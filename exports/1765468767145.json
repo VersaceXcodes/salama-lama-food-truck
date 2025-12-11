@@ -1,0 +1,19 @@
+{
+  "timestamp": 1765468767145,
+  "operation": {
+    "id": "webapp:react:store",
+    "refs": {
+      "id": "redux",
+      "version": "latest"
+    }
+  },
+  "projectId": "salama-lama-food-truck",
+  "files": [
+    {
+      "path": "/mnt/data/salama-lama-food-truck/vitereact/src/store/main.tsx",
+      "type": "text",
+      "size": 29948,
+      "dependencies": false
+    }
+  ]
+}

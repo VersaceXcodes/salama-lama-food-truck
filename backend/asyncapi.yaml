@@ -1,0 +1,1499 @@
+asyncapi: 2.6.0
+info:
+  title: Salama Lama Food Truck WebSocket API
+  version: 1.0.0
+  description: >
+    Real-time WebSocket API for the Salama Lama Food Truck application.
+
+    Handles real-time updates for orders, stock, loyalty, catering, and
+    notifications.
+  contact:
+    name: Salama Lama Development Team
+    email: dev@salamalama.ie
+servers:
+  development:
+    url: ws://localhost:3000/ws
+    protocol: ws
+    description: Development WebSocket server
+  production:
+    url: wss://api.salamalama.ie/ws
+    protocol: wss
+    description: Production WebSocket server
+channels:
+  orders/new:
+    description: Channel for broadcasting new orders to staff and admin
+    subscribe:
+      summary: Receive new order notifications
+      operationId: onNewOrder
+      tags:
+        - name: orders
+        - name: staff
+        - name: admin
+      message:
+        $ref: "#/components/messages/NewOrderNotification"
+  orders/{order_id}/status:
+    description: Channel for order status updates
+    parameters:
+      order_id:
+        description: Unique identifier of the order
+        schema:
+          type: string
+    subscribe:
+      summary: Receive order status change notifications
+      operationId: onOrderStatusChange
+      tags:
+        - name: orders
+        - name: customer
+        - name: staff
+        - name: admin
+      message:
+        $ref: "#/components/messages/OrderStatusUpdate"
+    publish:
+      summary: Update order status
+      operationId: updateOrderStatus
+      tags:
+        - name: orders
+        - name: staff
+        - name: admin
+      message:
+        $ref: "#/components/messages/OrderStatusUpdateRequest"
+  orders/{order_id}/tracking:
+    description: Channel for real-time order tracking updates
+    parameters:
+      order_id:
+        description: Unique identifier of the order
+        schema:
+          type: string
+    subscribe:
+      summary: Receive real-time order tracking updates
+      operationId: onOrderTrackingUpdate
+      tags:
+        - name: orders
+        - name: customer
+      message:
+        $ref: "#/components/messages/OrderTrackingUpdate"
+  stock/alerts:
+    description: Channel for stock level alerts
+    subscribe:
+      summary: Receive stock alerts for low or out of stock items
+      operationId: onStockAlert
+      tags:
+        - name: stock
+        - name: staff
+        - name: admin
+      message:
+        $ref: "#/components/messages/StockAlert"
+  stock/{item_id}/update:
+    description: Channel for specific item stock updates
+    parameters:
+      item_id:
+        description: Unique identifier of the menu item
+        schema:
+          type: string
+    subscribe:
+      summary: Receive stock level updates for specific item
+      operationId: onStockUpdate
+      tags:
+        - name: stock
+        - name: staff
+        - name: admin
+      message:
+        $ref: "#/components/messages/StockUpdate"
+    publish:
+      summary: Update stock level for item
+      operationId: updateStock
+      tags:
+        - name: stock
+        - name: staff
+        - name: admin
+      message:
+        $ref: "#/components/messages/StockUpdateRequest"
+  loyalty/{user_id}/points:
+    description: Channel for loyalty points updates
+    parameters:
+      user_id:
+        description: Unique identifier of the user
+        schema:
+          type: string
+    subscribe:
+      summary: Receive loyalty points updates
+      operationId: onPointsUpdate
+      tags:
+        - name: loyalty
+        - name: customer
+      message:
+        $ref: "#/components/messages/PointsUpdate"
+  loyalty/{user_id}/badges:
+    description: Channel for badge unlock notifications
+    parameters:
+      user_id:
+        description: Unique identifier of the user
+        schema:
+          type: string
+    subscribe:
+      summary: Receive badge unlock notifications
+      operationId: onBadgeUnlock
+      tags:
+        - name: loyalty
+        - name: customer
+      message:
+        $ref: "#/components/messages/BadgeUnlockNotification"
+  loyalty/{user_id}/milestone:
+    description: Channel for loyalty milestone achievements
+    parameters:
+      user_id:
+        description: Unique identifier of the user
+        schema:
+          type: string
+    subscribe:
+      summary: Receive milestone achievement notifications
+      operationId: onMilestoneAchieved
+      tags:
+        - name: loyalty
+        - name: customer
+      message:
+        $ref: "#/components/messages/MilestoneNotification"
+  loyalty/{user_id}/spin:
+    description: Channel for spin wheel availability updates
+    parameters:
+      user_id:
+        description: Unique identifier of the user
+        schema:
+          type: string
+    subscribe:
+      summary: Receive spin wheel availability updates
+      operationId: onSpinAvailable
+      tags:
+        - name: loyalty
+        - name: customer
+      message:
+        $ref: "#/components/messages/SpinAvailabilityNotification"
+  catering/inquiries/new:
+    description: Channel for new catering inquiry notifications
+    subscribe:
+      summary: Receive new catering inquiry notifications
+      operationId: onNewCateringInquiry
+      tags:
+        - name: catering
+        - name: admin
+      message:
+        $ref: "#/components/messages/NewCateringInquiryNotification"
+  catering/inquiries/{inquiry_id}/status:
+    description: Channel for catering inquiry status updates
+    parameters:
+      inquiry_id:
+        description: Unique identifier of the catering inquiry
+        schema:
+          type: string
+    subscribe:
+      summary: Receive catering inquiry status updates
+      operationId: onCateringStatusUpdate
+      tags:
+        - name: catering
+        - name: customer
+        - name: admin
+      message:
+        $ref: "#/components/messages/CateringInquiryStatusUpdate"
+  catering/inquiries/{inquiry_id}/quote:
+    description: Channel for catering quote notifications
+    parameters:
+      inquiry_id:
+        description: Unique identifier of the catering inquiry
+        schema:
+          type: string
+    subscribe:
+      summary: Receive catering quote sent notifications
+      operationId: onCateringQuoteSent
+      tags:
+        - name: catering
+        - name: customer
+      message:
+        $ref: "#/components/messages/CateringQuoteSentNotification"
+  notifications/{user_id}:
+    description: Channel for user-specific notifications
+    parameters:
+      user_id:
+        description: Unique identifier of the user
+        schema:
+          type: string
+    subscribe:
+      summary: Receive user-specific notifications
+      operationId: onUserNotification
+      tags:
+        - name: notifications
+        - name: customer
+        - name: staff
+        - name: admin
+      message:
+        oneOf:
+          - $ref: "#/components/messages/OrderNotification"
+          - $ref: "#/components/messages/LoyaltyNotification"
+          - $ref: "#/components/messages/CateringNotification"
+          - $ref: "#/components/messages/SystemNotification"
+  staff/queue/updates:
+    description: Channel for staff order queue real-time updates
+    subscribe:
+      summary: Receive real-time order queue updates
+      operationId: onQueueUpdate
+      tags:
+        - name: orders
+        - name: staff
+      message:
+        $ref: "#/components/messages/StaffQueueUpdate"
+  admin/dashboard/metrics:
+    description: Channel for real-time admin dashboard metrics
+    subscribe:
+      summary: Receive real-time business metrics updates
+      operationId: onDashboardMetricsUpdate
+      tags:
+        - name: analytics
+        - name: admin
+      message:
+        $ref: "#/components/messages/DashboardMetricsUpdate"
+components:
+  messages:
+    NewOrderNotification:
+      name: newOrder
+      title: New Order Notification
+      summary: Notification sent when a new order is placed
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - event
+          - data
+          - timestamp
+        properties:
+          event:
+            type: string
+            const: order.new
+          data:
+            type: object
+            required:
+              - order_id
+              - order_number
+              - user_id
+              - order_type
+              - status
+              - customer_name
+              - customer_phone
+              - total_amount
+              - created_at
+            properties:
+              order_id:
+                type: string
+                description: Unique order identifier
+              order_number:
+                type: string
+                description: Human-readable order number
+              user_id:
+                type: string
+                description: Customer user identifier
+              order_type:
+                type: string
+                enum:
+                  - collection
+                  - delivery
+                description: Type of order
+              status:
+                type: string
+                enum:
+                  - received
+                description: Current order status
+              collection_time_slot:
+                type: string
+                nullable: true
+                description: Selected collection time slot
+              delivery_address_snapshot:
+                type: object
+                nullable: true
+                description: Snapshot of delivery address
+              items:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - order_item_id
+                    - item_id
+                    - item_name
+                    - quantity
+                    - unit_price
+                    - line_total
+                  properties:
+                    order_item_id:
+                      type: string
+                    item_id:
+                      type: string
+                    item_name:
+                      type: string
+                    quantity:
+                      type: integer
+                    unit_price:
+                      type: number
+                    selected_customizations:
+                      type: object
+                      nullable: true
+                    line_total:
+                      type: number
+              subtotal:
+                type: number
+              discount_amount:
+                type: number
+              delivery_fee:
+                type: number
+                nullable: true
+              tax_amount:
+                type: number
+              total_amount:
+                type: number
+              payment_status:
+                type: string
+                enum:
+                  - pending
+                  - paid
+                  - failed
+              special_instructions:
+                type: string
+                nullable: true
+              customer_name:
+                type: string
+              customer_email:
+                type: string
+              customer_phone:
+                type: string
+              created_at:
+                type: string
+                format: date-time
+          timestamp:
+            type: string
+            format: date-time
+    OrderStatusUpdate:
+      name: orderStatusUpdate
+      title: Order Status Update
+      summary: Notification sent when order status changes
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - event
+          - data
+          - timestamp
+        properties:
+          event:
+            type: string
+            const: order.status_changed
+          data:
+            type: object
+            required:
+              - order_id
+              - order_number
+              - previous_status
+              - new_status
+              - changed_by_user_id
+              - changed_at
+            properties:
+              order_id:
+                type: string
+              order_number:
+                type: string
+              previous_status:
+                type: string
+                enum:
+                  - received
+                  - preparing
+                  - ready
+                  - out_for_delivery
+                  - completed
+                  - cancelled
+              new_status:
+                type: string
+                enum:
+                  - received
+                  - preparing
+                  - ready
+                  - out_for_delivery
+                  - completed
+                  - cancelled
+              changed_by_user_id:
+                type: string
+              changed_by_name:
+                type: string
+                description: Name of staff/admin who changed status
+              estimated_time:
+                type: string
+                nullable: true
+                description: Updated estimated ready/delivery time
+              notes:
+                type: string
+                nullable: true
+              changed_at:
+                type: string
+                format: date-time
+          timestamp:
+            type: string
+            format: date-time
+    OrderStatusUpdateRequest:
+      name: orderStatusUpdateRequest
+      title: Order Status Update Request
+      summary: Request to update order status
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - order_id
+          - new_status
+          - changed_by_user_id
+        properties:
+          order_id:
+            type: string
+          new_status:
+            type: string
+            enum:
+              - preparing
+              - ready
+              - out_for_delivery
+              - completed
+              - cancelled
+          changed_by_user_id:
+            type: string
+          notes:
+            type: string
+            nullable: true
+    OrderTrackingUpdate:
+      name: orderTrackingUpdate
+      title: Order Tracking Update
+      summary: Real-time tracking update for customer
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - event
+          - data
+          - timestamp
+        properties:
+          event:
+            type: string
+            const: order.tracking_update
+          data:
+            type: object
+            required:
+              - order_id
+              - order_number
+              - status
+              - progress_percentage
+            properties:
+              order_id:
+                type: string
+              order_number:
+                type: string
+              status:
+                type: string
+                enum:
+                  - received
+                  - preparing
+                  - ready
+                  - out_for_delivery
+                  - completed
+              progress_percentage:
+                type: integer
+                minimum: 0
+                maximum: 100
+              estimated_ready_time:
+                type: string
+                nullable: true
+                format: date-time
+              estimated_delivery_time:
+                type: string
+                nullable: true
+                format: date-time
+              status_message:
+                type: string
+                description: Human-readable status message
+              status_history:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - status
+                    - changed_at
+                  properties:
+                    status:
+                      type: string
+                    changed_at:
+                      type: string
+                      format: date-time
+          timestamp:
+            type: string
+            format: date-time
+    StockAlert:
+      name: stockAlert
+      title: Stock Alert
+      summary: Alert for low or out of stock items
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - event
+          - data
+          - timestamp
+        properties:
+          event:
+            type: string
+            enum:
+              - stock.low
+              - stock.out
+          data:
+            type: object
+            required:
+              - item_id
+              - item_name
+              - current_stock
+              - alert_type
+            properties:
+              item_id:
+                type: string
+              item_name:
+                type: string
+              category_id:
+                type: string
+              category_name:
+                type: string
+              current_stock:
+                type: integer
+              low_stock_threshold:
+                type: integer
+                nullable: true
+              alert_type:
+                type: string
+                enum:
+                  - low_stock
+                  - out_of_stock
+              alert_level:
+                type: string
+                enum:
+                  - warning
+                  - critical
+              recommended_action:
+                type: string
+          timestamp:
+            type: string
+            format: date-time
+    StockUpdate:
+      name: stockUpdate
+      title: Stock Update
+      summary: Real-time stock level update
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - event
+          - data
+          - timestamp
+        properties:
+          event:
+            type: string
+            const: stock.updated
+          data:
+            type: object
+            required:
+              - item_id
+              - item_name
+              - previous_stock
+              - new_stock
+              - change_type
+              - changed_by_user_id
+              - changed_at
+            properties:
+              item_id:
+                type: string
+              item_name:
+                type: string
+              previous_stock:
+                type: integer
+              new_stock:
+                type: integer
+              quantity_changed:
+                type: integer
+              change_type:
+                type: string
+                enum:
+                  - restock
+                  - sale
+                  - adjustment
+                  - waste
+              reason:
+                type: string
+                nullable: true
+              changed_by_user_id:
+                type: string
+              changed_by_name:
+                type: string
+              is_now_low_stock:
+                type: boolean
+              is_now_out_of_stock:
+                type: boolean
+              changed_at:
+                type: string
+                format: date-time
+          timestamp:
+            type: string
+            format: date-time
+    StockUpdateRequest:
+      name: stockUpdateRequest
+      title: Stock Update Request
+      summary: Request to update stock level
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - item_id
+          - new_stock
+          - change_type
+          - changed_by_user_id
+        properties:
+          item_id:
+            type: string
+          new_stock:
+            type: integer
+            minimum: 0
+          change_type:
+            type: string
+            enum:
+              - restock
+              - adjustment
+              - waste
+          reason:
+            type: string
+            nullable: true
+          notes:
+            type: string
+            nullable: true
+          changed_by_user_id:
+            type: string
+    PointsUpdate:
+      name: pointsUpdate
+      title: Points Update
+      summary: Loyalty points balance update
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - event
+          - data
+          - timestamp
+        properties:
+          event:
+            type: string
+            const: loyalty.points_updated
+          data:
+            type: object
+            required:
+              - loyalty_account_id
+              - user_id
+              - transaction_type
+              - points_amount
+              - previous_balance
+              - new_balance
+              - created_at
+            properties:
+              loyalty_account_id:
+                type: string
+              user_id:
+                type: string
+              transaction_id:
+                type: string
+              transaction_type:
+                type: string
+                enum:
+                  - earned
+                  - redeemed
+                  - expired
+                  - manual_adjustment
+              points_amount:
+                type: integer
+              previous_balance:
+                type: integer
+              new_balance:
+                type: integer
+              order_id:
+                type: string
+                nullable: true
+              reason:
+                type: string
+                nullable: true
+              next_milestone:
+                type: object
+                nullable: true
+                properties:
+                  name:
+                    type: string
+                  points_required:
+                    type: integer
+                  points_remaining:
+                    type: integer
+              created_at:
+                type: string
+                format: date-time
+          timestamp:
+            type: string
+            format: date-time
+    BadgeUnlockNotification:
+      name: badgeUnlock
+      title: Badge Unlock Notification
+      summary: Notification when a badge is unlocked
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - event
+          - data
+          - timestamp
+        properties:
+          event:
+            type: string
+            const: loyalty.badge_unlocked
+          data:
+            type: object
+            required:
+              - user_badge_id
+              - loyalty_account_id
+              - user_id
+              - badge_id
+              - badge_name
+              - badge_description
+              - icon_url
+              - earned_at
+            properties:
+              user_badge_id:
+                type: string
+              loyalty_account_id:
+                type: string
+              user_id:
+                type: string
+              badge_id:
+                type: string
+              badge_name:
+                type: string
+              badge_description:
+                type: string
+              badge_category:
+                type: string
+                nullable: true
+              icon_url:
+                type: string
+              unlock_criteria:
+                type: object
+              bonus_points:
+                type: integer
+                nullable: true
+                description: Bonus points awarded for unlocking
+              earned_at:
+                type: string
+                format: date-time
+          timestamp:
+            type: string
+            format: date-time
+    MilestoneNotification:
+      name: milestoneAchieved
+      title: Milestone Achievement Notification
+      summary: Notification when a loyalty milestone is reached
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - event
+          - data
+          - timestamp
+        properties:
+          event:
+            type: string
+            const: loyalty.milestone_achieved
+          data:
+            type: object
+            required:
+              - user_id
+              - milestone_type
+              - milestone_name
+              - milestone_value
+              - achieved_at
+            properties:
+              user_id:
+                type: string
+              loyalty_account_id:
+                type: string
+              milestone_type:
+                type: string
+                enum:
+                  - total_orders
+                  - total_spend
+                  - consecutive_weeks
+                  - referrals
+              milestone_name:
+                type: string
+              milestone_description:
+                type: string
+              milestone_value:
+                type: number
+              reward:
+                type: object
+                nullable: true
+                properties:
+                  type:
+                    type: string
+                  value:
+                    type: string
+                  description:
+                    type: string
+              achieved_at:
+                type: string
+                format: date-time
+          timestamp:
+            type: string
+            format: date-time
+    SpinAvailabilityNotification:
+      name: spinAvailable
+      title: Spin Wheel Availability Notification
+      summary: Notification when spin wheel becomes available
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - event
+          - data
+          - timestamp
+        properties:
+          event:
+            type: string
+            const: loyalty.spin_available
+          data:
+            type: object
+            required:
+              - user_id
+              - loyalty_account_id
+              - available_spins
+              - reason
+            properties:
+              user_id:
+                type: string
+              loyalty_account_id:
+                type: string
+              available_spins:
+                type: integer
+                minimum: 0
+              reason:
+                type: string
+                enum:
+                  - order_completed
+                  - milestone_reached
+                  - scheduled
+              next_spin_available_at:
+                type: string
+                nullable: true
+                format: date-time
+          timestamp:
+            type: string
+            format: date-time
+    NewCateringInquiryNotification:
+      name: newCateringInquiry
+      title: New Catering Inquiry Notification
+      summary: Notification when a new catering inquiry is submitted
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - event
+          - data
+          - timestamp
+        properties:
+          event:
+            type: string
+            const: catering.inquiry_new
+          data:
+            type: object
+            required:
+              - inquiry_id
+              - inquiry_number
+              - contact_name
+              - contact_email
+              - contact_phone
+              - event_type
+              - event_date
+              - guest_count
+              - status
+              - submitted_at
+            properties:
+              inquiry_id:
+                type: string
+              inquiry_number:
+                type: string
+              user_id:
+                type: string
+                nullable: true
+              contact_name:
+                type: string
+              contact_email:
+                type: string
+              contact_phone:
+                type: string
+              company_name:
+                type: string
+                nullable: true
+              event_type:
+                type: string
+                enum:
+                  - corporate
+                  - wedding
+                  - birthday
+                  - meeting
+                  - other
+              event_date:
+                type: string
+                format: date
+              event_start_time:
+                type: string
+              event_location_address:
+                type: string
+              guest_count:
+                type: integer
+              dietary_requirements:
+                type: array
+                nullable: true
+                items:
+                  type: string
+              budget_range:
+                type: string
+                nullable: true
+              status:
+                type: string
+                enum:
+                  - new
+              submitted_at:
+                type: string
+                format: date-time
+          timestamp:
+            type: string
+            format: date-time
+    CateringInquiryStatusUpdate:
+      name: cateringInquiryStatusUpdate
+      title: Catering Inquiry Status Update
+      summary: Notification when catering inquiry status changes
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - event
+          - data
+          - timestamp
+        properties:
+          event:
+            type: string
+            const: catering.status_changed
+          data:
+            type: object
+            required:
+              - inquiry_id
+              - inquiry_number
+              - previous_status
+              - new_status
+              - updated_at
+            properties:
+              inquiry_id:
+                type: string
+              inquiry_number:
+                type: string
+              user_id:
+                type: string
+                nullable: true
+              previous_status:
+                type: string
+                enum:
+                  - new
+                  - in_progress
+                  - quoted
+                  - confirmed
+                  - completed
+                  - cancelled
+              new_status:
+                type: string
+                enum:
+                  - new
+                  - in_progress
+                  - quoted
+                  - confirmed
+                  - completed
+                  - cancelled
+              status_message:
+                type: string
+                nullable: true
+              admin_notes:
+                type: string
+                nullable: true
+              updated_at:
+                type: string
+                format: date-time
+          timestamp:
+            type: string
+            format: date-time
+    CateringQuoteSentNotification:
+      name: cateringQuoteSent
+      title: Catering Quote Sent Notification
+      summary: Notification when catering quote is sent to customer
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - event
+          - data
+          - timestamp
+        properties:
+          event:
+            type: string
+            const: catering.quote_sent
+          data:
+            type: object
+            required:
+              - quote_id
+              - inquiry_id
+              - inquiry_number
+              - quote_number
+              - grand_total
+              - valid_until
+              - sent_at
+            properties:
+              quote_id:
+                type: string
+              inquiry_id:
+                type: string
+              inquiry_number:
+                type: string
+              quote_number:
+                type: string
+              user_id:
+                type: string
+                nullable: true
+              line_items:
+                type: array
+                items:
+                  type: object
+              subtotal:
+                type: number
+              tax_amount:
+                type: number
+              grand_total:
+                type: number
+              valid_until:
+                type: string
+                format: date-time
+              quote_pdf_url:
+                type: string
+                nullable: true
+              sent_at:
+                type: string
+                format: date-time
+          timestamp:
+            type: string
+            format: date-time
+    OrderNotification:
+      name: orderNotification
+      title: Order Notification
+      summary: Generic order-related notification
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - notification_id
+          - type
+          - category
+          - title
+          - message
+          - created_at
+        properties:
+          notification_id:
+            type: string
+          type:
+            type: string
+            enum:
+              - order_received
+              - order_preparing
+              - order_ready
+              - order_out_for_delivery
+              - order_completed
+              - order_cancelled
+          category:
+            type: string
+            const: order
+          priority:
+            type: string
+            enum:
+              - low
+              - medium
+              - high
+            default: medium
+          title:
+            type: string
+          message:
+            type: string
+          order_id:
+            type: string
+          order_number:
+            type: string
+          link:
+            type: string
+            nullable: true
+          action_required:
+            type: boolean
+            default: false
+          read:
+            type: boolean
+            default: false
+          created_at:
+            type: string
+            format: date-time
+    LoyaltyNotification:
+      name: loyaltyNotification
+      title: Loyalty Notification
+      summary: Generic loyalty-related notification
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - notification_id
+          - type
+          - category
+          - title
+          - message
+          - created_at
+        properties:
+          notification_id:
+            type: string
+          type:
+            type: string
+            enum:
+              - points_earned
+              - badge_unlocked
+              - milestone_reached
+              - reward_redeemed
+              - points_expiring
+              - spin_available
+          category:
+            type: string
+            const: loyalty
+          priority:
+            type: string
+            enum:
+              - low
+              - medium
+              - high
+            default: low
+          title:
+            type: string
+          message:
+            type: string
+          points_amount:
+            type: integer
+            nullable: true
+          badge_id:
+            type: string
+            nullable: true
+          reward_id:
+            type: string
+            nullable: true
+          link:
+            type: string
+            nullable: true
+          action_required:
+            type: boolean
+            default: false
+          read:
+            type: boolean
+            default: false
+          created_at:
+            type: string
+            format: date-time
+    CateringNotification:
+      name: cateringNotification
+      title: Catering Notification
+      summary: Generic catering-related notification
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - notification_id
+          - type
+          - category
+          - title
+          - message
+          - created_at
+        properties:
+          notification_id:
+            type: string
+          type:
+            type: string
+            enum:
+              - inquiry_received
+              - inquiry_in_progress
+              - quote_sent
+              - quote_accepted
+              - inquiry_confirmed
+              - inquiry_completed
+              - inquiry_cancelled
+          category:
+            type: string
+            const: catering
+          priority:
+            type: string
+            enum:
+              - low
+              - medium
+              - high
+            default: medium
+          title:
+            type: string
+          message:
+            type: string
+          inquiry_id:
+            type: string
+          inquiry_number:
+            type: string
+          link:
+            type: string
+            nullable: true
+          action_required:
+            type: boolean
+            default: false
+          read:
+            type: boolean
+            default: false
+          created_at:
+            type: string
+            format: date-time
+    SystemNotification:
+      name: systemNotification
+      title: System Notification
+      summary: Generic system-wide notification
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - notification_id
+          - type
+          - category
+          - title
+          - message
+          - created_at
+        properties:
+          notification_id:
+            type: string
+          type:
+            type: string
+            enum:
+              - account_verified
+              - password_changed
+              - payment_method_added
+              - address_added
+              - marketing_update
+              - system_maintenance
+              - feature_announcement
+          category:
+            type: string
+            const: system
+          priority:
+            type: string
+            enum:
+              - low
+              - medium
+              - high
+            default: low
+          title:
+            type: string
+          message:
+            type: string
+          link:
+            type: string
+            nullable: true
+          action_required:
+            type: boolean
+            default: false
+          read:
+            type: boolean
+            default: false
+          created_at:
+            type: string
+            format: date-time
+          expires_at:
+            type: string
+            nullable: true
+            format: date-time
+    StaffQueueUpdate:
+      name: staffQueueUpdate
+      title: Staff Queue Update
+      summary: Real-time update of staff order queue
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - event
+          - data
+          - timestamp
+        properties:
+          event:
+            type: string
+            const: staff.queue_updated
+          data:
+            type: object
+            required:
+              - queue_stats
+              - orders_by_status
+            properties:
+              queue_stats:
+                type: object
+                required:
+                  - total_active
+                  - new_count
+                  - preparing_count
+                  - ready_count
+                properties:
+                  total_active:
+                    type: integer
+                  new_count:
+                    type: integer
+                  preparing_count:
+                    type: integer
+                  ready_count:
+                    type: integer
+                  average_prep_time:
+                    type: number
+                    nullable: true
+              orders_by_status:
+                type: object
+                properties:
+                  new:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - order_id
+                        - order_number
+                        - order_type
+                        - created_at
+                      properties:
+                        order_id:
+                          type: string
+                        order_number:
+                          type: string
+                        order_type:
+                          type: string
+                        collection_time_slot:
+                          type: string
+                          nullable: true
+                        time_since_received:
+                          type: integer
+                          description: Minutes since order received
+                        created_at:
+                          type: string
+                          format: date-time
+                  preparing:
+                    type: array
+                    items:
+                      type: object
+                  ready:
+                    type: array
+                    items:
+                      type: object
+              alerts:
+                type: array
+                nullable: true
+                items:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                    message:
+                      type: string
+                    order_id:
+                      type: string
+                      nullable: true
+          timestamp:
+            type: string
+            format: date-time
+    DashboardMetricsUpdate:
+      name: dashboardMetricsUpdate
+      title: Dashboard Metrics Update
+      summary: Real-time update of admin dashboard metrics
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - event
+          - data
+          - timestamp
+        properties:
+          event:
+            type: string
+            const: admin.metrics_updated
+          data:
+            type: object
+            required:
+              - period
+              - metrics
+            properties:
+              period:
+                type: string
+                enum:
+                  - today
+                  - this_week
+                  - this_month
+                default: today
+              metrics:
+                type: object
+                required:
+                  - orders_count
+                  - revenue
+                  - new_customers_count
+                properties:
+                  orders_count:
+                    type: integer
+                  revenue:
+                    type: number
+                  new_customers_count:
+                    type: integer
+                  average_order_value:
+                    type: number
+                  collection_percentage:
+                    type: number
+                  delivery_percentage:
+                    type: number
+                  top_selling_items:
+                    type: array
+                    nullable: true
+                    items:
+                      type: object
+                      properties:
+                        item_id:
+                          type: string
+                        item_name:
+                          type: string
+                        quantity_sold:
+                          type: integer
+                  pending_catering_inquiries:
+                    type: integer
+                    nullable: true
+                  low_stock_items_count:
+                    type: integer
+                    nullable: true
+              last_order:
+                type: object
+                nullable: true
+                properties:
+                  order_id:
+                    type: string
+                  order_number:
+                    type: string
+                  total_amount:
+                    type: number
+                  created_at:
+                    type: string
+                    format: date-time
+          timestamp:
+            type: string
+            format: date-time

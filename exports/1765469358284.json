@@ -1,0 +1,21 @@
+{
+  "timestamp": 1765469358284,
+  "operation": {
+    "id": "backend:tests:main"
+  },
+  "projectId": "salama-lama-food-truck",
+  "files": [
+    {
+      "path": "/mnt/data/salama-lama-food-truck/backend/server.test.ts",
+      "type": "text",
+      "size": 162414,
+      "dependencies": false
+    },
+    {
+      "path": "/mnt/data/salama-lama-food-truck/backend/jest.config.ts",
+      "type": "text",
+      "size": 942,
+      "dependencies": false
+    }
+  ]
+}

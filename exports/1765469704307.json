@@ -1,0 +1,19 @@
+{
+  "timestamp": 1765469704307,
+  "operation": {
+    "id": "webapp:react:views",
+    "refs": {
+      "id": "UV_Signup",
+      "version": "latest"
+    }
+  },
+  "projectId": "salama-lama-food-truck",
+  "files": [
+    {
+      "path": "/mnt/data/salama-lama-food-truck/vitereact/src/components/views/UV_Signup.tsx",
+      "type": "text",
+      "size": 30616,
+      "dependencies": false
+    }
+  ]
+}

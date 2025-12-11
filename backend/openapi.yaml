@@ -1,0 +1,5386 @@
+openapi: 3.0.0
+info:
+  title: Salama Lama Food Truck API
+  version: 1.0.0
+  description: Comprehensive API for Salama Lama Food Truck web application
+    supporting online ordering, loyalty programs, catering services, and
+    business management.
+servers:
+  - url: http://localhost:3000/api
+    description: Development server
+tags:
+  - name: Authentication
+    description: User authentication and account verification
+  - name: Public
+    description: Unauthenticated public endpoints
+  - name: Profile
+    description: Customer profile management
+  - name: Addresses
+    description: Saved delivery addresses
+  - name: Payment Methods
+    description: Saved payment methods
+  - name: Menu
+    description: Menu browsing and search
+  - name: Cart
+    description: Shopping cart management
+  - name: Checkout
+    description: Order checkout process
+  - name: Orders
+    description: Order management and tracking
+  - name: Loyalty
+    description: Loyalty program and rewards
+  - name: Catering
+    description: Catering inquiries and quotes
+  - name: Staff
+    description: Staff operations
+  - name: Admin - Menu
+    description: Admin menu management
+  - name: Admin - Stock
+    description: Admin stock management
+  - name: Admin - Orders
+    description: Admin order management
+  - name: Admin - Delivery
+    description: Admin delivery configuration
+  - name: Admin - Discounts
+    description: Admin discount management
+  - name: Admin - Customers
+    description: Admin customer management
+  - name: Admin - Staff
+    description: Admin staff management
+  - name: Admin - Catering
+    description: Admin catering management
+  - name: Admin - Invoices
+    description: Admin invoice management
+  - name: Admin - Loyalty
+    description: Admin loyalty configuration
+  - name: Admin - Analytics
+    description: Admin analytics and reports
+  - name: Admin - Settings
+    description: Admin system settings
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for authenticated requests
+  schemas:
+    User:
+      type: object
+      properties:
+        user_id:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        role:
+          type: string
+          enum:
+            - customer
+            - staff
+            - admin
+        profile_photo_url:
+          type: string
+          nullable: true
+        email_verified:
+          type: boolean
+        status:
+          type: string
+          enum:
+            - active
+            - inactive
+            - suspended
+        created_at:
+          type: string
+          format: date-time
+        last_login_at:
+          type: string
+          format: date-time
+          nullable: true
+        marketing_opt_in:
+          type: boolean
+        order_notifications_email:
+          type: boolean
+        order_notifications_sms:
+          type: boolean
+        dietary_preferences:
+          type: array
+          items:
+            type: string
+          nullable: true
+        referral_code:
+          type: string
+          nullable: true
+    Address:
+      type: object
+      properties:
+        address_id:
+          type: string
+        user_id:
+          type: string
+        label:
+          type: string
+        address_line1:
+          type: string
+        address_line2:
+          type: string
+          nullable: true
+        city:
+          type: string
+        postal_code:
+          type: string
+        delivery_instructions:
+          type: string
+          nullable: true
+        is_default:
+          type: boolean
+        latitude:
+          type: number
+          nullable: true
+        longitude:
+          type: number
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+    PaymentMethod:
+      type: object
+      properties:
+        payment_method_id:
+          type: string
+        user_id:
+          type: string
+        card_type:
+          type: string
+          enum:
+            - Visa
+            - Mastercard
+            - Amex
+            - Discover
+        last_four_digits:
+          type: string
+        expiry_month:
+          type: string
+        expiry_year:
+          type: string
+        is_default:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+    Category:
+      type: object
+      properties:
+        category_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        sort_order:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+    MenuItem:
+      type: object
+      properties:
+        item_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        category_id:
+          type: string
+        price:
+          type: number
+        image_url:
+          type: string
+          nullable: true
+        image_urls:
+          type: array
+          items:
+            type: string
+          nullable: true
+        dietary_tags:
+          type: array
+          items:
+            type: string
+          nullable: true
+        is_limited_edition:
+          type: boolean
+        limited_edition_end_date:
+          type: string
+          format: date-time
+          nullable: true
+        is_active:
+          type: boolean
+        available_for_collection:
+          type: boolean
+        available_for_delivery:
+          type: boolean
+        stock_tracked:
+          type: boolean
+        current_stock:
+          type: integer
+          nullable: true
+        low_stock_threshold:
+          type: integer
+          nullable: true
+        sort_order:
+          type: integer
+        is_featured:
+          type: boolean
+        customization_groups:
+          type: array
+          items:
+            $ref: "#/components/schemas/CustomizationGroup"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    CustomizationGroup:
+      type: object
+      properties:
+        group_id:
+          type: string
+        item_id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+            - single
+            - multiple
+        is_required:
+          type: boolean
+        sort_order:
+          type: integer
+        options:
+          type: array
+          items:
+            $ref: "#/components/schemas/CustomizationOption"
+    CustomizationOption:
+      type: object
+      properties:
+        option_id:
+          type: string
+        group_id:
+          type: string
+        name:
+          type: string
+        additional_price:
+          type: number
+        is_default:
+          type: boolean
+        sort_order:
+          type: integer
+    CartItem:
+      type: object
+      properties:
+        item_id:
+          type: string
+        item_name:
+          type: string
+        quantity:
+          type: integer
+        unit_price:
+          type: number
+        selected_customizations:
+          type: object
+          nullable: true
+        line_total:
+          type: number
+    Cart:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CartItem"
+        subtotal:
+          type: number
+        discount_code:
+          type: string
+          nullable: true
+        discount_amount:
+          type: number
+        delivery_fee:
+          type: number
+        tax_amount:
+          type: number
+        total:
+          type: number
+    Order:
+      type: object
+      properties:
+        order_id:
+          type: string
+        order_number:
+          type: string
+        user_id:
+          type: string
+        order_type:
+          type: string
+          enum:
+            - collection
+            - delivery
+        status:
+          type: string
+          enum:
+            - received
+            - preparing
+            - ready
+            - out_for_delivery
+            - completed
+            - cancelled
+        collection_time_slot:
+          type: string
+          format: date-time
+          nullable: true
+        delivery_address_snapshot:
+          type: object
+          nullable: true
+        delivery_fee:
+          type: number
+          nullable: true
+        estimated_delivery_time:
+          type: string
+          nullable: true
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderItem"
+        subtotal:
+          type: number
+        discount_code:
+          type: string
+          nullable: true
+        discount_amount:
+          type: number
+        tax_amount:
+          type: number
+        total_amount:
+          type: number
+        payment_status:
+          type: string
+          enum:
+            - pending
+            - paid
+            - failed
+            - refunded
+        payment_method_type:
+          type: string
+          nullable: true
+        sumup_transaction_id:
+          type: string
+          nullable: true
+        invoice_url:
+          type: string
+          nullable: true
+        loyalty_points_awarded:
+          type: integer
+        special_instructions:
+          type: string
+          nullable: true
+        customer_name:
+          type: string
+        customer_email:
+          type: string
+        customer_phone:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        cancelled_at:
+          type: string
+          format: date-time
+          nullable: true
+        cancellation_reason:
+          type: string
+          nullable: true
+        status_history:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderStatusHistory"
+    OrderItem:
+      type: object
+      properties:
+        order_item_id:
+          type: string
+        order_id:
+          type: string
+        item_id:
+          type: string
+        item_name:
+          type: string
+        quantity:
+          type: integer
+        unit_price:
+          type: number
+        selected_customizations:
+          type: object
+          nullable: true
+        line_total:
+          type: number
+    OrderStatusHistory:
+      type: object
+      properties:
+        history_id:
+          type: string
+        order_id:
+          type: string
+        status:
+          type: string
+          enum:
+            - received
+            - preparing
+            - ready
+            - out_for_delivery
+            - completed
+            - cancelled
+        changed_by_user_id:
+          type: string
+        changed_at:
+          type: string
+          format: date-time
+        notes:
+          type: string
+          nullable: true
+    LoyaltyAccount:
+      type: object
+      properties:
+        loyalty_account_id:
+          type: string
+        user_id:
+          type: string
+        current_points_balance:
+          type: integer
+        total_points_earned:
+          type: integer
+        total_points_redeemed:
+          type: integer
+        total_points_expired:
+          type: integer
+        referral_count:
+          type: integer
+        spin_wheel_available_count:
+          type: integer
+        next_spin_available_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+    PointsTransaction:
+      type: object
+      properties:
+        transaction_id:
+          type: string
+        loyalty_account_id:
+          type: string
+        transaction_type:
+          type: string
+          enum:
+            - earned
+            - redeemed
+            - expired
+            - manual_adjustment
+        points_amount:
+          type: integer
+        order_id:
+          type: string
+          nullable: true
+        reason:
+          type: string
+          nullable: true
+        running_balance:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+    Badge:
+      type: object
+      properties:
+        badge_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        unlock_criteria:
+          type: object
+        icon_url:
+          type: string
+        is_active:
+          type: boolean
+        earned_at:
+          type: string
+          format: date-time
+          nullable: true
+    Reward:
+      type: object
+      properties:
+        reward_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        points_cost:
+          type: integer
+        reward_type:
+          type: string
+          enum:
+            - discount
+            - delivery
+            - physical
+            - merchandise
+        reward_value:
+          type: object
+        expiry_days_after_redemption:
+          type: integer
+          nullable: true
+        stock_limit:
+          type: integer
+          nullable: true
+        stock_remaining:
+          type: integer
+          nullable: true
+        status:
+          type: string
+          enum:
+            - active
+            - inactive
+            - out_of_stock
+        image_url:
+          type: string
+          nullable: true
+        availability_status:
+          type: string
+          enum:
+            - available
+            - limited
+            - unavailable
+          nullable: true
+        sort_order:
+          type: integer
+    RedeemedReward:
+      type: object
+      properties:
+        redeemed_reward_id:
+          type: string
+        loyalty_account_id:
+          type: string
+        reward_id:
+          type: string
+        reward_code:
+          type: string
+        points_deducted:
+          type: integer
+        redeemed_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        usage_status:
+          type: string
+          enum:
+            - unused
+            - used
+            - expired
+        used_in_order_id:
+          type: string
+          nullable: true
+    CateringInquiry:
+      type: object
+      properties:
+        inquiry_id:
+          type: string
+        inquiry_number:
+          type: string
+        user_id:
+          type: string
+          nullable: true
+        contact_name:
+          type: string
+        contact_email:
+          type: string
+        contact_phone:
+          type: string
+        company_name:
+          type: string
+          nullable: true
+        event_type:
+          type: string
+          enum:
+            - corporate
+            - wedding
+            - birthday
+            - meeting
+            - other
+        event_type_other:
+          type: string
+          nullable: true
+        event_date:
+          type: string
+          format: date
+        event_start_time:
+          type: string
+        event_end_time:
+          type: string
+        event_location_address:
+          type: string
+        event_location_city:
+          type: string
+        event_location_postal_code:
+          type: string
+        event_location_type:
+          type: string
+          enum:
+            - office
+            - home
+            - venue
+            - outdoor
+            - other
+        guest_count:
+          type: integer
+        guest_count_min:
+          type: integer
+          nullable: true
+        guest_count_max:
+          type: integer
+          nullable: true
+        dietary_requirements:
+          type: array
+          items:
+            type: string
+          nullable: true
+        dietary_notes:
+          type: string
+          nullable: true
+        menu_preferences:
+          type: string
+          nullable: true
+        preferred_package:
+          type: string
+          enum:
+            - standard
+            - premium
+            - luxury
+          nullable: true
+        budget_range:
+          type: string
+          nullable: true
+        additional_details:
+          type: string
+          nullable: true
+        attached_files:
+          type: array
+          items:
+            type: string
+          nullable: true
+        status:
+          type: string
+          enum:
+            - new
+            - in_progress
+            - quoted
+            - confirmed
+            - completed
+            - cancelled
+        admin_notes:
+          type: string
+          nullable: true
+        submitted_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        quotes:
+          type: array
+          items:
+            $ref: "#/components/schemas/CateringQuote"
+    CateringQuote:
+      type: object
+      properties:
+        quote_id:
+          type: string
+        inquiry_id:
+          type: string
+        quote_number:
+          type: string
+        line_items:
+          type: array
+          items:
+            type: object
+        subtotal:
+          type: number
+        additional_fees:
+          type: array
+          items:
+            type: object
+          nullable: true
+        tax_amount:
+          type: number
+        grand_total:
+          type: number
+        valid_until:
+          type: string
+          format: date-time
+        terms:
+          type: string
+          nullable: true
+        quote_pdf_url:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        sent_at:
+          type: string
+          format: date-time
+          nullable: true
+        accepted_at:
+          type: string
+          format: date-time
+          nullable: true
+    Invoice:
+      type: object
+      properties:
+        invoice_id:
+          type: string
+        invoice_number:
+          type: string
+        order_id:
+          type: string
+          nullable: true
+        catering_inquiry_id:
+          type: string
+          nullable: true
+        user_id:
+          type: string
+        customer_name:
+          type: string
+        customer_email:
+          type: string
+        customer_phone:
+          type: string
+        customer_address:
+          type: string
+          nullable: true
+        line_items:
+          type: array
+          items:
+            type: object
+        subtotal:
+          type: number
+        discount_amount:
+          type: number
+        delivery_fee:
+          type: number
+          nullable: true
+        tax_amount:
+          type: number
+        grand_total:
+          type: number
+        payment_status:
+          type: string
+          enum:
+            - pending
+            - paid
+            - overdue
+            - cancelled
+        payment_method:
+          type: string
+          nullable: true
+        sumup_transaction_id:
+          type: string
+          nullable: true
+        issue_date:
+          type: string
+          format: date
+        due_date:
+          type: string
+          format: date
+          nullable: true
+        paid_at:
+          type: string
+          format: date-time
+          nullable: true
+        invoice_pdf_url:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+    DiscountCode:
+      type: object
+      properties:
+        code_id:
+          type: string
+        code:
+          type: string
+        discount_type:
+          type: string
+          enum:
+            - percentage
+            - fixed
+            - delivery_fee
+        discount_value:
+          type: number
+        applicable_order_types:
+          type: array
+          items:
+            type: string
+            enum:
+              - collection
+              - delivery
+          nullable: true
+        applicable_category_ids:
+          type: array
+          items:
+            type: string
+          nullable: true
+        applicable_item_ids:
+          type: array
+          items:
+            type: string
+          nullable: true
+        minimum_order_value:
+          type: number
+          nullable: true
+        total_usage_limit:
+          type: integer
+          nullable: true
+        per_customer_usage_limit:
+          type: integer
+          nullable: true
+        total_used_count:
+          type: integer
+        valid_from:
+          type: string
+          format: date-time
+        valid_until:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+          enum:
+            - active
+            - inactive
+            - expired
+        internal_notes:
+          type: string
+          nullable: true
+    DeliveryZone:
+      type: object
+      properties:
+        zone_id:
+          type: string
+        zone_name:
+          type: string
+        zone_type:
+          type: string
+          enum:
+            - polygon
+            - radius
+            - postal_code
+        zone_boundaries:
+          type: object
+        delivery_fee:
+          type: number
+        minimum_order_value:
+          type: number
+          nullable: true
+        estimated_delivery_time:
+          type: integer
+        is_active:
+          type: boolean
+        priority:
+          type: integer
+    StockHistory:
+      type: object
+      properties:
+        history_id:
+          type: string
+        item_id:
+          type: string
+        change_type:
+          type: string
+          enum:
+            - restock
+            - sale
+            - adjustment
+            - waste
+        previous_stock:
+          type: integer
+        new_stock:
+          type: integer
+        quantity_changed:
+          type: integer
+        reason:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        changed_by_user_id:
+          type: string
+        changed_at:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          nullable: true
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      operationId: registerCustomer
+      summary: Register new customer account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - phone
+                - password
+                - first_name
+                - last_name
+              properties:
+                email:
+                  type: string
+                phone:
+                  type: string
+                password:
+                  type: string
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                marketing_opt_in:
+                  type: boolean
+                referred_by_user_id:
+                  type: string
+                  nullable: true
+      responses:
+        "201":
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+                  token:
+                    type: string
+                  first_order_discount_code:
+                    type: string
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      operationId: login
+      summary: Authenticate user and return token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+                remember_me:
+                  type: boolean
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+                  token:
+                    type: string
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      operationId: logout
+      summary: Logout current user
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /auth/password-reset-request:
+    post:
+      tags:
+        - Authentication
+      operationId: requestPasswordReset
+      summary: Request password reset link
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+      responses:
+        "200":
+          description: Reset link sent if email exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /auth/password-reset:
+    post:
+      tags:
+        - Authentication
+      operationId: resetPassword
+      summary: Reset password with token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reset_token
+                - new_password
+              properties:
+                reset_token:
+                  type: string
+                new_password:
+                  type: string
+      responses:
+        "200":
+          description: Password reset successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "400":
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /auth/verify-email:
+    post:
+      tags:
+        - Authentication
+      operationId: verifyEmail
+      summary: Verify email address with token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - verification_token
+              properties:
+                verification_token:
+                  type: string
+      responses:
+        "200":
+          description: Email verified successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "400":
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /auth/resend-verification:
+    post:
+      tags:
+        - Authentication
+      operationId: resendEmailVerification
+      summary: Resend email verification link
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Verification email sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /menu/items:
+    get:
+      tags:
+        - Menu
+      operationId: getMenuItems
+      summary: Get menu items with filtering and search
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: dietary_filters
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: false
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum:
+              - name
+              - price_low_high
+              - price_high_low
+              - popularity
+        - name: is_featured
+          in: query
+          schema:
+            type: boolean
+        - name: is_active
+          in: query
+          schema:
+            type: boolean
+        - name: in_stock
+          in: query
+          schema:
+            type: boolean
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: List of menu items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/MenuItem"
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+  /menu/items/{item_id}:
+    get:
+      tags:
+        - Menu
+      operationId: getMenuItem
+      summary: Get detailed menu item information
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Menu item details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MenuItem"
+        "404":
+          description: Item not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /menu/categories:
+    get:
+      tags:
+        - Menu
+      operationId: getCategories
+      summary: Get all menu categories
+      responses:
+        "200":
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Category"
+  /business/info:
+    get:
+      tags:
+        - Public
+      operationId: getBusinessInfo
+      summary: Get business information for landing page
+      responses:
+        "200":
+          description: Business information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  phone:
+                    type: string
+                  email:
+                    type: string
+                  address:
+                    type: string
+                  operating_hours:
+                    type: object
+                  social_links:
+                    type: object
+                  delivery_enabled:
+                    type: boolean
+  /business/reviews:
+    get:
+      tags:
+        - Public
+      operationId: getGoogleReviews
+      summary: Get Google reviews
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 5
+      responses:
+        "200":
+          description: Google reviews
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  aggregate_rating:
+                    type: number
+                  total_count:
+                    type: integer
+                  reviews:
+                    type: array
+                    items:
+                      type: object
+  /catering/info:
+    get:
+      tags:
+        - Public
+      operationId: getCateringInfo
+      summary: Get catering information and packages
+      responses:
+        "200":
+          description: Catering information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  description:
+                    type: string
+                  event_types:
+                    type: array
+                    items:
+                      type: string
+                  packages:
+                    type: array
+                    items:
+                      type: object
+  /newsletter/subscribe:
+    post:
+      tags:
+        - Public
+      operationId: subscribeNewsletter
+      summary: Subscribe to newsletter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+      responses:
+        "200":
+          description: Subscription successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "400":
+          description: Already subscribed or invalid email
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /profile:
+    get:
+      tags:
+        - Profile
+      operationId: getProfile
+      summary: Get customer profile
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Customer profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    put:
+      tags:
+        - Profile
+      operationId: updateProfile
+      summary: Update customer profile
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                phone:
+                  type: string
+                profile_photo_url:
+                  type: string
+                dietary_preferences:
+                  type: array
+                  items:
+                    type: string
+                marketing_opt_in:
+                  type: boolean
+                order_notifications_email:
+                  type: boolean
+                order_notifications_sms:
+                  type: boolean
+                marketing_emails:
+                  type: boolean
+      responses:
+        "200":
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    delete:
+      tags:
+        - Profile
+      operationId: deleteAccount
+      summary: Delete customer account (GDPR)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - password
+              properties:
+                password:
+                  type: string
+      responses:
+        "200":
+          description: Account deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /profile/password:
+    put:
+      tags:
+        - Profile
+      operationId: changePassword
+      summary: Change password
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - current_password
+                - new_password
+              properties:
+                current_password:
+                  type: string
+                new_password:
+                  type: string
+      responses:
+        "200":
+          description: Password changed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "400":
+          description: Invalid current password
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /addresses:
+    get:
+      tags:
+        - Addresses
+      operationId: getAddresses
+      summary: Get saved addresses
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: List of addresses
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  addresses:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Address"
+    post:
+      tags:
+        - Addresses
+      operationId: createAddress
+      summary: Add new address
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - label
+                - address_line1
+                - city
+                - postal_code
+              properties:
+                label:
+                  type: string
+                address_line1:
+                  type: string
+                address_line2:
+                  type: string
+                city:
+                  type: string
+                postal_code:
+                  type: string
+                delivery_instructions:
+                  type: string
+                is_default:
+                  type: boolean
+      responses:
+        "201":
+          description: Address created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Address"
+  /addresses/{address_id}:
+    put:
+      tags:
+        - Addresses
+      operationId: updateAddress
+      summary: Update address
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: address_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                label:
+                  type: string
+                address_line1:
+                  type: string
+                address_line2:
+                  type: string
+                city:
+                  type: string
+                postal_code:
+                  type: string
+                delivery_instructions:
+                  type: string
+                is_default:
+                  type: boolean
+      responses:
+        "200":
+          description: Address updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Address"
+    delete:
+      tags:
+        - Addresses
+      operationId: deleteAddress
+      summary: Delete address
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: address_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Address deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /addresses/{address_id}/default:
+    put:
+      tags:
+        - Addresses
+      operationId: setDefaultAddress
+      summary: Set address as default
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: address_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Default address updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Address"
+  /payment-methods:
+    get:
+      tags:
+        - Payment Methods
+      operationId: getPaymentMethods
+      summary: Get saved payment methods
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: List of payment methods
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  payment_methods:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/PaymentMethod"
+    post:
+      tags:
+        - Payment Methods
+      operationId: createPaymentMethod
+      summary: Add new payment method
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - sumup_token
+                - card_type
+                - last_four_digits
+                - expiry_month
+                - expiry_year
+                - cardholder_name
+              properties:
+                sumup_token:
+                  type: string
+                card_type:
+                  type: string
+                  enum:
+                    - Visa
+                    - Mastercard
+                    - Amex
+                    - Discover
+                last_four_digits:
+                  type: string
+                expiry_month:
+                  type: string
+                expiry_year:
+                  type: string
+                cardholder_name:
+                  type: string
+                is_default:
+                  type: boolean
+      responses:
+        "201":
+          description: Payment method added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentMethod"
+  /payment-methods/{payment_method_id}:
+    delete:
+      tags:
+        - Payment Methods
+      operationId: deletePaymentMethod
+      summary: Delete payment method
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: payment_method_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Payment method deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /payment-methods/{payment_method_id}/default:
+    put:
+      tags:
+        - Payment Methods
+      operationId: setDefaultPaymentMethod
+      summary: Set payment method as default
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: payment_method_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Default payment method updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentMethod"
+  /cart:
+    get:
+      tags:
+        - Cart
+      operationId: getCart
+      summary: Get shopping cart
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Shopping cart
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+    delete:
+      tags:
+        - Cart
+      operationId: clearCart
+      summary: Clear shopping cart
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Cart cleared
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /cart/items:
+    post:
+      tags:
+        - Cart
+      operationId: addCartItem
+      summary: Add item to cart
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - item_id
+                - quantity
+              properties:
+                item_id:
+                  type: string
+                quantity:
+                  type: integer
+                selected_customizations:
+                  type: object
+      responses:
+        "200":
+          description: Item added to cart
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+  /cart/items/{item_id}:
+    put:
+      tags:
+        - Cart
+      operationId: updateCartItem
+      summary: Update cart item quantity
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - quantity
+              properties:
+                quantity:
+                  type: integer
+      responses:
+        "200":
+          description: Cart item updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+    delete:
+      tags:
+        - Cart
+      operationId: removeCartItem
+      summary: Remove item from cart
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Item removed from cart
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+  /checkout/validate:
+    post:
+      tags:
+        - Checkout
+      operationId: validateCheckout
+      summary: Validate checkout data
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - order_type
+              properties:
+                order_type:
+                  type: string
+                  enum:
+                    - collection
+                    - delivery
+                collection_time_slot:
+                  type: string
+                  format: date-time
+                delivery_address_id:
+                  type: string
+                discount_code:
+                  type: string
+      responses:
+        "200":
+          description: Validation successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  errors:
+                    type: array
+                    items:
+                      type: string
+  /checkout/calculate:
+    post:
+      tags:
+        - Checkout
+      operationId: calculateCheckout
+      summary: Calculate order totals with fees
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - order_type
+              properties:
+                order_type:
+                  type: string
+                  enum:
+                    - collection
+                    - delivery
+                delivery_address_id:
+                  type: string
+                discount_code:
+                  type: string
+      responses:
+        "200":
+          description: Calculated totals
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  subtotal:
+                    type: number
+                  discount_amount:
+                    type: number
+                  delivery_fee:
+                    type: number
+                  tax_amount:
+                    type: number
+                  total_amount:
+                    type: number
+  /checkout/order:
+    post:
+      tags:
+        - Checkout
+      operationId: placeOrder
+      summary: Place order and process payment
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - order_type
+                - customer_name
+                - customer_email
+                - customer_phone
+              properties:
+                order_type:
+                  type: string
+                  enum:
+                    - collection
+                    - delivery
+                collection_time_slot:
+                  type: string
+                  format: date-time
+                delivery_address_id:
+                  type: string
+                discount_code:
+                  type: string
+                special_instructions:
+                  type: string
+                customer_name:
+                  type: string
+                customer_email:
+                  type: string
+                customer_phone:
+                  type: string
+                payment_method_id:
+                  type: string
+                cvv:
+                  type: string
+      responses:
+        "201":
+          description: Order placed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "400":
+          description: Order placement failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /orders:
+    get:
+      tags:
+        - Orders
+      operationId: getOrderHistory
+      summary: Get order history with filtering
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - received
+              - preparing
+              - ready
+              - out_for_delivery
+              - completed
+              - cancelled
+        - name: order_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - collection
+              - delivery
+        - name: date_range
+          in: query
+          schema:
+            type: string
+            enum:
+              - last_30_days
+              - last_3_months
+              - all_time
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Order history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orders:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Order"
+                  total:
+                    type: integer
+  /orders/{order_id}:
+    get:
+      tags:
+        - Orders
+      operationId: getOrder
+      summary: Get order details
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Order details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "404":
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /orders/{order_id}/cancel:
+    post:
+      tags:
+        - Orders
+      operationId: cancelOrder
+      summary: Cancel order
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cancellation_reason:
+                  type: string
+      responses:
+        "200":
+          description: Order cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "400":
+          description: Cannot cancel order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /orders/{order_id}/track:
+    get:
+      tags:
+        - Orders
+      operationId: trackOrder
+      summary: Track order status in real-time
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Order tracking information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  order_id:
+                    type: string
+                  order_number:
+                    type: string
+                  status:
+                    type: string
+                  estimated_time:
+                    type: string
+                  status_history:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/OrderStatusHistory"
+  /orders/{order_id}/invoice:
+    get:
+      tags:
+        - Orders
+      operationId: downloadOrderInvoice
+      summary: Download order invoice PDF
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Invoice PDF URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoice_url:
+                    type: string
+  /discounts/validate:
+    post:
+      tags:
+        - Checkout
+      operationId: validateDiscount
+      summary: Validate discount code
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+                - order_type
+                - order_value
+              properties:
+                code:
+                  type: string
+                order_type:
+                  type: string
+                  enum:
+                    - collection
+                    - delivery
+                order_value:
+                  type: number
+      responses:
+        "200":
+          description: Discount validation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  discount_amount:
+                    type: number
+                  message:
+                    type: string
+  /loyalty:
+    get:
+      tags:
+        - Loyalty
+      operationId: getLoyaltyAccount
+      summary: Get loyalty account details
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Loyalty account
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoyaltyAccount"
+  /loyalty/points/history:
+    get:
+      tags:
+        - Loyalty
+      operationId: getPointsHistory
+      summary: Get points transaction history
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Points history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transactions:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/PointsTransaction"
+                  total:
+                    type: integer
+  /loyalty/badges:
+    get:
+      tags:
+        - Loyalty
+      operationId: getBadges
+      summary: Get earned and available badges
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Badges list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  earned:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Badge"
+                  locked:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Badge"
+  /loyalty/rewards:
+    get:
+      tags:
+        - Loyalty
+      operationId: getRewards
+      summary: Get available rewards catalog
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Rewards catalog
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rewards:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Reward"
+  /loyalty/rewards/{reward_id}/redeem:
+    post:
+      tags:
+        - Loyalty
+      operationId: redeemReward
+      summary: Redeem loyalty reward
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: reward_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Reward redeemed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RedeemedReward"
+        "400":
+          description: Insufficient points or reward unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /loyalty/redeemed-rewards:
+    get:
+      tags:
+        - Loyalty
+      operationId: getRedeemedRewards
+      summary: Get redeemed rewards
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: usage_status
+          in: query
+          schema:
+            type: string
+            enum:
+              - unused
+              - used
+              - expired
+      responses:
+        "200":
+          description: Redeemed rewards
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  redeemed_rewards:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/RedeemedReward"
+  /loyalty/referral:
+    get:
+      tags:
+        - Loyalty
+      operationId: getReferralInfo
+      summary: Get referral code and stats
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Referral information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  referral_code:
+                    type: string
+                  referral_link:
+                    type: string
+                  referral_count:
+                    type: integer
+                  successful_referrals:
+                    type: integer
+                  total_points_earned:
+                    type: integer
+  /catering/inquiries:
+    get:
+      tags:
+        - Catering
+      operationId: getCateringInquiries
+      summary: Get customer's catering inquiries
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - new
+              - in_progress
+              - quoted
+              - confirmed
+              - completed
+              - cancelled
+      responses:
+        "200":
+          description: Catering inquiries list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  inquiries:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CateringInquiry"
+    post:
+      tags:
+        - Catering
+      operationId: createCateringInquiry
+      summary: Submit catering inquiry
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - contact_name
+                - contact_email
+                - contact_phone
+                - event_type
+                - event_date
+                - event_start_time
+                - event_end_time
+                - event_location_address
+                - event_location_city
+                - event_location_postal_code
+                - event_location_type
+                - guest_count
+              properties:
+                contact_name:
+                  type: string
+                contact_email:
+                  type: string
+                contact_phone:
+                  type: string
+                company_name:
+                  type: string
+                event_type:
+                  type: string
+                  enum:
+                    - corporate
+                    - wedding
+                    - birthday
+                    - meeting
+                    - other
+                event_type_other:
+                  type: string
+                event_date:
+                  type: string
+                  format: date
+                event_start_time:
+                  type: string
+                event_end_time:
+                  type: string
+                event_location_address:
+                  type: string
+                event_location_city:
+                  type: string
+                event_location_postal_code:
+                  type: string
+                event_location_type:
+                  type: string
+                  enum:
+                    - office
+                    - home
+                    - venue
+                    - outdoor
+                    - other
+                guest_count:
+                  type: integer
+                guest_count_min:
+                  type: integer
+                guest_count_max:
+                  type: integer
+                dietary_requirements:
+                  type: array
+                  items:
+                    type: string
+                dietary_notes:
+                  type: string
+                menu_preferences:
+                  type: string
+                preferred_package:
+                  type: string
+                  enum:
+                    - standard
+                    - premium
+                    - luxury
+                budget_range:
+                  type: string
+                additional_details:
+                  type: string
+                marketing_opt_in:
+                  type: boolean
+      responses:
+        "201":
+          description: Inquiry submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CateringInquiry"
+  /catering/inquiries/{inquiry_id}:
+    get:
+      tags:
+        - Catering
+      operationId: getCateringInquiry
+      summary: Get catering inquiry details
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: inquiry_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Inquiry details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CateringInquiry"
+  /catering/inquiries/{inquiry_id}/cancel:
+    put:
+      tags:
+        - Catering
+      operationId: cancelCateringInquiry
+      summary: Cancel catering inquiry
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: inquiry_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Inquiry cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CateringInquiry"
+  /catering/inquiries/{inquiry_id}/accept-quote:
+    post:
+      tags:
+        - Catering
+      operationId: acceptCateringQuote
+      summary: Accept catering quote
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: inquiry_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Quote accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CateringInquiry"
+  /staff/dashboard:
+    get:
+      tags:
+        - Staff
+      operationId: getStaffDashboard
+      summary: Get staff dashboard metrics
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Staff dashboard
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_orders_today:
+                    type: integer
+                  orders_in_progress:
+                    type: integer
+                  orders_completed_today:
+                    type: integer
+                  low_stock_items:
+                    type: array
+                    items:
+                      type: object
+  /staff/orders:
+    get:
+      tags:
+        - Staff
+      operationId: getStaffOrders
+      summary: Get staff order queue with filters
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - received
+              - preparing
+              - ready
+              - out_for_delivery
+        - name: order_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - collection
+              - delivery
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum:
+              - created_at
+              - collection_time_slot
+      responses:
+        "200":
+          description: Order queue
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orders:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Order"
+  /staff/orders/{order_id}:
+    get:
+      tags:
+        - Staff
+      operationId: getStaffOrder
+      summary: Get order details for staff
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Order details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+  /staff/orders/{order_id}/status:
+    put:
+      tags:
+        - Staff
+      operationId: updateStaffOrderStatus
+      summary: Update order status
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - preparing
+                    - ready
+                    - out_for_delivery
+                    - completed
+                notes:
+                  type: string
+      responses:
+        "200":
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+  /staff/stock:
+    get:
+      tags:
+        - Staff
+      operationId: getStaffStock
+      summary: Get stock levels for staff
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - all
+              - low_stock
+              - out_of_stock
+      responses:
+        "200":
+          description: Stock levels
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        item_id:
+                          type: string
+                        name:
+                          type: string
+                        current_stock:
+                          type: integer
+                        low_stock_threshold:
+                          type: integer
+                        status:
+                          type: string
+  /staff/stock/{item_id}:
+    put:
+      tags:
+        - Staff
+      operationId: updateStaffStock
+      summary: Update stock level (if permission)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - change_type
+                - quantity
+              properties:
+                change_type:
+                  type: string
+                  enum:
+                    - restock
+                    - adjustment
+                    - waste
+                quantity:
+                  type: integer
+                reason:
+                  type: string
+                notes:
+                  type: string
+      responses:
+        "200":
+          description: Stock updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  item_id:
+                    type: string
+                  previous_stock:
+                    type: integer
+                  new_stock:
+                    type: integer
+  /staff/reports/daily:
+    get:
+      tags:
+        - Staff
+      operationId: getStaffDailyReport
+      summary: Get daily sales summary for staff
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Daily report
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_orders:
+                    type: integer
+                  total_revenue:
+                    type: number
+                  average_order_value:
+                    type: number
+                  top_items:
+                    type: array
+                    items:
+                      type: object
+  /staff/profile:
+    get:
+      tags:
+        - Staff
+      operationId: getStaffProfile
+      summary: Get staff profile
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Staff profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    put:
+      tags:
+        - Staff
+      operationId: updateStaffProfile
+      summary: Update staff profile
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                phone:
+                  type: string
+      responses:
+        "200":
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+  /admin/dashboard:
+    get:
+      tags:
+        - Admin - Analytics
+      operationId: getAdminDashboard
+      summary: Get admin dashboard metrics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: date_range
+          in: query
+          schema:
+            type: string
+            enum:
+              - today
+              - yesterday
+              - last_7_days
+              - last_30_days
+              - this_month
+      responses:
+        "200":
+          description: Admin dashboard
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orders_today:
+                    type: integer
+                  revenue_today:
+                    type: number
+                  new_customers_today:
+                    type: integer
+                  orders_breakdown:
+                    type: object
+                  revenue_trend:
+                    type: array
+                    items:
+                      type: object
+                  pending_alerts:
+                    type: object
+  /admin/dashboard/alerts:
+    get:
+      tags:
+        - Admin - Analytics
+      operationId: getAdminAlerts
+      summary: Get pending admin alerts
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Pending alerts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  low_stock_items_count:
+                    type: integer
+                  new_catering_inquiries_count:
+                    type: integer
+                  low_stock_items:
+                    type: array
+                    items:
+                      type: object
+  /admin/menu/items:
+    get:
+      tags:
+        - Admin - Menu
+      operationId: getAdminMenuItems
+      summary: Get all menu items for admin
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: is_active
+          in: query
+          schema:
+            type: boolean
+        - name: is_featured
+          in: query
+          schema:
+            type: boolean
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Menu items list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/MenuItem"
+    post:
+      tags:
+        - Admin - Menu
+      operationId: createMenuItem
+      summary: Create new menu item
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - category_id
+                - price
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                category_id:
+                  type: string
+                price:
+                  type: number
+                image_url:
+                  type: string
+                dietary_tags:
+                  type: array
+                  items:
+                    type: string
+                is_limited_edition:
+                  type: boolean
+                limited_edition_end_date:
+                  type: string
+                  format: date-time
+                is_active:
+                  type: boolean
+                available_for_collection:
+                  type: boolean
+                available_for_delivery:
+                  type: boolean
+                stock_tracked:
+                  type: boolean
+                current_stock:
+                  type: integer
+                low_stock_threshold:
+                  type: integer
+                is_featured:
+                  type: boolean
+      responses:
+        "201":
+          description: Menu item created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MenuItem"
+  /admin/menu/items/{item_id}:
+    get:
+      tags:
+        - Admin - Menu
+      operationId: getAdminMenuItem
+      summary: Get menu item details for admin
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Menu item details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MenuItem"
+    put:
+      tags:
+        - Admin - Menu
+      operationId: updateMenuItem
+      summary: Update menu item
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                category_id:
+                  type: string
+                price:
+                  type: number
+                image_url:
+                  type: string
+                dietary_tags:
+                  type: array
+                  items:
+                    type: string
+                is_limited_edition:
+                  type: boolean
+                limited_edition_end_date:
+                  type: string
+                  format: date-time
+                is_active:
+                  type: boolean
+                available_for_collection:
+                  type: boolean
+                available_for_delivery:
+                  type: boolean
+                stock_tracked:
+                  type: boolean
+                current_stock:
+                  type: integer
+                low_stock_threshold:
+                  type: integer
+                is_featured:
+                  type: boolean
+      responses:
+        "200":
+          description: Menu item updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MenuItem"
+    delete:
+      tags:
+        - Admin - Menu
+      operationId: deleteMenuItem
+      summary: Delete menu item
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Menu item deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /admin/menu/items/{item_id}/duplicate:
+    post:
+      tags:
+        - Admin - Menu
+      operationId: duplicateMenuItem
+      summary: Duplicate menu item
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: Menu item duplicated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MenuItem"
+  /admin/menu/categories:
+    get:
+      tags:
+        - Admin - Menu
+      operationId: getAdminCategories
+      summary: Get all categories for admin
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Categories list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Category"
+    post:
+      tags:
+        - Admin - Menu
+      operationId: createCategory
+      summary: Create new category
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                sort_order:
+                  type: integer
+      responses:
+        "201":
+          description: Category created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+  /admin/menu/categories/{category_id}:
+    put:
+      tags:
+        - Admin - Menu
+      operationId: updateCategory
+      summary: Update category
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: category_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                sort_order:
+                  type: integer
+      responses:
+        "200":
+          description: Category updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+    delete:
+      tags:
+        - Admin - Menu
+      operationId: deleteCategory
+      summary: Delete category
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: category_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Category deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /admin/stock:
+    get:
+      tags:
+        - Admin - Stock
+      operationId: getAdminStock
+      summary: Get stock overview for admin
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - all
+              - low_stock
+              - out_of_stock
+      responses:
+        "200":
+          description: Stock overview
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_items_tracked:
+                    type: integer
+                  low_stock_count:
+                    type: integer
+                  out_of_stock_count:
+                    type: integer
+                  items:
+                    type: array
+                    items:
+                      type: object
+  /admin/stock/{item_id}:
+    get:
+      tags:
+        - Admin - Stock
+      operationId: getAdminStockItem
+      summary: Get stock details for item
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Stock details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  item_id:
+                    type: string
+                  name:
+                    type: string
+                  current_stock:
+                    type: integer
+                  low_stock_threshold:
+                    type: integer
+                  stock_status:
+                    type: string
+    put:
+      tags:
+        - Admin - Stock
+      operationId: adjustStock
+      summary: Adjust stock level
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - change_type
+                - quantity
+              properties:
+                change_type:
+                  type: string
+                  enum:
+                    - restock
+                    - adjustment
+                    - waste
+                quantity:
+                  type: integer
+                reason:
+                  type: string
+                notes:
+                  type: string
+      responses:
+        "200":
+          description: Stock adjusted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  item_id:
+                    type: string
+                  previous_stock:
+                    type: integer
+                  new_stock:
+                    type: integer
+  /admin/stock/{item_id}/history:
+    get:
+      tags:
+        - Admin - Stock
+      operationId: getStockHistory
+      summary: Get stock history for item
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Stock history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  history:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/StockHistory"
+                  total:
+                    type: integer
+  /admin/orders:
+    get:
+      tags:
+        - Admin - Orders
+      operationId: getAdminOrders
+      summary: Get all orders with comprehensive filtering
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - received
+              - preparing
+              - ready
+              - out_for_delivery
+              - completed
+              - cancelled
+        - name: order_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - collection
+              - delivery
+        - name: payment_status
+          in: query
+          schema:
+            type: string
+            enum:
+              - pending
+              - paid
+              - failed
+              - refunded
+        - name: date_range
+          in: query
+          schema:
+            type: string
+            enum:
+              - today
+              - last_7_days
+              - last_30_days
+              - custom
+        - name: customer_search
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Orders list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orders:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Order"
+                  total:
+                    type: integer
+  /admin/orders/{order_id}:
+    get:
+      tags:
+        - Admin - Orders
+      operationId: getAdminOrder
+      summary: Get order details for admin
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Order details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+    put:
+      tags:
+        - Admin - Orders
+      operationId: updateAdminOrder
+      summary: Update order
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - received
+                    - preparing
+                    - ready
+                    - out_for_delivery
+                    - completed
+                    - cancelled
+                special_instructions:
+                  type: string
+                internal_notes:
+                  type: string
+      responses:
+        "200":
+          description: Order updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+  /admin/orders/{order_id}/refund:
+    post:
+      tags:
+        - Admin - Orders
+      operationId: refundOrder
+      summary: Issue order refund
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refund_amount
+                - refund_reason
+              properties:
+                refund_amount:
+                  type: number
+                refund_reason:
+                  type: string
+      responses:
+        "200":
+          description: Refund processed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+  /admin/orders/{order_id}/cancel:
+    post:
+      tags:
+        - Admin - Orders
+      operationId: cancelAdminOrder
+      summary: Cancel order from admin
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - cancellation_reason
+              properties:
+                cancellation_reason:
+                  type: string
+                issue_refund:
+                  type: boolean
+      responses:
+        "200":
+          description: Order cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+  /admin/delivery/settings:
+    get:
+      tags:
+        - Admin - Delivery
+      operationId: getDeliverySettings
+      summary: Get delivery configuration
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Delivery settings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  delivery_enabled:
+                    type: boolean
+                  minimum_order_value:
+                    type: number
+                  free_delivery_threshold:
+                    type: number
+    put:
+      tags:
+        - Admin - Delivery
+      operationId: updateDeliverySettings
+      summary: Update global delivery settings
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                delivery_enabled:
+                  type: boolean
+                minimum_order_value:
+                  type: number
+                free_delivery_threshold:
+                  type: number
+      responses:
+        "200":
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /admin/delivery/zones:
+    get:
+      tags:
+        - Admin - Delivery
+      operationId: getDeliveryZones
+      summary: Get all delivery zones
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Delivery zones
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  zones:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/DeliveryZone"
+    post:
+      tags:
+        - Admin - Delivery
+      operationId: createDeliveryZone
+      summary: Create delivery zone
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - zone_name
+                - zone_type
+                - zone_boundaries
+                - delivery_fee
+                - estimated_delivery_time
+              properties:
+                zone_name:
+                  type: string
+                zone_type:
+                  type: string
+                  enum:
+                    - polygon
+                    - radius
+                    - postal_code
+                zone_boundaries:
+                  type: object
+                delivery_fee:
+                  type: number
+                minimum_order_value:
+                  type: number
+                estimated_delivery_time:
+                  type: integer
+                is_active:
+                  type: boolean
+                priority:
+                  type: integer
+      responses:
+        "201":
+          description: Zone created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeliveryZone"
+  /admin/delivery/zones/{zone_id}:
+    put:
+      tags:
+        - Admin - Delivery
+      operationId: updateDeliveryZone
+      summary: Update delivery zone
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: zone_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                zone_name:
+                  type: string
+                zone_boundaries:
+                  type: object
+                delivery_fee:
+                  type: number
+                minimum_order_value:
+                  type: number
+                estimated_delivery_time:
+                  type: integer
+                is_active:
+                  type: boolean
+                priority:
+                  type: integer
+      responses:
+        "200":
+          description: Zone updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeliveryZone"
+    delete:
+      tags:
+        - Admin - Delivery
+      operationId: deleteDeliveryZone
+      summary: Delete delivery zone
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: zone_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Zone deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /admin/delivery/validate-address:
+    post:
+      tags:
+        - Admin - Delivery
+      operationId: validateDeliveryAddress
+      summary: Validate if address is within delivery zones
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - address
+                - postal_code
+              properties:
+                address:
+                  type: string
+                postal_code:
+                  type: string
+      responses:
+        "200":
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  zone_id:
+                    type: string
+                  delivery_fee:
+                    type: number
+                  estimated_delivery_time:
+                    type: integer
+  /admin/discounts:
+    get:
+      tags:
+        - Admin - Discounts
+      operationId: getAdminDiscounts
+      summary: Get all discount codes
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - active
+              - inactive
+              - expired
+      responses:
+        "200":
+          description: Discount codes list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  discount_codes:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/DiscountCode"
+    post:
+      tags:
+        - Admin - Discounts
+      operationId: createDiscountCode
+      summary: Create discount code
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+                - discount_type
+                - discount_value
+                - valid_from
+              properties:
+                code:
+                  type: string
+                discount_type:
+                  type: string
+                  enum:
+                    - percentage
+                    - fixed
+                    - delivery_fee
+                discount_value:
+                  type: number
+                applicable_order_types:
+                  type: array
+                  items:
+                    type: string
+                minimum_order_value:
+                  type: number
+                total_usage_limit:
+                  type: integer
+                per_customer_usage_limit:
+                  type: integer
+                valid_from:
+                  type: string
+                  format: date-time
+                valid_until:
+                  type: string
+                  format: date-time
+                status:
+                  type: string
+                  enum:
+                    - active
+                    - inactive
+      responses:
+        "201":
+          description: Discount code created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiscountCode"
+  /admin/discounts/{code_id}:
+    get:
+      tags:
+        - Admin - Discounts
+      operationId: getAdminDiscount
+      summary: Get discount code details
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: code_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Discount code details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiscountCode"
+    put:
+      tags:
+        - Admin - Discounts
+      operationId: updateDiscountCode
+      summary: Update discount code
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: code_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                discount_value:
+                  type: number
+                minimum_order_value:
+                  type: number
+                total_usage_limit:
+                  type: integer
+                valid_until:
+                  type: string
+                  format: date-time
+                status:
+                  type: string
+                  enum:
+                    - active
+                    - inactive
+      responses:
+        "200":
+          description: Discount code updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiscountCode"
+    delete:
+      tags:
+        - Admin - Discounts
+      operationId: deleteDiscountCode
+      summary: Delete discount code
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: code_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Discount code deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /admin/discounts/{code_id}/usage:
+    get:
+      tags:
+        - Admin - Discounts
+      operationId: getDiscountUsage
+      summary: Get discount code usage analytics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: code_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Usage analytics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_uses:
+                    type: integer
+                  total_discount_given:
+                    type: number
+                  usage_details:
+                    type: array
+                    items:
+                      type: object
+  /admin/customers:
+    get:
+      tags:
+        - Admin - Customers
+      operationId: getAdminCustomers
+      summary: Get all customers with filtering
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: registration_date
+          in: query
+          schema:
+            type: string
+            enum:
+              - last_30_days
+              - last_90_days
+              - all_time
+        - name: total_orders
+          in: query
+          schema:
+            type: string
+            enum:
+              - more_than_10
+              - more_than_50
+              - all
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Customers list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customers:
+                    type: array
+                    items:
+                      type: object
+                  total:
+                    type: integer
+  /admin/customers/{customer_id}:
+    get:
+      tags:
+        - Admin - Customers
+      operationId: getAdminCustomer
+      summary: Get customer profile for admin
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: customer_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Customer profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+                  loyalty_account:
+                    $ref: "#/components/schemas/LoyaltyAccount"
+                  total_orders:
+                    type: integer
+                  total_spend:
+                    type: number
+                  average_order_value:
+                    type: number
+    put:
+      tags:
+        - Admin - Customers
+      operationId: updateAdminCustomer
+      summary: Update customer details
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: customer_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                email:
+                  type: string
+                phone:
+                  type: string
+      responses:
+        "200":
+          description: Customer updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    delete:
+      tags:
+        - Admin - Customers
+      operationId: deleteAdminCustomer
+      summary: Delete customer account (GDPR)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: customer_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Customer deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /admin/customers/{customer_id}/status:
+    put:
+      tags:
+        - Admin - Customers
+      operationId: updateCustomerStatus
+      summary: Suspend or activate customer account
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: customer_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - active
+                    - suspended
+                reason:
+                  type: string
+      responses:
+        "200":
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+  /admin/customers/{customer_id}/adjust-points:
+    post:
+      tags:
+        - Admin - Customers
+      operationId: adjustCustomerPoints
+      summary: Manually adjust customer loyalty points
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: customer_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - points_amount
+                - reason
+              properties:
+                points_amount:
+                  type: integer
+                reason:
+                  type: string
+      responses:
+        "200":
+          description: Points adjusted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoyaltyAccount"
+  /admin/staff:
+    get:
+      tags:
+        - Admin - Staff
+      operationId: getAdminStaff
+      summary: Get all staff accounts
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum:
+              - staff
+              - manager
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - active
+              - inactive
+      responses:
+        "200":
+          description: Staff list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  staff:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/User"
+    post:
+      tags:
+        - Admin - Staff
+      operationId: createStaffAccount
+      summary: Create staff account
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - first_name
+                - last_name
+                - role
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                phone:
+                  type: string
+                role:
+                  type: string
+                  enum:
+                    - staff
+                    - manager
+                staff_permissions:
+                  type: object
+      responses:
+        "201":
+          description: Staff account created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+  /admin/staff/{staff_id}:
+    get:
+      tags:
+        - Admin - Staff
+      operationId: getAdminStaffMember
+      summary: Get staff account details
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: staff_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Staff details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    put:
+      tags:
+        - Admin - Staff
+      operationId: updateStaffAccount
+      summary: Update staff account
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: staff_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                email:
+                  type: string
+                phone:
+                  type: string
+                role:
+                  type: string
+                  enum:
+                    - staff
+                    - manager
+                staff_permissions:
+                  type: object
+                status:
+                  type: string
+                  enum:
+                    - active
+                    - inactive
+      responses:
+        "200":
+          description: Staff account updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    delete:
+      tags:
+        - Admin - Staff
+      operationId: deleteStaffAccount
+      summary: Delete staff account
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: staff_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Staff account deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /admin/catering/inquiries:
+    get:
+      tags:
+        - Admin - Catering
+      operationId: getAdminCateringInquiries
+      summary: Get all catering inquiries
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - new
+              - in_progress
+              - quoted
+              - confirmed
+              - completed
+              - cancelled
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - corporate
+              - wedding
+              - birthday
+              - meeting
+              - other
+        - name: date_range
+          in: query
+          schema:
+            type: string
+            enum:
+              - next_month
+              - next_3_months
+              - all
+      responses:
+        "200":
+          description: Inquiries list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  inquiries:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CateringInquiry"
+  /admin/catering/inquiries/{inquiry_id}:
+    get:
+      tags:
+        - Admin - Catering
+      operationId: getAdminCateringInquiry
+      summary: Get catering inquiry details for admin
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: inquiry_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Inquiry details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CateringInquiry"
+    put:
+      tags:
+        - Admin - Catering
+      operationId: updateCateringInquiryStatus
+      summary: Update catering inquiry status
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: inquiry_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - new
+                    - in_progress
+                    - quoted
+                    - confirmed
+                    - completed
+                    - cancelled
+                admin_notes:
+                  type: string
+      responses:
+        "200":
+          description: Inquiry updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CateringInquiry"
+  /admin/catering/inquiries/{inquiry_id}/quotes:
+    post:
+      tags:
+        - Admin - Catering
+      operationId: createCateringQuote
+      summary: Create catering quote
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: inquiry_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - line_items
+                - subtotal
+                - tax_amount
+                - grand_total
+                - valid_until
+              properties:
+                line_items:
+                  type: array
+                  items:
+                    type: object
+                subtotal:
+                  type: number
+                additional_fees:
+                  type: array
+                  items:
+                    type: object
+                tax_amount:
+                  type: number
+                grand_total:
+                  type: number
+                valid_until:
+                  type: string
+                  format: date-time
+                terms:
+                  type: string
+      responses:
+        "201":
+          description: Quote created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CateringQuote"
+  /admin/catering/quotes/{quote_id}:
+    put:
+      tags:
+        - Admin - Catering
+      operationId: updateCateringQuote
+      summary: Update catering quote
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quote_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                quote_pdf_url:
+                  type: string
+      responses:
+        "200":
+          description: Quote updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CateringQuote"
+  /admin/catering/quotes/{quote_id}/send:
+    post:
+      tags:
+        - Admin - Catering
+      operationId: sendCateringQuote
+      summary: Send quote to customer
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quote_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Quote sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  sent_at:
+                    type: string
+                    format: date-time
+  /admin/invoices:
+    get:
+      tags:
+        - Admin - Invoices
+      operationId: getAdminInvoices
+      summary: Get all invoices
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - pending
+              - paid
+              - overdue
+              - cancelled
+        - name: date_range
+          in: query
+          schema:
+            type: string
+            enum:
+              - this_month
+              - last_month
+              - all_time
+        - name: customer_search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Invoices list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoices:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Invoice"
+    post:
+      tags:
+        - Admin - Invoices
+      operationId: createCustomInvoice
+      summary: Create custom invoice
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+                - customer_name
+                - customer_email
+                - customer_phone
+                - line_items
+                - subtotal
+                - tax_amount
+                - grand_total
+                - issue_date
+              properties:
+                user_id:
+                  type: string
+                customer_name:
+                  type: string
+                customer_email:
+                  type: string
+                customer_phone:
+                  type: string
+                customer_address:
+                  type: string
+                line_items:
+                  type: array
+                  items:
+                    type: object
+                subtotal:
+                  type: number
+                discount_amount:
+                  type: number
+                delivery_fee:
+                  type: number
+                tax_amount:
+                  type: number
+                grand_total:
+                  type: number
+                issue_date:
+                  type: string
+                  format: date
+                due_date:
+                  type: string
+                  format: date
+                notes:
+                  type: string
+      responses:
+        "201":
+          description: Invoice created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+  /admin/invoices/{invoice_id}:
+    get:
+      tags:
+        - Admin - Invoices
+      operationId: getAdminInvoice
+      summary: Get invoice details
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: invoice_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Invoice details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+    put:
+      tags:
+        - Admin - Invoices
+      operationId: updateInvoice
+      summary: Update invoice
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: invoice_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payment_status:
+                  type: string
+                  enum:
+                    - pending
+                    - paid
+                    - overdue
+                    - cancelled
+                notes:
+                  type: string
+      responses:
+        "200":
+          description: Invoice updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+  /admin/invoices/{invoice_id}/send:
+    post:
+      tags:
+        - Admin - Invoices
+      operationId: sendInvoice
+      summary: Send invoice to customer
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: invoice_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Invoice sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /admin/loyalty/rewards:
+    get:
+      tags:
+        - Admin - Loyalty
+      operationId: getAdminRewards
+      summary: Get all rewards for admin
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Rewards list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rewards:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Reward"
+    post:
+      tags:
+        - Admin - Loyalty
+      operationId: createReward
+      summary: Create reward
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - description
+                - points_cost
+                - reward_type
+                - reward_value
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                points_cost:
+                  type: integer
+                reward_type:
+                  type: string
+                  enum:
+                    - discount
+                    - delivery
+                    - physical
+                    - merchandise
+                reward_value:
+                  type: object
+                expiry_days_after_redemption:
+                  type: integer
+                stock_limit:
+                  type: integer
+                status:
+                  type: string
+                  enum:
+                    - active
+                    - inactive
+                image_url:
+                  type: string
+      responses:
+        "201":
+          description: Reward created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reward"
+  /admin/loyalty/rewards/{reward_id}:
+    put:
+      tags:
+        - Admin - Loyalty
+      operationId: updateReward
+      summary: Update reward
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: reward_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                points_cost:
+                  type: integer
+                reward_value:
+                  type: object
+                status:
+                  type: string
+                  enum:
+                    - active
+                    - inactive
+                    - out_of_stock
+      responses:
+        "200":
+          description: Reward updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reward"
+    delete:
+      tags:
+        - Admin - Loyalty
+      operationId: deleteReward
+      summary: Delete reward
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: reward_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Reward deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /admin/loyalty/badges:
+    get:
+      tags:
+        - Admin - Loyalty
+      operationId: getAdminBadges
+      summary: Get all badges for admin
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Badges list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  badges:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Badge"
+    post:
+      tags:
+        - Admin - Loyalty
+      operationId: createBadge
+      summary: Create badge
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - description
+                - unlock_criteria
+                - icon_url
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                unlock_criteria:
+                  type: object
+                icon_url:
+                  type: string
+                is_active:
+                  type: boolean
+      responses:
+        "201":
+          description: Badge created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Badge"
+  /admin/loyalty/badges/{badge_id}:
+    put:
+      tags:
+        - Admin - Loyalty
+      operationId: updateBadge
+      summary: Update badge
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: badge_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                unlock_criteria:
+                  type: object
+                is_active:
+                  type: boolean
+      responses:
+        "200":
+          description: Badge updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Badge"
+  /admin/analytics/sales:
+    get:
+      tags:
+        - Admin - Analytics
+      operationId: getSalesAnalytics
+      summary: Get sales analytics and reports
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: date_range
+          in: query
+          schema:
+            type: string
+            enum:
+              - last_7_days
+              - last_30_days
+              - this_month
+              - this_year
+        - name: report_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - revenue_trend
+              - orders_trend
+              - breakdown_by_type
+              - popular_items
+      responses:
+        "200":
+          description: Sales analytics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_revenue:
+                    type: number
+                  total_orders:
+                    type: integer
+                  average_order_value:
+                    type: number
+                  revenue_by_day:
+                    type: array
+                    items:
+                      type: object
+                  orders_by_type:
+                    type: object
+                  top_items:
+                    type: array
+                    items:
+                      type: object
+  /admin/analytics/customers:
+    get:
+      tags:
+        - Admin - Analytics
+      operationId: getCustomerAnalytics
+      summary: Get customer analytics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: date_range
+          in: query
+          schema:
+            type: string
+            enum:
+              - last_30_days
+              - last_90_days
+              - this_year
+      responses:
+        "200":
+          description: Customer analytics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  new_customers:
+                    type: integer
+                  repeat_customer_rate:
+                    type: number
+                  customer_lifetime_value:
+                    type: number
+                  top_customers:
+                    type: array
+                    items:
+                      type: object
+                  loyalty_engagement:
+                    type: object
+  /admin/analytics/time-analysis:
+    get:
+      tags:
+        - Admin - Analytics
+      operationId: getTimeAnalytics
+      summary: Get time-based analytics (peak times, fulfillment)
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Time analysis
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  peak_order_hours:
+                    type: array
+                    items:
+                      type: object
+                  average_fulfillment_time:
+                    type: integer
+                  orders_by_day_of_week:
+                    type: array
+                    items:
+                      type: object
+  /admin/settings:
+    get:
+      tags:
+        - Admin - Settings
+      operationId: getAdminSettings
+      summary: Get all system settings
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: System settings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  business_info:
+                    type: object
+                  operating_hours:
+                    type: object
+                  tax_settings:
+                    type: object
+                  notification_settings:
+                    type: object
+                  loyalty_settings:
+                    type: object
+                  payment_settings:
+                    type: object
+  /admin/settings/business:
+    put:
+      tags:
+        - Admin - Settings
+      operationId: updateBusinessSettings
+      summary: Update business information
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                phone:
+                  type: string
+                email:
+                  type: string
+                address:
+                  type: string
+                logo_url:
+                  type: string
+      responses:
+        "200":
+          description: Business settings updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /admin/settings/operating-hours:
+    put:
+      tags:
+        - Admin - Settings
+      operationId: updateOperatingHours
+      summary: Update operating hours
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                weekly_schedule:
+                  type: object
+                special_hours:
+                  type: array
+                  items:
+                    type: object
+      responses:
+        "200":
+          description: Operating hours updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /admin/settings/loyalty:
+    put:
+      tags:
+        - Admin - Settings
+      operationId: updateLoyaltySettings
+      summary: Update loyalty program settings
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                earning_rate:
+                  type: number
+                points_expiry_enabled:
+                  type: boolean
+                points_expiry_months:
+                  type: integer
+                referral_enabled:
+                  type: boolean
+                referrer_reward_points:
+                  type: integer
+                referee_reward_points:
+                  type: integer
+      responses:
+        "200":
+          description: Loyalty settings updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string

@@ -1,0 +1,21 @@
+{
+  "timestamp": 1765468445039,
+  "operation": {
+    "id": "settings:config:package"
+  },
+  "projectId": "salama-lama-food-truck",
+  "files": [
+    {
+      "path": "/mnt/data/salama-lama-food-truck/backend/package.json",
+      "type": "text",
+      "size": 1428,
+      "dependencies": true
+    },
+    {
+      "path": "/mnt/data/salama-lama-food-truck/backend/.env",
+      "type": "text",
+      "size": 349,
+      "dependencies": false
+    }
+  ]
+}

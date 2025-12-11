@@ -1,0 +1,411 @@
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
+import { useAppStore } from '@/store/main';
+import { Bell, Package, ShoppingCart, User, LogOut, X } from 'lucide-react';
+
+// ===========================
+// Types & Interfaces
+// ===========================
+
+interface StaffNotification {
+  notification_id: string;
+  type: 'low_stock_alert' | 'new_order' | 'order_update';
+  message: string;
+  created_at: string;
+  item_id?: string;
+  order_id?: string;
+}
+
+interface StaffDashboardResponse {
+  total_orders_today: number;
+  orders_in_progress: number;
+  orders_completed_today: number;
+  low_stock_items: Array<{
+    item_id: string;
+    name: string;
+    current_stock: number;
+    low_stock_threshold: number;
+  }>;
+}
+
+// ===========================
+// API Functions
+// ===========================
+
+const fetchStaffNotifications = async (token: string): Promise<StaffNotification[]> => {
+  const response = await axios.get<StaffDashboardResponse>(
+    `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api/staff/dashboard`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+
+  // Transform low stock items into notifications
+  const notifications: StaffNotification[] = response.data.low_stock_items.map((item) => ({
+    notification_id: `stock_${item.item_id}`,
+    type: 'low_stock_alert',
+    message: `${item.name} is running low (${item.current_stock} left)`,
+    created_at: new Date().toISOString(),
+    item_id: item.item_id,
+  }));
+
+  return notifications;
+};
+
+const logoutStaff = async (token: string): Promise<void> => {
+  await axios.post(
+    `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api/auth/logout`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+};
+
+// ===========================
+// Main Component
+// ===========================
+
+const GV_TopNav_Staff: React.FC = () => {
+  const navigate = useNavigate();
+
+  // ===========================
+  // Zustand State (Individual Selectors)
+  // ===========================
+  const currentUser = useAppStore(state => state.authentication_state.current_user);
+  const authToken = useAppStore(state => state.authentication_state.auth_token);
+  const logoutUser = useAppStore(state => state.logout_user);
+
+  // ===========================
+  // Local State
+  // ===========================
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  // ===========================
+  // React Query - Fetch Notifications
+  // ===========================
+  const {
+    data: notifications = [],
+    isLoading: isLoadingNotifications,
+    refetch: refetchNotifications,
+  } = useQuery({
+    queryKey: ['staff-notifications'],
+    queryFn: () => fetchStaffNotifications(authToken || ''),
+    enabled: !!authToken,
+    staleTime: 30000, // 30 seconds
+    refetchInterval: 60000, // Refetch every 60 seconds
+    retry: 1,
+  });
+
+  // ===========================
+  // Computed Values
+  // ===========================
+  const notificationCount = notifications.length;
+  const staffName = currentUser?.first_name || 'Staff';
+
+  // ===========================
+  // Event Handlers
+  // ===========================
+
+  const handleNotificationClick = () => {
+    setIsNotificationsOpen(!isNotificationsOpen);
+    setIsProfileOpen(false);
+    if (!isNotificationsOpen) {
+      refetchNotifications();
+    }
+  };
+
+  const handleProfileClick = () => {
+    setIsProfileOpen(!isProfileOpen);
+    setIsNotificationsOpen(false);
+  };
+
+  const handleLogout = async () => {
+    try {
+      if (authToken) {
+        await logoutStaff(authToken);
+      }
+      // Clear global auth state
+      await logoutUser();
+      // Redirect to staff login
+      navigate('/staff/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Still log out locally even if API call fails
+      await logoutUser();
+      navigate('/staff/login');
+    }
+  };
+
+  const handleNotificationItemClick = (notification: StaffNotification) => {
+    if (notification.type === 'low_stock_alert' && notification.item_id) {
+      navigate('/staff/stock');
+      setIsNotificationsOpen(false);
+    } else if (notification.order_id) {
+      navigate(`/staff/orders/${notification.order_id}`);
+      setIsNotificationsOpen(false);
+    }
+  };
+
+  const closeDropdowns = () => {
+    setIsNotificationsOpen(false);
+    setIsProfileOpen(false);
+  };
+
+  // ===========================
+  // Render
+  // ===========================
+
+  return (
+    <>
+      {/* Fixed Navigation Bar */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-orange-600 to-orange-700 shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            {/* Left Section: Logo + Main Navigation */}
+            <div className="flex items-center space-x-6">
+              {/* Logo */}
+              <Link
+                to="/staff/dashboard"
+                className="flex items-center space-x-2 text-white font-bold text-xl hover:opacity-90 transition-opacity"
+                aria-label="Staff Dashboard Home"
+              >
+                <ShoppingCart className="h-7 w-7" />
+                <span className="hidden sm:inline">Salama Lama Staff</span>
+              </Link>
+
+              {/* Main Navigation Links */}
+              <div className="hidden md:flex items-center space-x-2">
+                <Link
+                  to="/staff/orders"
+                  className="flex items-center space-x-2 px-4 py-2 rounded-lg text-white font-medium hover:bg-orange-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-orange-600"
+                  aria-label="View Orders"
+                >
+                  <ShoppingCart className="h-5 w-5" />
+                  <span>Orders</span>
+                </Link>
+
+                <Link
+                  to="/staff/stock"
+                  className="flex items-center space-x-2 px-4 py-2 rounded-lg text-white font-medium hover:bg-orange-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-orange-600"
+                  aria-label="View Stock"
+                >
+                  <Package className="h-5 w-5" />
+                  <span>Stock</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Right Section: Notifications + Profile */}
+            <div className="flex items-center space-x-4">
+              {/* Notification Bell */}
+              <div className="relative">
+                <button
+                  onClick={handleNotificationClick}
+                  className="relative p-2 rounded-lg text-white hover:bg-orange-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-orange-600"
+                  aria-label="Notifications"
+                  aria-expanded={isNotificationsOpen}
+                >
+                  <Bell className="h-6 w-6" />
+                  {notificationCount > 0 && (
+                    <span className="absolute top-0 right-0 flex items-center justify-center h-5 w-5 text-xs font-bold text-white bg-red-600 rounded-full border-2 border-orange-700">
+                      {notificationCount > 9 ? '9+' : notificationCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Notifications Dropdown */}
+                {isNotificationsOpen && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
+                    {/* Dropdown Header */}
+                    <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
+                      <h3 className="text-sm font-semibold text-gray-900">
+                        Notifications ({notificationCount})
+                      </h3>
+                      <button
+                        onClick={() => setIsNotificationsOpen(false)}
+                        className="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-500 rounded"
+                        aria-label="Close notifications"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                    </div>
+
+                    {/* Notifications List */}
+                    <div className="max-h-96 overflow-y-auto">
+                      {isLoadingNotifications ? (
+                        <div className="px-4 py-6 text-center">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto"></div>
+                          <p className="mt-2 text-sm text-gray-600">Loading notifications...</p>
+                        </div>
+                      ) : notifications.length === 0 ? (
+                        <div className="px-4 py-6 text-center">
+                          <Bell className="h-10 w-10 text-gray-300 mx-auto mb-2" />
+                          <p className="text-sm text-gray-600">No notifications</p>
+                          <p className="text-xs text-gray-500 mt-1">You're all caught up!</p>
+                        </div>
+                      ) : (
+                        <ul className="divide-y divide-gray-100">
+                          {notifications.map((notification) => (
+                            <li key={notification.notification_id}>
+                              <button
+                                onClick={() => handleNotificationItemClick(notification)}
+                                className="w-full px-4 py-3 hover:bg-gray-50 transition-colors text-left focus:outline-none focus:bg-gray-50"
+                              >
+                                <div className="flex items-start space-x-3">
+                                  {/* Icon */}
+                                  <div
+                                    className={`flex-shrink-0 w-2 h-2 mt-2 rounded-full ${
+                                      notification.type === 'low_stock_alert'
+                                        ? 'bg-yellow-500'
+                                        : 'bg-blue-500'
+                                    }`}
+                                  ></div>
+
+                                  {/* Content */}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm text-gray-900 font-medium">
+                                      {notification.type === 'low_stock_alert'
+                                        ? 'Low Stock Alert'
+                                        : 'Order Update'}
+                                    </p>
+                                    <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                      {new Date(notification.created_at).toLocaleTimeString([], {
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                      })}
+                                    </p>
+                                  </div>
+                                </div>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+
+                    {/* Dropdown Footer */}
+                    {notifications.length > 0 && (
+                      <div className="px-4 py-3 bg-gray-50 border-t border-gray-200">
+                        <Link
+                          to="/staff/dashboard"
+                          onClick={closeDropdowns}
+                          className="text-sm text-orange-600 hover:text-orange-700 font-medium focus:outline-none focus:underline"
+                        >
+                          View Dashboard
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Staff Profile Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={handleProfileClick}
+                  className="flex items-center space-x-2 px-3 py-2 rounded-lg text-white hover:bg-orange-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-orange-600"
+                  aria-label="Staff Profile Menu"
+                  aria-expanded={isProfileOpen}
+                >
+                  <User className="h-5 w-5" />
+                  <span className="hidden sm:inline font-medium">{staffName}</span>
+                </button>
+
+                {/* Profile Dropdown */}
+                {isProfileOpen && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
+                    {/* User Info */}
+                    <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                      <p className="text-sm font-semibold text-gray-900">{staffName}</p>
+                      <p className="text-xs text-gray-600 mt-1">{currentUser?.email}</p>
+                      <p className="text-xs text-gray-500 mt-1 capitalize">
+                        {currentUser?.role || 'Staff'}
+                      </p>
+                    </div>
+
+                    {/* Menu Items */}
+                    <div className="py-1">
+                      <Link
+                        to="/staff/profile"
+                        onClick={closeDropdowns}
+                        className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                      >
+                        <User className="h-4 w-4" />
+                        <span>My Profile</span>
+                      </Link>
+
+                      <Link
+                        to="/staff/reports"
+                        onClick={closeDropdowns}
+                        className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                      >
+                        <Package className="h-4 w-4" />
+                        <span>Reports</span>
+                      </Link>
+
+                      <div className="border-t border-gray-100 my-1"></div>
+
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors text-left focus:outline-none focus:bg-red-50"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span>Sign Out</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Navigation Links */}
+          <div className="md:hidden border-t border-orange-800 py-2">
+            <div className="flex items-center space-x-2">
+              <Link
+                to="/staff/orders"
+                className="flex items-center space-x-2 px-3 py-2 rounded-lg text-white text-sm font-medium hover:bg-orange-800 transition-all duration-200"
+              >
+                <ShoppingCart className="h-4 w-4" />
+                <span>Orders</span>
+              </Link>
+
+              <Link
+                to="/staff/stock"
+                className="flex items-center space-x-2 px-3 py-2 rounded-lg text-white text-sm font-medium hover:bg-orange-800 transition-all duration-200"
+              >
+                <Package className="h-4 w-4" />
+                <span>Stock</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Spacer to prevent content from going under fixed navbar */}
+      <div className="h-16"></div>
+
+      {/* Backdrop for dropdowns */}
+      {(isNotificationsOpen || isProfileOpen) && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={closeDropdowns}
+          aria-hidden="true"
+        ></div>
+      )}
+    </>
+  );
+};
+
+export default GV_TopNav_Staff;

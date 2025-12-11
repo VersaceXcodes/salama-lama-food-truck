@@ -1,0 +1,15 @@
+{
+  "timestamp": 1765466832504,
+  "operation": {
+    "id": "db:postgres"
+  },
+  "projectId": "salama-lama-food-truck",
+  "files": [
+    {
+      "path": "/mnt/data/salama-lama-food-truck/backend/db.sql",
+      "type": "text",
+      "size": 70705,
+      "dependencies": false
+    }
+  ]
+}

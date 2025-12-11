@@ -1,0 +1,19 @@
+{
+  "timestamp": 1765469664693,
+  "operation": {
+    "id": "webapp:react:views",
+    "refs": {
+      "id": "UV_PasswordReset",
+      "version": "latest"
+    }
+  },
+  "projectId": "salama-lama-food-truck",
+  "files": [
+    {
+      "path": "/mnt/data/salama-lama-food-truck/vitereact/src/components/views/UV_PasswordReset.tsx",
+      "type": "text",
+      "size": 15537,
+      "dependencies": false
+    }
+  ]
+}

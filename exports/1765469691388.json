@@ -1,0 +1,15 @@
+{
+  "timestamp": 1765469691388,
+  "operation": {
+    "id": "settings:config:package"
+  },
+  "projectId": "salama-lama-food-truck",
+  "files": [
+    {
+      "path": "/mnt/data/salama-lama-food-truck/vitereact/package.json",
+      "type": "text",
+      "size": 2985,
+      "dependencies": true
+    }
+  ]
+}

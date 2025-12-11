@@ -1,0 +1,15 @@
+{
+  "timestamp": 1765468427444,
+  "operation": {
+    "id": "backend:server:main"
+  },
+  "projectId": "salama-lama-food-truck",
+  "files": [
+    {
+      "path": "/mnt/data/salama-lama-food-truck/backend/server.ts",
+      "type": "text",
+      "size": 1545,
+      "dependencies": false
+    }
+  ]
+}

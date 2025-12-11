@@ -1,0 +1,15 @@
+{
+  "timestamp": 1765467233858,
+  "operation": {
+    "id": "db:schemas:zod"
+  },
+  "projectId": "salama-lama-food-truck",
+  "files": [
+    {
+      "path": "/mnt/data/salama-lama-food-truck/backend/schema.ts",
+      "type": "text",
+      "size": 51888,
+      "dependencies": false
+    }
+  ]
+}

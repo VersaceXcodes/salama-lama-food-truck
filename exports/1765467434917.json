@@ -1,0 +1,15 @@
+{
+  "timestamp": 1765467434917,
+  "operation": {
+    "id": "backend:specifications:asyncapi"
+  },
+  "projectId": "salama-lama-food-truck",
+  "files": [
+    {
+      "path": "/mnt/data/salama-lama-food-truck/backend/asyncapi.yaml",
+      "type": "text",
+      "size": 42360,
+      "dependencies": false
+    }
+  ]
+}

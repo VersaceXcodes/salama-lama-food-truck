@@ -1,0 +1,15 @@
+{
+  "timestamp": 1765467572869,
+  "operation": {
+    "id": "backend:specifications:openapi"
+  },
+  "projectId": "salama-lama-food-truck",
+  "files": [
+    {
+      "path": "/mnt/data/salama-lama-food-truck/backend/openapi.yaml",
+      "type": "text",
+      "size": 138003,
+      "dependencies": false
+    }
+  ]
+}

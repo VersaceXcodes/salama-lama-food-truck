@@ -1,0 +1,19 @@
+{
+  "timestamp": 1765469734647,
+  "operation": {
+    "id": "webapp:react:views",
+    "refs": {
+      "id": "UV_FAQs",
+      "version": "latest"
+    }
+  },
+  "projectId": "salama-lama-food-truck",
+  "files": [
+    {
+      "path": "/mnt/data/salama-lama-food-truck/vitereact/src/components/views/UV_FAQs.tsx",
+      "type": "text",
+      "size": 29837,
+      "dependencies": false
+    }
+  ]
+}

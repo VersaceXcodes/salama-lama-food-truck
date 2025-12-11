@@ -284,7 +284,7 @@ const GV_TopNav_Admin: React.FC = () => {
                       <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
                       {notificationsData && notificationsData.notification_count > 0 && (
                         <button
-                          onClick={refetchNotifications}
+                          onClick={() => refetchNotifications()}
                           className="text-xs text-orange-600 hover:text-orange-700 font-medium"
                         >
                           Refresh

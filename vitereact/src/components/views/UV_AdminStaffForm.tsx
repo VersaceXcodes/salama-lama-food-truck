@@ -3,8 +3,6 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppStore } from '@/store/main';
-import { z } from 'zod';
-import { createUserInputSchema, updateUserInputSchema } from '@/db/zodschemas';
 
 // ===========================
 // TypeScript Interfaces

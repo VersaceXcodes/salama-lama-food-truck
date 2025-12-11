@@ -199,9 +199,6 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Determine current route context
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isStaffRoute = location.pathname.startsWith('/staff');
-  const isPublicAuthRoute = ['/login', '/signup', '/forgot-password', '/staff/login', '/admin/login'].includes(location.pathname) ||
-                           location.pathname.startsWith('/reset-password') ||
-                           location.pathname.startsWith('/verify-email');
 
   // Routes that should show floating cart
   const showFloatingCartRoutes = ['/', '/menu', '/catering', '/dashboard'];
@@ -214,7 +211,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const showCookieConsentRoutes = !isAdminRoute && !isStaffRoute && !isAuthenticated;
 
   // Determine which top nav to show
-  let TopNavComponent = null;
+  let TopNavComponent: React.FC | null = null;
   if (isAdminRoute && isAuthenticated && userRole === 'admin') {
     TopNavComponent = GV_TopNav_Admin;
   } else if (isStaffRoute && isAuthenticated && (userRole === 'staff' || userRole === 'manager')) {

@@ -161,16 +161,16 @@ const UV_AdminCustomers: React.FC = () => {
     };
   };
 
-  const { data, isLoading, isError, error, refetch } = useQuery({
+  const { data = { customers_list: [], total_customers_count: 0 }, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['admin', 'customers', searchParams.toString()],
     queryFn: fetchCustomers,
     staleTime: 60000,
     refetchOnWindowFocus: false,
-    keepPreviousData: true,
+    placeholderData: (previousData) => previousData,
   });
 
-  const customers_list = data?.customers_list || [];
-  const total_customers_count = data?.total_customers_count || 0;
+  const customers_list = data.customers_list;
+  const total_customers_count = data.total_customers_count;
 
   // ===========================
   // Filter Handlers

@@ -240,7 +240,7 @@ const UV_Signup: React.FC = () => {
         first_name: registration_form_data.first_name,
         last_name: registration_form_data.last_name,
         marketing_opt_in: registration_form_data.marketing_opt_in,
-        referred_by_user_id: referral_code_from_url,
+        referred_by_user_id: referral_code_from_url || undefined,
       });
 
       // Success - show success modal with discount code

@@ -183,7 +183,7 @@ const UV_Landing: React.FC = () => {
 
   // Helper function to render star rating
   const renderStars = (rating: number) => {
-    const stars = [];
+    const stars: JSX.Element[] = [];
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 >= 0.5;
 

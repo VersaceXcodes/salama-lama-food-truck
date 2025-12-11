@@ -633,7 +633,9 @@ const UV_Privacy: React.FC = () => {
                   <section
                     key={section.id}
                     id={section.id}
-                    ref={(el) => (sectionRefs.current[section.id] = el)}
+                    ref={(el) => {
+                      if (el) sectionRefs.current[section.id] = el as HTMLDivElement;
+                    }}
                     className="p-8 scroll-mt-24"
                   >
                     <h2 className="text-2xl font-bold text-gray-900 mb-4">

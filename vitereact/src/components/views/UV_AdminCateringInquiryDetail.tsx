@@ -186,7 +186,6 @@ const sendQuoteToCustomer = async (quote_id: string, auth_token: string): Promis
 
 const UV_AdminCateringInquiryDetail: React.FC = () => {
   const { inquiry_id } = useParams<{ inquiry_id: string }>();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   // Zustand store - CRITICAL: Individual selectors only

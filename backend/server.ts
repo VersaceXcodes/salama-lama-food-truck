@@ -4319,7 +4319,8 @@ app.get('/api/admin/menu/items/:id', authenticate_token, require_role(['admin'])
     
     // Return the item with proper number coercion
     const item = coerce_numbers(result.rows[0], ['price', 'current_stock', 'low_stock_threshold', 'sort_order']);
-    return ok(res, 200, item);
+    // Return item directly (not wrapped) for consistency with other GET endpoints
+    return res.status(200).json(item);
   } catch (error) {
     return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
   }
@@ -6004,8 +6005,13 @@ app.use((err, req, res, next) => {
   return res.status(500).json(createErrorResponse('Internal server error', err, 'INTERNAL_SERVER_ERROR', req.request_id));
 });
 
-// Catch-all route for SPA routing
+// Catch-all route for SPA routing (exclude API paths)
 app.get('*', (req, res) => {
+  // If the request is for an API endpoint but didn't match any route, return 404 JSON
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json(createErrorResponse('API endpoint not found', null, 'NOT_FOUND', req.request_id));
+  }
+  // Otherwise, serve the SPA
   res.sendFile(path.join(publicDir, 'index.html'));
 });
 

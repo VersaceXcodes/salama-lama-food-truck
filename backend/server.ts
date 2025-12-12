@@ -5591,6 +5591,32 @@ app.post('/api/admin/discounts', authenticate_token, require_role(['admin']), as
   }
 });
 
+app.get('/api/admin/discounts/:id', authenticate_token, require_role(['admin']), async (req, res) => {
+  try {
+    const code_id = req.params.id;
+    const row = await pool.query('SELECT * FROM discount_codes WHERE code_id = $1', [code_id]);
+    if (row.rows.length === 0) return res.status(404).json(createErrorResponse('Discount not found', null, 'NOT_FOUND', req.request_id));
+    
+    const discount = discountCodeSchema.parse({
+      ...coerce_numbers(row.rows[0], ['discount_value', 'minimum_order_value']),
+      discount_value: Number(row.rows[0].discount_value),
+      minimum_order_value: row.rows[0].minimum_order_value === null || row.rows[0].minimum_order_value === undefined ? null : Number(row.rows[0].minimum_order_value),
+      applicable_order_types: row.rows[0].applicable_order_types ?? null,
+      applicable_category_ids: row.rows[0].applicable_category_ids ?? null,
+      applicable_item_ids: row.rows[0].applicable_item_ids ?? null,
+      total_usage_limit: row.rows[0].total_usage_limit ?? null,
+      per_customer_usage_limit: row.rows[0].per_customer_usage_limit ?? null,
+      total_used_count: Number(row.rows[0].total_used_count),
+      valid_until: row.rows[0].valid_until ?? null,
+      internal_notes: row.rows[0].internal_notes ?? null,
+    });
+
+    return ok(res, 200, discount);
+  } catch (error) {
+    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+  }
+});
+
 app.put('/api/admin/discounts/:id', authenticate_token, require_role(['admin']), async (req, res) => {
   try {
     const code_id = req.params.id;

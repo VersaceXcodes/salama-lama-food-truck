@@ -113,7 +113,13 @@ const fetchOrderDetails = async (order_id: string, token: string): Promise<Order
       },
     }
   );
-  return response.data;
+  // Backend returns {order, items, status_history}, flatten to expected structure
+  const { order, items, status_history } = response.data;
+  return {
+    ...order,
+    items: items || [],
+    status_history: status_history || [],
+  };
 };
 
 const updateOrderStatus = async (

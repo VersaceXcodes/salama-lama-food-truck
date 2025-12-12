@@ -73,7 +73,7 @@ import {
   pointsTransactionSchema,
   createSystemSettingInputSchema,
   systemSettingSchema,
-} from './schema.ts';
+} from './schema.js';
 
 dotenv.config();
 
@@ -1890,9 +1890,9 @@ app.get('/api/business/info', async (req, res) => {
     const is_currently_open = true;
 
     return ok(res, 200, {
-      name: typeof store_name === 'string' ? JSON.parse(store_name) : store_name,
-      phone: typeof store_phone === 'string' ? JSON.parse(store_phone) : store_phone,
-      email: typeof store_email === 'string' ? JSON.parse(store_email) : store_email,
+      name: store_name,
+      phone: store_phone,
+      email: store_email,
       address: store_address,
       operating_hours: store_hours,
       social_links: await get_setting('social_links', {}),

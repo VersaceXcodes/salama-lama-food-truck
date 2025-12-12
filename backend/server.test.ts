@@ -3,7 +3,7 @@ import { Server } from 'socket.io';
 import { io as ioClient } from 'socket.io-client';
 import jwt from 'jsonwebtoken';
 import { nanoid } from 'nanoid';
-import { app, pool } from './server.ts'; // import your Express app instance and database pool
+import { app, pool } from './server.js'; // import your Express app instance and database pool
 
 // ============================================
 // TEST DATABASE SETUP & TEARDOWN

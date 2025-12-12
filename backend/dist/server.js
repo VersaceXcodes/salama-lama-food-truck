@@ -2689,13 +2689,14 @@ app.get('/api/orders/:id', authenticate_token, async (req, res) => {
 // Order tracking endpoint - returns simplified order data for tracking
 app.get('/api/orders/:id/track', authenticate_token, async (req, res) => {
     try {
-        const order_id = req.params.id;
-        const order_res = await pool.query('SELECT order_id, order_number, status, order_type, collection_time_slot, delivery_address_snapshot, estimated_delivery_time, customer_name, customer_phone FROM orders WHERE order_id = $1 AND user_id = $2', [order_id, req.user.user_id]);
+        const identifier = req.params.id;
+        // Support both order_id (ord_005) and order_number (ORD-2024-0005)
+        const order_res = await pool.query('SELECT order_id, order_number, status, order_type, collection_time_slot, delivery_address_snapshot, estimated_delivery_time, customer_name, customer_phone FROM orders WHERE (order_id = $1 OR order_number = $1) AND user_id = $2', [identifier, req.user.user_id]);
         if (order_res.rows.length === 0) {
             return res.status(404).json(createErrorResponse('Order not found', null, 'NOT_FOUND', req.request_id));
         }
         const order_row = order_res.rows[0];
-        const status_res = await pool.query('SELECT status, changed_at, changed_by_user_id, notes FROM order_status_history WHERE order_id = $1 ORDER BY changed_at ASC', [order_id]);
+        const status_res = await pool.query('SELECT status, changed_at, changed_by_user_id, notes FROM order_status_history WHERE order_id = $1 ORDER BY changed_at ASC', [order_row.order_id]);
         return ok(res, 200, {
             order_id: order_row.order_id,
             order_number: order_row.order_number,

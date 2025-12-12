@@ -220,6 +220,32 @@ function ensure_upper(s) {
 }
 
 /**
+ * Log admin activity to activity_logs table.
+ */
+async function log_activity({ user_id, action_type, entity_type, entity_id, description, changes, ip_address, user_agent }) {
+  try {
+    await pool.query(
+      'INSERT INTO activity_logs (log_id, user_id, action_type, entity_type, entity_id, description, changes, ip_address, user_agent, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9,$10)',
+      [
+        gen_id('log'),
+        user_id,
+        action_type,
+        entity_type,
+        entity_id,
+        description,
+        JSON.stringify(changes || {}),
+        ip_address || null,
+        user_agent || null,
+        now_iso(),
+      ]
+    );
+  } catch (error) {
+    // Log but don't throw - activity logging should not break the main operation
+    console.error('[log_activity] Failed to log activity:', error);
+  }
+}
+
+/**
  * Parse query parameters into types expected by Zod schemas.
  * We support booleans, numbers, arrays (comma separated or repeated params).
  */
@@ -4552,6 +4578,18 @@ app.post('/api/admin/menu/items', authenticate_token, require_role(['admin']), a
       ]
     );
 
+    // Log activity
+    await log_activity({
+      user_id: req.user.user_id,
+      action_type: 'create',
+      entity_type: 'menu_item',
+      entity_id: item_id,
+      description: `Created menu item: ${input.name}`,
+      changes: { name: input.name, price: input.price, category_id: input.category_id },
+      ip_address: req.ip,
+      user_agent: req.headers['user-agent'],
+    });
+
     return ok(res, 201, { item_id });
   } catch (error) {
     if (error instanceof z.ZodError) return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
@@ -4637,6 +4675,18 @@ app.put('/api/admin/menu/items/:id', authenticate_token, require_role(['admin'])
     console.log(`[admin/menu/items/:id PUT] Final price in response: ${updated_item.price} (type: ${typeof updated_item.price})`);
     console.log(`[admin/menu/items/:id PUT] DB returned price: ${updated_row.price} (type: ${typeof updated_row.price})`);
     
+    // Log activity
+    await log_activity({
+      user_id: req.user.user_id,
+      action_type: 'update',
+      entity_type: 'menu_item',
+      entity_id: item_id,
+      description: `Updated menu item: ${updated_item.name}`,
+      changes: input,
+      ip_address: req.ip,
+      user_agent: req.headers['user-agent'],
+    });
+
     return ok(res, 200, { item: updated_item });
   } catch (error) {
     if (error instanceof z.ZodError) return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
@@ -5581,6 +5631,22 @@ app.post('/api/admin/discounts', authenticate_token, require_role(['admin']), as
       ]
     );
 
+    // Log activity
+    await log_activity({
+      user_id: req.user.user_id,
+      action_type: 'create',
+      entity_type: 'discount',
+      entity_id: code_id,
+      description: `Created discount code: ${input.code}`,
+      changes: { 
+        code: input.code, 
+        discount_type: input.discount_type, 
+        discount_value: input.discount_value 
+      },
+      ip_address: req.ip,
+      user_agent: req.headers['user-agent'],
+    });
+
     return ok(res, 201, { code_id });
   } catch (error) {
     if (error instanceof z.ZodError) return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
@@ -5643,8 +5709,20 @@ app.put('/api/admin/discounts/:id', authenticate_token, require_role(['admin']),
 
     params.push(code_id);
 
-    const upd = await pool.query(`UPDATE discount_codes SET ${fields.join(', ')} WHERE code_id = $${params.length} RETURNING code_id`, params);
+    const upd = await pool.query(`UPDATE discount_codes SET ${fields.join(', ')} WHERE code_id = $${params.length} RETURNING code_id, code`, params);
     if (upd.rows.length === 0) return res.status(404).json(createErrorResponse('Discount not found', null, 'NOT_FOUND', req.request_id));
+
+    // Log activity
+    await log_activity({
+      user_id: req.user.user_id,
+      action_type: 'update',
+      entity_type: 'discount',
+      entity_id: code_id,
+      description: `Updated discount code: ${upd.rows[0].code}`,
+      changes: input,
+      ip_address: req.ip,
+      user_agent: req.headers['user-agent'],
+    });
 
     return ok(res, 200, { code_id });
   } catch (error) {
@@ -5762,11 +5840,33 @@ app.put('/api/admin/customers/:id/points', authenticate_token, require_role(['ad
         `INSERT INTO points_transactions (
           transaction_id, loyalty_account_id, transaction_type, points_amount,
           order_id, reason, adjusted_by_user_id, running_balance, created_at, expires_at
-        ) VALUES ($1,$2,'manual_adjustment',$3,NULL,$4,$5,$6,NULL)`,
+        ) VALUES ($1,$2,'manual_adjustment',$3,NULL,$4,$5,$6,$7,NULL)`,
         [gen_id('pt'), la.loyalty_account_id, delta, body.reason, req.user.user_id, next_balance, now_iso()]
       );
 
+      // Get user info for logging
+      const user_res = await client.query('SELECT first_name, last_name, email FROM users WHERE user_id = $1', [user_id]);
+      const user_name = user_res.rows.length > 0 ? `${user_res.rows[0].first_name} ${user_res.rows[0].last_name}` : user_id;
+
       await client.query('COMMIT');
+
+      // Log activity
+      await log_activity({
+        user_id: req.user.user_id,
+        action_type: 'update',
+        entity_type: 'user',
+        entity_id: user_id,
+        description: `Adjusted loyalty points for ${user_name}: ${body.action === 'add' ? '+' : '-'}${body.points} points`,
+        changes: { 
+          action: body.action, 
+          points: body.points, 
+          reason: body.reason,
+          previous_balance: prev_balance,
+          new_balance: next_balance
+        },
+        ip_address: req.ip,
+        user_agent: req.headers['user-agent'],
+      });
 
       return ok(res, 200, { message: 'Points updated', previous_balance: prev_balance, new_balance: next_balance });
     });

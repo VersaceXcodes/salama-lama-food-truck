@@ -239,7 +239,9 @@ const UV_AdminMenuList: React.FC = () => {
       ),
     enabled: !!authToken,
     staleTime: 0, // Always fetch fresh data to ensure updates are immediately visible
+    gcTime: 0, // Don't cache data in memory (formerly cacheTime)
     refetchOnMount: 'always', // Always refetch when component mounts
+    refetchOnWindowFocus: false, // Don't refetch on window focus to avoid unnecessary requests
   });
 
   // Toggle item status mutation

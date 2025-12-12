@@ -230,8 +230,11 @@ const UV_AdminMenuItemForm: React.FC = () => {
 
   const createMutation = useMutation({
     mutationFn: (payload: CreateMenuItemPayload) => createMenuItem(payload, authToken!),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-menu-items'] });
+    onSuccess: async () => {
+      // Invalidate and remove cached data to force fresh fetch
+      await queryClient.invalidateQueries({ queryKey: ['admin-menu-items'], refetchType: 'all' });
+      queryClient.removeQueries({ queryKey: ['admin-menu-items'] });
+      
       setSuccessMessage('Menu item created successfully!');
       setTimeout(() => {
         navigate('/admin/menu');
@@ -253,10 +256,13 @@ const UV_AdminMenuItemForm: React.FC = () => {
     onSuccess: async () => {
       // Aggressively invalidate all related queries and wait for them to refetch
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['admin-menu-items'] }),
-        queryClient.invalidateQueries({ queryKey: ['admin-menu-item', itemIdParam] }),
-        queryClient.refetchQueries({ queryKey: ['admin-menu-items'] }),
+        queryClient.invalidateQueries({ queryKey: ['admin-menu-items'], refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: ['admin-menu-item', itemIdParam], refetchType: 'all' }),
       ]);
+      
+      // Remove all cached data for menu items to force fresh fetch
+      queryClient.removeQueries({ queryKey: ['admin-menu-items'] });
+      
       setSuccessMessage('Menu item updated successfully!');
       setTimeout(() => {
         navigate('/admin/menu');

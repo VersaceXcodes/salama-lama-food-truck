@@ -251,9 +251,13 @@ const UV_Signup: React.FC = () => {
     } catch (error: any) {
       setSubmissionLoading(false);
       
-      // Handle error
-      const errorMessage = error.message || 'Registration failed. Please try again.';
+      // Handle error - use backend message if available, fallback to generic
+      const errorMessage = error.response?.data?.message || error.message || 'Registration failed. Please try again.';
       setRegistrationError(errorMessage);
+
+      // Log error for debugging
+      console.error('Registration error:', error);
+      console.error('Error response:', error.response?.data);
 
       // Parse specific field errors if available
       if (error.response?.data?.errors) {
@@ -427,17 +431,22 @@ const UV_Signup: React.FC = () => {
                 </div>
               )}
 
-              {/* Error message */}
+              {/* Error message - Prominent red error banner */}
               {registration_error && (
-                <div className="mb-6 bg-red-50 border-2 border-red-300 rounded-lg p-4 shadow-sm">
+                <div className="mb-6 bg-red-50 border-4 border-red-400 rounded-lg p-5 shadow-lg animate-shake" role="alert">
                   <div className="flex items-start">
-                    <X className="h-5 w-5 text-red-600 mr-2 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-red-800 mb-1">{registration_error}</p>
+                    <div className="flex-shrink-0">
+                      <X className="h-6 w-6 text-red-600" />
+                    </div>
+                    <div className="ml-3 flex-1">
+                      <h3 className="text-base font-bold text-red-900 mb-1">
+                        Registration Failed
+                      </h3>
+                      <p className="text-sm font-medium text-red-800 mb-2">{registration_error}</p>
                       {registration_error.toLowerCase().includes('already registered') && (
-                        <p className="text-sm text-red-700">
+                        <p className="text-sm text-red-700 mt-2">
                           Already have an account?{' '}
-                          <Link to="/login" className="font-semibold underline hover:text-red-900">
+                          <Link to="/login" className="font-bold underline hover:text-red-900 transition-colors">
                             Sign in here
                           </Link>
                         </p>
@@ -515,13 +524,16 @@ const UV_Signup: React.FC = () => {
                       handleInputChange('email', e.target.value);
                     }}
                     onBlur={() => handleBlur('email')}
-                    className={`block w-full px-4 py-3 border ${
-                      form_validation_errors.email ? 'border-red-300' : 'border-gray-300'
+                    className={`block w-full px-4 py-3 border-2 ${
+                      form_validation_errors.email ? 'border-red-500 bg-red-50' : 'border-gray-300'
                     } rounded-lg focus:outline-none focus:ring-4 focus:ring-orange-100 focus:border-orange-500 transition-all`}
                     placeholder="you@example.com"
                   />
                   {form_validation_errors.email && (
-                    <p className="mt-1 text-sm text-red-600">{form_validation_errors.email}</p>
+                    <p className="mt-2 text-sm font-semibold text-red-700 flex items-start">
+                      <X className="h-4 w-4 mr-1 mt-0.5 flex-shrink-0" />
+                      <span>{form_validation_errors.email}</span>
+                    </p>
                   )}
                 </div>
 
@@ -541,13 +553,16 @@ const UV_Signup: React.FC = () => {
                       handleInputChange('phone', e.target.value);
                     }}
                     onBlur={() => handleBlur('phone')}
-                    className={`block w-full px-4 py-3 border ${
-                      form_validation_errors.phone ? 'border-red-300' : 'border-gray-300'
+                    className={`block w-full px-4 py-3 border-2 ${
+                      form_validation_errors.phone ? 'border-red-500 bg-red-50' : 'border-gray-300'
                     } rounded-lg focus:outline-none focus:ring-4 focus:ring-orange-100 focus:border-orange-500 transition-all`}
                     placeholder="+353 1 234 5678"
                   />
                   {form_validation_errors.phone && (
-                    <p className="mt-1 text-sm text-red-600">{form_validation_errors.phone}</p>
+                    <p className="mt-2 text-sm font-semibold text-red-700 flex items-start">
+                      <X className="h-4 w-4 mr-1 mt-0.5 flex-shrink-0" />
+                      <span>{form_validation_errors.phone}</span>
+                    </p>
                   )}
                 </div>
 

@@ -890,7 +890,7 @@ export const createCateringInquiryInputSchema = z.object({
     company_name: z.string().max(255).nullable().optional(),
     event_type: z.enum(['corporate', 'wedding', 'birthday', 'meeting', 'other']),
     event_type_other: z.string().max(100).nullable().optional(),
-    event_date: z.string(),
+    event_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
     event_start_time: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
     event_end_time: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
     event_location_address: z.string().min(1).max(255),

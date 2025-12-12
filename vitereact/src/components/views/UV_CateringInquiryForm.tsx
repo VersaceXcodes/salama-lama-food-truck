@@ -129,7 +129,7 @@ const UV_CateringInquiryForm: React.FC = () => {
       }
 
       const response = await axios.post(
-        `${API_BASE_URL}/api/catering/inquiries`,
+        `${API_BASE_URL}/api/catering/inquiry`,
         data,
         { headers }
       );

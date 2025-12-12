@@ -133,6 +133,7 @@ const UV_Menu: React.FC = () => {
     searchParams.get('sort') || 'default'
   );
   const [filterPanelOpen, setFilterPanelOpen] = useState(false);
+  const [loadingItemId, setLoadingItemId] = useState<string | null>(null);
   const [customizationModal, setCustomizationModal] = useState<{
     is_open: boolean;
     item: MenuItem | null;
@@ -192,8 +193,10 @@ const UV_Menu: React.FC = () => {
 
   // React Query: Add to Cart Mutation
   const addToCartMutation = useMutation({
-    mutationFn: (data: { item_id: string; quantity: number; selected_customizations: Record<string, any> }) =>
-      addItemToCart(data, authToken),
+    mutationFn: (data: { item_id: string; quantity: number; selected_customizations: Record<string, any> }) => {
+      setLoadingItemId(data.item_id);
+      return addItemToCart(data, authToken);
+    },
     onSuccess: () => {
       // Update Zustand cart state
       if (customizationModal.item) {
@@ -213,6 +216,9 @@ const UV_Menu: React.FC = () => {
         addToCartAction(cartItem);
       }
 
+      // Clear loading state
+      setLoadingItemId(null);
+
       // Close modal and reset
       setCustomizationModal({
         is_open: false,
@@ -226,6 +232,9 @@ const UV_Menu: React.FC = () => {
       alert('Item added to cart!');
     },
     onError: (error: any) => {
+      // Clear loading state
+      setLoadingItemId(null);
+      
       // Check if it's an authentication error
       if (error.response?.status === 401) {
         alert('Please log in or register to add items to your cart.');
@@ -811,14 +820,30 @@ const UV_Menu: React.FC = () => {
                               handleQuickAddToCart(item);
                             }
                           }}
-                          disabled={isOutOfStock}
-                          className={`w-full px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
+                          disabled={isOutOfStock || loadingItemId === item.item_id}
+                          className={`w-full px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center ${
                             isOutOfStock
                               ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                              : loadingItemId === item.item_id
+                              ? 'bg-orange-600 text-white opacity-75 cursor-wait'
                               : 'bg-orange-600 text-white hover:bg-orange-700 hover:shadow-lg'
                           }`}
                         >
-                          {isOutOfStock ? 'Out of Stock' : item.customization_groups.length > 0 ? 'Customize & Add' : 'Add to Cart'}
+                          {loadingItemId === item.item_id ? (
+                            <>
+                              <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              Adding...
+                            </>
+                          ) : isOutOfStock ? (
+                            'Out of Stock'
+                          ) : item.customization_groups.length > 0 ? (
+                            'Customize & Add'
+                          ) : (
+                            'Add to Cart'
+                          )}
                         </button>
                       </div>
                     </div>

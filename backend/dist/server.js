@@ -2050,11 +2050,13 @@ app.post('/api/checkout/validate', authenticate_token, async (req, res) => {
             discount_code: body.discount_code ?? cart.discount_code,
         });
         const errors = [...totals.validation_errors];
-        if (body.order_type === 'collection') {
-            if (!body.collection_time_slot) {
-                errors.push({ field: 'collection_time_slot', error: 'REQUIRED', message: 'Collection time slot is required' });
-            }
-        }
+        // Don't validate collection_time_slot or delivery_address at cart validation stage
+        // These will be validated at order creation time
+        // if (body.order_type === 'collection') {
+        //   if (!body.collection_time_slot) {
+        //     errors.push({ field: 'collection_time_slot', error: 'REQUIRED', message: 'Collection time slot is required' });
+        //   }
+        // }
         const valid = errors.length === 0;
         return ok(res, 200, { valid, errors });
     }

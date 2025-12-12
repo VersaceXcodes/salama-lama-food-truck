@@ -10,6 +10,7 @@ import { ShoppingBag, Trash2, Minus, Plus, Tag, ArrowRight, AlertCircle, Loader2
 // ===========================
 
 interface CartItem {
+  cart_item_id: string;
   item_id: string;
   item_name: string;
   quantity: number;
@@ -99,11 +100,11 @@ const UV_Cart: React.FC = () => {
   // ===========================
 
   const updateItemMutation = useMutation({
-    mutationFn: async ({ item_id, quantity }: { item_id: string; quantity: number }) => {
-      setItemLoadingStates(prev => ({ ...prev, [item_id]: true }));
+    mutationFn: async ({ cart_item_id, quantity }: { cart_item_id: string; quantity: number }) => {
+      setItemLoadingStates(prev => ({ ...prev, [cart_item_id]: true }));
       
       const response = await axios.put(
-        `${API_BASE_URL}/api/cart/items/${item_id}`,
+        `${API_BASE_URL}/api/cart/item/${cart_item_id}`,
         { quantity },
         {
           headers: authToken ? { Authorization: `Bearer ${authToken}` } : {}
@@ -119,7 +120,7 @@ const UV_Cart: React.FC = () => {
       alert(error.response?.data?.message || 'Failed to update quantity. Please try again.');
     },
     onSettled: (_data, _error, variables) => {
-      setItemLoadingStates(prev => ({ ...prev, [variables.item_id]: false }));
+      setItemLoadingStates(prev => ({ ...prev, [variables.cart_item_id]: false }));
     }
   });
 
@@ -128,9 +129,9 @@ const UV_Cart: React.FC = () => {
   // ===========================
 
   const removeItemMutation = useMutation({
-    mutationFn: async (item_id: string) => {
+    mutationFn: async (cart_item_id: string) => {
       const response = await axios.delete(
-        `${API_BASE_URL}/api/cart/items/${item_id}`,
+        `${API_BASE_URL}/api/cart/item/${cart_item_id}`,
         {
           headers: authToken ? { Authorization: `Bearer ${authToken}` } : {}
         }
@@ -207,14 +208,14 @@ const UV_Cart: React.FC = () => {
   // Event Handlers
   // ===========================
 
-  const handleQuantityChange = (item_id: string, newQuantity: number) => {
+  const handleQuantityChange = (cart_item_id: string, newQuantity: number) => {
     if (newQuantity < 1) return;
-    updateItemMutation.mutate({ item_id, quantity: newQuantity });
+    updateItemMutation.mutate({ cart_item_id, quantity: newQuantity });
   };
 
-  const handleRemoveItem = (item_id: string, item_name: string) => {
+  const handleRemoveItem = (cart_item_id: string, item_name: string) => {
     if (confirm(`Remove ${item_name} from cart?`)) {
-      removeItemMutation.mutate(item_id);
+      removeItemMutation.mutate(cart_item_id);
     }
   };
 
@@ -375,11 +376,11 @@ const UV_Cart: React.FC = () => {
               {cartItems.map((item) => {
                 const unitPrice = Number(item.unit_price || 0);
                 const lineTotal = Number(item.line_total || 0);
-                const isUpdating = itemLoadingStates[item.item_id] || false;
+                const isUpdating = itemLoadingStates[item.cart_item_id] || false;
 
                 return (
                   <div
-                    key={item.item_id}
+                    key={item.cart_item_id}
                     className="bg-white rounded-xl shadow-md border border-gray-200 p-6 transition-all duration-200 hover:shadow-lg"
                   >
                     <div className="flex items-start justify-between">
@@ -400,7 +401,7 @@ const UV_Cart: React.FC = () => {
                         {/* Quantity Selector */}
                         <div className="mt-4 flex items-center space-x-3">
                           <button
-                            onClick={() => handleQuantityChange(item.item_id, item.quantity - 1)}
+                            onClick={() => handleQuantityChange(item.cart_item_id, item.quantity - 1)}
                             disabled={item.quantity <= 1 || isUpdating}
                             className="w-10 h-10 rounded-lg border-2 border-gray-300 flex items-center justify-center text-gray-700 hover:bg-gray-50 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                             aria-label="Decrease quantity"
@@ -419,7 +420,7 @@ const UV_Cart: React.FC = () => {
                             onChange={(e) => {
                               const newQuantity = parseInt(e.target.value, 10);
                               if (!isNaN(newQuantity) && newQuantity > 0) {
-                                handleQuantityChange(item.item_id, newQuantity);
+                                handleQuantityChange(item.cart_item_id, newQuantity);
                               }
                             }}
                             disabled={isUpdating}
@@ -428,7 +429,7 @@ const UV_Cart: React.FC = () => {
                           />
 
                           <button
-                            onClick={() => handleQuantityChange(item.item_id, item.quantity + 1)}
+                            onClick={() => handleQuantityChange(item.cart_item_id, item.quantity + 1)}
                             disabled={isUpdating}
                             className="w-10 h-10 rounded-lg border-2 border-gray-300 flex items-center justify-center text-gray-700 hover:bg-gray-50 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                             aria-label="Increase quantity"
@@ -445,7 +446,7 @@ const UV_Cart: React.FC = () => {
                       {/* Right Side: Line Total and Remove Button */}
                       <div className="ml-4 flex flex-col items-end space-y-3">
                         <button
-                          onClick={() => handleRemoveItem(item.item_id, item.item_name)}
+                          onClick={() => handleRemoveItem(item.cart_item_id, item.item_name)}
                           disabled={removeItemMutation.isPending}
                           className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-all duration-200 disabled:opacity-50"
                           aria-label="Remove item"

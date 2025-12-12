@@ -75,17 +75,32 @@ const UV_Signup: React.FC = () => {
 
   // Scroll error banner into view when error appears
   useEffect(() => {
-    if (registration_error && errorBannerRef.current && !errorBannerRef.current.classList.contains('hidden')) {
-      console.log('Scrolling to error banner via useEffect');
-      errorBannerRef.current.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'center' 
+    if (registration_error && errorBannerRef.current) {
+      // Check if the banner is actually visible (not hidden)
+      const isVisible = !errorBannerRef.current.classList.contains('hidden');
+      console.log('Error banner visibility check:', { 
+        hasError: !!registration_error, 
+        hasRef: !!errorBannerRef.current, 
+        isVisible,
+        classList: errorBannerRef.current.className 
       });
-      // Also focus the email field if there's an email error
-      if (form_validation_errors.email && emailFieldRef.current) {
+      
+      if (isVisible) {
+        console.log('Scrolling to error banner via useEffect');
+        // Use a small delay to ensure the DOM has updated
         setTimeout(() => {
-          emailFieldRef.current?.focus();
-        }, 500);
+          errorBannerRef.current?.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          });
+        }, 100);
+        
+        // Also focus the email field if there's an email error
+        if (form_validation_errors.email && emailFieldRef.current) {
+          setTimeout(() => {
+            emailFieldRef.current?.focus();
+          }, 600);
+        }
       }
     }
   }, [registration_error, form_validation_errors.email]);
@@ -298,24 +313,19 @@ const UV_Signup: React.FC = () => {
         newFieldErrors.phone = 'This phone number is already registered. Please use a different phone number or try logging in.';
       }
 
-      // CRITICAL FIX: Use setTimeout to ensure error state updates happen AFTER
-      // the store's authentication state updates complete. This prevents a race
-      // condition where the store update triggers a re-render that clears local state.
-      // Setting timeout to 0 pushes the state updates to the next event loop tick.
-      setTimeout(() => {
-        console.log('Setting error state - Error message:', errorMessage);
-        console.log('Setting error state - Field errors:', newFieldErrors);
-        
-        // Use flushSync to ensure these updates happen synchronously together
-        flushSync(() => {
-          setSubmissionLoading(false);
-          setRegistrationError(errorMessage);
-          setFormValidationErrors(newFieldErrors);
-        });
-        
-        console.log('Error state set - should now be visible');
-        console.log('Error banner will be scrolled into view by useEffect');
-      }, 0);
+      // Use flushSync to ensure state updates happen synchronously
+      // This prevents a race condition where async updates might get lost
+      console.log('Setting error state - Error message:', errorMessage);
+      console.log('Setting error state - Field errors:', newFieldErrors);
+      
+      flushSync(() => {
+        setSubmissionLoading(false);
+        setRegistrationError(errorMessage);
+        setFormValidationErrors(newFieldErrors);
+      });
+      
+      console.log('Error state set - should now be visible');
+      console.log('Error banner will be scrolled into view by useEffect');
     }
   };
 
@@ -466,14 +476,18 @@ const UV_Signup: React.FC = () => {
               )}
 
               {/* Error message - Prominent red error banner - ALWAYS render div to preserve ref */}
-              {registration_error ? (
-                <div 
-                  ref={errorBannerRef}
-                  className="mb-6 bg-red-50 border-4 border-red-400 rounded-lg p-5 shadow-lg transition-all duration-300"
-                  role="alert"
-                  aria-live="assertive"
-                  aria-atomic="true"
-                >
+              <div 
+                ref={errorBannerRef}
+                className={registration_error 
+                  ? "mb-6 bg-red-50 border-4 border-red-400 rounded-lg p-5 shadow-lg transition-all duration-300"
+                  : "hidden"
+                }
+                role={registration_error ? "alert" : undefined}
+                aria-live={registration_error ? "assertive" : undefined}
+                aria-atomic={registration_error ? "true" : undefined}
+                aria-hidden={!registration_error}
+              >
+                {registration_error && (
                   <div className="flex items-start">
                     <div className="flex-shrink-0">
                       <X className="h-6 w-6 text-red-600" />
@@ -493,10 +507,8 @@ const UV_Signup: React.FC = () => {
                       )}
                     </div>
                   </div>
-                </div>
-              ) : (
-                <div ref={errorBannerRef} className="hidden" aria-hidden="true" />
-              )}
+                )}
+              </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Name fields */}

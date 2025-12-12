@@ -189,8 +189,17 @@ const UV_CateringInquiryForm: React.FC = () => {
   };
 
   const validateTimeFormat = (time: string): boolean => {
+    if (!time) return false;
+    
+    // Handle time with seconds (e.g., "14:30:00") - strip seconds
+    let normalizedTime = time;
+    if (time.includes(':') && time.split(':').length === 3) {
+      const parts = time.split(':');
+      normalizedTime = `${parts[0]}:${parts[1]}`;
+    }
+    
     const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
-    return timeRegex.test(time);
+    return timeRegex.test(normalizedTime);
   };
 
   const validateMinimumLeadTime = (eventDate: string): boolean => {
@@ -272,19 +281,26 @@ const UV_CateringInquiryForm: React.FC = () => {
     return null;
   }, [formData.event_type]);
 
-  const validateForm = useCallback((): boolean => {
+  const validateForm = useCallback((): { isValid: boolean; errors: FormValidationErrors } => {
     const errors: FormValidationErrors = {};
+
+    console.log('Validating form with formData:', formData);
 
     // Validate all required fields
     (Object.keys(formData) as Array<keyof CateringInquiryFormData>).forEach((key) => {
       const error = validateField(key, formData[key]);
       if (error) {
+        console.log(`Validation error for ${key}:`, error, 'Value:', formData[key]);
         errors[key] = error;
       }
     });
 
+    console.log('Total validation errors:', Object.keys(errors).length, errors);
     setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
+    return {
+      isValid: Object.keys(errors).length === 0,
+      errors: errors,
+    };
   }, [formData, validateField]);
 
   // ===========================
@@ -334,19 +350,16 @@ const UV_CateringInquiryForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Clear previous errors
-    setValidationErrors({});
-
     // Validate form using existing validation logic
-    const isValid = validateForm();
+    const validationResult = validateForm();
     
-    if (!isValid) {
+    if (!validationResult.isValid) {
       // Scroll to top to show error banner
       window.scrollTo({ top: 0, behavior: 'smooth' });
       
       // Focus first error field after a brief delay to allow scroll
       setTimeout(() => {
-        const firstErrorField = Object.keys(validationErrors)[0];
+        const firstErrorField = Object.keys(validationResult.errors)[0];
         if (firstErrorField) {
           const element = document.getElementById(firstErrorField);
           element?.focus();
@@ -677,6 +690,7 @@ const UV_CateringInquiryForm: React.FC = () => {
                         // Don't validate format on change - just set the value
                         // Browser native time input handles the format
                         const value = e.target.value;
+                        console.log('Event End Time onChange:', value);
                         setFormData(prev => ({ ...prev, event_end_time: value }));
                         if (validationErrors.event_end_time) {
                           setValidationErrors(prev => {
@@ -686,7 +700,10 @@ const UV_CateringInquiryForm: React.FC = () => {
                           });
                         }
                       }}
-                      onBlur={() => handleInputBlur('event_end_time')}
+                      onBlur={(e) => {
+                        console.log('Event End Time onBlur:', e.target.value, 'formData:', formData.event_end_time);
+                        handleInputBlur('event_end_time');
+                      }}
                       className={`w-full px-4 py-3 rounded-lg border-2 transition-colors ${
                         validationErrors.event_end_time
                           ? 'border-red-500 focus:border-red-600'

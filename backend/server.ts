@@ -5597,18 +5597,19 @@ app.get('/api/admin/discounts/:id', authenticate_token, require_role(['admin']),
     const row = await pool.query('SELECT * FROM discount_codes WHERE code_id = $1', [code_id]);
     if (row.rows.length === 0) return res.status(404).json(createErrorResponse('Discount not found', null, 'NOT_FOUND', req.request_id));
     
+    const rawData = row.rows[0];
     const discount = discountCodeSchema.parse({
-      ...coerce_numbers(row.rows[0], ['discount_value', 'minimum_order_value']),
-      discount_value: Number(row.rows[0].discount_value),
-      minimum_order_value: row.rows[0].minimum_order_value === null || row.rows[0].minimum_order_value === undefined ? null : Number(row.rows[0].minimum_order_value),
-      applicable_order_types: row.rows[0].applicable_order_types ?? null,
-      applicable_category_ids: row.rows[0].applicable_category_ids ?? null,
-      applicable_item_ids: row.rows[0].applicable_item_ids ?? null,
-      total_usage_limit: row.rows[0].total_usage_limit ?? null,
-      per_customer_usage_limit: row.rows[0].per_customer_usage_limit ?? null,
-      total_used_count: Number(row.rows[0].total_used_count),
-      valid_until: row.rows[0].valid_until ?? null,
-      internal_notes: row.rows[0].internal_notes ?? null,
+      ...coerce_numbers(rawData, ['discount_value', 'minimum_order_value']),
+      discount_value: Number(rawData.discount_value),
+      minimum_order_value: rawData.minimum_order_value === null || rawData.minimum_order_value === undefined ? null : Number(rawData.minimum_order_value),
+      applicable_order_types: Array.isArray(rawData.applicable_order_types) ? rawData.applicable_order_types : (rawData.applicable_order_types ? [rawData.applicable_order_types] : []),
+      applicable_category_ids: Array.isArray(rawData.applicable_category_ids) ? rawData.applicable_category_ids : (rawData.applicable_category_ids ? [rawData.applicable_category_ids] : []),
+      applicable_item_ids: Array.isArray(rawData.applicable_item_ids) ? rawData.applicable_item_ids : (rawData.applicable_item_ids ? [rawData.applicable_item_ids] : []),
+      total_usage_limit: rawData.total_usage_limit ?? null,
+      per_customer_usage_limit: rawData.per_customer_usage_limit ?? null,
+      total_used_count: Number(rawData.total_used_count),
+      valid_until: rawData.valid_until ?? null,
+      internal_notes: rawData.internal_notes ?? null,
     });
 
     return ok(res, 200, discount);

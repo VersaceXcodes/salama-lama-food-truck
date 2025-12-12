@@ -97,6 +97,17 @@ const fetchOrderDetails = async (order_id: string, auth_token: string): Promise<
       },
     }
   );
+  
+  // API returns { success: true, order: {...}, items: [...], status_history: [...] }
+  // Merge them into a single order object
+  if (response.data && response.data.order) {
+    return {
+      ...response.data.order,
+      items: response.data.items || [],
+      status_history: response.data.status_history || []
+    };
+  }
+  
   return response.data;
 };
 
@@ -115,6 +126,16 @@ const cancelOrder = async (
       },
     }
   );
+  
+  // Handle response structure similar to fetchOrderDetails
+  if (response.data && response.data.order) {
+    return {
+      ...response.data.order,
+      items: response.data.items || [],
+      status_history: response.data.status_history || []
+    };
+  }
+  
   return response.data;
 };
 
@@ -628,8 +649,9 @@ const UV_OrderDetail: React.FC = () => {
                         : 'bg-red-100 text-red-800'
                     }`}
                   >
-                    {order_data.payment_status.charAt(0).toUpperCase() +
-                      order_data.payment_status.slice(1)}
+                    {order_data.payment_status ? 
+                      order_data.payment_status.charAt(0).toUpperCase() + order_data.payment_status.slice(1)
+                      : 'Unknown'}
                   </span>
                 </div>
               </div>

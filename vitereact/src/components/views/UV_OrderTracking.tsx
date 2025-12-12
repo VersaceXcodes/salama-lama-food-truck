@@ -186,7 +186,7 @@ const UV_OrderTracking: React.FC = () => {
         throw new Error('Missing order ID or authentication token');
       }
 
-      const response = await axios.get<OrderTrackingData>(
+      const response = await axios.get(
         `${API_BASE_URL}/api/orders/${order_id}/track`,
         {
           headers: {
@@ -195,7 +195,10 @@ const UV_OrderTracking: React.FC = () => {
         }
       );
 
-      return response.data;
+      // API returns { success: true, ...tracking_data }
+      // Extract the tracking data (excluding success field)
+      const { success, ...trackingData } = response.data;
+      return trackingData as OrderTrackingData;
     },
     enabled: !!order_id && !!auth_token,
     staleTime: websocket_connected ? 5 * 60 * 1000 : 30 * 1000, // 5 min if WebSocket, 30s if polling
@@ -501,7 +504,9 @@ const UV_OrderTracking: React.FC = () => {
               <span
                 className={`px-4 py-2 rounded-full text-sm font-semibold border ${getStatusColor(order_tracking_data.status)}`}
               >
-                {order_tracking_data.status.charAt(0).toUpperCase() + order_tracking_data.status.slice(1).replace('_', ' ')}
+                {order_tracking_data.status ? 
+                  order_tracking_data.status.charAt(0).toUpperCase() + order_tracking_data.status.slice(1).replace('_', ' ')
+                  : 'Unknown'}
               </span>
             </div>
           </div>

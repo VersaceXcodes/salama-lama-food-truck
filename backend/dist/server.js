@@ -2686,6 +2686,38 @@ app.get('/api/orders/:id', authenticate_token, async (req, res) => {
         return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
     }
 });
+// Order tracking endpoint - returns simplified order data for tracking
+app.get('/api/orders/:id/track', authenticate_token, async (req, res) => {
+    try {
+        const order_id = req.params.id;
+        const order_res = await pool.query('SELECT order_id, order_number, status, order_type, collection_time_slot, delivery_address_snapshot, estimated_delivery_time, customer_name, customer_phone FROM orders WHERE order_id = $1 AND user_id = $2', [order_id, req.user.user_id]);
+        if (order_res.rows.length === 0) {
+            return res.status(404).json(createErrorResponse('Order not found', null, 'NOT_FOUND', req.request_id));
+        }
+        const order_row = order_res.rows[0];
+        const status_res = await pool.query('SELECT status, changed_at, changed_by_user_id, notes FROM order_status_history WHERE order_id = $1 ORDER BY changed_at ASC', [order_id]);
+        return ok(res, 200, {
+            order_id: order_row.order_id,
+            order_number: order_row.order_number,
+            status: order_row.status,
+            order_type: order_row.order_type,
+            collection_time_slot: order_row.collection_time_slot,
+            delivery_address_snapshot: order_row.delivery_address_snapshot,
+            estimated_time: order_row.estimated_delivery_time,
+            customer_name: order_row.customer_name,
+            customer_phone: order_row.customer_phone,
+            status_history: status_res.rows.map((r) => ({
+                status: r.status,
+                changed_at: r.changed_at,
+                changed_by_user_id: r.changed_by_user_id,
+                notes: r.notes ?? null,
+            })),
+        });
+    }
+    catch (error) {
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
 app.post('/api/orders/:id/cancel', authenticate_token, async (req, res) => {
     try {
         const order_id = req.params.id;

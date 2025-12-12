@@ -1443,8 +1443,19 @@ app.post('/api/auth/register', async (req, res) => {
       const pct = Number(first_order_pct ?? 10);
       const valid_until = new Date(Date.now() + Number(validity_days ?? 30) * 86400000).toISOString();
 
-      const discount_code = `FIRST${pct}-${user_id.slice(0, 6).toUpperCase()}`;
-      const code_id = gen_id('dc');
+      // Generate unique discount code with retry logic
+      let discount_code = `FIRST${pct}-${user_id.slice(0, 6).toUpperCase()}`;
+      let code_id = gen_id('dc');
+      
+      // Check if code already exists and add suffix if needed
+      for (let attempt = 0; attempt < 10; attempt++) {
+        const existing_code = await client.query('SELECT code_id FROM discount_codes WHERE code = $1', [discount_code]);
+        if (existing_code.rows.length === 0) break;
+        // Add random suffix to make it unique
+        discount_code = `FIRST${pct}-${user_id.slice(0, 6).toUpperCase()}-${String(Math.floor(Math.random() * 900) + 100)}`;
+        code_id = gen_id('dc');
+      }
+      
       await client.query(
         `INSERT INTO discount_codes (
           code_id, code, discount_type, discount_value,

@@ -429,10 +429,10 @@ export const useAppStore = create<AppStore>()(
           // Token is invalid, clear auth state
           set(() => ({
             authentication_state: {
-              current_user: user,
-              auth_token: token,
+              current_user: null,
+              auth_token: null,
               authentication_status: {
-                is_authenticated: true,
+                is_authenticated: false,
                 is_loading: false,
               },
               error_message: null,

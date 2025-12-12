@@ -698,17 +698,6 @@ async function fetch_menu_items({ for_admin = false, search }) {
     params.push(`%${normalized_search.query}%`);
     const search_param_idx = params.length;
     where.push(`(mi.name ILIKE $${search_param_idx} OR mi.description ILIKE $${search_param_idx})`);
-    
-    // Add relevance-based ordering: exact name match > name starts with > name contains > description contains
-    params.push(normalized_search.query.toLowerCase());
-    const exact_param_idx = params.length;
-    search_order_clause = `, 
-      CASE 
-        WHEN LOWER(mi.name) = $${exact_param_idx} THEN 1
-        WHEN LOWER(mi.name) LIKE $${exact_param_idx} || '%' THEN 2
-        WHEN LOWER(mi.name) LIKE '%' || $${exact_param_idx} || '%' THEN 3
-        ELSE 4
-      END`;
   }
 
   if (normalized_search.dietary_tags && Array.isArray(normalized_search.dietary_tags) && normalized_search.dietary_tags.length > 0) {
@@ -733,6 +722,19 @@ async function fetch_menu_items({ for_admin = false, search }) {
      ${where_sql}`,
     params
   );
+
+  // Add search relevance ordering params after count query
+  if (normalized_search.query) {
+    params.push(normalized_search.query.toLowerCase());
+    const exact_param_idx = params.length;
+    search_order_clause = `, 
+      CASE 
+        WHEN LOWER(mi.name) = $${exact_param_idx} THEN 1
+        WHEN LOWER(mi.name) LIKE $${exact_param_idx} || '%' THEN 2
+        WHEN LOWER(mi.name) LIKE '%' || $${exact_param_idx} || '%' THEN 3
+        ELSE 4
+      END`;
+  }
 
   params.push(normalized_search.limit);
   params.push(normalized_search.offset);

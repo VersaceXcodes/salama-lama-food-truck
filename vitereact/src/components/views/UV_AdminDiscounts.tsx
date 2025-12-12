@@ -64,7 +64,7 @@ const fetchDiscountCodes = async (
   );
 
   return {
-    discount_codes: response.data.discount_codes || [],
+    discount_codes: response.data.discounts || response.data.discount_codes || [],
     total: response.data.total || 0,
   };
 };

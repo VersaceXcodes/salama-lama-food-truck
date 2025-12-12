@@ -149,7 +149,25 @@ const UV_AdminCustomerProfile: React.FC = () => {
           headers: { Authorization: `Bearer ${auth_token}` }
         }
       );
-      return response.data;
+      // Transform backend response to match frontend expectations
+      const data = response.data;
+      return {
+        user: data.customer || data.user,
+        loyalty_account: data.loyalty_account || {
+          loyalty_account_id: '',
+          current_points_balance: 0,
+          total_points_earned: 0,
+          total_points_redeemed: 0,
+          total_points_expired: 0,
+          referral_count: 0,
+        },
+        recent_orders: data.recent_orders || [],
+        recent_points_transactions: data.recent_points_transactions || [],
+        catering_inquiries: data.catering_inquiries || [],
+        total_orders: data.stats?.total_orders || data.total_orders || 0,
+        total_spend: data.stats?.total_spend || data.total_spend || 0,
+        average_order_value: data.stats?.average_order_value || data.average_order_value || 0,
+      };
     },
     enabled: !!customer_id && !!auth_token,
     staleTime: 30000, // 30 seconds

@@ -74,6 +74,7 @@ import UV_AdminInvoices from '@/components/views/UV_AdminInvoices';
 import UV_AdminInvoiceDetail from '@/components/views/UV_AdminInvoiceDetail';
 import UV_AdminAnalytics from '@/components/views/UV_AdminAnalytics';
 import UV_AdminSettings from '@/components/views/UV_AdminSettings';
+import UV_AdminActivityLogs from '@/components/views/UV_AdminActivityLogs';
 
 // ===========================
 // React Query Setup
@@ -544,6 +545,11 @@ const AppRoutes: React.FC = () => {
         <Route path="/admin/settings" element={
           <AdminRoute>
             <UV_AdminSettings />
+          </AdminRoute>
+        } />
+        <Route path="/admin/activity-logs" element={
+          <AdminRoute>
+            <UV_AdminActivityLogs />
           </AdminRoute>
         } />
 

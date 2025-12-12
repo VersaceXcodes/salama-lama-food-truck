@@ -4431,6 +4431,38 @@ app.get('/api/admin/dashboard', authenticate_token, require_role(['admin']), asy
   }
 });
 
+// Admin dashboard alerts (for notifications)
+app.get('/api/admin/dashboard/alerts', authenticate_token, require_role(['admin']), async (req, res) => {
+  try {
+    const low_stock_res = await pool.query(
+      `SELECT item_id, name as item_name, current_stock, low_stock_threshold
+       FROM menu_items
+       WHERE stock_tracked = true AND low_stock_threshold IS NOT NULL AND current_stock <= low_stock_threshold
+       ORDER BY current_stock ASC
+       LIMIT 10`
+    );
+
+    const catering_new_res = await pool.query(
+      `SELECT COUNT(*)::int as new_inquiries
+       FROM catering_inquiries
+       WHERE status = 'new'`
+    );
+
+    return ok(res, 200, {
+      low_stock_items_count: low_stock_res.rows.length,
+      new_catering_inquiries_count: catering_new_res.rows[0]?.new_inquiries ?? 0,
+      low_stock_items: low_stock_res.rows.map(item => ({
+        item_id: item.item_id,
+        item_name: item.item_name,
+        current_stock: Number(item.current_stock),
+        low_stock_threshold: Number(item.low_stock_threshold),
+      })),
+    });
+  } catch (error) {
+    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+  }
+});
+
 // Admin menu items list
 app.get('/api/admin/menu/items', authenticate_token, require_role(['admin']), async (req, res) => {
   try {
@@ -6419,6 +6451,79 @@ app.put('/api/admin/settings', authenticate_token, require_role(['admin']), asyn
     });
 
     return ok(res, 200, { message: 'Settings saved successfully' });
+  } catch (error) {
+    if (error instanceof z.ZodError) return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+  }
+});
+
+// Get activity logs (admin only)
+app.get('/api/admin/activity-logs', authenticate_token, require_role(['admin']), async (req, res) => {
+  try {
+    const schema = z.object({
+      limit: z.coerce.number().int().positive().default(50),
+      offset: z.coerce.number().int().nonnegative().default(0),
+      user_id: z.string().optional(),
+      action_type: z.string().optional(),
+      entity_type: z.string().optional(),
+    });
+    const q = schema.parse(req.query);
+
+    let query = 'SELECT al.*, u.first_name, u.last_name, u.email FROM activity_logs al LEFT JOIN users u ON al.user_id = u.user_id WHERE 1=1';
+    const params: any[] = [];
+    let paramCount = 0;
+
+    if (q.user_id) {
+      paramCount++;
+      query += ` AND al.user_id = $${paramCount}`;
+      params.push(q.user_id);
+    }
+
+    if (q.action_type) {
+      paramCount++;
+      query += ` AND al.action_type = $${paramCount}`;
+      params.push(q.action_type);
+    }
+
+    if (q.entity_type) {
+      paramCount++;
+      query += ` AND al.entity_type = $${paramCount}`;
+      params.push(q.entity_type);
+    }
+
+    query += ` ORDER BY al.created_at DESC LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
+    params.push(q.limit, q.offset);
+
+    const countQuery = 'SELECT COUNT(*)::int as total FROM activity_logs WHERE 1=1' + 
+      (q.user_id ? ` AND user_id = '${q.user_id}'` : '') +
+      (q.action_type ? ` AND action_type = '${q.action_type}'` : '') +
+      (q.entity_type ? ` AND entity_type = '${q.entity_type}'` : '');
+
+    const [rows, countRows] = await Promise.all([
+      pool.query(query, params),
+      pool.query(countQuery)
+    ]);
+
+    const logs = rows.rows.map(r => ({
+      log_id: r.log_id,
+      user_id: r.user_id,
+      user_name: r.first_name && r.last_name ? `${r.first_name} ${r.last_name}` : r.email || 'Unknown User',
+      action_type: r.action_type,
+      entity_type: r.entity_type,
+      entity_id: r.entity_id,
+      description: r.description,
+      changes: r.changes,
+      ip_address: r.ip_address,
+      user_agent: r.user_agent,
+      created_at: r.created_at,
+    }));
+
+    return ok(res, 200, {
+      logs,
+      total: countRows.rows[0]?.total || 0,
+      limit: q.limit,
+      offset: q.offset,
+    });
   } catch (error) {
     if (error instanceof z.ZodError) return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
     return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));

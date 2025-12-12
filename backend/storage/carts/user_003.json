@@ -3,7 +3,7 @@
     {
       "cart_item_id": "cart_dPyemeC76PXHK7hhfZEz",
       "item_id": "item_002",
-      "quantity": 1,
+      "quantity": 2,
       "selected_customizations": {
         "cg_001": [
           {
@@ -182,8 +182,148 @@
       "quantity": 1,
       "selected_customizations": {},
       "added_at": "2025-12-12T15:23:49.532Z"
+    },
+    {
+      "cart_item_id": "cart_0UEjixOkzWRcmQDFQtGK",
+      "item_id": "item_x9IKeDcJ1QCZqquElmvp",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-12T15:33:01.601Z"
+    },
+    {
+      "cart_item_id": "cart_ulKXutdHgbZVrnqYUkC6",
+      "item_id": "item_x9IKeDcJ1QCZqquElmvp",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-12T15:34:46.806Z"
+    },
+    {
+      "cart_item_id": "cart_UkuUm3VW18HvD9A1cwV1",
+      "item_id": "item_x9IKeDcJ1QCZqquElmvp",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-12T15:35:58.270Z"
+    },
+    {
+      "cart_item_id": "cart_p_kTbHfXNK3LufFuQam8",
+      "item_id": "item_x9IKeDcJ1QCZqquElmvp",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-12T15:53:16.375Z"
+    },
+    {
+      "cart_item_id": "cart_C9ZQWKbuAfr8mhMd6Jbb",
+      "item_id": "item_x9IKeDcJ1QCZqquElmvp",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-12T15:54:36.991Z"
+    },
+    {
+      "cart_item_id": "cart_hDIORYSxyjfPSgze7CsS",
+      "item_id": "item_x9IKeDcJ1QCZqquElmvp",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-12T15:58:14.219Z"
+    },
+    {
+      "cart_item_id": "cart_-tiuT7xWLEu0rQyMcCBN",
+      "item_id": "item_x9IKeDcJ1QCZqquElmvp",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-12T15:58:54.716Z"
+    },
+    {
+      "cart_item_id": "cart_0l1Ys5-YI9j3crrqfxxX",
+      "item_id": "item_x9IKeDcJ1QCZqquElmvp",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-12T16:00:37.783Z"
+    },
+    {
+      "cart_item_id": "cart_Sz0iVzYlNJcVWqAukIcM",
+      "item_id": "item_x9IKeDcJ1QCZqquElmvp",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-12T16:02:13.865Z"
+    },
+    {
+      "cart_item_id": "cart_icgyixAaTpehGdvzf_vl",
+      "item_id": "item_x9IKeDcJ1QCZqquElmvp",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-12T16:02:53.069Z"
+    },
+    {
+      "cart_item_id": "cart_rqlCxel_6kRfYNW2xAU_",
+      "item_id": "item_x9IKeDcJ1QCZqquElmvp",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-12T16:04:40.247Z"
+    },
+    {
+      "cart_item_id": "cart_Iqta0zyi5ONEjdeGvUBj",
+      "item_id": "item_x9IKeDcJ1QCZqquElmvp",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-12T16:06:33.108Z"
+    },
+    {
+      "cart_item_id": "cart_4x2Wo6NRMFnxG8apdip4",
+      "item_id": "item_x9IKeDcJ1QCZqquElmvp",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-12T16:18:25.900Z"
+    },
+    {
+      "cart_item_id": "cart_LsVFulGNhEqwsbKHPCek",
+      "item_id": "item_x9IKeDcJ1QCZqquElmvp",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-12T16:22:41.027Z"
+    },
+    {
+      "cart_item_id": "cart_oSRmPdsmc8WODfXDfF8u",
+      "item_id": "item_x9IKeDcJ1QCZqquElmvp",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-12T16:24:21.142Z"
+    },
+    {
+      "cart_item_id": "cart_ON0Q3R5lBF53jZ5miIBk",
+      "item_id": "item_x9IKeDcJ1QCZqquElmvp",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-12T16:26:00.633Z"
+    },
+    {
+      "cart_item_id": "cart_RTl75RxMCw6dbYiTwbk-",
+      "item_id": "item_x9IKeDcJ1QCZqquElmvp",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-12T16:28:08.714Z"
+    },
+    {
+      "cart_item_id": "cart_xwheOBtnxipvsJZdk488",
+      "item_id": "item_x9IKeDcJ1QCZqquElmvp",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-12T16:31:14.325Z"
+    },
+    {
+      "cart_item_id": "cart_lD-kpGMcVlvY3gLNs-Fj",
+      "item_id": "item_x9IKeDcJ1QCZqquElmvp",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-12T16:32:53.494Z"
+    },
+    {
+      "cart_item_id": "cart_BjB9pPJ6hs0lAeJaeNhM",
+      "item_id": "item_x9IKeDcJ1QCZqquElmvp",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-12T16:35:37.376Z"
     }
   ],
   "discount_code": null,
-  "updated_at": "2025-12-12T15:23:49.532Z"
+  "updated_at": "2025-12-12T16:35:37.376Z"
 }

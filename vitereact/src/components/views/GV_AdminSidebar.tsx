@@ -14,6 +14,7 @@ import {
   FileText,
   BarChart3,
   Settings,
+  Activity,
   ChevronRight,
   ChevronDown,
   Menu,
@@ -112,6 +113,11 @@ const GV_AdminSidebar: React.FC = () => {
       name: 'Analytics',
       path: '/admin/analytics',
       icon: BarChart3,
+    },
+    {
+      name: 'Activity Logs',
+      path: '/admin/activity-logs',
+      icon: Activity,
     },
     {
       name: 'Settings',

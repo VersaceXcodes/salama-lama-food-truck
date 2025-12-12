@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppStore } from '@/store/main';
 import { Eye, EyeOff, Check, X, Copy, Gift, Sparkles } from 'lucide-react';
@@ -269,16 +270,13 @@ const UV_Signup: React.FC = () => {
       setSubmissionLoading(false);
 
     } catch (error: any) {
-      // Stop loading state
-      setSubmissionLoading(false);
+      // Log error for debugging
+      console.error('Registration error:', error);
+      console.error('Error response:', error.response?.data);
       
       // Handle error - use backend message if available, fallback to generic
       const errorMessage = error.response?.data?.message || error.message || 'Registration failed. Please try again.';
       
-      // Log error for debugging
-      console.error('Registration error:', error);
-      console.error('Error response:', error.response?.data);
-
       // Create new errors object for batch update
       const newFieldErrors = { ...form_validation_errors };
       
@@ -299,9 +297,13 @@ const UV_Signup: React.FC = () => {
         newFieldErrors.phone = 'This phone number is already registered. Please use a different phone number or try logging in.';
       }
 
-      // Apply all state updates together using React's automatic batching
-      setRegistrationError(errorMessage);
-      setFormValidationErrors(newFieldErrors);
+      // Use flushSync to force synchronous state updates and immediate re-render
+      // This ensures the error banner displays immediately, even in test environments
+      flushSync(() => {
+        setSubmissionLoading(false);
+        setRegistrationError(errorMessage);
+        setFormValidationErrors(newFieldErrors);
+      });
     }
   };
 

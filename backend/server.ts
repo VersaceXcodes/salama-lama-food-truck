@@ -2809,7 +2809,41 @@ app.get('/api/orders', authenticate_token, async (req, res) => {
       refund_amount: r.refund_amount === null || r.refund_amount === undefined ? null : Number(r.refund_amount),
     }, ['subtotal', 'discount_amount', 'tax_amount', 'total_amount', 'delivery_fee', 'refund_amount'])));
 
-    return ok(res, 200, { orders, total: count_res.rows[0]?.count ?? 0, limit: q.limit, offset: q.offset });
+    // Fetch items for all orders
+    const order_ids = orders.map(o => o.order_id);
+    let items_by_order = {};
+    if (order_ids.length > 0) {
+      const items_res = await pool.query(
+        `SELECT order_id, order_item_id, item_id, item_name, quantity, unit_price, selected_customizations, line_total
+         FROM order_items
+         WHERE order_id = ANY($1)
+         ORDER BY item_name ASC`,
+        [order_ids]
+      );
+      // Group items by order_id
+      items_res.rows.forEach((item) => {
+        if (!items_by_order[item.order_id]) {
+          items_by_order[item.order_id] = [];
+        }
+        items_by_order[item.order_id].push({
+          order_item_id: item.order_item_id,
+          item_id: item.item_id,
+          item_name: item.item_name,
+          quantity: Number(item.quantity),
+          unit_price: Number(item.unit_price),
+          selected_customizations: item.selected_customizations ?? null,
+          line_total: Number(item.line_total),
+        });
+      });
+    }
+
+    // Add items to each order
+    const orders_with_items = orders.map(order => ({
+      ...order,
+      items: items_by_order[order.order_id] || [],
+    }));
+
+    return ok(res, 200, { orders: orders_with_items, total: count_res.rows[0]?.count ?? 0, limit: q.limit, offset: q.offset });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
@@ -4202,7 +4236,7 @@ app.put('/api/staff/orders/:id/status', authenticate_token, require_role(['staff
   }
 });
 
-app.get('/api/staff/stock', authenticate_token, require_role(['staff', 'admin']), async (req, res) => {
+app.get('/api/staff/stock', authenticate_token, require_role(['staff', 'admin']), require_permission('manage_menu'), async (req, res) => {
   try {
     const rows = await pool.query(
       `SELECT mi.item_id, mi.name, mi.category_id, c.name as category_name,

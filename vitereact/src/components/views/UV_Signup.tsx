@@ -75,7 +75,8 @@ const UV_Signup: React.FC = () => {
 
   // Scroll error banner into view when error appears
   useEffect(() => {
-    if (registration_error && errorBannerRef.current) {
+    if (registration_error && errorBannerRef.current && !errorBannerRef.current.classList.contains('hidden')) {
+      console.log('Scrolling to error banner via useEffect');
       errorBannerRef.current.scrollIntoView({ 
         behavior: 'smooth', 
         block: 'center' 
@@ -313,28 +314,7 @@ const UV_Signup: React.FC = () => {
         });
         
         console.log('Error state set - should now be visible');
-        
-        // Scroll to error banner after DOM updates
-        // Use double requestAnimationFrame to ensure React has fully rendered the error banner
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            if (errorBannerRef.current) {
-              console.log('Error banner ref found, scrolling into view');
-              errorBannerRef.current.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'center' 
-              });
-              // Focus the email field if there's an email error
-              if (newFieldErrors.email && emailFieldRef.current) {
-                setTimeout(() => {
-                  emailFieldRef.current?.focus();
-                }, 500);
-              }
-            } else {
-              console.warn('Error banner ref NOT found in DOM - this should not happen anymore');
-            }
-          });
-        });
+        console.log('Error banner will be scrolled into view by useEffect');
       }, 0);
     }
   };
@@ -486,19 +466,14 @@ const UV_Signup: React.FC = () => {
               )}
 
               {/* Error message - Prominent red error banner - ALWAYS render div to preserve ref */}
-              <div 
-                ref={errorBannerRef}
-                className={`mb-6 transition-all duration-300 ${
-                  registration_error 
-                    ? 'bg-red-50 border-4 border-red-400 rounded-lg p-5 shadow-lg opacity-100' 
-                    : 'h-0 overflow-hidden opacity-0 border-0 p-0'
-                }`}
-                role={registration_error ? "alert" : undefined}
-                aria-live={registration_error ? "assertive" : undefined}
-                aria-atomic={registration_error ? "true" : undefined}
-                style={{ display: registration_error ? 'block' : 'block' }}
-              >
-                {registration_error && (
+              {registration_error ? (
+                <div 
+                  ref={errorBannerRef}
+                  className="mb-6 bg-red-50 border-4 border-red-400 rounded-lg p-5 shadow-lg transition-all duration-300"
+                  role="alert"
+                  aria-live="assertive"
+                  aria-atomic="true"
+                >
                   <div className="flex items-start">
                     <div className="flex-shrink-0">
                       <X className="h-6 w-6 text-red-600" />
@@ -518,8 +493,10 @@ const UV_Signup: React.FC = () => {
                       )}
                     </div>
                   </div>
-                )}
-              </div>
+                </div>
+              ) : (
+                <div ref={errorBannerRef} className="hidden" aria-hidden="true" />
+              )}
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Name fields */}

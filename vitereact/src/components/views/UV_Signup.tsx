@@ -263,6 +263,21 @@ const UV_Signup: React.FC = () => {
           ...backendErrors,
         }));
       }
+      
+      // Handle specific error codes from backend
+      if (error.response?.data?.error_code === 'EMAIL_ALREADY_EXISTS') {
+        setFormValidationErrors(prev => ({
+          ...prev,
+          email: 'This email address is already registered. Please use a different email or try logging in.',
+        }));
+      }
+      
+      if (error.response?.data?.error_code === 'PHONE_ALREADY_EXISTS') {
+        setFormValidationErrors(prev => ({
+          ...prev,
+          phone: 'This phone number is already registered. Please use a different phone number or try logging in.',
+        }));
+      }
     }
   };
 
@@ -414,10 +429,20 @@ const UV_Signup: React.FC = () => {
 
               {/* Error message */}
               {registration_error && (
-                <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="mb-6 bg-red-50 border-2 border-red-300 rounded-lg p-4 shadow-sm">
                   <div className="flex items-start">
                     <X className="h-5 w-5 text-red-600 mr-2 mt-0.5 flex-shrink-0" />
-                    <p className="text-sm text-red-800">{registration_error}</p>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-red-800 mb-1">{registration_error}</p>
+                      {registration_error.toLowerCase().includes('already registered') && (
+                        <p className="text-sm text-red-700">
+                          Already have an account?{' '}
+                          <Link to="/login" className="font-semibold underline hover:text-red-900">
+                            Sign in here
+                          </Link>
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}

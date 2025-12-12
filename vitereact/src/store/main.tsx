@@ -352,7 +352,10 @@ export const useAppStore = create<AppStore>()(
             },
           }));
           
-          throw new Error(errorMessage);
+          // Preserve the full error response for better error handling in components
+          const enhancedError: any = new Error(errorMessage);
+          enhancedError.response = error.response;
+          throw enhancedError;
         }
       },
 

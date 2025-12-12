@@ -52,7 +52,7 @@ const UV_PasswordResetRequest: React.FC = () => {
   // ===========================
   const mutation = useMutation({
     mutationFn: requestPasswordReset,
-    onSuccess: (_data) => {
+    onSuccess: () => {
       setIsSubmitted(true);
     },
     onError: (error: any) => {

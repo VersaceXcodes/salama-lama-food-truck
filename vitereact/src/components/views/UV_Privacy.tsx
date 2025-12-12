@@ -48,7 +48,7 @@ const fetchPrivacyPolicy = async (): Promise<PrivacyPolicyContent> => {
       `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api/content/privacy`
     );
     return response.data;
-  } catch (error) {
+  } catch {
     // Fallback to hardcoded GDPR-compliant privacy policy
     return {
       title: "Privacy Policy",
@@ -367,7 +367,7 @@ const UV_Privacy: React.FC = () => {
       if (!authToken) throw new Error('Not authenticated');
       return requestDataExport(authToken);
     },
-    onSuccess: (_data) => {
+    onSuccess: () => {
       setExportSuccessMessage('Data export request submitted successfully! You will receive an email with your data within 48 hours.');
       setExportErrorMessage(null);
       

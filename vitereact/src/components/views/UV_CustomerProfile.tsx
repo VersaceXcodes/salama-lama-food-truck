@@ -256,7 +256,7 @@ const UV_CustomerProfile: React.FC = () => {
     }
     if (!profileFormData.phone.trim()) {
       errors.phone = 'Phone number is required';
-    } else if (!/^[\d\s\+\-\(\)]+$/.test(profileFormData.phone)) {
+    } else if (!/^[\d\s+\-()]+$/.test(profileFormData.phone)) {
       errors.phone = 'Invalid phone number format';
     }
 

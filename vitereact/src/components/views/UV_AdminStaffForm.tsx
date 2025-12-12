@@ -283,6 +283,7 @@ const UV_AdminStaffForm: React.FC = () => {
 
     if (is_edit_mode) {
       // Update existing staff (exclude email and password)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { email, password, ...updateData } = formData;
       updateMutation.mutate(updateData);
     } else {

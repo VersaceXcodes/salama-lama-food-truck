@@ -317,7 +317,7 @@ const UV_AdminCategoryManagement: React.FC = () => {
         }
       }
       queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
-    } catch (error: any) {
+    } catch {
       setErrorMessage('Failed to reorder categories');
       queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
     }

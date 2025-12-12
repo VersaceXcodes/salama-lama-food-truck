@@ -32,7 +32,7 @@ const validateEmail = (email: string): boolean => {
 
 const validatePhone = (phone: string): boolean => {
   // Remove spaces, dashes, parentheses
-  const cleaned = phone.replace(/[\s\-\(\)]/g, '');
+  const cleaned = phone.replace(/[\s\-()]/g, '');
   // Accept 10-15 digits, optionally starting with +
   const phoneRegex = /^\+?\d{10,15}$/;
   return phoneRegex.test(cleaned);
@@ -68,7 +68,7 @@ const validateCustomerPhone = (phone: string): string | null => {
   if (!phone || phone.trim().length === 0) {
     return 'Phone number is required';
   }
-  const cleanedPhone = phone.replace(/[\s\-\(\)]/g, '');
+  const cleanedPhone = phone.replace(/[\s\-()]/g, '');
   if (cleanedPhone.length < 10) {
     return 'Phone number must be at least 10 digits';
   }

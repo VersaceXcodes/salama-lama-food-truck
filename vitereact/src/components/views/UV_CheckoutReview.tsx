@@ -124,7 +124,7 @@ const format_date_time = (datetime: string | null): string => {
       hour: '2-digit',
       minute: '2-digit',
     });
-  } catch (error) {
+  } catch {
     return datetime;
   }
 };

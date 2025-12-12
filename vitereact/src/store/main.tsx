@@ -247,7 +247,7 @@ export const useAppStore = create<AppStore>()(
 
           const { user, token } = response.data;
 
-          set((_state) => ({
+          set(() => ({
             authentication_state: {
               current_user: user,
               auth_token: token,
@@ -265,7 +265,7 @@ export const useAppStore = create<AppStore>()(
         } catch (error: any) {
           const errorMessage = error.response?.data?.message || error.message || 'Login failed';
           
-          set((_state) => ({
+          set(() => ({
             authentication_state: {
               current_user: null,
               auth_token: null,
@@ -302,7 +302,7 @@ export const useAppStore = create<AppStore>()(
 
           const { user, token, first_order_discount_code } = response.data;
 
-          set((_state) => ({
+          set(() => ({
             authentication_state: {
               current_user: user,
               auth_token: token,
@@ -322,7 +322,7 @@ export const useAppStore = create<AppStore>()(
         } catch (error: any) {
           const errorMessage = error.response?.data?.message || error.message || 'Registration failed';
           
-          set((_state) => ({
+          set(() => ({
             authentication_state: {
               current_user: null,
               auth_token: null,
@@ -357,7 +357,7 @@ export const useAppStore = create<AppStore>()(
         get().disconnect_websocket();
 
         // Clear all state
-        set((_state) => ({
+        set(() => ({
           authentication_state: {
             current_user: null,
             auth_token: null,
@@ -408,7 +408,7 @@ export const useAppStore = create<AppStore>()(
 
           const user = response.data;
 
-          set((_state) => ({
+          set(() => ({
             authentication_state: {
               current_user: user,
               auth_token: token,
@@ -427,12 +427,12 @@ export const useAppStore = create<AppStore>()(
           console.error('Token verification failed:', error);
           
           // Token is invalid, clear auth state
-          set((_state) => ({
+          set(() => ({
             authentication_state: {
-              current_user: null,
-              auth_token: null,
+              current_user: user,
+              auth_token: token,
               authentication_status: {
-                is_authenticated: false,
+                is_authenticated: true,
                 is_loading: false,
               },
               error_message: null,
@@ -582,7 +582,7 @@ export const useAppStore = create<AppStore>()(
       },
 
       clear_cart: () => {
-        set((_state) => ({
+        set(() => ({
           cart_state: {
             items: [],
             subtotal: 0,
@@ -704,7 +704,7 @@ export const useAppStore = create<AppStore>()(
       },
 
       clear_notifications: () => {
-        set((_state) => ({
+        set(() => ({
           notification_state: {
             notifications: [],
             unread_count: 0,
@@ -893,7 +893,7 @@ export const useAppStore = create<AppStore>()(
         if (socket) {
           socket.disconnect();
           
-          set((_state) => ({
+          set(() => ({
             websocket_state: {
               socket: null,
               connected: false,

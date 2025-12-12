@@ -172,8 +172,8 @@ const UV_AdminDiscounts: React.FC = () => {
   );
   const [search_query, setSearchQuery] = useState<string>('');
   const [selected_codes, setSelectedCodes] = useState<string[]>([]);
-  const [sort_by, _setSortBy] = useState<string>('created_at');
-  const [sort_order, _setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [sort_by] = useState<string>('created_at');
+  const [sort_order] = useState<'asc' | 'desc'>('desc');
   const [pagination, setPagination] = useState({
     limit: 50,
     offset: 0,

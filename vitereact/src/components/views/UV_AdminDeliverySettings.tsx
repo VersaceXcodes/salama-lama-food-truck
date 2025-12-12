@@ -375,7 +375,7 @@ const UV_AdminDeliverySettings: React.FC = () => {
     let parsed_boundaries: any;
     try {
       parsed_boundaries = JSON.parse(zone_form_data.zone_boundaries);
-    } catch (error) {
+    } catch {
       show_notification('error', 'Invalid zone boundaries JSON format');
       return;
     }

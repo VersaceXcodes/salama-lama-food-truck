@@ -58,10 +58,11 @@ const UV_StaffReports: React.FC = () => {
     switch (period) {
       case 'today':
         return today.toISOString().split('T')[0];
-      case 'yesterday':
+      case 'yesterday': {
         const yesterday = new Date(today);
         yesterday.setDate(yesterday.getDate() - 1);
         return yesterday.toISOString().split('T')[0];
+      }
       case 'last_7_days':
         return 'last_7_days';
       default:

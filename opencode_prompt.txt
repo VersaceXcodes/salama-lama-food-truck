@@ -1,43 +1,129 @@
-VALIDATION FAILURE - Frontend TypeScript Compilation (Attempt 2/100)
+VALIDATION FAILURE - Lint Project (Attempt 1/100)
 
-The project validation failed at the "Frontend TypeScript Compilation" step. You need to analyze the error and fix it.
+The project validation failed at the "Lint Project" step. You need to analyze the error and fix it.
 
 ## Error Details:
-src/components/views/UV_AdminOrders.tsx(198,7): error TS6133: 'getStatusIcon' is declared but its value is never read.
-src/components/views/UV_AdminSettings.tsx(2,27): error TS6133: 'Link' is declared but its value is never read.
-src/components/views/UV_Cart.tsx(121,17): error TS6133: 'data' is declared but its value is never read.
-src/components/views/UV_Cart.tsx(121,23): error TS6133: 'error' is declared but its value is never read.
-src/components/views/UV_CheckoutPayment.tsx(106,12): error TS6133: 'fetchError' is declared but its value is never read.
-src/components/views/UV_CheckoutPayment.tsx(298,29): error TS6133: 'cardType' is declared but its value is never read.
-src/components/views/UV_Contact.tsx(103,24): error TS6133: 'form_data' is declared but its value is never read.
-src/components/views/UV_FAQs.tsx(1,27): error TS6133: 'useEffect' is declared but its value is never read.
-src/components/views/UV_Landing.tsx(6,31): error TS6133: 'Mail' is declared but its value is never read.
-src/components/views/UV_Menu.tsx(2,10): error TS6133: 'Link' is declared but its value is never read.
-src/components/views/UV_Menu.tsx(197,17): error TS6133: 'response' is declared but its value is never read.
-src/components/views/UV_MyCateringInquiries.tsx(2,33): error TS6133: 'useNavigate' is declared but its value is never read.
-src/components/views/UV_OrderTracking.tsx(1,38): error TS6133: 'useMemo' is declared but its value is never read.
-src/components/views/UV_PasswordReset.tsx(119,17): error TS6133: 'data' is declared but its value is never read.
-src/components/views/UV_PasswordResetRequest.tsx(55,17): error TS6133: 'data' is declared but its value is never read.
-src/components/views/UV_Privacy.tsx(370,17): error TS6133: 'data' is declared but its value is never read.
-src/components/views/UV_SavedPaymentMethods.tsx(6,43): error TS6133: 'X' is declared but its value is never read.
-src/components/views/UV_StaffDashboard.tsx(2,10): error TS6133: 'Link' is declared but its value is never read.
-src/components/views/UV_StaffDashboard.tsx(324,9): error TS6133: '_getNextStatusAction' is declared but its value is never read.
-src/components/views/UV_StaffOrderDetail.tsx(485,17): error TS6133: 'is_future' is declared but its value is never read.
-src/components/views/UV_StaffOrderQueue.tsx(392,20): error TS6133: 'payload' is declared but its value is never read.
-src/components/views/UV_StaffOrderQueue.tsx(427,11): error TS6133: '_handleNewOrder' is declared but its value is never read.
-src/components/views/UV_StaffStock.tsx(1,38): error TS6133: 'useMemo' is declared but its value is never read.
-src/components/views/UV_StaffStock.tsx(2,10): error TS6133: 'Link' is declared but its value is never read.
-src/components/views/UV_StaffStock.tsx(250,17): error TS6133: 'data' is declared but its value is never read.
+
+> conductor@0.0.0 lint
+> eslint .
+
+
+/app/vitereact/src/components/views/GV_Footer.tsx
+   8:7  warning  Fast refresh only works when a file only exports components. Move your component(s) to a separate file  react-refresh/only-export-components
+  14:7  warning  Fast refresh only works when a file only exports components. Move your component(s) to a separate file  react-refresh/only-export-components
+  20:7  warning  Fast refresh only works when a file only exports components. Move your component(s) to a separate file  react-refresh/only-export-components
+  26:7  warning  Fast refresh only works when a file only exports components. Move your component(s) to a separate file  react-refresh/only-export-components
+
+/app/vitereact/src/components/views/UV_AdminAnalytics.tsx
+  112:7  warning  Fast refresh only works when a file only exports components. Move your component(s) to a separate file  react-refresh/only-export-components
+  136:7  warning  Fast refresh only works when a file only exports components. Move your component(s) to a separate file  react-refresh/only-export-components
+  199:7  warning  Fast refresh only works when a file only exports components. Move your component(s) to a separate file  react-refresh/only-export-components
+
+/app/vitereact/src/components/views/UV_AdminCategoryManagement.tsx
+  320:14  error  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/app/vitereact/src/components/views/UV_AdminDashboard.tsx
+  146:7  warning  Fast refresh only works when a file only exports components. Move your component(s) to a separate file  react-refresh/only-export-components
+
+/app/vitereact/src/components/views/UV_AdminDeliverySettings.tsx
+  378:14  error  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/app/vitereact/src/components/views/UV_AdminDiscounts.tsx
+  175:19  error  '_setSortBy' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  176:22  error  '_setSortOrder' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/app/vitereact/src/components/views/UV_AdminLogin.tsx
+  234:14  error  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/app/vitereact/src/components/views/UV_AdminStaffForm.tsx
+  286:15  error  'email' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  286:22  error  'password' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/app/vitereact/src/components/views/UV_CheckoutContact.tsx
+  35:39  error  Unnecessary escape character: \(  no-useless-escape
+  35:41  error  Unnecessary escape character: \)  no-useless-escape
+  71:44  error  Unnecessary escape character: \(  no-useless-escape
+  71:46  error  Unnecessary escape character: \)  no-useless-escape
+
+/app/vitereact/src/components/views/UV_CheckoutPayment.tsx
+  244:13  error  Variable names containing "mock", "dummy", or "fake" are not allowed. Use real data  custom/no-mock-data
+  245:13  error  Variable names containing "mock", "dummy", or "fake" are not allowed. Use real data  custom/no-mock-data
+  266:14  error  'error' is defined but never used                                                    @typescript-eslint/no-unused-vars
+
+/app/vitereact/src/components/views/UV_CheckoutReview.tsx
+  127:12  error  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/app/vitereact/src/components/views/UV_Contact.tsx
+  103:24  error  '_form_data' is defined but never used  @typescript-eslint/no-unused-vars
+
+/app/vitereact/src/components/views/UV_CustomerProfile.tsx
+  259:24  error  Unnecessary escape character: \+  no-useless-escape
+  259:28  error  Unnecessary escape character: \(  no-useless-escape
+  259:30  error  Unnecessary escape character: \)  no-useless-escape
+
+/app/vitereact/src/components/views/UV_EmailVerification.tsx
+  153:6  warning  React Hook useEffect has a missing dependency: 'verifyEmailMutation'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/app/vitereact/src/components/views/UV_FAQs.tsx
+  313:10  error  '_loadingState' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  313:25  error  '_setLoadingState' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/app/vitereact/src/components/views/UV_Menu.tsx
+  197:17  error  '_response' is defined but never used  @typescript-eslint/no-unused-vars
+
+/app/vitereact/src/components/views/UV_OrderHistory.tsx
+  308:6  warning  React Hook useEffect has missing dependencies: 'searchParams' and 'setSearchParams'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+/app/vitereact/src/components/views/UV_PasswordReset.tsx
+  119:17  error  '_data' is defined but never used  @typescript-eslint/no-unused-vars
+
+/app/vitereact/src/components/views/UV_PasswordResetRequest.tsx
+  55:17  error  '_data' is defined but never used  @typescript-eslint/no-unused-vars
+
+/app/vitereact/src/components/views/UV_Privacy.tsx
+   51:12  error  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  370:17  error  '_data' is defined but never used  @typescript-eslint/no-unused-vars
+
+/app/vitereact/src/components/views/UV_SavedPaymentMethods.tsx
+  142:7  error  Variable names containing "mock", "dummy", or "fake" are not allowed. Use real data     custom/no-mock-data
+  305:5  error  Comments mentioning mock/dummy/fake data are not allowed. Implement real functionality  custom/no-mock-data
+
+/app/vitereact/src/components/views/UV_StaffOrderQueue.tsx
+  342:9  warning  The 'orders' logical expression could make the dependencies of useMemo Hook (at line 467) change on every render. To fix this, wrap the initialization of 'orders' in its own useMemo() Hook  react-hooks/exhaustive-deps
+
+/app/vitereact/src/components/views/UV_StaffReports.tsx
+  62:9  error  Unexpected lexical declaration in case block  no-case-declarations
+
+/app/vitereact/src/components/views/UV_Terms.tsx
+  448:6  warning  React Hook useEffect has a missing dependency: 'staticTermsContent'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/app/vitereact/src/hooks/use-toast.ts
+  15:7  error  'actionTypes' is assigned a value but only used as a type  @typescript-eslint/no-unused-vars
+
+/app/vitereact/src/store/main.tsx
+  250:16  error  '_state' is defined but never used  @typescript-eslint/no-unused-vars
+  268:16  error  '_state' is defined but never used  @typescript-eslint/no-unused-vars
+  305:16  error  '_state' is defined but never used  @typescript-eslint/no-unused-vars
+  325:16  error  '_state' is defined but never used  @typescript-eslint/no-unused-vars
+  360:14  error  '_state' is defined but never used  @typescript-eslint/no-unused-vars
+  411:16  error  '_state' is defined but never used  @typescript-eslint/no-unused-vars
+  430:16  error  '_state' is defined but never used  @typescript-eslint/no-unused-vars
+  585:14  error  '_state' is defined but never used  @typescript-eslint/no-unused-vars
+  707:14  error  '_state' is defined but never used  @typescript-eslint/no-unused-vars
+  896:16  error  '_state' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 52 problems (40 errors, 12 warnings)
+
 
 
 ## Validation Context:
-- Step: Frontend TypeScript Compilation
+- Step: Lint Project
 - Working Directory: /app/vitereact
-- Attempt: 2/100
-- Previous failures for this step: 2
+- Attempt: 1/100
+- Previous failures for this step: 1
 
 ## Project Memory Summary:
-- Total validation attempts: 6
+- Total validation attempts: 9
 - Common issues encountered: None
 - Known dependencies: @hookform/resolvers, @radix-ui/react-accordion, @radix-ui/react-alert-dialog, @radix-ui/react-aspect-ratio, @radix-ui/react-avatar, @radix-ui/react-checkbox, @radix-ui/react-collapsible, @radix-ui/react-context-menu, @radix-ui/react-dialog, @radix-ui/react-dropdown-menu
 - Missing dependencies: None
@@ -155,12 +241,11 @@ PROTECTED DIRECTORIES (DO NOT MODIFY):
 
 
 
-## Previous Validation Failures for Frontend TypeScript Compilation:
-- 12:23:19 AM: 
-- 12:34:28 AM: 
+## Previous Validation Failures for Lint Project:
+- 12:41:15 AM: 
 
 ## Your Task:
-1. **Analyze the Error**: Understand what specifically went wrong in the Frontend TypeScript Compilation step
+1. **Analyze the Error**: Understand what specifically went wrong in the Lint Project step
 2. **Check Previous Attempts**: Consider if this is a recurring issue based on validation history
 3. **Locate the Problem**: Identify which files need to be modified
 4. **Apply Fixes**: Use the available tools to fix the specific issues

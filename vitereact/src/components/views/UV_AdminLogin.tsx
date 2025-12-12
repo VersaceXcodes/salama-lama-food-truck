@@ -231,7 +231,7 @@ const UV_AdminLogin: React.FC = () => {
       // On success, complete authentication
       setShowTwoFactorStep(false);
       navigate('/admin/dashboard');
-    } catch (error: any) {
+    } catch {
       setAuthenticationError('Invalid verification code. Please try again.');
       handleFailedAttempt();
     } finally {

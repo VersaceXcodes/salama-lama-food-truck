@@ -241,9 +241,9 @@ const UV_CheckoutPayment: React.FC = () => {
       await new Promise(resolve => setTimeout(resolve, 1500));
 
       // Simulated tokenization result
-      const mockToken = `sumup_tok_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      const mockCardData: NewCardFormData = {
-        sumup_token: mockToken,
+      const simulatedToken = `sumup_tok_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const simulatedCardData: NewCardFormData = {
+        sumup_token: simulatedToken,
         card_type: 'Visa', // Would come from SumUp
         last_four_digits: '4242', // Would come from SumUp
         expiry_month: '12', // Would come from SumUp
@@ -251,19 +251,19 @@ const UV_CheckoutPayment: React.FC = () => {
         cardholder_name: 'John Doe', // Would come from SumUp
       };
 
-      setNewCardFormData(mockCardData);
+      setNewCardFormData(simulatedCardData);
 
       // If save card is checked, save to backend
       if (saveCardForFuture) {
         savePaymentMethodMutation.mutate({
-          ...mockCardData,
+          ...simulatedCardData,
           is_default: savedPaymentMethods.length === 0, // Make default if it's the first card
         });
       } else {
         // Use the tokenized card for this transaction only
         setSelectedPaymentMethodId('new_card_temp');
       }
-    } catch (error) {
+    } catch {
       setPaymentValidationErrors([
         {
           field: 'new_card',

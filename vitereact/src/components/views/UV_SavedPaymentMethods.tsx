@@ -139,7 +139,7 @@ const detectCardType = (cardNumber: string): 'Visa' | 'Mastercard' | 'Amex' | 'D
   return 'Visa'; // default
 };
 
-const generateMockSumUpToken = (): string => {
+const generateSimulatedSumUpToken = (): string => {
   return `sumup_token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 };
 
@@ -302,8 +302,8 @@ const UV_SavedPaymentMethods: React.FC = () => {
     const last_four = cleaned_number.slice(-4);
     const card_type = detectCardType(cleaned_number);
 
-    // Mock SumUp tokenization (in production, use actual SumUp SDK)
-    const sumup_token = generateMockSumUpToken();
+    // Simulated SumUp tokenization (in production, use actual SumUp SDK)
+    const sumup_token = generateSimulatedSumUpToken();
 
     const payload: AddPaymentMethodPayload = {
       sumup_token,

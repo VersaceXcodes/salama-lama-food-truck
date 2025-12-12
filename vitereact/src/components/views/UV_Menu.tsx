@@ -194,7 +194,7 @@ const UV_Menu: React.FC = () => {
   const addToCartMutation = useMutation({
     mutationFn: (data: { item_id: string; quantity: number; selected_customizations: Record<string, any> }) =>
       addItemToCart(data, authToken),
-    onSuccess: (_response) => {
+    onSuccess: () => {
       // Update Zustand cart state
       if (customizationModal.item) {
         const item = customizationModal.item;

@@ -338,13 +338,21 @@ const UV_CateringInquiryForm: React.FC = () => {
     setValidationErrors({});
 
     // Validate form using existing validation logic
-    if (!validateForm()) {
-      // Focus first error field
-      const firstErrorField = Object.keys(validationErrors)[0];
-      if (firstErrorField) {
-        const element = document.getElementById(firstErrorField);
-        element?.focus();
-      }
+    const isValid = validateForm();
+    
+    if (!isValid) {
+      // Scroll to top to show error banner
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      
+      // Focus first error field after a brief delay to allow scroll
+      setTimeout(() => {
+        const firstErrorField = Object.keys(validationErrors)[0];
+        if (firstErrorField) {
+          const element = document.getElementById(firstErrorField);
+          element?.focus();
+          element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 300);
       return;
     }
 
@@ -393,7 +401,7 @@ const UV_CateringInquiryForm: React.FC = () => {
 
           {/* Main Form */}
           <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8">
-            <form onSubmit={handleSubmit} className="space-y-8">
+            <form onSubmit={handleSubmit} className="space-y-8" noValidate>
               {/* Submit Error Message */}
               {validationErrors.submit && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -402,6 +410,27 @@ const UV_CateringInquiryForm: React.FC = () => {
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                     </svg>
                     <p className="text-sm text-red-700">{validationErrors.submit}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* General Validation Error Banner */}
+              {Object.keys(validationErrors).length > 0 && !validationErrors.submit && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div className="flex items-start">
+                    <svg className="h-5 w-5 text-red-600 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-red-700 mb-1">Please correct the following errors:</p>
+                      <ul className="text-sm text-red-600 list-disc list-inside space-y-1">
+                        {Object.entries(validationErrors).map(([field, error]) => (
+                          <li key={field}>
+                            <span className="font-medium">{field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</span> {error}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
                 </div>
               )}
@@ -585,7 +614,6 @@ const UV_CateringInquiryForm: React.FC = () => {
                       }}
                       onBlur={() => handleInputBlur('event_date')}
                       min={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
-                      required
                       className={`w-full px-4 py-3 rounded-lg border-2 transition-colors ${
                         validationErrors.event_date
                           ? 'border-red-500 focus:border-red-600'
@@ -623,7 +651,6 @@ const UV_CateringInquiryForm: React.FC = () => {
                         }
                       }}
                       onBlur={() => handleInputBlur('event_start_time')}
-                      required
                       className={`w-full px-4 py-3 rounded-lg border-2 transition-colors ${
                         validationErrors.event_start_time
                           ? 'border-red-500 focus:border-red-600'
@@ -660,7 +687,6 @@ const UV_CateringInquiryForm: React.FC = () => {
                         }
                       }}
                       onBlur={() => handleInputBlur('event_end_time')}
-                      required
                       className={`w-full px-4 py-3 rounded-lg border-2 transition-colors ${
                         validationErrors.event_end_time
                           ? 'border-red-500 focus:border-red-600'

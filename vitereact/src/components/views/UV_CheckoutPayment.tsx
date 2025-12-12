@@ -75,12 +75,6 @@ const UV_CheckoutPayment: React.FC = () => {
   // Zustand Store - Individual selectors (CRITICAL: No object destructuring)
   const authToken = useAppStore(state => state.authentication_state.auth_token);
   const currentUser = useAppStore(state => state.authentication_state.current_user);
-  const cartTotal = useAppStore(state => state.cart_state.total);
-  const cartSubtotal = useAppStore(state => state.cart_state.subtotal);
-  const cartDiscountAmount = useAppStore(state => state.cart_state.discount_amount);
-  const cartDeliveryFee = useAppStore(state => state.cart_state.delivery_fee);
-  const cartTaxAmount = useAppStore(state => state.cart_state.tax_amount);
-  const cartItems = useAppStore(state => state.cart_state.items);
 
   // Local State
   const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState<string | null>(null);
@@ -98,6 +92,35 @@ const UV_CheckoutPayment: React.FC = () => {
   });
   const [paymentValidationErrors, setPaymentValidationErrors] = useState<PaymentValidationError[]>([]);
   const [isSumUpTokenizing, setIsSumUpTokenizing] = useState<boolean>(false);
+
+  // Fetch cart data with computed totals
+  const {
+    data: cartData,
+    isLoading: isCartLoading,
+  } = useQuery({
+    queryKey: ['cart'],
+    queryFn: async () => {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api/cart`,
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        }
+      );
+      return response.data;
+    },
+    enabled: !!authToken,
+    staleTime: 30000,
+  });
+
+  // Extract cart values with safe defaults
+  const cartTotal = Number(cartData?.total || 0);
+  const cartSubtotal = Number(cartData?.subtotal || 0);
+  const cartDiscountAmount = Number(cartData?.discount_amount || 0);
+  const cartDeliveryFee = Number(cartData?.delivery_fee || 0);
+  const cartTaxAmount = Number(cartData?.tax_amount || 0);
+  const cartItems = cartData?.items || [];
 
   // Fetch saved payment methods
   const {
@@ -363,16 +386,16 @@ const UV_CheckoutPayment: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Loading State */}
-                  {loadingPaymentMethods && (
+                   {/* Loading State */}
+                  {(loadingPaymentMethods || isCartLoading) && (
                     <div className="text-center py-8">
                       <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto" />
-                      <p className="mt-4 text-gray-600">Loading payment methods...</p>
+                      <p className="mt-4 text-gray-600">Loading...</p>
                     </div>
                   )}
 
                   {/* Payment Methods */}
-                  {!loadingPaymentMethods && (
+                  {!loadingPaymentMethods && !isCartLoading && (
                     <>
                       {/* Saved Payment Methods */}
                       {savedPaymentMethods.length > 0 && (
@@ -635,7 +658,7 @@ const UV_CheckoutPayment: React.FC = () => {
                     <button
                       type="button"
                       onClick={handleContinueToReview}
-                      disabled={loadingPaymentMethods || savePaymentMethodMutation.isPending}
+                      disabled={loadingPaymentMethods || isCartLoading || savePaymentMethodMutation.isPending || cartTotal <= 0}
                       className="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-4 focus:ring-blue-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
                     >
                       {savePaymentMethodMutation.isPending ? (

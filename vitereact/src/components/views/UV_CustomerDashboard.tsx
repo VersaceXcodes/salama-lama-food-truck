@@ -565,6 +565,30 @@ const UV_CustomerDashboard: React.FC = () => {
                 </div>
               </div>
 
+              {/* Email Verification Banner */}
+              {!userProfile.email_verified && (
+                <div className="mb-6 bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-lg shadow">
+                  <div className="flex items-start">
+                    <AlertCircle className="h-5 w-5 text-yellow-500 mr-3 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <h3 className="text-sm font-semibold text-yellow-800 mb-1">
+                        Email Verification Required
+                      </h3>
+                      <p className="text-sm text-yellow-700 mb-3">
+                        Please verify your email address to access all features and receive important updates about your orders.
+                      </p>
+                      <Link
+                        to="/profile"
+                        className="inline-flex items-center text-yellow-800 hover:text-yellow-900 font-semibold text-sm"
+                      >
+                        Verify Email
+                        <ChevronRight className="h-4 w-4 ml-1" />
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Reorder Success Message */}
               {reorderSuccess && (
                 <div className="mb-6 bg-green-50 border-l-4 border-green-500 p-4 rounded-lg shadow">

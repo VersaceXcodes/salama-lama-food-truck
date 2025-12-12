@@ -2395,6 +2395,89 @@ app.post('/api/checkout/create-order', authenticate_token, async (req, res) => {
 /**
  * ORDERS
  */
+/*
+  Customer orders endpoint - supports filtering by status (including comma-separated values)
+  This endpoint is used by the customer dashboard to fetch orders.
+*/
+app.get('/api/orders', authenticate_token, async (req, res) => {
+    try {
+        // Parse query with status potentially being a comma-separated string
+        const rawQuery = { ...req.query };
+        // Handle comma-separated status values - extract before parsing schema
+        let statusFilter = null;
+        if (rawQuery.status && typeof rawQuery.status === 'string') {
+            const statusArray = rawQuery.status.split(',').map(s => s.trim()).filter(Boolean);
+            if (statusArray.length > 0) {
+                statusFilter = statusArray;
+            }
+        }
+        // Remove status from rawQuery to avoid schema validation issues
+        const queryForSchema = { ...rawQuery };
+        delete queryForSchema.status;
+        const q = parse_query(searchOrderInputSchema, {
+            ...queryForSchema,
+            user_id: req.user.user_id
+        });
+        const where = ['user_id = $1'];
+        const params = [req.user.user_id];
+        // Handle status filter - support both single value and array
+        if (statusFilter && statusFilter.length > 0) {
+            params.push(statusFilter);
+            where.push(`status = ANY($${params.length})`);
+        }
+        else if (q.status) {
+            params.push(q.status);
+            where.push(`status = $${params.length}`);
+        }
+        if (q.order_type) {
+            params.push(q.order_type);
+            where.push(`order_type = $${params.length}`);
+        }
+        if (q.payment_status) {
+            params.push(q.payment_status);
+            where.push(`payment_status = $${params.length}`);
+        }
+        if (q.date_from) {
+            params.push(q.date_from);
+            where.push(`created_at >= $${params.length}`);
+        }
+        if (q.date_to) {
+            params.push(q.date_to);
+            where.push(`created_at <= $${params.length}`);
+        }
+        const count_res = await pool.query(`SELECT COUNT(*)::int as count FROM orders WHERE ${where.join(' AND ')}`, params);
+        params.push(q.limit);
+        params.push(q.offset);
+        const sort_by_map = {
+            created_at: 'created_at',
+            updated_at: 'updated_at',
+            total_amount: 'total_amount',
+            order_number: 'order_number',
+        };
+        const sort_by = sort_by_map[q.sort_by] || 'created_at';
+        const sort_order = q.sort_order === 'asc' ? 'ASC' : 'DESC';
+        const rows = await pool.query(`SELECT * FROM orders WHERE ${where.join(' AND ')}
+       ORDER BY ${sort_by} ${sort_order}
+       LIMIT $${params.length - 1} OFFSET $${params.length}`, params);
+        const orders = rows.rows.map((r) => orderSchema.parse(coerce_numbers({
+            ...r,
+            delivery_address_id: r.delivery_address_id ?? null,
+            delivery_fee: r.delivery_fee === null || r.delivery_fee === undefined ? null : Number(r.delivery_fee),
+            subtotal: Number(r.subtotal),
+            discount_amount: Number(r.discount_amount),
+            tax_amount: Number(r.tax_amount),
+            total_amount: Number(r.total_amount),
+            refund_amount: r.refund_amount === null || r.refund_amount === undefined ? null : Number(r.refund_amount),
+        }, ['subtotal', 'discount_amount', 'tax_amount', 'total_amount', 'delivery_fee', 'refund_amount'])));
+        return ok(res, 200, { orders, total: count_res.rows[0]?.count ?? 0, limit: q.limit, offset: q.offset });
+    }
+    catch (error) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+        }
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
 app.get('/api/orders/history', authenticate_token, async (req, res) => {
     try {
         const q = parse_query(searchOrderInputSchema, { ...req.query, user_id: req.user.user_id });
@@ -5262,12 +5345,19 @@ app.get('/api/admin/analytics/customers', authenticate_token, require_role(['adm
          WHERE u.role = 'customer'
          GROUP BY u.user_id
        ) customer_totals`);
-        // Get loyalty engagement data
-        const loyalty_engagement = await pool.query(`SELECT 
-         COUNT(DISTINCT user_id)::int as active_participants,
-         COALESCE(SUM(CASE WHEN transaction_type = 'earned' THEN points ELSE 0 END), 0)::int as points_issued,
-         COALESCE(SUM(CASE WHEN transaction_type = 'redeemed' THEN ABS(points) ELSE 0 END), 0)::int as points_redeemed
-       FROM loyalty_transactions`);
+        // Get loyalty engagement data (check if table exists first)
+        let loyalty_engagement;
+        try {
+            loyalty_engagement = await pool.query(`SELECT 
+           COUNT(DISTINCT user_id)::int as active_participants,
+           COALESCE(SUM(CASE WHEN transaction_type = 'earned' THEN points ELSE 0 END), 0)::int as points_issued,
+           COALESCE(SUM(CASE WHEN transaction_type = 'redeemed' THEN ABS(points) ELSE 0 END), 0)::int as points_redeemed
+         FROM loyalty_transactions`);
+        }
+        catch (e) {
+            // Table doesn't exist, provide default values
+            loyalty_engagement = { rows: [{ active_participants: 0, points_issued: 0, points_redeemed: 0 }] };
+        }
         const total_cust = total_customers.rows[0]?.count ?? 0;
         const repeat_cust = repeat_customers.rows[0]?.count ?? 0;
         const repeat_rate = total_cust > 0 ? repeat_cust / total_cust : 0;
@@ -5307,21 +5397,21 @@ app.get('/api/admin/analytics/time-analysis', authenticate_token, require_role([
             where.push(`created_at <= $${params.length}`);
         }
         // Peak order hours
-        const peak_hours = await pool.query(`SELECT EXTRACT(HOUR FROM created_at)::int as hour, COUNT(*)::int as order_count
+        const peak_hours = await pool.query(`SELECT CAST(DATE_PART('hour', created_at::timestamp) AS INTEGER) as hour, COUNT(*)::int as order_count
        FROM orders
        WHERE ${where.join(' AND ')}
        GROUP BY hour
        ORDER BY order_count DESC`, params);
         // Average fulfillment time (in minutes)
-        const fulfillment_time = await pool.query(`SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (completed_at - created_at)) / 60), 0)::int as avg_minutes
+        const fulfillment_time = await pool.query(`SELECT COALESCE(AVG(DATE_PART('epoch', (completed_at::timestamp - created_at::timestamp)) / 60), 0)::int as avg_minutes
        FROM orders
        WHERE ${where.join(' AND ')} AND completed_at IS NOT NULL`, params);
         // Orders by day of week
-        const orders_by_day = await pool.query(`SELECT TO_CHAR(created_at, 'Day') as day, COUNT(*)::int as order_count
+        const orders_by_day = await pool.query(`SELECT TO_CHAR(created_at::timestamp, 'Day') as day, COUNT(*)::int as order_count
        FROM orders
        WHERE ${where.join(' AND ')}
-       GROUP BY day, EXTRACT(DOW FROM created_at)
-       ORDER BY EXTRACT(DOW FROM created_at)`, params);
+       GROUP BY day, DATE_PART('dow', created_at::timestamp)
+       ORDER BY DATE_PART('dow', created_at::timestamp)`, params);
         return ok(res, 200, {
             peak_order_hours: peak_hours.rows.map((r) => ({ hour: r.hour, order_count: r.order_count })),
             average_fulfillment_time: fulfillment_time.rows[0]?.avg_minutes ?? 0,

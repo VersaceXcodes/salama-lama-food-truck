@@ -2721,6 +2721,103 @@ app.post('/api/checkout/create-order', authenticate_token, async (req, res) => {
  * ORDERS
  */
 
+/*
+  Customer orders endpoint - supports filtering by status (including comma-separated values)
+  This endpoint is used by the customer dashboard to fetch orders.
+*/
+app.get('/api/orders', authenticate_token, async (req, res) => {
+  try {
+    // Parse query with status potentially being a comma-separated string
+    const rawQuery = { ...req.query };
+    
+    // Handle comma-separated status values - extract before parsing schema
+    let statusFilter = null;
+    if (rawQuery.status && typeof rawQuery.status === 'string') {
+      const statusArray = rawQuery.status.split(',').map(s => s.trim()).filter(Boolean);
+      if (statusArray.length > 0) {
+        statusFilter = statusArray;
+      }
+    }
+    
+    // Remove status from rawQuery to avoid schema validation issues
+    const queryForSchema = { ...rawQuery };
+    delete queryForSchema.status;
+    
+    const q = parse_query(searchOrderInputSchema, { 
+      ...queryForSchema, 
+      user_id: req.user.user_id 
+    });
+
+    const where = ['user_id = $1'];
+    const params = [req.user.user_id];
+
+    // Handle status filter - support both single value and array
+    if (statusFilter && statusFilter.length > 0) {
+      params.push(statusFilter);
+      where.push(`status = ANY($${params.length})`);
+    } else if (q.status) {
+      params.push(q.status);
+      where.push(`status = $${params.length}`);
+    }
+    
+    if (q.order_type) {
+      params.push(q.order_type);
+      where.push(`order_type = $${params.length}`);
+    }
+    if (q.payment_status) {
+      params.push(q.payment_status);
+      where.push(`payment_status = $${params.length}`);
+    }
+    if (q.date_from) {
+      params.push(q.date_from);
+      where.push(`created_at >= $${params.length}`);
+    }
+    if (q.date_to) {
+      params.push(q.date_to);
+      where.push(`created_at <= $${params.length}`);
+    }
+
+    const count_res = await pool.query(`SELECT COUNT(*)::int as count FROM orders WHERE ${where.join(' AND ')}`, params);
+
+    params.push(q.limit);
+    params.push(q.offset);
+
+    const sort_by_map = {
+      created_at: 'created_at',
+      updated_at: 'updated_at',
+      total_amount: 'total_amount',
+      order_number: 'order_number',
+    };
+    const sort_by = sort_by_map[q.sort_by] || 'created_at';
+    const sort_order = q.sort_order === 'asc' ? 'ASC' : 'DESC';
+
+    const rows = await pool.query(
+      `SELECT * FROM orders WHERE ${where.join(' AND ')}
+       ORDER BY ${sort_by} ${sort_order}
+       LIMIT $${params.length - 1} OFFSET $${params.length}`,
+      params
+    );
+
+    const orders = rows.rows.map((r) => orderSchema.parse(coerce_numbers({
+      ...r,
+      delivery_address_id: r.delivery_address_id ?? null,
+      delivery_fee: r.delivery_fee === null || r.delivery_fee === undefined ? null : Number(r.delivery_fee),
+      subtotal: Number(r.subtotal),
+      discount_amount: Number(r.discount_amount),
+      tax_amount: Number(r.tax_amount),
+      total_amount: Number(r.total_amount),
+      refund_amount: r.refund_amount === null || r.refund_amount === undefined ? null : Number(r.refund_amount),
+    }, ['subtotal', 'discount_amount', 'tax_amount', 'total_amount', 'delivery_fee', 'refund_amount'])));
+
+    return ok(res, 200, { orders, total: count_res.rows[0]?.count ?? 0, limit: q.limit, offset: q.offset });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+    }
+    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+  }
+});
+
 app.get('/api/orders/history', authenticate_token, async (req, res) => {
   try {
     const q = parse_query(searchOrderInputSchema, { ...req.query, user_id: req.user.user_id });

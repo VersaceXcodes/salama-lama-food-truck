@@ -3697,7 +3697,7 @@ app.put('/api/staff/orders/:id/status', authenticate_token, require_role(['staff
         return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
     }
 });
-app.get('/api/staff/stock', authenticate_token, require_role(['staff', 'admin']), require_permission('manage_menu'), async (req, res) => {
+app.get('/api/staff/stock', authenticate_token, require_role(['staff', 'manager', 'admin']), async (req, res) => {
     try {
         const rows = await pool.query(`SELECT mi.item_id, mi.name, mi.category_id, c.name as category_name,
               mi.stock_tracked, mi.current_stock, mi.low_stock_threshold
@@ -4196,8 +4196,8 @@ app.get('/api/admin/stock', authenticate_token, require_role(['admin']), async (
             stock_tracked: r.stock_tracked,
             current_stock: r.current_stock === null || r.current_stock === undefined ? null : Number(r.current_stock),
             low_stock_threshold: r.low_stock_threshold === null || r.low_stock_threshold === undefined ? null : Number(r.low_stock_threshold),
-            updated_at: r.updated_at,
-            status: !r.stock_tracked
+            last_updated: r.updated_at,
+            stock_status: !r.stock_tracked
                 ? 'not_tracked'
                 : (Number(r.current_stock ?? 0) <= 0)
                     ? 'out_of_stock'
@@ -4205,12 +4205,15 @@ app.get('/api/admin/stock', authenticate_token, require_role(['admin']), async (
                         ? 'low_stock'
                         : 'ok',
         }));
-        const summary = {
-            total_tracked: items.filter((i) => i.stock_tracked).length,
-            low_stock: items.filter((i) => i.stock_tracked && i.status === 'low_stock').length,
-            out_of_stock: items.filter((i) => i.stock_tracked && i.status === 'out_of_stock').length,
-        };
-        return ok(res, 200, { summary, items });
+        const total_items_tracked = items.filter((i) => i.stock_tracked).length;
+        const low_stock_count = items.filter((i) => i.stock_tracked && i.stock_status === 'low_stock').length;
+        const out_of_stock_count = items.filter((i) => i.stock_tracked && i.stock_status === 'out_of_stock').length;
+        return ok(res, 200, {
+            total_items_tracked,
+            low_stock_count,
+            out_of_stock_count,
+            items
+        });
     }
     catch (error) {
         return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));

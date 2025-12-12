@@ -3948,20 +3948,44 @@ app.get('/api/staff/orders', authenticate_token, require_role(['staff', 'admin']
       params
     );
 
+    // Fetch order items for each order
+    const ordersWithItems = await Promise.all(
+      rows.rows.map(async (r) => {
+        const itemsRes = await pool.query(
+          `SELECT order_item_id, item_id, item_name, quantity, unit_price, selected_customizations
+           FROM order_items
+           WHERE order_id = $1
+           ORDER BY order_item_id`,
+          [r.order_id]
+        );
+
+        return {
+          order_id: r.order_id,
+          order_number: r.order_number,
+          order_type: r.order_type,
+          status: r.status,
+          customer_name: r.customer_name,
+          customer_phone: r.customer_phone,
+          collection_time_slot: r.collection_time_slot ?? null,
+          delivery_address_snapshot: r.delivery_address_snapshot ?? null,
+          special_instructions: r.special_instructions ?? null,
+          total_amount: Number(r.total_amount),
+          created_at: r.created_at,
+          updated_at: r.updated_at,
+          items: itemsRes.rows.map((item) => ({
+            order_item_id: item.order_item_id,
+            item_id: item.item_id,
+            item_name: item.item_name,
+            quantity: item.quantity,
+            unit_price: Number(item.unit_price),
+            selected_customizations: item.selected_customizations ?? null,
+          })),
+        };
+      })
+    );
+
     return ok(res, 200, {
-      orders: rows.rows.map((r) => ({
-        order_id: r.order_id,
-        order_number: r.order_number,
-        order_type: r.order_type,
-        status: r.status,
-        customer_name: r.customer_name,
-        customer_phone: r.customer_phone,
-        collection_time_slot: r.collection_time_slot ?? null,
-        delivery_address_snapshot: r.delivery_address_snapshot ?? null,
-        total_amount: Number(r.total_amount),
-        created_at: r.created_at,
-        updated_at: r.updated_at,
-      })),
+      orders: ordersWithItems,
       limit: q.limit,
       offset: q.offset,
     });

@@ -94,8 +94,11 @@ const fetchStaffOrders = async (
   );
 
   const now = new Date();
-  const orders = response.data.orders.map((order: any) => ({
+  const rawOrders = Array.isArray(response.data.orders) ? response.data.orders : [];
+  
+  const orders = rawOrders.map((order: any) => ({
     ...order,
+    items: Array.isArray(order.items) ? order.items : [],
     time_since_received: Math.floor((now.getTime() - new Date(order.created_at).getTime()) / 60000),
   }));
 
@@ -339,7 +342,7 @@ const UV_StaffOrderQueue: React.FC = () => {
     retry: 2,
   });
 
-  const orders = ordersData?.orders || [];
+  const orders = Array.isArray(ordersData?.orders) ? ordersData.orders : [];
   const queueStats = ordersData?.stats || {
     total_active: 0,
     new_count: 0,
@@ -458,11 +461,12 @@ const UV_StaffOrderQueue: React.FC = () => {
 
   // Filter orders by status for kanban view
   const ordersByStatus = useMemo(() => {
+    const safeOrders = Array.isArray(orders) ? orders : [];
     return {
-      received: orders.filter(o => o.status === 'received'),
-      preparing: orders.filter(o => o.status === 'preparing'),
-      ready: orders.filter(o => o.status === 'ready'),
-      out_for_delivery: orders.filter(o => o.status === 'out_for_delivery'),
+      received: safeOrders.filter(o => o.status === 'received'),
+      preparing: safeOrders.filter(o => o.status === 'preparing'),
+      ready: safeOrders.filter(o => o.status === 'ready'),
+      out_for_delivery: safeOrders.filter(o => o.status === 'out_for_delivery'),
     };
   }, [orders]);
 
@@ -536,20 +540,24 @@ const UV_StaffOrderQueue: React.FC = () => {
         {/* Items */}
         <div className="border-t pt-3">
           <div className="space-y-2">
-            {order.items.map((item) => (
-              <div key={item.order_item_id} className="text-sm">
-                <div className="font-medium text-gray-900">
-                  {item.quantity}x {item.item_name}
-                </div>
-                {item.selected_customizations && Object.keys(item.selected_customizations).length > 0 && (
-                  <div className="ml-4 text-xs text-gray-600 space-y-0.5">
-                    {Object.entries(item.selected_customizations).map(([key, value], idx) => (
-                      <div key={idx}>- {key}: <span className="font-medium">{String(value)}</span></div>
-                    ))}
+            {Array.isArray(order.items) && order.items.length > 0 ? (
+              order.items.map((item) => (
+                <div key={item.order_item_id} className="text-sm">
+                  <div className="font-medium text-gray-900">
+                    {item.quantity}x {item.item_name}
                   </div>
-                )}
-              </div>
-            ))}
+                  {item.selected_customizations && Object.keys(item.selected_customizations).length > 0 && (
+                    <div className="ml-4 text-xs text-gray-600 space-y-0.5">
+                      {Object.entries(item.selected_customizations).map(([key, value], idx) => (
+                        <div key={idx}>- {key}: <span className="font-medium">{String(value)}</span></div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className="text-sm text-gray-500 italic">No items available</div>
+            )}
           </div>
         </div>
 

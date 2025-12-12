@@ -64,8 +64,6 @@ const UV_CheckoutOrderType: React.FC = () => {
 
   // const currentUser = useAppStore(state => state.authentication_state.current_user);
   const authToken = useAppStore(state => state.authentication_state.auth_token);
-  const cartItems = useAppStore(state => state.cart_state.items);
-  const cartSubtotal = useAppStore(state => state.cart_state.subtotal);
   const deliveryEnabled = useAppStore(state => state.business_settings.delivery_enabled);
   // const operatingHours = useAppStore(state => state.business_settings.operating_hours);
   const updateCartFees = useAppStore(state => state.update_cart_fees);
@@ -122,6 +120,26 @@ const UV_CheckoutOrderType: React.FC = () => {
   });
 
   const savedAddresses = addressesData || [];
+
+  // ===========================
+  // Fetch Cart Data (React Query)
+  // ===========================
+
+  const { data: cartData } = useQuery({
+    queryKey: ['cart'],
+    queryFn: async () => {
+      const response = await axios.get(`${API_BASE_URL}/api/cart`, {
+        headers: authToken ? { Authorization: `Bearer ${authToken}` } : {}
+      });
+      return response.data;
+    },
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
+    retry: 1
+  });
+
+  const cartItems = cartData?.items || [];
+  const cartSubtotal = cartData?.subtotal || 0;
 
   // ===========================
   // Validate Delivery Address Mutation

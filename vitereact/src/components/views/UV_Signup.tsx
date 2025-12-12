@@ -183,6 +183,10 @@ const UV_Signup: React.FC = () => {
     // Validate password strength on password change
     if (field === 'password' && typeof value === 'string') {
       validatePasswordStrength(value);
+      // Also clear password_confirmation error if they now match
+      if (value === password_confirmation && form_validation_errors.password_confirmation) {
+        setFormValidationErrors(prev => ({ ...prev, password_confirmation: null }));
+      }
     }
   };
 
@@ -192,7 +196,7 @@ const UV_Signup: React.FC = () => {
 
     switch (field) {
       case 'email':
-        if (!value || typeof value !== 'string') {
+        if (!value || typeof value !== 'string' || value.trim() === '') {
           error = 'Email is required';
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
           error = 'Please enter a valid email address';
@@ -200,7 +204,7 @@ const UV_Signup: React.FC = () => {
         break;
 
       case 'phone':
-        if (!value || typeof value !== 'string') {
+        if (!value || typeof value !== 'string' || value.trim() === '') {
           error = 'Phone number is required';
         } else if (value.length < 10) {
           error = 'Phone number must be at least 10 digits';
@@ -210,7 +214,7 @@ const UV_Signup: React.FC = () => {
         break;
 
       case 'password':
-        if (!value || typeof value !== 'string') {
+        if (!value || typeof value !== 'string' || value.trim() === '') {
           error = 'Password is required';
         } else if (value.length < 8) {
           error = 'Password must be at least 8 characters';
@@ -222,13 +226,15 @@ const UV_Signup: React.FC = () => {
         break;
 
       case 'password_confirmation':
-        if (value !== registration_form_data.password) {
+        if (!value || typeof value !== 'string' || value.trim() === '') {
+          error = 'Password confirmation is required';
+        } else if (value !== registration_form_data.password) {
           error = 'Passwords do not match';
         }
         break;
 
       case 'first_name':
-        if (!value || typeof value !== 'string') {
+        if (!value || typeof value !== 'string' || value.trim() === '') {
           error = 'First name is required';
         } else if (value.length > 100) {
           error = 'First name is too long';
@@ -236,7 +242,7 @@ const UV_Signup: React.FC = () => {
         break;
 
       case 'last_name':
-        if (!value || typeof value !== 'string') {
+        if (!value || typeof value !== 'string' || value.trim() === '') {
           error = 'Last name is required';
         } else if (value.length > 100) {
           error = 'Last name is too long';
@@ -769,8 +775,14 @@ const UV_Signup: React.FC = () => {
                       required
                       value={password_confirmation}
                       onChange={(e) => {
-                        setPasswordConfirmation(e.target.value);
+                        const newValue = e.target.value;
+                        setPasswordConfirmation(newValue);
+                        // Clear the error immediately when user starts typing
                         setFormValidationErrors(prev => ({ ...prev, password_confirmation: null }));
+                        // If the new value matches the password, also clear any stale error
+                        if (newValue === registration_form_data.password) {
+                          setFormValidationErrors(prev => ({ ...prev, password_confirmation: null }));
+                        }
                       }}
                       onBlur={() => handleBlur('password_confirmation')}
                       className={`block w-full px-4 py-3 pr-12 border ${

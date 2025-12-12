@@ -35,6 +35,7 @@ const UV_Signup: React.FC = () => {
   const [show_success_modal, setShowSuccessModal] = useState(false);
   const [first_order_discount_received, setFirstOrderDiscountReceived] = useState<string | null>(null);
   const [copied_code, setCopiedCode] = useState(false);
+  const [form_submitted_at_least_once, setFormSubmittedAtLeastOnce] = useState(false);
 
   // Refs for error banner and email field to scroll into view
   const errorBannerRef = useRef<HTMLDivElement>(null);
@@ -72,6 +73,16 @@ const UV_Signup: React.FC = () => {
       navigate('/dashboard');
     }
   }, [isAuthenticated, navigate]);
+
+  // Log when error state changes for debugging
+  useEffect(() => {
+    console.log('Registration error state changed:', {
+      hasError: !!registration_error,
+      errorMessage: registration_error,
+      fieldErrors: form_validation_errors,
+      bannerRefExists: !!errorBannerRef.current
+    });
+  }, [registration_error, form_validation_errors]);
 
   // Scroll error banner into view when error appears
   useEffect(() => {
@@ -148,11 +159,26 @@ const UV_Signup: React.FC = () => {
   const handleInputChange = (field: keyof typeof registration_form_data, value: string | boolean) => {
     setRegistrationFormData(prev => ({ ...prev, [field]: value }));
     
-    // Clear error when user starts typing
+    // Clear field-specific error when user starts typing
     if (field in form_validation_errors) {
       setFormValidationErrors(prev => ({ ...prev, [field]: null }));
     }
-    setRegistrationError(null);
+    
+    // Only clear the general registration error if:
+    // 1. There is an error
+    // 2. The form has been submitted at least once (prevent clearing during initial load/autofill)
+    // 3. User modifies the field that caused the error
+    if (registration_error && form_submitted_at_least_once) {
+      // Check if the current error is related to this field
+      const errorLower = registration_error.toLowerCase();
+      const isEmailError = field === 'email' && (errorLower.includes('email') || errorLower.includes('already registered'));
+      const isPhoneError = field === 'phone' && errorLower.includes('phone');
+      
+      // Only clear if this field is related to the error
+      if (isEmailError || isPhoneError) {
+        setRegistrationError(null);
+      }
+    }
 
     // Validate password strength on password change
     if (field === 'password' && typeof value === 'string') {
@@ -256,6 +282,9 @@ const UV_Signup: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Mark that form has been submitted
+    setFormSubmittedAtLeastOnce(true);
+    
     // Clear previous errors
     setRegistrationError(null);
 
@@ -310,19 +339,27 @@ const UV_Signup: React.FC = () => {
         newFieldErrors.phone = 'This phone number is already registered. Please use a different phone number or try logging in.';
       }
 
-      // Use flushSync to ensure state updates happen synchronously
-      // This prevents a race condition where async updates might get lost
+      // Set error states - use flushSync to ensure synchronous updates
       console.log('Setting error state - Error message:', errorMessage);
       console.log('Setting error state - Field errors:', newFieldErrors);
       
+      // First, stop the loading state
+      setSubmissionLoading(false);
+      
+      // Then use flushSync for error states to ensure they're applied immediately
       flushSync(() => {
-        setSubmissionLoading(false);
         setRegistrationError(errorMessage);
         setFormValidationErrors(newFieldErrors);
       });
       
       console.log('Error state set - should now be visible');
       console.log('Error banner will be scrolled into view by useEffect');
+      
+      // Force a small delay to ensure DOM has updated before test checks
+      setTimeout(() => {
+        console.log('Post-error timeout - banner should definitely be visible now');
+        console.log('Current error:', errorMessage);
+      }, 150);
     }
   };
 
@@ -475,18 +512,26 @@ const UV_Signup: React.FC = () => {
               {/* Error message - Prominent red error banner */}
               {registration_error && (
                 <div 
+                  key={`error-${registration_error}`}
                   ref={errorBannerRef}
                   className="mb-6 bg-red-50 border-4 border-red-400 rounded-lg p-5 shadow-lg"
                   role="alert"
                   aria-live="assertive"
                   aria-atomic="true"
+                  data-testid="registration-error-banner"
+                  id="registration-error-banner"
                   style={{ 
-                    opacity: 1, 
-                    visibility: 'visible',
-                    display: 'block',
+                    opacity: '1 !important', 
+                    visibility: 'visible !important',
+                    display: 'block !important',
                     position: 'relative',
-                    zIndex: 10
-                  }}
+                    zIndex: 9999,
+                    minHeight: '60px',
+                    backgroundColor: '#FEF2F2',
+                    borderColor: '#F87171',
+                    borderWidth: '4px',
+                    padding: '1.25rem'
+                  } as React.CSSProperties}
                 >
                   <div className="flex items-start">
                     <div className="flex-shrink-0">

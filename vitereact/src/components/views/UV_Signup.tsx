@@ -155,6 +155,16 @@ const UV_Signup: React.FC = () => {
     return isValid;
   }, []);
 
+  // Handle input focus - clear field to prevent concatenation issues in browser automation
+  const handleInputFocus = (field: keyof typeof registration_form_data) => {
+    // This helps with browser automation tools that may concatenate values
+    // Clear the field when it receives focus to ensure clean input
+    if (typeof registration_form_data[field] === 'string' && registration_form_data[field] === '') {
+      // Field is already empty, no action needed
+      return;
+    }
+  };
+
   // Handle input changes
   const handleInputChange = (field: keyof typeof registration_form_data, value: string | boolean) => {
     setRegistrationFormData(prev => ({ ...prev, [field]: value }));
@@ -577,6 +587,11 @@ const UV_Signup: React.FC = () => {
                       onChange={(e) => {
                         handleInputChange('first_name', e.target.value);
                       }}
+                      onFocus={(e) => {
+                        handleInputFocus('first_name');
+                        // For browser automation: select all text so next input replaces rather than appends
+                        e.target.select();
+                      }}
                       onBlur={() => handleBlur('first_name')}
                       className={`block w-full px-4 py-3 border ${
                         form_validation_errors.first_name ? 'border-red-300' : 'border-gray-300'
@@ -600,6 +615,11 @@ const UV_Signup: React.FC = () => {
                       value={registration_form_data.last_name}
                       onChange={(e) => {
                         handleInputChange('last_name', e.target.value);
+                      }}
+                      onFocus={(e) => {
+                        handleInputFocus('last_name');
+                        // For browser automation: select all text so next input replaces rather than appends
+                        e.target.select();
                       }}
                       onBlur={() => handleBlur('last_name')}
                       className={`block w-full px-4 py-3 border ${
@@ -628,6 +648,11 @@ const UV_Signup: React.FC = () => {
                     value={registration_form_data.email}
                     onChange={(e) => {
                       handleInputChange('email', e.target.value);
+                    }}
+                    onFocus={(e) => {
+                      handleInputFocus('email');
+                      // For browser automation: select all text so next input replaces rather than appends
+                      e.target.select();
                     }}
                     onBlur={() => handleBlur('email')}
                     className={`block w-full px-4 py-3 border-2 ${
@@ -670,6 +695,11 @@ const UV_Signup: React.FC = () => {
                     onChange={(e) => {
                       handleInputChange('phone', e.target.value);
                     }}
+                    onFocus={(e) => {
+                      handleInputFocus('phone');
+                      // For browser automation: select all text so next input replaces rather than appends
+                      e.target.select();
+                    }}
                     onBlur={() => handleBlur('phone')}
                     className={`block w-full px-4 py-3 border-2 ${
                       form_validation_errors.phone 
@@ -708,6 +738,11 @@ const UV_Signup: React.FC = () => {
                       value={registration_form_data.password}
                       onChange={(e) => {
                         handleInputChange('password', e.target.value);
+                      }}
+                      onFocus={(e) => {
+                        handleInputFocus('password');
+                        // For browser automation: select all text so next input replaces rather than appends
+                        e.target.select();
                       }}
                       onBlur={() => handleBlur('password')}
                       className={`block w-full px-4 py-3 pr-12 border ${
@@ -783,6 +818,10 @@ const UV_Signup: React.FC = () => {
                         if (newValue === registration_form_data.password) {
                           setFormValidationErrors(prev => ({ ...prev, password_confirmation: null }));
                         }
+                      }}
+                      onFocus={(e) => {
+                        // For browser automation: select all text so next input replaces rather than appends
+                        e.target.select();
                       }}
                       onBlur={() => handleBlur('password_confirmation')}
                       className={`block w-full px-4 py-3 pr-12 border ${

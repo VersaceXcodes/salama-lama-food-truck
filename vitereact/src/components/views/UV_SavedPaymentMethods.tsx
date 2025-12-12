@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppStore } from '@/store/main';
-import { CreditCard, Plus, Trash2, Check, X, AlertCircle } from 'lucide-react';
+import { CreditCard, Plus, Trash2, Check, AlertCircle } from 'lucide-react';
 
 // ===========================
 // Types & Interfaces

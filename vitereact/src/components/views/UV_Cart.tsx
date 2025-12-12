@@ -118,7 +118,7 @@ const UV_Cart: React.FC = () => {
       console.error('Failed to update item quantity:', error);
       alert(error.response?.data?.message || 'Failed to update quantity. Please try again.');
     },
-    onSettled: (data, error, variables) => {
+    onSettled: (_data, _error, variables) => {
       setItemLoadingStates(prev => ({ ...prev, [variables.item_id]: false }));
     }
   });

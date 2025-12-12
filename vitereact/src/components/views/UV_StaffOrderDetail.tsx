@@ -482,7 +482,6 @@ const UV_StaffOrderDetail: React.FC = () => {
         {statuses.map((status, index) => {
           const is_current = status === current_status;
           const is_past = index < current_index;
-          const is_future = index > current_index;
 
           return (
             <React.Fragment key={status}>

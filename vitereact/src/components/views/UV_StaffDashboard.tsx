@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppStore } from '@/store/main';
@@ -321,15 +321,7 @@ const UV_StaffDashboard: React.FC = () => {
       : { text: 'Delivery', color: 'bg-purple-100 text-purple-800' };
   };
 
-  const _getNextStatusAction = (currentStatus: string): { status: string; label: string; color: string } | null => {
-    const statusMap: Record<string, { status: string; label: string; color: string }> = {
-      received: { status: 'preparing', label: 'Start Preparing', color: 'bg-blue-600 hover:bg-blue-700' },
-      preparing: { status: 'ready', label: 'Mark Ready', color: 'bg-green-600 hover:bg-green-700' },
-      ready: { status: 'completed', label: 'Complete', color: 'bg-gray-600 hover:bg-gray-700' },
-    };
-    return statusMap[currentStatus] || null;
-  };
-  // getNextStatusAction is defined but currently unused - placeholder for future feature
+  // Removed unused function _getNextStatusAction - can be re-added if needed in future
 
   // ===========================
   // Loading State

@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppStore } from '@/store/main';
@@ -247,7 +247,7 @@ const UV_StaffStock: React.FC = () => {
   // Stock update mutation
   const stockUpdateMutation = useMutation({
     mutationFn: (payload: StockUpdatePayload) => updateItemStock(authToken, payload),
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       // Refetch stock data
       queryClient.invalidateQueries({ queryKey: ['staff-stock'] });
       

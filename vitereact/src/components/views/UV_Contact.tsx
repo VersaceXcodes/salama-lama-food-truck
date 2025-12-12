@@ -100,7 +100,7 @@ const UV_Contact: React.FC = () => {
   // ===========================
 
   const submit_mutation = useMutation({
-    mutationFn: async (form_data: ContactFormData) => {
+    mutationFn: async (_form_data: ContactFormData) => {
       // MISSING ENDPOINT: POST /api/contact/submit not defined in OpenAPI spec
       // Simulating submission for now - in production, this should create a support ticket
       await new Promise(resolve => setTimeout(resolve, 1500));

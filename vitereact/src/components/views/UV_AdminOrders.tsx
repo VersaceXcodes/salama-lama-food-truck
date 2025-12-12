@@ -11,9 +11,6 @@ import {
   ChevronUp,
   RefreshCw,
   X,
-  CheckCircle,
-  XCircle,
-  Clock,
   Truck,
   ShoppingBag,
   AlertCircle,
@@ -195,17 +192,7 @@ const getPaymentStatusBadgeColor = (status: string): string => {
   return colors[status] || 'bg-gray-100 text-gray-800';
 };
 
-const getStatusIcon = (status: string) => {
-  const icons: Record<string, React.ReactNode> = {
-    received: <Clock className="w-4 h-4" />,
-    preparing: <RefreshCw className="w-4 h-4" />,
-    ready: <CheckCircle className="w-4 h-4" />,
-    out_for_delivery: <Truck className="w-4 h-4" />,
-    completed: <CheckCircle className="w-4 h-4" />,
-    cancelled: <XCircle className="w-4 h-4" />,
-  };
-  return icons[status] || <Clock className="w-4 h-4" />;
-};
+// Removed unused function getStatusIcon - can be re-added if needed in future
 
 // ===========================
 // Main Component

@@ -215,28 +215,7 @@ const getNextStatusAction = (order: Order): { label: string; status: Order['stat
   }
 };
 
-const playNotificationSound = () => {
-  try {
-    // Using a simple beep tone (data URL for a short beep)
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    oscillator.frequency.value = 800;
-    oscillator.type = 'sine';
-    
-    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-    
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.5);
-  } catch (error) {
-    console.error('Failed to play notification sound:', error);
-  }
-};
+// Removed unused function playNotificationSound - can be re-added for WebSocket integration
 
 const generateKitchenTicket = (order: Order): string => {
   const customizationsList = order.items.map(item => {
@@ -389,7 +368,7 @@ const UV_StaffOrderQueue: React.FC = () => {
 
       return { previousData };
     },
-    onError: (err, payload, context) => {
+    onError: (err, _payload, context) => {
       if (context?.previousData) {
         queryClient.setQueryData(['staff', 'orders', filterOptions], context.previousData);
       }
@@ -423,25 +402,19 @@ const UV_StaffOrderQueue: React.FC = () => {
   }, [authToken, currentUser, subscribeToStaffEvents]);
 
   // Handle WebSocket new order event
+  // Placeholder for WebSocket integration - currently not implemented
   useEffect(() => {
-    const _handleNewOrder = () => {
-      queryClient.invalidateQueries({ queryKey: ['staff', 'orders'] });
-      
-      const isMuted = notificationSettings.muted_until && new Date(notificationSettings.muted_until) > new Date();
-      
-      if (notificationSettings.audio_enabled && !isMuted) {
-        playNotificationSound();
-      }
-      
-      addNotification({
-        type: 'new_order',
-        message: 'New order received!',
-      });
-    };
-    // handleNewOrder is defined but currently not called - placeholder for WebSocket integration
-
     // In a real implementation, this would be connected to the WebSocket event listener
-    // For now, we'll just set up the handler structure
+    // Example:
+    // const handleNewOrder = () => {
+    //   queryClient.invalidateQueries({ queryKey: ['staff', 'orders'] });
+    //   const isMuted = notificationSettings.muted_until && new Date(notificationSettings.muted_until) > new Date();
+    //   if (notificationSettings.audio_enabled && !isMuted) {
+    //     playNotificationSound();
+    //   }
+    //   addNotification({ type: 'new_order', message: 'New order received!' });
+    // };
+    
     return () => {
       // Cleanup
     };

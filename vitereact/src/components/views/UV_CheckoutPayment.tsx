@@ -103,7 +103,6 @@ const UV_CheckoutPayment: React.FC = () => {
   const {
     data: savedPaymentMethods = [],
     isLoading: loadingPaymentMethods,
-    error: fetchError,
   } = useQuery({
     queryKey: ['payment-methods', currentUser?.user_id],
     queryFn: () => fetchPaymentMethods(authToken!),
@@ -295,10 +294,7 @@ const UV_CheckoutPayment: React.FC = () => {
   // Helper Functions
   // ===========================
 
-  const getCardBrandIcon = (cardType: string) => {
-    // In real app, would return actual card brand logo
-    return <CreditCard className="h-6 w-6 text-gray-600" />;
-  };
+  // Removed unused function getCardBrandIcon - can be re-added if needed in future
 
   const getErrorMessage = (field: string): string | undefined => {
     return paymentValidationErrors.find(err => err.field === field)?.message;
@@ -405,7 +401,7 @@ const UV_CheckoutPayment: React.FC = () => {
                                   className="h-4 w-4 text-blue-600 focus:ring-blue-500"
                                 />
                                 <div className="flex-shrink-0">
-                                  {getCardBrandIcon(method.card_type)}
+                                  <CreditCard className="h-6 w-6 text-gray-600" />
                                 </div>
                                 <div className="flex-1">
                                   <div className="flex items-center space-x-2">

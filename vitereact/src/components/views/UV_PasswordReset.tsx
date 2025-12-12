@@ -116,7 +116,7 @@ const UV_PasswordReset: React.FC = () => {
   // React Query mutation for password reset
   const reset_mutation = useMutation({
     mutationFn: resetPassword,
-    onSuccess: (data) => {
+    onSuccess: (_data) => {
       setIsSuccess(true);
       setErrorMessage(null);
       

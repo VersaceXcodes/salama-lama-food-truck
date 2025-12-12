@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppStore } from '@/store/main';
@@ -194,7 +194,7 @@ const UV_Menu: React.FC = () => {
   const addToCartMutation = useMutation({
     mutationFn: (data: { item_id: string; quantity: number; selected_customizations: Record<string, any> }) =>
       addItemToCart(data, authToken),
-    onSuccess: (response) => {
+    onSuccess: (_response) => {
       // Update Zustand cart state
       if (customizationModal.item) {
         const item = customizationModal.item;

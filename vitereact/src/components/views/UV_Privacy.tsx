@@ -367,7 +367,7 @@ const UV_Privacy: React.FC = () => {
       if (!authToken) throw new Error('Not authenticated');
       return requestDataExport(authToken);
     },
-    onSuccess: (data) => {
+    onSuccess: (_data) => {
       setExportSuccessMessage('Data export request submitted successfully! You will receive an email with your data within 48 hours.');
       setExportErrorMessage(null);
       

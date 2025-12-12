@@ -231,15 +231,16 @@ const UV_AdminMenuItemForm: React.FC = () => {
   const createMutation = useMutation({
     mutationFn: (payload: CreateMenuItemPayload) => createMenuItem(payload, authToken!),
     onSuccess: async () => {
-      // Invalidate and remove cached data to force fresh fetch
-      await queryClient.invalidateQueries({ queryKey: ['admin-menu-items'], refetchType: 'all' });
+      // CRITICAL FIX: Completely clear all menu item caches before navigation
       queryClient.removeQueries({ queryKey: ['admin-menu-items'] });
-      
-      // Wait for cache to clear and refetch to ensure fresh data
-      await queryClient.refetchQueries({ queryKey: ['admin-menu-items'], type: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['admin-menu-items'] });
       
       setSuccessMessage('Menu item created successfully!');
-      // Navigate immediately after refetch completes to ensure fresh data is loaded
+      
+      // Small delay to ensure cache clear is complete before navigation
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Navigate to list - the list view will fetch fresh data on mount
       navigate('/admin/menu');
     },
     onError: (error: any) => {
@@ -256,20 +257,21 @@ const UV_AdminMenuItemForm: React.FC = () => {
     mutationFn: (payload: Partial<CreateMenuItemPayload>) =>
       updateMenuItem(itemIdParam!, payload, authToken!),
     onSuccess: async () => {
-      // Aggressively invalidate all related queries and wait for them to refetch
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['admin-menu-items'], refetchType: 'all' }),
-        queryClient.invalidateQueries({ queryKey: ['admin-menu-item', itemIdParam], refetchType: 'all' }),
-      ]);
-      
-      // Remove all cached data for menu items to force fresh fetch
+      // CRITICAL FIX: Completely clear all menu item caches before navigation
+      // This ensures the list view will fetch completely fresh data
       queryClient.removeQueries({ queryKey: ['admin-menu-items'] });
+      queryClient.removeQueries({ queryKey: ['admin-menu-item', itemIdParam] });
       
-      // Wait for cache to clear and refetch to ensure fresh data
-      await queryClient.refetchQueries({ queryKey: ['admin-menu-items'], type: 'active' });
+      // Invalidate to mark queries as stale
+      queryClient.invalidateQueries({ queryKey: ['admin-menu-items'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-menu-item', itemIdParam] });
       
       setSuccessMessage('Menu item updated successfully!');
-      // Navigate immediately after refetch completes to ensure fresh data is loaded
+      
+      // Small delay to ensure cache clear is complete before navigation
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Navigate to list - the list view will fetch fresh data on mount
       navigate('/admin/menu');
     },
     onError: (error: any) => {

@@ -78,14 +78,22 @@ const fetchMenuItems = async (
   if (isActive) params.append('is_active', isActive);
   if (search) params.append('search', search);
 
+  // CRITICAL FIX: Add timestamp to prevent browser caching
+  params.append('_t', Date.now().toString());
+
   const response = await axios.get(
     `${API_BASE_URL}/api/admin/menu/items?${params.toString()}`,
     {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Cache-Control': 'no-cache, no-store, must-revalidate', // Prevent HTTP caching
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      },
     }
   );
 
-  // CRITICAL: Convert NUMERIC fields from strings to numbers
+  // CRITICAL: Convert NUMERIC fields from strings to numbers to ensure proper display
   return {
     ...response.data,
     items: response.data.items.map((item: any) => ({
@@ -217,7 +225,7 @@ const UV_AdminMenuList: React.FC = () => {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Fetch menu items
+  // Fetch menu items - CRITICAL: Aggressive cache settings to prevent stale data
   const {
     data: menuItemsData,
     isLoading: itemsLoading,
@@ -238,10 +246,11 @@ const UV_AdminMenuList: React.FC = () => {
         debouncedSearch
       ),
     enabled: !!authToken,
-    staleTime: 0, // Always fetch fresh data to ensure updates are immediately visible
-    gcTime: 0, // Don't cache data in memory (formerly cacheTime)
-    refetchOnMount: 'always', // Always refetch when component mounts
+    staleTime: 0, // Always consider data stale - fetch fresh immediately
+    gcTime: 0, // Don't cache data in memory at all
+    refetchOnMount: 'always', // CRITICAL: Always refetch when component mounts (prevents stale data after navigation)
     refetchOnWindowFocus: false, // Don't refetch on window focus to avoid unnecessary requests
+    refetchOnReconnect: true, // Refetch on network reconnect
   });
 
   // Toggle item status mutation

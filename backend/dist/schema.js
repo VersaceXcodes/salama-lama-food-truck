@@ -312,13 +312,16 @@ export const updateMenuItemInputSchema = z.object({
 });
 export const searchMenuItemInputSchema = z.object({
     query: z.string().optional(),
+    search: z.string().optional(), // Alias for query
     category_id: z.string().optional(),
+    category: z.string().optional(), // Alias for category_id
     is_active: z.boolean().optional(),
     is_featured: z.boolean().optional(),
     is_limited_edition: z.boolean().optional(),
     available_for_collection: z.boolean().optional(),
     available_for_delivery: z.boolean().optional(),
     dietary_tags: z.array(z.string()).optional(),
+    dietary_filters: z.union([z.string(), z.array(z.string())]).optional(), // Alias for dietary_tags
     min_price: z.number().nonnegative().optional(),
     max_price: z.number().positive().optional(),
     in_stock: z.boolean().optional(),

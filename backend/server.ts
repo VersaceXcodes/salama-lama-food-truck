@@ -638,59 +638,81 @@ async function fetch_menu_items({ for_admin = false, search }) {
   const where = [];
   const params = [];
 
+  // Normalize aliases from frontend
+  const normalized_search = {
+    ...search,
+    category_id: search.category_id || search.category,
+    query: search.query || search.search,
+    dietary_tags: search.dietary_tags || (search.dietary_filters ? (Array.isArray(search.dietary_filters) ? search.dietary_filters : [search.dietary_filters]) : undefined),
+  };
+
   if (!for_admin) {
     where.push('mi.is_active = true');
-  } else if (search.is_active !== undefined) {
-    params.push(search.is_active);
+  } else if (normalized_search.is_active !== undefined) {
+    params.push(normalized_search.is_active);
     where.push(`mi.is_active = $${params.length}`);
   }
 
-  if (search.category_id) {
-    params.push(search.category_id);
+  if (normalized_search.category_id) {
+    params.push(normalized_search.category_id);
     where.push(`mi.category_id = $${params.length}`);
   }
 
-  if (search.is_featured !== undefined) {
-    params.push(search.is_featured);
+  if (normalized_search.is_featured !== undefined) {
+    params.push(normalized_search.is_featured);
     where.push(`mi.is_featured = $${params.length}`);
   }
 
-  if (search.is_limited_edition !== undefined) {
-    params.push(search.is_limited_edition);
+  if (normalized_search.is_limited_edition !== undefined) {
+    params.push(normalized_search.is_limited_edition);
     where.push(`mi.is_limited_edition = $${params.length}`);
   }
 
-  if (search.available_for_collection !== undefined) {
-    params.push(search.available_for_collection);
+  if (normalized_search.available_for_collection !== undefined) {
+    params.push(normalized_search.available_for_collection);
     where.push(`mi.available_for_collection = $${params.length}`);
   }
 
-  if (search.available_for_delivery !== undefined) {
-    params.push(search.available_for_delivery);
+  if (normalized_search.available_for_delivery !== undefined) {
+    params.push(normalized_search.available_for_delivery);
     where.push(`mi.available_for_delivery = $${params.length}`);
   }
 
-  if (search.min_price !== undefined) {
-    params.push(search.min_price);
+  if (normalized_search.min_price !== undefined) {
+    params.push(normalized_search.min_price);
     where.push(`mi.price >= $${params.length}`);
   }
 
-  if (search.max_price !== undefined) {
-    params.push(search.max_price);
+  if (normalized_search.max_price !== undefined) {
+    params.push(normalized_search.max_price);
     where.push(`mi.price <= $${params.length}`);
   }
 
-  if (search.in_stock === true) {
+  if (normalized_search.in_stock === true) {
     where.push('(mi.stock_tracked = false OR (mi.current_stock IS NOT NULL AND mi.current_stock > 0))');
   }
 
-  if (search.query) {
-    params.push(`%${search.query}%`);
-    where.push(`(mi.name ILIKE $${params.length} OR mi.description ILIKE $${params.length})`);
+  // Improved search with relevance
+  let search_order_clause = '';
+  if (normalized_search.query) {
+    params.push(`%${normalized_search.query}%`);
+    const search_param_idx = params.length;
+    where.push(`(mi.name ILIKE $${search_param_idx} OR mi.description ILIKE $${search_param_idx})`);
+    
+    // Add relevance-based ordering: exact name match > name starts with > name contains > description contains
+    params.push(normalized_search.query.toLowerCase());
+    const exact_param_idx = params.length;
+    search_order_clause = `, 
+      CASE 
+        WHEN LOWER(mi.name) = $${exact_param_idx} THEN 1
+        WHEN LOWER(mi.name) LIKE $${exact_param_idx} || '%' THEN 2
+        WHEN LOWER(mi.name) LIKE '%' || $${exact_param_idx} || '%' THEN 3
+        ELSE 4
+      END`;
   }
 
-  if (search.dietary_tags && Array.isArray(search.dietary_tags) && search.dietary_tags.length > 0) {
-    params.push(JSON.stringify(search.dietary_tags));
+  if (normalized_search.dietary_tags && Array.isArray(normalized_search.dietary_tags) && normalized_search.dietary_tags.length > 0) {
+    params.push(JSON.stringify(normalized_search.dietary_tags));
     where.push(`(mi.dietary_tags @> $${params.length}::jsonb)`);
   }
 
@@ -700,8 +722,8 @@ async function fetch_menu_items({ for_admin = false, search }) {
     sort_order: 'mi.sort_order',
     created_at: 'mi.created_at',
   };
-  const sort_by = sort_by_map[search.sort_by] || 'mi.sort_order';
-  const sort_order = search.sort_order === 'desc' ? 'DESC' : 'ASC';
+  const sort_by = sort_by_map[normalized_search.sort_by] || 'mi.sort_order';
+  const sort_order = normalized_search.sort_order === 'desc' ? 'DESC' : 'ASC';
 
   const where_sql = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
@@ -712,15 +734,19 @@ async function fetch_menu_items({ for_admin = false, search }) {
     params
   );
 
-  params.push(search.limit);
-  params.push(search.offset);
+  params.push(normalized_search.limit);
+  params.push(normalized_search.offset);
+
+  const order_clause = normalized_search.query 
+    ? `ORDER BY ${search_order_clause.substring(2)}, ${sort_by} ${sort_order}, mi.name ASC`
+    : `ORDER BY ${sort_by} ${sort_order}, mi.name ASC`;
 
   const rows_res = await pool.query(
     `SELECT mi.*, c.name as category_name, c.sort_order as category_sort_order
      FROM menu_items mi
      JOIN categories c ON mi.category_id = c.category_id
      ${where_sql}
-     ORDER BY ${sort_by} ${sort_order}, mi.name ASC
+     ${order_clause}
      LIMIT $${params.length - 1} OFFSET $${params.length}`,
     params
   );

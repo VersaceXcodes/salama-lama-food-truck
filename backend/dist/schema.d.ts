@@ -831,13 +831,16 @@ export declare const updateMenuItemInputSchema: z.ZodObject<{
 }>;
 export declare const searchMenuItemInputSchema: z.ZodObject<{
     query: z.ZodOptional<z.ZodString>;
+    search: z.ZodOptional<z.ZodString>;
     category_id: z.ZodOptional<z.ZodString>;
+    category: z.ZodOptional<z.ZodString>;
     is_active: z.ZodOptional<z.ZodBoolean>;
     is_featured: z.ZodOptional<z.ZodBoolean>;
     is_limited_edition: z.ZodOptional<z.ZodBoolean>;
     available_for_collection: z.ZodOptional<z.ZodBoolean>;
     available_for_delivery: z.ZodOptional<z.ZodBoolean>;
     dietary_tags: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+    dietary_filters: z.ZodOptional<z.ZodUnion<[z.ZodString, z.ZodArray<z.ZodString, "many">]>>;
     min_price: z.ZodOptional<z.ZodNumber>;
     max_price: z.ZodOptional<z.ZodNumber>;
     in_stock: z.ZodOptional<z.ZodBoolean>;
@@ -858,6 +861,9 @@ export declare const searchMenuItemInputSchema: z.ZodObject<{
     available_for_collection?: boolean;
     available_for_delivery?: boolean;
     is_featured?: boolean;
+    search?: string;
+    category?: string;
+    dietary_filters?: string | string[];
     min_price?: number;
     max_price?: number;
     in_stock?: boolean;
@@ -874,6 +880,9 @@ export declare const searchMenuItemInputSchema: z.ZodObject<{
     available_for_collection?: boolean;
     available_for_delivery?: boolean;
     is_featured?: boolean;
+    search?: string;
+    category?: string;
+    dietary_filters?: string | string[];
     min_price?: number;
     max_price?: number;
     in_stock?: boolean;

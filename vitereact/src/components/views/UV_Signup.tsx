@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppStore } from '@/store/main';
 import { Eye, EyeOff, Check, X, Copy, Gift, Sparkles } from 'lucide-react';
@@ -35,6 +35,10 @@ const UV_Signup: React.FC = () => {
   const [first_order_discount_received, setFirstOrderDiscountReceived] = useState<string | null>(null);
   const [copied_code, setCopiedCode] = useState(false);
 
+  // Refs for error banner and email field to scroll into view
+  const errorBannerRef = useRef<HTMLDivElement>(null);
+  const emailFieldRef = useRef<HTMLInputElement>(null);
+
   // Form validation errors
   const [form_validation_errors, setFormValidationErrors] = useState<{
     email: string | null;
@@ -67,6 +71,22 @@ const UV_Signup: React.FC = () => {
       navigate('/dashboard');
     }
   }, [isAuthenticated, navigate]);
+
+  // Scroll error banner into view when error appears
+  useEffect(() => {
+    if (registration_error && errorBannerRef.current) {
+      errorBannerRef.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      });
+      // Also focus the email field if there's an email error
+      if (form_validation_errors.email && emailFieldRef.current) {
+        setTimeout(() => {
+          emailFieldRef.current?.focus();
+        }, 500);
+      }
+    }
+  }, [registration_error, form_validation_errors.email]);
 
   // Password strength validation
   const validatePasswordStrength = useCallback((password: string) => {
@@ -249,39 +269,39 @@ const UV_Signup: React.FC = () => {
       setSubmissionLoading(false);
 
     } catch (error: any) {
+      // Stop loading state
       setSubmissionLoading(false);
       
       // Handle error - use backend message if available, fallback to generic
       const errorMessage = error.response?.data?.message || error.message || 'Registration failed. Please try again.';
-      setRegistrationError(errorMessage);
-
+      
       // Log error for debugging
       console.error('Registration error:', error);
       console.error('Error response:', error.response?.data);
 
+      // Create new errors object for batch update
+      const newFieldErrors = { ...form_validation_errors };
+      
       // Parse specific field errors if available
       if (error.response?.data?.errors) {
         const backendErrors = error.response.data.errors;
-        setFormValidationErrors(prev => ({
-          ...prev,
-          ...backendErrors,
-        }));
+        Object.assign(newFieldErrors, backendErrors);
       }
       
       // Handle specific error codes from backend
-      if (error.response?.data?.error_code === 'EMAIL_ALREADY_EXISTS') {
-        setFormValidationErrors(prev => ({
-          ...prev,
-          email: 'This email address is already registered. Please use a different email or try logging in.',
-        }));
+      const errorCode = error.response?.data?.error_code;
+      
+      if (errorCode === 'EMAIL_ALREADY_EXISTS') {
+        newFieldErrors.email = 'This email address is already registered. Please use a different email or try logging in.';
       }
       
-      if (error.response?.data?.error_code === 'PHONE_ALREADY_EXISTS') {
-        setFormValidationErrors(prev => ({
-          ...prev,
-          phone: 'This phone number is already registered. Please use a different phone number or try logging in.',
-        }));
+      if (errorCode === 'PHONE_ALREADY_EXISTS') {
+        newFieldErrors.phone = 'This phone number is already registered. Please use a different phone number or try logging in.';
       }
+
+      // Apply all state updates together using React's automatic batching
+      setRegistrationError(errorMessage);
+      setFormValidationErrors(newFieldErrors);
     }
   };
 
@@ -433,7 +453,13 @@ const UV_Signup: React.FC = () => {
 
               {/* Error message - Prominent red error banner */}
               {registration_error && (
-                <div className="mb-6 bg-red-50 border-4 border-red-400 rounded-lg p-5 shadow-lg animate-shake" role="alert">
+                <div 
+                  ref={errorBannerRef}
+                  className="mb-6 bg-red-50 border-4 border-red-400 rounded-lg p-5 shadow-lg animate-shake" 
+                  role="alert"
+                  aria-live="assertive"
+                  aria-atomic="true"
+                >
                   <div className="flex items-start">
                     <div className="flex-shrink-0">
                       <X className="h-6 w-6 text-red-600" />
@@ -514,6 +540,7 @@ const UV_Signup: React.FC = () => {
                     Email Address <span className="text-red-500">*</span>
                   </label>
                   <input
+                    ref={emailFieldRef}
                     id="email"
                     name="email"
                     type="email"
@@ -525,13 +552,25 @@ const UV_Signup: React.FC = () => {
                     }}
                     onBlur={() => handleBlur('email')}
                     className={`block w-full px-4 py-3 border-2 ${
-                      form_validation_errors.email ? 'border-red-500 bg-red-50' : 'border-gray-300'
-                    } rounded-lg focus:outline-none focus:ring-4 focus:ring-orange-100 focus:border-orange-500 transition-all`}
+                      form_validation_errors.email 
+                        ? 'border-red-600 bg-red-50 ring-4 ring-red-200 text-red-900' 
+                        : 'border-gray-300'
+                    } rounded-lg focus:outline-none focus:ring-4 ${
+                      form_validation_errors.email
+                        ? 'focus:ring-red-200 focus:border-red-600'
+                        : 'focus:ring-orange-100 focus:border-orange-500'
+                    } transition-all`}
                     placeholder="you@example.com"
+                    aria-invalid={form_validation_errors.email ? 'true' : 'false'}
+                    aria-describedby={form_validation_errors.email ? 'email-error' : undefined}
                   />
                   {form_validation_errors.email && (
-                    <p className="mt-2 text-sm font-semibold text-red-700 flex items-start">
-                      <X className="h-4 w-4 mr-1 mt-0.5 flex-shrink-0" />
+                    <p 
+                      id="email-error"
+                      className="mt-2 text-sm font-bold text-red-800 flex items-start bg-red-100 p-2 rounded border-l-4 border-red-600"
+                      role="alert"
+                    >
+                      <X className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0 text-red-600" />
                       <span>{form_validation_errors.email}</span>
                     </p>
                   )}
@@ -554,13 +593,22 @@ const UV_Signup: React.FC = () => {
                     }}
                     onBlur={() => handleBlur('phone')}
                     className={`block w-full px-4 py-3 border-2 ${
-                      form_validation_errors.phone ? 'border-red-500 bg-red-50' : 'border-gray-300'
-                    } rounded-lg focus:outline-none focus:ring-4 focus:ring-orange-100 focus:border-orange-500 transition-all`}
+                      form_validation_errors.phone 
+                        ? 'border-red-600 bg-red-50 ring-4 ring-red-200 text-red-900' 
+                        : 'border-gray-300'
+                    } rounded-lg focus:outline-none focus:ring-4 ${
+                      form_validation_errors.phone
+                        ? 'focus:ring-red-200 focus:border-red-600'
+                        : 'focus:ring-orange-100 focus:border-orange-500'
+                    } transition-all`}
                     placeholder="+353 1 234 5678"
                   />
                   {form_validation_errors.phone && (
-                    <p className="mt-2 text-sm font-semibold text-red-700 flex items-start">
-                      <X className="h-4 w-4 mr-1 mt-0.5 flex-shrink-0" />
+                    <p 
+                      className="mt-2 text-sm font-bold text-red-800 flex items-start bg-red-100 p-2 rounded border-l-4 border-red-600"
+                      role="alert"
+                    >
+                      <X className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0 text-red-600" />
                       <span>{form_validation_errors.phone}</span>
                     </p>
                   )}

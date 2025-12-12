@@ -1,0 +1,112 @@
+{
+  "items": [
+    {
+      "cart_item_id": "cart_dPyemeC76PXHK7hhfZEz",
+      "item_id": "item_002",
+      "quantity": 1,
+      "selected_customizations": {
+        "cg_001": [
+          {
+            "option_id": "co_002",
+            "option_name": "Oat Milk",
+            "additional_price": 0.5
+          }
+        ],
+        "cg_002": [
+          {
+            "option_id": "co_006",
+            "option_name": "Large",
+            "additional_price": 0.8
+          }
+        ],
+        "cg_003": [
+          {
+            "option_id": "co_008",
+            "option_name": "Extra Shot",
+            "additional_price": 0.6
+          }
+        ]
+      },
+      "added_at": "2025-12-12T02:46:08.037Z"
+    },
+    {
+      "cart_item_id": "cart_kmDtkYm1qfccKtY3EOST",
+      "item_id": "item_017",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-12T02:48:55.814Z"
+    },
+    {
+      "cart_item_id": "cart_84RipMp3ttkSx_t9kfLa",
+      "item_id": "item_015",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-12T02:49:56.525Z"
+    },
+    {
+      "cart_item_id": "cart_Ss5xo6aNnNRrKWy6Ss_q",
+      "item_id": "item_017",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-12T02:59:03.666Z"
+    },
+    {
+      "cart_item_id": "cart_lV107v2g7aMbwHFDVr3v",
+      "item_id": "item_017",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-12T03:00:43.409Z"
+    },
+    {
+      "cart_item_id": "cart_ByJzBvyEpwrvV8K1Go4h",
+      "item_id": "item_017",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-12T03:08:14.590Z"
+    },
+    {
+      "cart_item_id": "cart_UtF7S9GkP5bg3Zdfg6ap",
+      "item_id": "item_017",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-12T03:10:06.305Z"
+    },
+    {
+      "cart_item_id": "cart_wXWfTROe_6FdNTQYMFjF",
+      "item_id": "item_017",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-12T03:20:19.955Z"
+    },
+    {
+      "cart_item_id": "cart_ceWbAuU-9Z9FsKwS2OZ2",
+      "item_id": "item_017",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-12T03:21:47.268Z"
+    },
+    {
+      "cart_item_id": "cart_3GyPydOQwfIYoVWsf0JD",
+      "item_id": "item_017",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-12T03:23:35.673Z"
+    },
+    {
+      "cart_item_id": "cart_27IoDVw-TJ9f4SZL-WRI",
+      "item_id": "item_017",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-12T03:29:28.841Z"
+    },
+    {
+      "cart_item_id": "cart_GVRrFvviM3sapb3vEDTZ",
+      "item_id": "item_017",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-12T03:31:07.417Z"
+    }
+  ],
+  "discount_code": null,
+  "updated_at": "2025-12-12T03:31:07.417Z"
+}

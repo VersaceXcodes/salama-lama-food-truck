@@ -3030,6 +3030,39 @@ app.get('/api/invoices/:id/download', authenticate_token, async (req, res) => {
 /**
  * LOYALTY
  */
+// Get full loyalty account info (used by frontend dashboard)
+app.get('/api/loyalty', authenticate_token, async (req, res) => {
+    try {
+        const la_res = await pool.query('SELECT * FROM loyalty_accounts WHERE user_id = $1', [req.user.user_id]);
+        if (la_res.rows.length === 0) {
+            return ok(res, 200, {
+                loyalty_account_id: null,
+                user_id: req.user.user_id,
+                current_points_balance: 0,
+                total_points_earned: 0,
+                total_points_redeemed: 0,
+                total_points_expired: 0,
+                referral_count: 0,
+                spin_wheel_available_count: 0,
+                next_spin_available_at: null,
+                created_at: now_iso(),
+            });
+        }
+        const la = {
+            ...la_res.rows[0],
+            current_points_balance: Number(la_res.rows[0].current_points_balance),
+            total_points_earned: Number(la_res.rows[0].total_points_earned),
+            total_points_redeemed: Number(la_res.rows[0].total_points_redeemed),
+            total_points_expired: Number(la_res.rows[0].total_points_expired),
+            referral_count: Number(la_res.rows[0].referral_count),
+            spin_wheel_available_count: Number(la_res.rows[0].spin_wheel_available_count),
+        };
+        return ok(res, 200, la);
+    }
+    catch (error) {
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
 app.get('/api/loyalty/balance', authenticate_token, async (req, res) => {
     try {
         const la_res = await pool.query('SELECT * FROM loyalty_accounts WHERE user_id = $1', [req.user.user_id]);
@@ -3045,6 +3078,90 @@ app.get('/api/loyalty/balance', authenticate_token, async (req, res) => {
             spin_wheel_available_count: Number(la_res.rows[0].spin_wheel_available_count),
         });
         return ok(res, 200, { loyalty_account: la });
+    }
+    catch (error) {
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+// Get points transaction history
+app.get('/api/loyalty/points/history', authenticate_token, async (req, res) => {
+    try {
+        const schema = z.object({
+            limit: z.number().int().positive().max(100).default(50),
+            offset: z.number().int().nonnegative().default(0),
+        });
+        const { limit, offset } = parse_query(schema, req.query);
+        const la_res = await pool.query('SELECT loyalty_account_id FROM loyalty_accounts WHERE user_id = $1', [req.user.user_id]);
+        if (la_res.rows.length === 0) {
+            return ok(res, 200, { transactions: [], total: 0 });
+        }
+        const loyalty_account_id = la_res.rows[0].loyalty_account_id;
+        const count_res = await pool.query('SELECT COUNT(*)::int as count FROM points_transactions WHERE loyalty_account_id = $1', [loyalty_account_id]);
+        const total = count_res.rows[0]?.count ?? 0;
+        const txns_res = await pool.query(`SELECT * FROM points_transactions 
+       WHERE loyalty_account_id = $1 
+       ORDER BY created_at DESC 
+       LIMIT $2 OFFSET $3`, [loyalty_account_id, limit, offset]);
+        const transactions = txns_res.rows.map((t) => ({
+            ...t,
+            points_amount: Number(t.points_amount),
+            running_balance: Number(t.running_balance),
+        }));
+        return ok(res, 200, { transactions, total });
+    }
+    catch (error) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+        }
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+// Get redeemed rewards
+app.get('/api/loyalty/redeemed-rewards', authenticate_token, async (req, res) => {
+    try {
+        const la_res = await pool.query('SELECT loyalty_account_id FROM loyalty_accounts WHERE user_id = $1', [req.user.user_id]);
+        if (la_res.rows.length === 0) {
+            return ok(res, 200, { redeemed_rewards: [] });
+        }
+        const loyalty_account_id = la_res.rows[0].loyalty_account_id;
+        const rewards_res = await pool.query(`SELECT * FROM redeemed_rewards 
+       WHERE loyalty_account_id = $1 
+       ORDER BY redeemed_at DESC`, [loyalty_account_id]);
+        const redeemed_rewards = rewards_res.rows.map((r) => ({
+            ...r,
+            points_deducted: Number(r.points_deducted),
+        }));
+        return ok(res, 200, { redeemed_rewards });
+    }
+    catch (error) {
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+// Get referral info
+app.get('/api/loyalty/referral', authenticate_token, async (req, res) => {
+    try {
+        const user_res = await pool.query('SELECT referral_code FROM users WHERE user_id = $1', [req.user.user_id]);
+        const referral_code = user_res.rows[0]?.referral_code || '';
+        const la_res = await pool.query('SELECT referral_count FROM loyalty_accounts WHERE user_id = $1', [req.user.user_id]);
+        const referral_count = la_res.rows.length > 0 ? Number(la_res.rows[0].referral_count) : 0;
+        // Count successful referrals (users who actually signed up and have loyalty accounts)
+        const successful_res = await pool.query('SELECT COUNT(*)::int as count FROM users WHERE referred_by_user_id = $1', [req.user.user_id]);
+        const successful_referrals = successful_res.rows[0]?.count ?? 0;
+        // Calculate points earned from referrals
+        // Assuming referral points are tracked in points_transactions with reason containing "referral"
+        const points_res = await pool.query(`SELECT COALESCE(SUM(points_amount), 0)::int as total
+       FROM points_transactions pt
+       JOIN loyalty_accounts la ON pt.loyalty_account_id = la.loyalty_account_id
+       WHERE la.user_id = $1 AND pt.reason ILIKE '%referral%'`, [req.user.user_id]);
+        const total_points_earned = points_res.rows[0]?.total ?? 0;
+        const referral_link = `${FRONTEND_URL}/register?ref=${referral_code}`;
+        return ok(res, 200, {
+            referral_code,
+            referral_link,
+            referral_count,
+            successful_referrals,
+            total_points_earned,
+        });
     }
     catch (error) {
         return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
@@ -3090,7 +3207,82 @@ app.get('/api/loyalty/badges', authenticate_token, async (req, res) => {
             });
             return { ...parsed, earned_at: earned_map.get(parsed.badge_id) || null, is_earned: earned_map.has(parsed.badge_id) };
         });
-        return ok(res, 200, { badges });
+        // Split into earned and locked for frontend
+        const earned = badges.filter((b) => b.is_earned);
+        const locked = badges.filter((b) => !b.is_earned);
+        return ok(res, 200, { badges, earned, locked });
+    }
+    catch (error) {
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+// Redeem reward - alternative URL structure for frontend compatibility
+app.post('/api/loyalty/rewards/:reward_id/redeem', authenticate_token, async (req, res) => {
+    try {
+        const reward_id = req.params.reward_id;
+        await with_client(async (client) => {
+            await client.query('BEGIN');
+            const la_res = await client.query('SELECT * FROM loyalty_accounts WHERE user_id = $1 FOR UPDATE', [req.user.user_id]);
+            if (la_res.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return res.status(400).json(createErrorResponse('Loyalty account not found', null, 'LOYALTY_NOT_FOUND', req.request_id));
+            }
+            const la = la_res.rows[0];
+            const current_points_balance = Number(la.current_points_balance);
+            const reward_res = await client.query('SELECT * FROM rewards WHERE reward_id = $1 AND status = $2 FOR UPDATE', [reward_id, 'active']);
+            if (reward_res.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return res.status(404).json(createErrorResponse('Reward not found', null, 'NOT_FOUND', req.request_id));
+            }
+            const reward = reward_res.rows[0];
+            const points_cost = Number(reward.points_cost);
+            if (current_points_balance < points_cost) {
+                await client.query('ROLLBACK');
+                return res.status(400).json(createErrorResponse('Insufficient points', null, 'INSUFFICIENT_POINTS', req.request_id));
+            }
+            if (reward.stock_limit !== null && reward.stock_remaining !== null) {
+                const remaining = Number(reward.stock_remaining);
+                if (remaining <= 0) {
+                    await client.query('ROLLBACK');
+                    return res.status(400).json(createErrorResponse('Reward is out of stock', null, 'REWARD_OUT_OF_STOCK', req.request_id));
+                }
+                await client.query('UPDATE rewards SET stock_remaining = stock_remaining - 1, updated_at = $1 WHERE reward_id = $2', [now_iso(), reward_id]);
+            }
+            const next_balance = current_points_balance - points_cost;
+            await client.query('UPDATE loyalty_accounts SET current_points_balance = $1, total_points_redeemed = total_points_redeemed + $2 WHERE loyalty_account_id = $3', [next_balance, points_cost, la.loyalty_account_id]);
+            const reward_code = `${reward.name}`.toUpperCase().replace(/[^A-Z0-9]+/g, '').slice(0, 8) + `-${nanoid(6).toUpperCase()}`;
+            const expires_at = reward.expiry_days_after_redemption
+                ? new Date(Date.now() + Number(reward.expiry_days_after_redemption) * 86400000).toISOString()
+                : null;
+            const rr_id = gen_id('rr');
+            await client.query(`INSERT INTO redeemed_rewards (
+          redeemed_reward_id, loyalty_account_id, reward_id, reward_code,
+          points_deducted, redeemed_at, expires_at, usage_status, used_in_order_id, used_at
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,'unused',NULL,NULL)`, [rr_id, la.loyalty_account_id, reward_id, ensure_upper(reward_code), points_cost, now_iso(), expires_at]);
+            await client.query(`INSERT INTO points_transactions (
+          transaction_id, loyalty_account_id, transaction_type, points_amount,
+          order_id, reason, adjusted_by_user_id, running_balance, created_at, expires_at
+        ) VALUES ($1,$2,'redeemed',$3,NULL,$4,NULL,$5,$6,NULL)`, [gen_id('pt'), la.loyalty_account_id, -points_cost, `Redeemed: ${reward.name}`, next_balance, now_iso()]);
+            await client.query('COMMIT');
+            send_email_mock({
+                to: req.user.email,
+                subject: 'Reward redeemed',
+                body: `You redeemed ${reward.name}. Your code: ${ensure_upper(reward_code)}${expires_at ? ` (expires ${expires_at})` : ''}`,
+            }).catch(() => { });
+            // Return format expected by frontend
+            return ok(res, 200, {
+                redeemed_reward_id: rr_id,
+                loyalty_account_id: la.loyalty_account_id,
+                reward_id,
+                reward_code: ensure_upper(reward_code),
+                points_deducted: points_cost,
+                redeemed_at: now_iso(),
+                expires_at,
+                usage_status: 'unused',
+                used_in_order_id: null,
+                used_at: null,
+            });
+        });
     }
     catch (error) {
         return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));

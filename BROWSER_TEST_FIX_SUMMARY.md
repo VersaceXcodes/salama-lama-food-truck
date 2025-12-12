@@ -1,62 +1,78 @@
 # Browser Test Fix Summary - Customer Registration Flow
 
-## Issue Resolved ✅
+## Current Issue (December 12, 2025)
 
-**Test Name:** Customer Registration Flow  
-**Priority:** Critical  
-**Root Cause:** Test data conflict - email `newcustomer@test.ie` already exists in database  
-**Status:** ✅ Fixed
+**Test Name:** Form Validation and Error Display (ui-004)  
+**Priority:** High  
+**Root Cause:** Test data conflict - phone `+353871234599` already exists in database  
+**Status:** ⚠️ Test data cleanup required
 
 ---
 
-## What Was the Problem?
+## What Is the Problem?
 
-The browser test was attempting to register a new customer with email `newcustomer@test.ie`, but this user **already existed** in the database from a previous test run. The application correctly rejected the duplicate registration with a 409 Conflict error.
+The browser test is attempting to register a new customer with:
+- Email: `test.signup@example.com`
+- Phone: `+353871234599`
 
-### Evidence:
+This phone number **already exists** in the database from a previous test run. The application correctly rejected the duplicate registration with a 409 Conflict error.
+
+### Evidence from Test Logs:
 - HTTP Status: **409 Conflict**
-- Error Message: **"Email already registered"**
+- Error Message: **"Phone already registered"**
+- Error Code: **PHONE_ALREADY_EXISTS**
 - Frontend Response: **Error banner displayed correctly** ✅
 - Backend Response: **Proper error handling** ✅
+- Field Error: **"This phone number is already registered. Please use a different phone number or try logging in."** ✅
 
-**This was NOT a bug** - the system was working correctly by preventing duplicate registrations!
+**This is NOT a bug** - the system is working correctly by preventing duplicate registrations!
 
 ---
 
 ## Solution Implemented
 
-### 1. Test Data Cleanup Script Created
+### 1. Updated SQL Cleanup Script
 
-**File:** `/app/backend/cleanup-test-data.js`
+**File:** `/app/cleanup_browser_test_data.sql`
 
-This script safely removes test users and all their related data before running browser tests.
+This script safely removes all browser test users and their related data:
+- `test.signup@example.com` / `+353871234599` (primary browser test user)
+- `newcustomer@test.ie` (legacy test user)
 
 **Usage:**
 ```bash
-# From backend directory
-cd /app/backend
-npm run cleanup-test-data
+# Using the shell script wrapper (recommended)
+./cleanup-browser-test-data.sh
 
-# Or with specific email
-node cleanup-test-data.js youremail@test.com
+# Or using psql directly
+psql $DATABASE_URL -f cleanup_browser_test_data.sql
 ```
 
-### 2. SQL Cleanup Script (Alternative)
+### 2. Node.js Alternative (if psql not available)
 
-**File:** `/app/cleanup_test_user.sql`
-
-For direct database access:
+**From backend directory:**
 ```bash
-psql $DATABASE_URL -f /app/cleanup_test_user.sql
+cd /app/backend
+node -e "
+const { Pool } = require('pg');
+const fs = require('fs');
+const pool = new Pool({ 
+  connectionString: process.env.DATABASE_URL, 
+  ssl: { rejectUnauthorized: false } 
+});
+pool.query(fs.readFileSync('../cleanup_browser_test_data.sql', 'utf8'))
+  .then(() => { console.log('✓ Cleanup done'); pool.end(); })
+  .catch(e => { console.error(e); pool.end(); });
+"
 ```
 
 ### 3. Documentation Created
 
 **Files:**
-- `/app/REGISTRATION_TEST_FIX.md` - Detailed technical analysis
-- `/app/BROWSER_TEST_FIX_SUMMARY.md` - This file
-- `/app/cleanup_test_user.sql` - SQL cleanup script
-- `/app/backend/cleanup-test-data.js` - Node.js cleanup script
+- `/app/BROWSER_TEST_DATA_CLEANUP.md` - Detailed cleanup instructions
+- `/app/BROWSER_TEST_FIX_SUMMARY.md` - This summary
+- `/app/cleanup_browser_test_data.sql` - Comprehensive SQL cleanup script
+- `/app/cleanup-browser-test-data.sh` - Shell script wrapper
 
 ---
 
@@ -64,12 +80,12 @@ psql $DATABASE_URL -f /app/cleanup_test_user.sql
 
 ### Step 1: Clean up test data
 ```bash
-cd /app/backend
-npm run cleanup-test-data
+# Run the cleanup script
+./cleanup-browser-test-data.sh
 ```
 
 ### Step 2: Run your browser tests
-The test user `newcustomer@test.ie` can now be created successfully.
+The test user (`test.signup@example.com` / `+353871234599`) can now be created successfully.
 
 ### Expected Result:
 - ✅ Registration succeeds
@@ -131,32 +147,68 @@ describe('Registration with existing email', () => {
 
 ---
 
-## Package.json Update
+## Test Data Used
 
-Added new script to `/app/backend/package.json`:
-```json
-{
-  "scripts": {
-    "cleanup-test-data": "node cleanup-test-data.js"
-  }
-}
-```
+Current browser tests use:
+
+| Field | Value |
+|-------|-------|
+| First Name | New |
+| Last Name | User |
+| Email | test.signup@example.com |
+| Phone | +353871234599 |
+| Password | TestPass123! |
+
+These credentials must be cleaned from the database before running tests.
 
 ---
 
-## Console Log Analysis (from test)
+## Console Log Analysis (from current test)
 
 The test logs show the system is working correctly:
 
 ```
-✅ "Registration error: Error: Email already registered"
-✅ "Error response: {success: false, message: Email already registered, error_code: EMAIL_ALREADY_EXISTS}"
-✅ "Setting error state - Error message: Email already registered"
+✅ "Registration error: Error: Phone already registered"
+✅ "Error response: {success: false, message: Phone already registered, error_code: PHONE_ALREADY_EXISTS, details: {field: phone}}"
+✅ "Setting error state - Error message: Phone already registered"
+✅ "Setting error state - Field errors: {phone: This phone number is already registered. Please use a different phone number or try logging in.}"
 ✅ "Error state set - should now be visible"
-✅ "Current error: Email already registered"
+✅ "Current error: Phone already registered"
 ```
 
 All error handling steps executed successfully!
+
+## Network Log Analysis
+
+From the browser test network logs:
+
+**Request:**
+```json
+POST /api/auth/register
+{
+  "email": "test.signup@example.com",
+  "phone": "+353871234599",
+  "password": "TestPass123!",
+  "first_name": "New",
+  "last_name": "User",
+  "marketing_opt_in": false
+}
+```
+
+**Response:**
+```json
+Status: 409 Conflict
+{
+  "success": false,
+  "message": "Phone already registered",
+  "error_code": "PHONE_ALREADY_EXISTS",
+  "timestamp": "2025-12-12T15:03:52.991Z",
+  "request_id": "req_7cHdMizYEoGh",
+  "details": { "field": "phone" }
+}
+```
+
+This is the **correct and expected response** for a duplicate phone number!
 
 ---
 
@@ -181,38 +233,54 @@ These files are working correctly and were **not modified**:
 ## Quick Reference Commands
 
 ```bash
-# Clean up test data
-cd /app/backend && npm run cleanup-test-data
+# Clean up test data (recommended)
+./cleanup-browser-test-data.sh
 
-# Clean up specific user
-cd /app/backend && node cleanup-test-data.js youremail@test.com
+# Or using psql directly
+psql $DATABASE_URL -f cleanup_browser_test_data.sql
 
-# Using SQL directly
-psql $DATABASE_URL -f /app/cleanup_test_user.sql
+# Check if test user exists
+psql $DATABASE_URL -c "SELECT email, phone, first_name, last_name FROM users WHERE email = 'test.signup@example.com' OR phone = '+353871234599';"
 
-# Check if user exists
-psql $DATABASE_URL -c "SELECT email, first_name, last_name FROM users WHERE email = 'newcustomer@test.ie';"
+# Alternative using Node.js
+cd backend && node -e "
+const { Pool } = require('pg');
+const fs = require('fs');
+const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+pool.query(fs.readFileSync('../cleanup_browser_test_data.sql', 'utf8')).then(() => { console.log('Done'); pool.end(); });
+"
 ```
 
 ---
 
 ## Summary
 
-✅ **Root cause identified:** Test data conflict, not a code bug  
-✅ **Cleanup scripts created:** Both Node.js and SQL versions  
-✅ **NPM script added:** `npm run cleanup-test-data`  
-✅ **Documentation complete:** Full technical analysis provided  
-✅ **Code verified:** All error handling working correctly  
-✅ **Solution tested:** Cleanup script successfully removes test user  
+✅ **Root cause identified:** Test data conflict (phone number already registered), not a code bug  
+✅ **Cleanup scripts created:** SQL script + shell wrapper  
+✅ **Documentation complete:** Detailed cleanup instructions and analysis  
+✅ **Code verified:** All error handling working perfectly  
+✅ **Application status:** Fully functional - no code changes needed  
 
-**The browser test will now pass after running the cleanup script.**
+**The browser test will pass after running the cleanup script.**
+
+## Action Required
+
+Run this command before your next browser test:
+
+```bash
+./cleanup-browser-test-data.sh
+```
+
+Or if you don't have `psql` installed:
+
+```bash
+cd backend && node -e "const { Pool } = require('pg'); const fs = require('fs'); const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } }); pool.query(fs.readFileSync('../cleanup_browser_test_data.sql', 'utf8')).then(() => { console.log('✓ Cleanup complete'); pool.end(); }).catch(e => { console.error(e); pool.end(); });"
+```
 
 ---
 
-## Questions?
+## Additional Resources
 
-Refer to `/app/REGISTRATION_TEST_FIX.md` for detailed technical analysis including:
-- Complete error flow diagram
-- Network request/response details
-- Code line references
-- Alternative testing strategies
+- `/app/BROWSER_TEST_DATA_CLEANUP.md` - Comprehensive cleanup guide
+- `/app/cleanup_browser_test_data.sql` - SQL cleanup script
+- `/app/cleanup-browser-test-data.sh` - Shell wrapper script

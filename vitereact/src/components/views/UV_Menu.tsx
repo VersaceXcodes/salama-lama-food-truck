@@ -226,7 +226,14 @@ const UV_Menu: React.FC = () => {
       alert('Item added to cart!');
     },
     onError: (error: any) => {
-      alert(error.response?.data?.message || 'Failed to add item to cart');
+      // Check if it's an authentication error
+      if (error.response?.status === 401) {
+        alert('Please log in or register to add items to your cart.');
+        // Redirect to login page
+        window.location.href = '/login?redirect=/menu';
+      } else {
+        alert(error.response?.data?.message || 'Failed to add item to cart');
+      }
     },
   });
 
@@ -373,6 +380,13 @@ const UV_Menu: React.FC = () => {
   const handleAddToCart = () => {
     if (!customizationModal.item) return;
 
+    // Check if user is authenticated
+    if (!authToken) {
+      alert('Please log in or register to add items to your cart.');
+      window.location.href = '/login?redirect=/menu';
+      return;
+    }
+
     // Validate required customizations
     const requiredGroups = customizationModal.item.customization_groups.filter(g => g.is_required);
     const selectedGroupIds = new Set(customizationModal.selected_customizations.map(c => c.group_id));
@@ -413,19 +427,21 @@ const UV_Menu: React.FC = () => {
   };
 
   const handleQuickAddToCart = (item: MenuItem) => {
+    // Check if user is authenticated
+    if (!authToken) {
+      alert('Please log in or register to add items to your cart.');
+      window.location.href = '/login?redirect=/menu';
+      return;
+    }
+
     // For items without customizations or without required customizations
     if (item.customization_groups.length === 0 || !item.customization_groups.some(g => g.is_required)) {
-      // Add directly to cart
-      const cartItem = {
+      // Make API call to add to cart
+      addToCartMutation.mutate({
         item_id: item.item_id,
-        item_name: item.name,
         quantity: 1,
-        unit_price: Number(item.price),
-        customizations: [],
-        line_total: Number(item.price),
-      };
-      addToCartAction(cartItem);
-      alert('Item added to cart!');
+        selected_customizations: {},
+      });
     } else {
       // Open customization modal
       handleOpenCustomizationModal(item);

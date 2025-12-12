@@ -3932,6 +3932,81 @@ app.delete('/api/admin/categories/:id', authenticate_token, require_role(['admin
         return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
     }
 });
+// Alias routes for frontend compatibility (/api/admin/menu/categories -> /api/admin/categories)
+app.get('/api/admin/menu/categories', authenticate_token, require_role(['admin']), async (req, res) => {
+    try {
+        const rows = await pool.query('SELECT * FROM categories ORDER BY sort_order ASC, name ASC');
+        const categories = rows.rows.map((r) => categorySchema.parse({
+            ...r,
+            description: r.description ?? null,
+            sort_order: Number(r.sort_order),
+        }));
+        return ok(res, 200, { categories });
+    }
+    catch (error) {
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+app.post('/api/admin/menu/categories', authenticate_token, require_role(['admin']), async (req, res) => {
+    try {
+        const input = createCategoryInputSchema.parse(req.body);
+        const category_id = gen_id('cat');
+        await pool.query('INSERT INTO categories (category_id, name, description, sort_order, created_at) VALUES ($1,$2,$3,$4,$5)', [category_id, input.name, input.description ?? null, input.sort_order ?? 0, now_iso()]);
+        return ok(res, 201, { category_id });
+    }
+    catch (error) {
+        if (error instanceof z.ZodError)
+            return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+        if (String(error?.message || '').includes('duplicate key')) {
+            return res.status(409).json(createErrorResponse('Category name already exists', error, 'CATEGORY_EXISTS', req.request_id));
+        }
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+app.put('/api/admin/menu/categories/:id', authenticate_token, require_role(['admin']), async (req, res) => {
+    try {
+        const category_id = req.params.id;
+        const input = updateCategoryInputSchema.parse({ ...req.body, category_id });
+        const fields = [];
+        const params = [];
+        for (const [k, v] of Object.entries(input)) {
+            if (k === 'category_id')
+                continue;
+            if (v === undefined)
+                continue;
+            params.push(v);
+            fields.push(`${k} = $${params.length}`);
+        }
+        if (fields.length === 0)
+            return res.status(400).json(createErrorResponse('No fields to update', null, 'NO_UPDATES', req.request_id));
+        params.push(category_id);
+        const upd = await pool.query(`UPDATE categories SET ${fields.join(', ')} WHERE category_id = $${params.length} RETURNING category_id`, params);
+        if (upd.rows.length === 0)
+            return res.status(404).json(createErrorResponse('Category not found', null, 'NOT_FOUND', req.request_id));
+        return ok(res, 200, { category_id });
+    }
+    catch (error) {
+        if (error instanceof z.ZodError)
+            return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+app.delete('/api/admin/menu/categories/:id', authenticate_token, require_role(['admin']), async (req, res) => {
+    try {
+        const category_id = req.params.id;
+        const count = await pool.query('SELECT COUNT(*)::int as count FROM menu_items WHERE category_id = $1', [category_id]);
+        if ((count.rows[0]?.count ?? 0) > 0) {
+            return res.status(400).json(createErrorResponse('Cannot delete category with existing items', null, 'CATEGORY_NOT_EMPTY', req.request_id));
+        }
+        const del = await pool.query('DELETE FROM categories WHERE category_id = $1 RETURNING category_id', [category_id]);
+        if (del.rows.length === 0)
+            return res.status(404).json(createErrorResponse('Category not found', null, 'NOT_FOUND', req.request_id));
+        return ok(res, 200, { message: 'Category deleted' });
+    }
+    catch (error) {
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
 // Admin stock overview
 app.get('/api/admin/stock', authenticate_token, require_role(['admin']), async (req, res) => {
     try {

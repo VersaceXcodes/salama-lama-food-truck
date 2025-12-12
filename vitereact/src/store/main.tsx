@@ -161,7 +161,20 @@ interface AppStore {
 // ===========================
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
-const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:3000';
+// Dynamically determine WebSocket URL based on current location
+const getWebSocketURL = (): string => {
+  if (import.meta.env.VITE_WS_BASE_URL) {
+    return import.meta.env.VITE_WS_BASE_URL;
+  }
+  // Use production URL if available, fallback to localhost
+  if (typeof window !== 'undefined') {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.host;
+    return `${protocol}//${host}`;
+  }
+  return 'ws://localhost:3000';
+};
+const WS_BASE_URL = getWebSocketURL();
 
 const generate_notification_id = (): string => {
   return `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;

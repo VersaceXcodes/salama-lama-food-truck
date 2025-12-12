@@ -75,33 +75,31 @@ const UV_Signup: React.FC = () => {
 
   // Scroll error banner into view when error appears
   useEffect(() => {
-    if (registration_error && errorBannerRef.current) {
-      // Check if the banner is actually visible (not hidden)
-      const isVisible = !errorBannerRef.current.classList.contains('hidden');
-      console.log('Error banner visibility check:', { 
-        hasError: !!registration_error, 
-        hasRef: !!errorBannerRef.current, 
-        isVisible,
-        classList: errorBannerRef.current.className 
-      });
+    if (registration_error) {
+      console.log('Error detected - waiting for banner to render');
       
-      if (isVisible) {
-        console.log('Scrolling to error banner via useEffect');
-        // Use a small delay to ensure the DOM has updated
-        setTimeout(() => {
-          errorBannerRef.current?.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'center' 
-          });
-        }, 100);
-        
-        // Also focus the email field if there's an email error
-        if (form_validation_errors.email && emailFieldRef.current) {
-          setTimeout(() => {
-            emailFieldRef.current?.focus();
-          }, 600);
-        }
-      }
+      // Use requestAnimationFrame to ensure React has finished rendering
+      // Double RAF ensures the DOM has been painted
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (errorBannerRef.current) {
+            console.log('Scrolling error banner into view');
+            errorBannerRef.current.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center' 
+            });
+            
+            // Also focus the email field if there's an email error
+            if (form_validation_errors.email && emailFieldRef.current) {
+              setTimeout(() => {
+                emailFieldRef.current?.focus();
+              }, 400);
+            }
+          } else {
+            console.warn('Error banner ref not available after RAF');
+          }
+        });
+      });
     }
   }, [registration_error, form_validation_errors.email]);
 
@@ -475,19 +473,15 @@ const UV_Signup: React.FC = () => {
                 </div>
               )}
 
-              {/* Error message - Prominent red error banner - ALWAYS render div to preserve ref */}
-              <div 
-                ref={errorBannerRef}
-                className={registration_error 
-                  ? "mb-6 bg-red-50 border-4 border-red-400 rounded-lg p-5 shadow-lg transition-all duration-300"
-                  : "hidden"
-                }
-                role={registration_error ? "alert" : undefined}
-                aria-live={registration_error ? "assertive" : undefined}
-                aria-atomic={registration_error ? "true" : undefined}
-                aria-hidden={!registration_error}
-              >
-                {registration_error && (
+              {/* Error message - Prominent red error banner */}
+              {registration_error && (
+                <div 
+                  ref={errorBannerRef}
+                  className="mb-6 bg-red-50 border-4 border-red-400 rounded-lg p-5 shadow-lg transition-all duration-300 animate-in fade-in slide-in-from-top-4"
+                  role="alert"
+                  aria-live="assertive"
+                  aria-atomic="true"
+                >
                   <div className="flex items-start">
                     <div className="flex-shrink-0">
                       <X className="h-6 w-6 text-red-600" />
@@ -507,8 +501,8 @@ const UV_Signup: React.FC = () => {
                       )}
                     </div>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Name fields */}

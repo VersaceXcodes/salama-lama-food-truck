@@ -82,7 +82,8 @@ const fetchMenuItem = async (itemId: string, token: string): Promise<MenuItem> =
       },
     }
   );
-  return response.data;
+  // Backend now returns { success: true, item, ... }, so we need to extract the item
+  return response.data.item || response.data;
 };
 
 const createMenuItem = async (payload: CreateMenuItemPayload, token: string): Promise<MenuItem> => {
@@ -96,6 +97,7 @@ const createMenuItem = async (payload: CreateMenuItemPayload, token: string): Pr
       },
     }
   );
+  // Backend returns { success: true, item_id, ... }
   return response.data;
 };
 
@@ -114,7 +116,8 @@ const updateMenuItem = async (
       },
     }
   );
-  return response.data;
+  // Backend now returns { success: true, item, ... }, so we need to extract the item
+  return response.data.item || response.data;
 };
 
 // ===========================

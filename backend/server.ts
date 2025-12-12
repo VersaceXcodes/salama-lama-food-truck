@@ -4298,6 +4298,11 @@ app.get('/api/admin/dashboard', authenticate_token, require_role(['admin']), asy
 // Admin menu items list
 app.get('/api/admin/menu/items', authenticate_token, require_role(['admin']), async (req, res) => {
   try {
+    // Prevent caching of admin data
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    
     const search = parse_query(searchMenuItemInputSchema, req.query);
     const { items, total } = await fetch_menu_items({ for_admin: true, search });
     return ok(res, 200, { items, total, limit: search.limit, offset: search.offset });
@@ -4310,6 +4315,11 @@ app.get('/api/admin/menu/items', authenticate_token, require_role(['admin']), as
 // Admin get single menu item
 app.get('/api/admin/menu/items/:id', authenticate_token, require_role(['admin']), async (req, res) => {
   try {
+    // Prevent caching of admin data
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    
     const item_id = req.params.id;
     const result = await pool.query('SELECT * FROM menu_items WHERE item_id = $1', [item_id]);
     
@@ -4317,10 +4327,9 @@ app.get('/api/admin/menu/items/:id', authenticate_token, require_role(['admin'])
       return res.status(404).json(createErrorResponse('Menu item not found', null, 'NOT_FOUND', req.request_id));
     }
     
-    // Return the item with proper number coercion
-    const item = coerce_numbers(result.rows[0], ['price', 'current_stock', 'low_stock_threshold', 'sort_order']);
-    // Return item directly (not wrapped) for consistency with other GET endpoints
-    return res.status(200).json(item);
+    // Return the item with proper number coercion and standard response wrapper
+    const item = menuItemSchema.parse(coerce_numbers(result.rows[0], ['price', 'current_stock', 'low_stock_threshold', 'sort_order']));
+    return ok(res, 200, { item });
   } catch (error) {
     return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
   }
@@ -4386,6 +4395,13 @@ app.post('/api/admin/menu/items', authenticate_token, require_role(['admin']), a
 app.put('/api/admin/menu/items/:id', authenticate_token, require_role(['admin']), async (req, res) => {
   try {
     const item_id = req.params.id;
+    
+    // First, check if the item exists
+    const existing = await pool.query('SELECT item_id FROM menu_items WHERE item_id = $1', [item_id]);
+    if (existing.rows.length === 0) {
+      return res.status(404).json(createErrorResponse('Menu item not found', null, 'NOT_FOUND', req.request_id));
+    }
+    
     const input = updateMenuItemInputSchema.parse({ ...req.body, item_id });
 
     const fields = [];
@@ -4395,10 +4411,13 @@ app.put('/api/admin/menu/items/:id', authenticate_token, require_role(['admin'])
     for (const [k, v] of Object.entries(input)) {
       if (k === 'item_id') continue;
       if (v === undefined) continue;
-      params.push(v);
+      
+      // Handle JSONB fields - need to serialize arrays
       if (set_jsonb.has(k)) {
+        params.push(v === null ? null : JSON.stringify(v));
         fields.push(`${k} = $${params.length}::jsonb`);
       } else {
+        params.push(v);
         fields.push(`${k} = $${params.length}`);
       }
     }
@@ -4418,10 +4437,20 @@ app.put('/api/admin/menu/items/:id', authenticate_token, require_role(['admin'])
     }
 
     // Return the full updated item with proper number coercion
-    const updated_item = coerce_numbers(upd.rows[0], ['price', 'current_stock', 'low_stock_threshold', 'sort_order']);
+    const updated_row = upd.rows[0];
+    const updated_item = menuItemSchema.parse(coerce_numbers({
+      ...updated_row,
+      image_urls: updated_row.image_urls ?? null,
+      dietary_tags: updated_row.dietary_tags ?? null,
+      price: Number(updated_row.price),
+    }, ['price', 'current_stock', 'low_stock_threshold', 'sort_order']));
+    
+    console.log(`[admin/menu/items/:id PUT] Updated item ${item_id}, new price: ${updated_item.price}`);
+    
     return ok(res, 200, { item: updated_item });
   } catch (error) {
     if (error instanceof z.ZodError) return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+    console.error('[admin/menu/items/:id PUT] Error:', error);
     return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
   }
 });

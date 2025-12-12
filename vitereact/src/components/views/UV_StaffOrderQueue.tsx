@@ -758,7 +758,9 @@ const UV_StaffOrderQueue: React.FC = () => {
                 className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
                 <option value="created_at">Sort by: Oldest First</option>
-                <option value="collection_time_slot">Sort by: Collection Time</option>
+                <option value="updated_at">Sort by: Recently Updated</option>
+                <option value="order_number">Sort by: Order Number</option>
+                <option value="total_amount">Sort by: Total Amount</option>
               </select>
             </div>
 

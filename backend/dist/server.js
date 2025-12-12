@@ -3437,9 +3437,13 @@ app.get('/api/staff/orders', authenticate_token, require_role(['staff', 'admin']
         }
         params.push(q.limit);
         params.push(q.offset);
+        // Use sort_by and sort_order from query parameters
+        const validSortColumns = ['created_at', 'updated_at', 'total_amount', 'order_number'];
+        const sortColumn = validSortColumns.includes(q.sort_by) ? q.sort_by : 'created_at';
+        const sortOrder = q.sort_order === 'desc' ? 'DESC' : 'ASC';
         const rows = await pool.query(`SELECT * FROM orders
        WHERE ${where.join(' AND ')}
-       ORDER BY created_at ASC
+       ORDER BY ${sortColumn} ${sortOrder}
        LIMIT $${params.length - 1} OFFSET $${params.length}`, params);
         return ok(res, 200, {
             orders: rows.rows.map((r) => ({

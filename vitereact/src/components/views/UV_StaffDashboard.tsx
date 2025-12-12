@@ -96,13 +96,22 @@ const fetchActiveOrders = async (authToken: string): Promise<OrdersResponse> => 
         'Content-Type': 'application/json',
       },
       params: {
-        status: 'received,preparing,ready',
+        // Don't filter by status to get all active orders
+        // Backend will return orders sorted by created_at by default
         limit: 5,
-        sort_by: 'collection_time_slot',
+        sort_by: 'created_at',
+        sort_order: 'asc',
       },
     }
   );
-  return response.data;
+  // Filter orders to only show active statuses (received, preparing, ready, out_for_delivery)
+  const activeStatuses = ['received', 'preparing', 'ready', 'out_for_delivery'];
+  return {
+    ...response.data,
+    orders: response.data.orders.filter((order: any) => 
+      activeStatuses.includes(order.status)
+    ),
+  };
 };
 
 const updateOrderStatus = async (

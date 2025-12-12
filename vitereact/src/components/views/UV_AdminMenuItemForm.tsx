@@ -233,22 +233,56 @@ const UV_AdminMenuItemForm: React.FC = () => {
 
   const createMutation = useMutation({
     mutationFn: (payload: CreateMenuItemPayload) => createMenuItem(payload, authToken!),
-    onSuccess: async () => {
-      // CRITICAL FIX: Completely clear all menu item caches before navigation
+    onSuccess: async (createdItem) => {
+      console.log('[AdminMenuItemForm] Create successful, item:', createdItem);
+      
+      // CRITICAL FIX: Aggressive cache invalidation strategy (same as update)
+      await queryClient.cancelQueries({ queryKey: ['admin-menu-items'] });
       queryClient.removeQueries({ queryKey: ['admin-menu-items'] });
       queryClient.invalidateQueries({ queryKey: ['admin-menu-items'] });
       
       setSuccessMessage('Menu item created successfully!');
       
-      // Small delay to ensure cache clear is complete before navigation
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Wait to ensure backend transaction commits
+      await new Promise(resolve => setTimeout(resolve, 300));
       
-      // Navigate to list - the list view will fetch fresh data on mount
-      navigate('/admin/menu');
+      // Pre-fetch fresh data before navigation
+      try {
+        await queryClient.prefetchQuery({
+          queryKey: ['admin-menu-items', null, null, ''],
+          queryFn: () => {
+            const params = new URLSearchParams();
+            params.append('_t', Date.now().toString());
+            return axios.get(
+              `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api/admin/menu/items?${params.toString()}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${authToken}`,
+                  'Cache-Control': 'no-cache, no-store, must-revalidate',
+                  'Pragma': 'no-cache',
+                  'Expires': '0'
+                },
+              }
+            ).then(res => ({
+              ...res.data,
+              items: res.data.items.map((item: any) => ({
+                ...item,
+                price: Number(item.price || 0),
+              })),
+            }));
+          },
+        });
+      } catch (error) {
+        console.error('[AdminMenuItemForm] Pre-fetch error:', error);
+      }
+      
+      // Navigate to list with replace to prevent back button issues
+      navigate('/admin/menu', { replace: true });
     },
     onError: (error: any) => {
       const errorMsg = error.response?.data?.message || error.message || 'Failed to create menu item';
       setValidationErrors([errorMsg]);
+      console.error('[AdminMenuItemForm] Create error:', error);
     },
   });
 
@@ -259,27 +293,64 @@ const UV_AdminMenuItemForm: React.FC = () => {
   const updateMutation = useMutation({
     mutationFn: (payload: Partial<CreateMenuItemPayload>) =>
       updateMenuItem(itemIdParam!, payload, authToken!),
-    onSuccess: async () => {
-      // CRITICAL FIX: Completely clear all menu item caches before navigation
-      // This ensures the list view will fetch completely fresh data
+    onSuccess: async (updatedItem) => {
+      console.log('[AdminMenuItemForm] Update successful, item:', updatedItem);
+      
+      // CRITICAL FIX: Aggressive cache invalidation strategy
+      // Step 1: Remove ALL cached menu queries to force fresh fetches
+      await queryClient.cancelQueries({ queryKey: ['admin-menu-items'] });
+      await queryClient.cancelQueries({ queryKey: ['admin-menu-item'] });
+      
       queryClient.removeQueries({ queryKey: ['admin-menu-items'] });
       queryClient.removeQueries({ queryKey: ['admin-menu-item', itemIdParam] });
       
-      // Invalidate to mark queries as stale
+      // Step 2: Invalidate to ensure any remaining queries are marked stale
       queryClient.invalidateQueries({ queryKey: ['admin-menu-items'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-menu-item', itemIdParam] });
+      queryClient.invalidateQueries({ queryKey: ['admin-menu-item'] });
       
       setSuccessMessage('Menu item updated successfully!');
       
-      // Small delay to ensure cache clear is complete before navigation
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Step 3: Wait longer to ensure backend transaction commits and cache is fully cleared
+      // This prevents race conditions where navigation happens before DB update completes
+      await new Promise(resolve => setTimeout(resolve, 300));
       
-      // Navigate to list - the list view will fetch fresh data on mount
-      navigate('/admin/menu');
+      // Step 4: Pre-fetch fresh data before navigation to ensure it's ready
+      try {
+        await queryClient.prefetchQuery({
+          queryKey: ['admin-menu-items', null, null, ''],
+          queryFn: () => {
+            const params = new URLSearchParams();
+            params.append('_t', Date.now().toString());
+            return axios.get(
+              `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api/admin/menu/items?${params.toString()}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${authToken}`,
+                  'Cache-Control': 'no-cache, no-store, must-revalidate',
+                  'Pragma': 'no-cache',
+                  'Expires': '0'
+                },
+              }
+            ).then(res => ({
+              ...res.data,
+              items: res.data.items.map((item: any) => ({
+                ...item,
+                price: Number(item.price || 0),
+              })),
+            }));
+          },
+        });
+      } catch (error) {
+        console.error('[AdminMenuItemForm] Pre-fetch error:', error);
+      }
+      
+      // Step 5: Navigate to list - it will use the pre-fetched fresh data
+      navigate('/admin/menu', { replace: true });
     },
     onError: (error: any) => {
       const errorMsg = error.response?.data?.message || error.message || 'Failed to update menu item';
       setValidationErrors([errorMsg]);
+      console.error('[AdminMenuItemForm] Update error:', error);
     },
   });
 

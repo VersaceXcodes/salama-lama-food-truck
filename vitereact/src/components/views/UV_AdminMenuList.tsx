@@ -238,13 +238,27 @@ const UV_AdminMenuList: React.FC = () => {
       selectedStatusFilter,
       debouncedSearch,
     ],
-    queryFn: () =>
-      fetchMenuItems(
+    queryFn: async () => {
+      console.log('[AdminMenuList] Fetching menu items with filters:', {
+        category: selectedCategoryFilter,
+        status: selectedStatusFilter,
+        search: debouncedSearch,
+      });
+      
+      const result = await fetchMenuItems(
         authToken!,
         selectedCategoryFilter,
         selectedStatusFilter,
         debouncedSearch
-      ),
+      );
+      
+      console.log('[AdminMenuList] Fetched items:', result.items.length, 'items');
+      if (result.items.length > 0) {
+        console.log('[AdminMenuList] Sample prices:', result.items.slice(0, 3).map(i => ({ name: i.name, price: i.price })));
+      }
+      
+      return result;
+    },
     enabled: !!authToken,
     staleTime: 0, // Always consider data stale - fetch fresh immediately
     gcTime: 0, // Don't cache data in memory at all

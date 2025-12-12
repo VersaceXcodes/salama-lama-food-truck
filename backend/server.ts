@@ -4403,6 +4403,11 @@ app.put('/api/admin/menu/items/:id', authenticate_token, require_role(['admin'])
     }
     
     const input = updateMenuItemInputSchema.parse({ ...req.body, item_id });
+    
+    // CRITICAL: Log the incoming price to verify it's received correctly
+    if ('price' in input) {
+      console.log(`[admin/menu/items/:id PUT] Updating price for ${item_id}: ${input.price} (type: ${typeof input.price})`);
+    }
 
     const fields = [];
     const params = [];
@@ -4430,6 +4435,10 @@ app.put('/api/admin/menu/items/:id', authenticate_token, require_role(['admin'])
     fields.push(`updated_at = $${params.length}`);
 
     params.push(item_id);
+    
+    // Log the SQL query for debugging
+    console.log(`[admin/menu/items/:id PUT] SQL: UPDATE menu_items SET ${fields.join(', ')} WHERE item_id = $${params.length}`);
+    console.log(`[admin/menu/items/:id PUT] Params:`, params);
 
     const upd = await pool.query(`UPDATE menu_items SET ${fields.join(', ')} WHERE item_id = $${params.length} RETURNING *`, params);
     if (upd.rows.length === 0) {
@@ -4445,7 +4454,10 @@ app.put('/api/admin/menu/items/:id', authenticate_token, require_role(['admin'])
       price: Number(updated_row.price),
     }, ['price', 'current_stock', 'low_stock_threshold', 'sort_order']));
     
-    console.log(`[admin/menu/items/:id PUT] Updated item ${item_id}, new price: ${updated_item.price}`);
+    // CRITICAL: Log the final returned price to verify it's correct
+    console.log(`[admin/menu/items/:id PUT] Successfully updated item ${item_id}`);
+    console.log(`[admin/menu/items/:id PUT] Final price in response: ${updated_item.price} (type: ${typeof updated_item.price})`);
+    console.log(`[admin/menu/items/:id PUT] DB returned price: ${updated_row.price} (type: ${typeof updated_row.price})`);
     
     return ok(res, 200, { item: updated_item });
   } catch (error) {

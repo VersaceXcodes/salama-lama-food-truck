@@ -136,7 +136,13 @@ const UV_About: React.FC = () => {
                   About {businessInfo.name || businessSettings.business_info.name || 'Salama Lama'}
                 </h1>
                 <p className="text-xl md:text-2xl text-gray-700 max-w-3xl mx-auto leading-relaxed">
-                  Bringing authentic flavors to the streets of {businessInfo.address || businessSettings.business_info.address || 'Dublin'}
+                  Bringing authentic flavors to the streets of {
+                    (businessInfo.address && typeof businessInfo.address === 'object') 
+                      ? businessInfo.address.city 
+                      : (businessSettings.business_info.address && typeof businessSettings.business_info.address === 'object')
+                        ? businessSettings.business_info.address.city
+                        : 'Dublin'
+                  }
                 </p>
                 <div className="mt-8">
                   <Link
@@ -403,7 +409,12 @@ const UV_About: React.FC = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                     <span className="font-medium">
-                      {businessInfo.address || businessSettings.business_info.address}
+                      {(businessInfo.address && typeof businessInfo.address === 'object')
+                        ? `${businessInfo.address.line1}${businessInfo.address.line2 ? ', ' + businessInfo.address.line2 : ''}, ${businessInfo.address.city}, ${businessInfo.address.postal_code}`
+                        : (businessSettings.business_info.address && typeof businessSettings.business_info.address === 'object')
+                          ? `${businessSettings.business_info.address.line1}${businessSettings.business_info.address.line2 ? ', ' + businessSettings.business_info.address.line2 : ''}, ${businessSettings.business_info.address.city}, ${businessSettings.business_info.address.postal_code}`
+                          : businessInfo.address || businessSettings.business_info.address || 'Dublin, Ireland'
+                      }
                     </span>
                   </div>
                 </div>

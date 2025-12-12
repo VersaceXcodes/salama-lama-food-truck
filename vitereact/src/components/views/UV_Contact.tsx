@@ -12,7 +12,12 @@ interface BusinessContactInfo {
   name: string;
   phone: string;
   email: string;
-  address: string;
+  address: {
+    line1: string;
+    line2?: string | null;
+    city: string;
+    postal_code: string;
+  };
   operating_hours: Record<string, { open: string; close: string }>;
   location_coordinates: { latitude: number; longitude: number } | null;
   social_links: Record<string, string>;
@@ -376,11 +381,20 @@ const UV_Contact: React.FC = () => {
                   </div>
                   <h3 className="text-xl font-bold text-gray-900 mb-4">Visit Us</h3>
                   <p className="text-gray-700 leading-relaxed">
-                    {business_contact_info?.address || business_settings.business_info.address || 'Dublin, Ireland'}
+                    {business_contact_info?.address && typeof business_contact_info.address === 'object'
+                      ? `${business_contact_info.address.line1}${business_contact_info.address.line2 ? ', ' + business_contact_info.address.line2 : ''}, ${business_contact_info.address.city}, ${business_contact_info.address.postal_code}`
+                      : (business_settings.business_info.address && typeof business_settings.business_info.address === 'object')
+                        ? `${business_settings.business_info.address.line1}${business_settings.business_info.address.line2 ? ', ' + business_settings.business_info.address.line2 : ''}, ${business_settings.business_info.address.city}, ${business_settings.business_info.address.postal_code}`
+                        : 'Dublin, Ireland'
+                    }
                   </p>
                   <a
                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                      business_contact_info?.address || business_settings.business_info.address || 'Dublin, Ireland'
+                      business_contact_info?.address && typeof business_contact_info.address === 'object'
+                        ? `${business_contact_info.address.line1}, ${business_contact_info.address.city}, ${business_contact_info.address.postal_code}`
+                        : (business_settings.business_info.address && typeof business_settings.business_info.address === 'object')
+                          ? `${business_settings.business_info.address.line1}, ${business_settings.business_info.address.city}, ${business_settings.business_info.address.postal_code}`
+                          : 'Dublin, Ireland'
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -407,7 +421,11 @@ const UV_Contact: React.FC = () => {
               )}
               <iframe
                 src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${encodeURIComponent(
-                  business_contact_info?.address || business_settings.business_info.address || 'Dublin, Ireland'
+                  business_contact_info?.address && typeof business_contact_info.address === 'object'
+                    ? `${business_contact_info.address.line1}, ${business_contact_info.address.city}, ${business_contact_info.address.postal_code}`
+                    : (business_settings.business_info.address && typeof business_settings.business_info.address === 'object')
+                      ? `${business_settings.business_info.address.line1}, ${business_settings.business_info.address.city}, ${business_settings.business_info.address.postal_code}`
+                      : 'Dublin, Ireland'
                 )}&zoom=15`}
                 width="100%"
                 height="450"

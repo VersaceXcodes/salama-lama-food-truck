@@ -64,7 +64,12 @@ export interface BusinessSettings {
     name: string;
     phone: string;
     email: string;
-    address: string;
+    address: string | {
+      line1: string;
+      line2?: string | null;
+      city: string;
+      postal_code: string;
+    };
   };
   tax_settings: {
     vat_rate: number;

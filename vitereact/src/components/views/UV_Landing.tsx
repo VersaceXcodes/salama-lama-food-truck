@@ -22,7 +22,12 @@ interface BusinessInfo {
   name: string;
   phone: string;
   email: string;
-  address: string;
+  address: {
+    line1: string;
+    line2?: string | null;
+    city: string;
+    postal_code: string;
+  };
   operating_hours: Record<string, any>;
   delivery_enabled: boolean;
   social_links?: {
@@ -428,7 +433,7 @@ const UV_Landing: React.FC = () => {
               {/* Map */}
               <div className="rounded-xl overflow-hidden shadow-lg border border-gray-200 h-[400px]">
                 <iframe
-                  src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${encodeURIComponent(business_info.address)}`}
+                  src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${encodeURIComponent(`${business_info.address.line1}, ${business_info.address.city}, ${business_info.address.postal_code}`)}`}
                   width="100%"
                   height="100%"
                   style={{ border: 0 }}
@@ -446,9 +451,14 @@ const UV_Landing: React.FC = () => {
                     <MapPin className="w-6 h-6 text-orange-600 flex-shrink-0 mt-1" />
                     <div>
                       <h3 className="font-semibold text-gray-900 mb-2">Address</h3>
-                      <p className="text-gray-600">{business_info.address}</p>
+                      <p className="text-gray-600">
+                        {business_info.address.line1}
+                        {business_info.address.line2 && <><br />{business_info.address.line2}</>}
+                        <br />
+                        {business_info.address.city}, {business_info.address.postal_code}
+                      </p>
                       <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(business_info.address)}`}
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${business_info.address.line1}, ${business_info.address.city}, ${business_info.address.postal_code}`)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center text-orange-600 font-medium mt-2 hover:text-orange-700 transition-colors"

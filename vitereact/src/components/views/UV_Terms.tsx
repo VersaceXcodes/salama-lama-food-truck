@@ -390,7 +390,11 @@ const UV_Terms: React.FC = () => {
           },
           {
             heading: '15.2 Business Address',
-            content: `Salama Lama Food Truck, ${businessSettings.business_info.address || 'Dublin, Ireland'}. Our registered business address and VAT number are available upon request.`
+            content: `Salama Lama Food Truck, ${
+              businessSettings.business_info.address && typeof businessSettings.business_info.address === 'object'
+                ? `${businessSettings.business_info.address.line1}${businessSettings.business_info.address.line2 ? ', ' + businessSettings.business_info.address.line2 : ''}, ${businessSettings.business_info.address.city}, ${businessSettings.business_info.address.postal_code}`
+                : 'Dublin, Ireland'
+            }. Our registered business address and VAT number are available upon request.`
           },
           {
             heading: '15.3 Response Times',
@@ -758,7 +762,11 @@ const UV_Terms: React.FC = () => {
                           </a>
                         </p>
                         <p>
-                          <strong>Address:</strong> {businessSettings.business_info.address || 'Dublin, Ireland'}
+                          <strong>Address:</strong> {
+                            businessSettings.business_info.address && typeof businessSettings.business_info.address === 'object'
+                              ? `${businessSettings.business_info.address.line1}${businessSettings.business_info.address.line2 ? ', ' + businessSettings.business_info.address.line2 : ''}, ${businessSettings.business_info.address.city}, ${businessSettings.business_info.address.postal_code}`
+                              : 'Dublin, Ireland'
+                          }
                         </p>
                       </div>
                     </div>

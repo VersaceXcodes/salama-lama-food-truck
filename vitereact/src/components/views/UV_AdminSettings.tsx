@@ -28,7 +28,12 @@ interface BusinessInfoSettings {
   name: string;
   phone: string;
   email: string;
-  address: string;
+  address: string | {
+    line1: string;
+    line2?: string | null;
+    city: string;
+    postal_code: string;
+  };
   logo_url: string | null;
 }
 
@@ -245,7 +250,12 @@ const UV_AdminSettings: React.FC = () => {
   // Update settings state when data is fetched
   useEffect(() => {
     if (settingsData) {
-      setBusinessInfoSettings(settingsData.business_info);
+      // Convert address object to string for editing if needed
+      const businessInfo = { ...settingsData.business_info };
+      if (businessInfo.address && typeof businessInfo.address === 'object') {
+        businessInfo.address = `${businessInfo.address.line1}${businessInfo.address.line2 ? ', ' + businessInfo.address.line2 : ''}, ${businessInfo.address.city}, ${businessInfo.address.postal_code}`;
+      }
+      setBusinessInfoSettings(businessInfo);
       setOperatingHoursSettings(settingsData.operating_hours);
       setTaxSettings(settingsData.tax_settings);
       setNotificationSettings(settingsData.notification_settings);
@@ -510,7 +520,7 @@ const UV_AdminSettings: React.FC = () => {
                     </label>
                     <input
                       type="text"
-                      value={businessInfoSettings.address}
+                      value={typeof businessInfoSettings.address === 'string' ? businessInfoSettings.address : `${businessInfoSettings.address.line1}${businessInfoSettings.address.line2 ? ', ' + businessInfoSettings.address.line2 : ''}, ${businessInfoSettings.address.city}, ${businessInfoSettings.address.postal_code}`}
                       onChange={(e) => {
                         setBusinessInfoSettings({ ...businessInfoSettings, address: e.target.value });
                         setUnsavedChanges(prev => ({ ...prev, business_info: true }));

@@ -68,35 +68,44 @@ interface ValidationResult {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
-const fetchDeliverySettings = async (token: string): Promise<DeliverySettings> => {
+interface DeliverySettingsResponse extends DeliverySettings {
+  zones: DeliveryZone[];
+}
+
+const fetchDeliverySettings = async (token: string): Promise<DeliverySettingsResponse> => {
   const response = await axios.get(`${API_BASE_URL}/api/admin/delivery/settings`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  return {
-    delivery_enabled: response.data.delivery_enabled ?? false,
-    minimum_order_value: response.data.minimum_order_value ? Number(response.data.minimum_order_value) : null,
-    free_delivery_threshold: response.data.free_delivery_threshold ? Number(response.data.free_delivery_threshold) : null,
-  };
-};
-
-const fetchDeliveryZones = async (token: string): Promise<DeliveryZone[]> => {
-  const response = await axios.get(`${API_BASE_URL}/api/admin/delivery/zones`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return response.data.zones.map((zone: any) => ({
+  
+  const zones = (response.data.zones || []).map((zone: any) => ({
     ...zone,
     delivery_fee: Number(zone.delivery_fee || 0),
     minimum_order_value: zone.minimum_order_value ? Number(zone.minimum_order_value) : null,
     estimated_delivery_time: Number(zone.estimated_delivery_time || 0),
     priority: Number(zone.priority || 0),
   }));
+  
+  return {
+    delivery_enabled: response.data.delivery_enabled ?? false,
+    minimum_order_value: response.data.minimum_order_delivery ? Number(response.data.minimum_order_delivery) : null,
+    free_delivery_threshold: response.data.free_delivery_threshold ? Number(response.data.free_delivery_threshold) : null,
+    zones,
+  };
 };
+
+// Removed separate fetchDeliveryZones - zones are returned by fetchDeliverySettings
 
 const updateDeliverySettings = async (
   token: string,
   settings: DeliverySettings
 ): Promise<void> => {
-  await axios.put(`${API_BASE_URL}/api/admin/delivery/settings`, settings, {
+  // Map to backend field names
+  const payload = {
+    delivery_enabled: settings.delivery_enabled,
+    minimum_order_delivery: settings.minimum_order_value,
+    free_delivery_threshold: settings.free_delivery_threshold,
+  };
+  await axios.put(`${API_BASE_URL}/api/admin/delivery/settings`, payload, {
     headers: { Authorization: `Bearer ${token}` },
   });
 };
@@ -193,7 +202,7 @@ const UV_AdminDeliverySettings: React.FC = () => {
   // REACT QUERY HOOKS
   // ============================================================================
 
-  // Fetch delivery settings
+  // Fetch delivery settings (includes zones)
   const {
     data: settings_data,
     isLoading: settings_loading,
@@ -206,18 +215,9 @@ const UV_AdminDeliverySettings: React.FC = () => {
     retry: 1,
   });
 
-  // Fetch delivery zones
-  const {
-    data: zones_data,
-    isLoading: zones_loading,
-    error: zones_error,
-  } = useQuery({
-    queryKey: ['delivery_zones'],
-    queryFn: () => fetchDeliveryZones(auth_token!),
-    enabled: !!auth_token,
-    staleTime: 5 * 60 * 1000,
-    retry: 1,
-  });
+  const zones_data = settings_data?.zones || [];
+  const zones_loading = settings_loading;
+  const zones_error = settings_error;
 
   // Update settings mutation
   const update_settings_mutation = useMutation({

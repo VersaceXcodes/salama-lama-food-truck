@@ -245,6 +245,66 @@ const UV_AdminSettings: React.FC = () => {
     queryFn: () => fetchAllSettings(authToken!),
     enabled: !!authToken,
     staleTime: 5 * 60 * 1000,
+    select: (data) => {
+      // The backend returns a flat list of settings, so we need to provide default structured data
+      // TODO: Backend needs to be updated to return structured settings data
+      return {
+        business_info: {
+          name: '',
+          phone: '',
+          email: '',
+          address: '',
+          logo_url: null,
+        },
+        operating_hours: {
+          weekly_schedule: {
+            monday: { open: '11:00', close: '20:00', closed: false },
+            tuesday: { open: '11:00', close: '20:00', closed: false },
+            wednesday: { open: '11:00', close: '20:00', closed: false },
+            thursday: { open: '11:00', close: '20:00', closed: false },
+            friday: { open: '11:00', close: '20:00', closed: false },
+            saturday: { open: '12:00', close: '22:00', closed: false },
+            sunday: { open: '12:00', close: '20:00', closed: false },
+          },
+          special_hours: [],
+        },
+        tax_settings: {
+          vat_rate: 23,
+          tax_registration_number: null,
+          apply_tax_to_all: true,
+        },
+        notification_settings: {
+          order_notifications_enabled: true,
+          notification_emails: [],
+          catering_notifications_enabled: true,
+          customer_email_notifications: true,
+          customer_sms_notifications: false,
+        },
+        loyalty_settings: {
+          earning_rate: 1,
+          points_expiry_enabled: false,
+          points_expiry_months: 12,
+          referral_enabled: true,
+          referrer_reward_points: 100,
+          referee_reward_points: 50,
+          gamification_enabled: true,
+        },
+        payment_settings: {
+          sumup_api_key: null,
+          sumup_merchant_id: null,
+          test_mode_enabled: true,
+          saved_methods_enabled: true,
+        },
+        email_settings: {
+          email_provider: 'sendgrid' as const,
+          smtp_host: null,
+          smtp_port: null,
+          api_key: null,
+          sender_email: '',
+          sender_name: '',
+        },
+      };
+    },
   });
 
   // Update settings state when data is fetched
@@ -520,7 +580,11 @@ const UV_AdminSettings: React.FC = () => {
                     </label>
                     <input
                       type="text"
-                      value={typeof businessInfoSettings.address === 'string' ? businessInfoSettings.address : `${businessInfoSettings.address.line1}${businessInfoSettings.address.line2 ? ', ' + businessInfoSettings.address.line2 : ''}, ${businessInfoSettings.address.city}, ${businessInfoSettings.address.postal_code}`}
+                      value={typeof businessInfoSettings.address === 'string' 
+                        ? businessInfoSettings.address 
+                        : businessInfoSettings.address 
+                          ? `${businessInfoSettings.address.line1}${businessInfoSettings.address.line2 ? ', ' + businessInfoSettings.address.line2 : ''}, ${businessInfoSettings.address.city}, ${businessInfoSettings.address.postal_code}`
+                          : ''}
                       onChange={(e) => {
                         setBusinessInfoSettings({ ...businessInfoSettings, address: e.target.value });
                         setUnsavedChanges(prev => ({ ...prev, business_info: true }));

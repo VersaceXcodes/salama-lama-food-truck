@@ -292,80 +292,6 @@ const UV_CateringInquiryForm: React.FC = () => {
   // ===========================
 
   const handleInputChange = (field: keyof CateringInquiryFormData, value: any) => {
-    // Sanitize date input - ensure it's in YYYY-MM-DD format
-    if (field === 'event_date') {
-      if (!value) {
-        // Allow clearing the field
-        value = '';
-      } else {
-        const dateStr = String(value).trim();
-        // Check if date format is valid (YYYY-MM-DD)
-        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-        
-        if (!dateRegex.test(dateStr)) {
-          // Try to parse and reformat if it's a parseable date
-          const date = new Date(dateStr);
-          if (!isNaN(date.getTime()) && date.getFullYear() > 1900 && date.getFullYear() < 2100) {
-            // Format as YYYY-MM-DD
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            value = `${year}-${month}-${day}`;
-          } else {
-            // If completely invalid, clear the field to prevent corruption
-            console.warn('Invalid date value detected, clearing field:', dateStr);
-            value = '';
-          }
-        } else {
-          // Even if format looks right, validate it's a real date
-          const date = new Date(dateStr);
-          if (isNaN(date.getTime()) || date.getFullYear() < 1900 || date.getFullYear() > 2100) {
-            console.warn('Invalid date value detected (out of range), clearing field:', dateStr);
-            value = '';
-          }
-        }
-      }
-    }
-
-    // Sanitize time input - ensure it's in HH:MM format
-    if ((field === 'event_start_time' || field === 'event_end_time')) {
-      if (!value) {
-        // Allow clearing the field
-        value = '';
-      } else {
-        const timeStr = String(value).trim();
-        // Check if time format is valid (HH:MM)
-        const timeRegex = /^([01]?\d|2[0-3]):([0-5]?\d)$/;
-        
-        if (!timeRegex.test(timeStr)) {
-          // Remove any invalid characters and try to extract valid time
-          const cleanedTime = timeStr.replace(/[^\d:]/g, '');
-          const timeParts = cleanedTime.split(':').filter(p => p.length > 0);
-          
-          if (timeParts.length >= 2) {
-            const hours = parseInt(timeParts[0], 10);
-            const minutes = parseInt(timeParts[1], 10);
-            
-            if (!isNaN(hours) && !isNaN(minutes) && hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
-              value = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-            } else {
-              // If invalid values, clear the field to prevent corruption
-              console.warn('Invalid time value detected, clearing field:', timeStr);
-              value = '';
-            }
-          } else {
-            // If completely invalid format, clear the field
-            console.warn('Invalid time format detected, clearing field:', timeStr);
-            value = '';
-          }
-        } else {
-          // Ensure it's properly formatted with leading zeros
-          const [hours, minutes] = timeStr.split(':');
-          value = `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`;
-        }
-      }
-    }
-
     setFormData(prev => ({
       ...prev,
       [field]: value,
@@ -411,43 +337,7 @@ const UV_CateringInquiryForm: React.FC = () => {
     // Clear previous errors
     setValidationErrors({});
 
-    // Additional sanitization before validation to prevent corrupted data
-    const sanitizedFormData = { ...formData };
-
-    // Sanitize date field
-    if (sanitizedFormData.event_date) {
-      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-      if (!dateRegex.test(sanitizedFormData.event_date)) {
-        setValidationErrors({ event_date: 'Invalid date format. Please re-enter the date.' });
-        document.getElementById('event_date')?.focus();
-        return;
-      }
-      // Validate the date is actually valid
-      const date = new Date(sanitizedFormData.event_date);
-      if (isNaN(date.getTime())) {
-        setValidationErrors({ event_date: 'Invalid date. Please re-enter the date.' });
-        document.getElementById('event_date')?.focus();
-        return;
-      }
-    }
-
-    // Sanitize time fields
-    const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
-    if (sanitizedFormData.event_start_time && !timeRegex.test(sanitizedFormData.event_start_time)) {
-      setValidationErrors({ event_start_time: 'Invalid start time format. Please re-enter the time.' });
-      document.getElementById('event_start_time')?.focus();
-      return;
-    }
-    if (sanitizedFormData.event_end_time && !timeRegex.test(sanitizedFormData.event_end_time)) {
-      setValidationErrors({ event_end_time: 'Invalid end time format. Please re-enter the time.' });
-      document.getElementById('event_end_time')?.focus();
-      return;
-    }
-
-    // Update form data with sanitized values
-    setFormData(sanitizedFormData);
-
-    // Validate form
+    // Validate form using existing validation logic
     if (!validateForm()) {
       // Focus first error field
       const firstErrorField = Object.keys(validationErrors)[0];
@@ -460,12 +350,12 @@ const UV_CateringInquiryForm: React.FC = () => {
 
     // Prepare submission data
     const submissionData: any = {
-      ...sanitizedFormData,
+      ...formData,
       user_id: currentUser?.user_id || undefined,
-      guest_count: Number(sanitizedFormData.guest_count),
-      guest_count_min: sanitizedFormData.guest_count_min ? Number(sanitizedFormData.guest_count_min) : null,
-      guest_count_max: sanitizedFormData.guest_count_max ? Number(sanitizedFormData.guest_count_max) : null,
-      dietary_requirements: sanitizedFormData.dietary_requirements.length > 0 ? sanitizedFormData.dietary_requirements : null,
+      guest_count: Number(formData.guest_count),
+      guest_count_min: formData.guest_count_min ? Number(formData.guest_count_min) : null,
+      guest_count_max: formData.guest_count_max ? Number(formData.guest_count_max) : null,
+      dietary_requirements: formData.dietary_requirements.length > 0 ? formData.dietary_requirements : null,
     };
 
     // Submit mutation
@@ -680,20 +570,21 @@ const UV_CateringInquiryForm: React.FC = () => {
                       name="event_date"
                       autoComplete="off"
                       value={formData.event_date}
-                      onChange={(e) => handleInputChange('event_date', e.target.value)}
-                      onBlur={() => handleInputBlur('event_date')}
-                      onInput={(e) => {
-                        // Additional safeguard: validate on input to prevent corruption
-                        const input = e.target as HTMLInputElement;
-                        const value = input.value;
-                        if (value && !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-                          console.warn('Invalid date format detected on input, clearing:', value);
-                          input.value = '';
-                          handleInputChange('event_date', '');
+                      onChange={(e) => {
+                        // Don't validate format on change - just set the value
+                        // Browser native date input handles the format
+                        const value = e.target.value;
+                        setFormData(prev => ({ ...prev, event_date: value }));
+                        if (validationErrors.event_date) {
+                          setValidationErrors(prev => {
+                            const newErrors = { ...prev };
+                            delete newErrors.event_date;
+                            return newErrors;
+                          });
                         }
                       }}
+                      onBlur={() => handleInputBlur('event_date')}
                       min={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
-                      pattern="\d{4}-\d{2}-\d{2}"
                       required
                       className={`w-full px-4 py-3 rounded-lg border-2 transition-colors ${
                         validationErrors.event_date
@@ -718,19 +609,20 @@ const UV_CateringInquiryForm: React.FC = () => {
                       name="event_start_time"
                       autoComplete="off"
                       value={formData.event_start_time}
-                      onChange={(e) => handleInputChange('event_start_time', e.target.value)}
-                      onBlur={() => handleInputBlur('event_start_time')}
-                      onInput={(e) => {
-                        // Additional safeguard: validate on input to prevent corruption
-                        const input = e.target as HTMLInputElement;
-                        const value = input.value;
-                        if (value && !/^([01]?\d|2[0-3]):([0-5]?\d)$/.test(value)) {
-                          console.warn('Invalid time format detected on input, clearing:', value);
-                          input.value = '';
-                          handleInputChange('event_start_time', '');
+                      onChange={(e) => {
+                        // Don't validate format on change - just set the value
+                        // Browser native time input handles the format
+                        const value = e.target.value;
+                        setFormData(prev => ({ ...prev, event_start_time: value }));
+                        if (validationErrors.event_start_time) {
+                          setValidationErrors(prev => {
+                            const newErrors = { ...prev };
+                            delete newErrors.event_start_time;
+                            return newErrors;
+                          });
                         }
                       }}
-                      pattern="([01]\d|2[0-3]):([0-5]\d)"
+                      onBlur={() => handleInputBlur('event_start_time')}
                       required
                       className={`w-full px-4 py-3 rounded-lg border-2 transition-colors ${
                         validationErrors.event_start_time
@@ -754,19 +646,20 @@ const UV_CateringInquiryForm: React.FC = () => {
                       name="event_end_time"
                       autoComplete="off"
                       value={formData.event_end_time}
-                      onChange={(e) => handleInputChange('event_end_time', e.target.value)}
-                      onBlur={() => handleInputBlur('event_end_time')}
-                      onInput={(e) => {
-                        // Additional safeguard: validate on input to prevent corruption
-                        const input = e.target as HTMLInputElement;
-                        const value = input.value;
-                        if (value && !/^([01]?\d|2[0-3]):([0-5]?\d)$/.test(value)) {
-                          console.warn('Invalid time format detected on input, clearing:', value);
-                          input.value = '';
-                          handleInputChange('event_end_time', '');
+                      onChange={(e) => {
+                        // Don't validate format on change - just set the value
+                        // Browser native time input handles the format
+                        const value = e.target.value;
+                        setFormData(prev => ({ ...prev, event_end_time: value }));
+                        if (validationErrors.event_end_time) {
+                          setValidationErrors(prev => {
+                            const newErrors = { ...prev };
+                            delete newErrors.event_end_time;
+                            return newErrors;
+                          });
                         }
                       }}
-                      pattern="([01]\d|2[0-3]):([0-5]\d)"
+                      onBlur={() => handleInputBlur('event_end_time')}
                       required
                       className={`w-full px-4 py-3 rounded-lg border-2 transition-colors ${
                         validationErrors.event_end_time

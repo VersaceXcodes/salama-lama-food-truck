@@ -76,26 +76,37 @@ const fetchStockLevels = async (
   category: string | null,
   status: string | null
 ): Promise<{ stock_items: StockItem[]; stock_summary: StockSummary }> => {
+  if (!token) {
+    throw new Error('Authentication token is required');
+  }
+
   const params = new URLSearchParams();
   if (category) params.append('category', category);
   if (status && status !== 'all') params.append('status', status);
 
-  const response = await axios.get<StockAPIResponse>(
-    `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api/staff/stock`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      params,
+  try {
+    const response = await axios.get<StockAPIResponse>(
+      `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api/staff/stock`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        params,
+      }
+    );
+
+    // Validate response structure
+    if (!response.data || !response.data.items) {
+      console.error('[StaffStock] Invalid response structure:', response.data);
+      throw new Error('Invalid response structure from server');
     }
-  );
 
-  const items = response.data.items;
-  let lowStockCount = 0;
-  let outOfStockCount = 0;
-  let itemsOkCount = 0;
+    const items = response.data.items;
+    let lowStockCount = 0;
+    let outOfStockCount = 0;
+    let itemsOkCount = 0;
 
-  const stockItems: StockItem[] = items.map((item) => {
+    const stockItems: StockItem[] = items.map((item) => {
     let stock_status: 'ok' | 'low_stock' | 'out_of_stock' = 'ok';
     
     if (item.stock_tracked) {
@@ -125,8 +136,8 @@ const fetchStockLevels = async (
       low_stock_threshold: item.low_stock_threshold,
       stock_tracked: item.stock_tracked,
       stock_status,
-      is_active: item.is_active,
-      image_url: item.image_url,
+      is_active: item.is_active ?? true,
+      image_url: item.image_url ?? null,
     };
   });
 
@@ -139,6 +150,17 @@ const fetchStockLevels = async (
       items_ok_count: itemsOkCount,
     },
   };
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error('[StaffStock] API Error:', {
+        status: error.response?.status,
+        message: error.response?.data?.message,
+        url: error.config?.url,
+      });
+      throw error;
+    }
+    throw error;
+  }
 };
 
 const updateItemStock = async (

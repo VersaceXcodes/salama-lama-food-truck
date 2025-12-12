@@ -160,16 +160,40 @@ const UV_AdminStock: React.FC = () => {
     enabled: !!auth_token,
     staleTime: 60 * 1000, // 1 minute
     select: (data) => {
+      // Ensure data exists and has the expected structure
+      if (!data || typeof data !== 'object') {
+        console.error('[AdminStock] Invalid data structure received:', data);
+        return {
+          total_items_tracked: 0,
+          low_stock_count: 0,
+          out_of_stock_count: 0,
+          items: []
+        };
+      }
+
       // Ensure items is an array before mapping
-      const items = Array.isArray(data?.items) ? data.items : [];
-      return {
-        ...data,
-        items: items.map(item => ({
-          ...item,
-          current_stock: item.current_stock !== null ? Number(item.current_stock) : null,
-          low_stock_threshold: item.low_stock_threshold !== null ? Number(item.low_stock_threshold) : null,
-        }))
-      };
+      const items = Array.isArray(data.items) ? data.items : [];
+      
+      try {
+        return {
+          total_items_tracked: data.total_items_tracked || 0,
+          low_stock_count: data.low_stock_count || 0,
+          out_of_stock_count: data.out_of_stock_count || 0,
+          items: items.map(item => ({
+            ...item,
+            current_stock: item.current_stock !== null && item.current_stock !== undefined ? Number(item.current_stock) : null,
+            low_stock_threshold: item.low_stock_threshold !== null && item.low_stock_threshold !== undefined ? Number(item.low_stock_threshold) : null,
+          }))
+        };
+      } catch (error) {
+        console.error('[AdminStock] Error transforming stock data:', error);
+        return {
+          total_items_tracked: 0,
+          low_stock_count: 0,
+          out_of_stock_count: 0,
+          items: []
+        };
+      }
     },
   });
 

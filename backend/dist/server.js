@@ -3700,7 +3700,8 @@ app.put('/api/staff/orders/:id/status', authenticate_token, require_role(['staff
 app.get('/api/staff/stock', authenticate_token, require_role(['staff', 'admin']), async (req, res) => {
     try {
         const rows = await pool.query(`SELECT mi.item_id, mi.name, mi.category_id, c.name as category_name,
-              mi.stock_tracked, mi.current_stock, mi.low_stock_threshold
+              mi.stock_tracked, mi.current_stock, mi.low_stock_threshold,
+              mi.is_active, mi.image_url
        FROM menu_items mi
        JOIN categories c ON c.category_id = mi.category_id
        ORDER BY c.sort_order ASC, mi.sort_order ASC, mi.name ASC`);
@@ -3713,6 +3714,8 @@ app.get('/api/staff/stock', authenticate_token, require_role(['staff', 'admin'])
                 stock_tracked: r.stock_tracked,
                 current_stock: r.current_stock === null || r.current_stock === undefined ? null : Number(r.current_stock),
                 low_stock_threshold: r.low_stock_threshold === null || r.low_stock_threshold === undefined ? null : Number(r.low_stock_threshold),
+                is_active: r.is_active,
+                image_url: r.image_url,
                 status: !r.stock_tracked
                     ? 'not_tracked'
                     : (Number(r.current_stock ?? 0) <= 0)

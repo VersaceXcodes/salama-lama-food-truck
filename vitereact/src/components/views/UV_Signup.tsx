@@ -297,13 +297,36 @@ const UV_Signup: React.FC = () => {
         newFieldErrors.phone = 'This phone number is already registered. Please use a different phone number or try logging in.';
       }
 
-      // Use flushSync to force synchronous state updates and immediate re-render
-      // This ensures the error banner displays immediately, even in test environments
-      flushSync(() => {
-        setSubmissionLoading(false);
-        setRegistrationError(errorMessage);
-        setFormValidationErrors(newFieldErrors);
-      });
+      // CRITICAL FIX: Use setTimeout to ensure error state updates happen AFTER
+      // the store's authentication state updates complete. This prevents a race
+      // condition where the store update triggers a re-render that clears local state.
+      // Setting timeout to 0 pushes the state updates to the next event loop tick.
+      setTimeout(() => {
+        console.log('Setting error state - Error message:', errorMessage);
+        console.log('Setting error state - Field errors:', newFieldErrors);
+        
+        // Use flushSync to ensure these updates happen synchronously together
+        flushSync(() => {
+          setSubmissionLoading(false);
+          setRegistrationError(errorMessage);
+          setFormValidationErrors(newFieldErrors);
+        });
+        
+        console.log('Error state set - should now be visible');
+        
+        // Scroll to error banner after DOM updates
+        requestAnimationFrame(() => {
+          if (errorBannerRef.current) {
+            console.log('Error banner ref found, scrolling into view');
+            errorBannerRef.current.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center' 
+            });
+          } else {
+            console.warn('Error banner ref NOT found in DOM');
+          }
+        });
+      }, 0);
     }
   };
 

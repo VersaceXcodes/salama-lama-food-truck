@@ -3995,6 +3995,41 @@ app.get('/api/staff/orders', authenticate_token, require_role(['staff', 'admin']
   }
 });
 
+// Get individual order details for staff
+app.get('/api/staff/orders/:id', authenticate_token, require_role(['staff', 'admin']), async (req, res) => {
+  try {
+    const order_id = req.params.id;
+    const order_res = await pool.query('SELECT * FROM orders WHERE order_id = $1', [order_id]);
+    if (order_res.rows.length === 0) return res.status(404).json(createErrorResponse('Order not found', null, 'NOT_FOUND', req.request_id));
+
+    const items_res = await pool.query('SELECT * FROM order_items WHERE order_id = $1 ORDER BY item_name ASC', [order_id]);
+    const status_res = await pool.query('SELECT * FROM order_status_history WHERE order_id = $1 ORDER BY changed_at ASC', [order_id]);
+
+    return ok(res, 200, {
+      ...coerce_numbers({
+        ...order_res.rows[0],
+        delivery_fee: order_res.rows[0].delivery_fee === null || order_res.rows[0].delivery_fee === undefined ? null : Number(order_res.rows[0].delivery_fee),
+        subtotal: Number(order_res.rows[0].subtotal),
+        discount_amount: Number(order_res.rows[0].discount_amount),
+        tax_amount: Number(order_res.rows[0].tax_amount),
+        total_amount: Number(order_res.rows[0].total_amount),
+      }, ['subtotal', 'discount_amount', 'tax_amount', 'total_amount', 'delivery_fee']),
+      items: items_res.rows.map((r) => ({
+        order_item_id: r.order_item_id,
+        item_id: r.item_id,
+        item_name: r.item_name,
+        quantity: Number(r.quantity),
+        unit_price: Number(r.unit_price),
+        line_total: Number(r.line_total),
+        selected_customizations: r.selected_customizations ?? null,
+      })),
+      status_history: status_res.rows,
+    });
+  } catch (error) {
+    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+  }
+});
+
 app.put('/api/staff/orders/:id/status', authenticate_token, require_role(['staff', 'admin']), require_permission('manage_orders'), async (req, res) => {
   try {
     const order_id = req.params.id;

@@ -650,7 +650,7 @@ async function fetch_menu_items({ for_admin = false, search }) {
         price: Number(r.price),
         image_urls: r.image_urls ?? null,
         dietary_tags: r.dietary_tags ?? null,
-    }, [])));
+    }, ['price', 'current_stock', 'low_stock_threshold', 'sort_order'])));
     return { items, total: count_res.rows[0]?.count ?? 0 };
 }
 /**

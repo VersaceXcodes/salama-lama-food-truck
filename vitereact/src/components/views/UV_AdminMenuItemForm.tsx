@@ -235,10 +235,12 @@ const UV_AdminMenuItemForm: React.FC = () => {
       await queryClient.invalidateQueries({ queryKey: ['admin-menu-items'], refetchType: 'all' });
       queryClient.removeQueries({ queryKey: ['admin-menu-items'] });
       
+      // Wait for cache to clear and refetch to ensure fresh data
+      await queryClient.refetchQueries({ queryKey: ['admin-menu-items'], type: 'active' });
+      
       setSuccessMessage('Menu item created successfully!');
-      setTimeout(() => {
-        navigate('/admin/menu');
-      }, 1500);
+      // Navigate immediately after refetch completes to ensure fresh data is loaded
+      navigate('/admin/menu');
     },
     onError: (error: any) => {
       const errorMsg = error.response?.data?.message || error.message || 'Failed to create menu item';
@@ -263,10 +265,12 @@ const UV_AdminMenuItemForm: React.FC = () => {
       // Remove all cached data for menu items to force fresh fetch
       queryClient.removeQueries({ queryKey: ['admin-menu-items'] });
       
+      // Wait for cache to clear and refetch to ensure fresh data
+      await queryClient.refetchQueries({ queryKey: ['admin-menu-items'], type: 'active' });
+      
       setSuccessMessage('Menu item updated successfully!');
-      setTimeout(() => {
-        navigate('/admin/menu');
-      }, 1500);
+      // Navigate immediately after refetch completes to ensure fresh data is loaded
+      navigate('/admin/menu');
     },
     onError: (error: any) => {
       const errorMsg = error.response?.data?.message || error.message || 'Failed to update menu item';

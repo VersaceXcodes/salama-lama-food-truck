@@ -5906,6 +5906,16 @@ app.get('/api/admin/analytics/sales', authenticate_token, require_role(['admin']
        LIMIT 10`,
       params
     );
+    
+    // Revenue by day for trend chart
+    const revenue_by_day = await pool.query(
+      `SELECT DATE(created_at) as date, COALESCE(SUM(total_amount),0) as revenue
+       FROM orders
+       WHERE ${where.join(' AND ')}
+       GROUP BY DATE(created_at)
+       ORDER BY date ASC`,
+      params
+    );
 
     return ok(res, 200, {
       summary: {
@@ -5915,6 +5925,7 @@ app.get('/api/admin/analytics/sales', authenticate_token, require_role(['admin']
       },
       breakdown_by_type: by_type.rows.map((r) => ({ order_type: r.order_type, orders: r.orders, revenue: Number(r.revenue) })),
       top_items: top_items.rows.map((r) => ({ item_name: r.item_name, quantity_sold: r.quantity_sold, revenue: Number(r.revenue) })),
+      revenue_by_day: revenue_by_day.rows.map((r) => ({ date: r.date, revenue: Number(r.revenue) })),
     });
   } catch (error) {
     if (error instanceof z.ZodError) return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
@@ -5931,6 +5942,29 @@ app.get('/api/admin/analytics/customers', authenticate_token, require_role(['adm
          SELECT user_id FROM orders WHERE payment_status = 'paid' GROUP BY user_id HAVING COUNT(*) > 1
        ) t`
     );
+    
+    // Calculate new customers in the selected date range
+    const q_schema = z.object({ date_from: z.string().optional(), date_to: z.string().optional() });
+    const q = parse_query(q_schema, req.query);
+    
+    const date_where = [];
+    const date_params = [];
+    if (q.date_from) {
+      date_params.push(q.date_from);
+      date_where.push(`created_at >= $${date_params.length}`);
+    }
+    if (q.date_to) {
+      date_params.push(q.date_to);
+      date_where.push(`created_at <= $${date_params.length}`);
+    }
+    
+    const new_customers_query = date_where.length > 0 
+      ? await pool.query(
+          `SELECT COUNT(*)::int as count FROM users WHERE role = 'customer' AND ${date_where.join(' AND ')}`,
+          date_params
+        )
+      : { rows: [{ count: total_customers.rows[0]?.count ?? 0 }] };
+    
     const top_customers = await pool.query(
       `SELECT u.user_id, u.first_name, u.last_name, u.email,
               COUNT(o.order_id)::int as orders,
@@ -5942,19 +5976,110 @@ app.get('/api/admin/analytics/customers', authenticate_token, require_role(['adm
        ORDER BY spend DESC
        LIMIT 20`
     );
+    
+    // Calculate customer lifetime value
+    const clv_query = await pool.query(
+      `SELECT COALESCE(AVG(total_spend), 0) as clv
+       FROM (
+         SELECT u.user_id, COALESCE(SUM(o.total_amount), 0) as total_spend
+         FROM users u
+         LEFT JOIN orders o ON o.user_id = u.user_id AND o.payment_status = 'paid'
+         WHERE u.role = 'customer'
+         GROUP BY u.user_id
+       ) customer_totals`
+    );
+    
+    // Get loyalty engagement data (check if table exists first)
+    let loyalty_engagement;
+    try {
+      loyalty_engagement = await pool.query(
+        `SELECT 
+           COUNT(DISTINCT user_id)::int as active_participants,
+           COALESCE(SUM(CASE WHEN transaction_type = 'earned' THEN points ELSE 0 END), 0)::int as points_issued,
+           COALESCE(SUM(CASE WHEN transaction_type = 'redeemed' THEN ABS(points) ELSE 0 END), 0)::int as points_redeemed
+         FROM loyalty_transactions`
+      );
+    } catch (e) {
+      // Table doesn't exist, provide default values
+      loyalty_engagement = { rows: [{ active_participants: 0, points_issued: 0, points_redeemed: 0 }] };
+    }
+
+    const total_cust = total_customers.rows[0]?.count ?? 0;
+    const repeat_cust = repeat_customers.rows[0]?.count ?? 0;
+    const repeat_rate = total_cust > 0 ? repeat_cust / total_cust : 0;
 
     return ok(res, 200, {
-      total_customers: total_customers.rows[0]?.count ?? 0,
-      repeat_customers: repeat_customers.rows[0]?.count ?? 0,
+      new_customers: new_customers_query.rows[0]?.count ?? 0,
+      repeat_customer_rate: repeat_rate,
+      customer_lifetime_value: Number(clv_query.rows[0]?.clv ?? 0),
       top_customers: top_customers.rows.map((r) => ({
         user_id: r.user_id,
-        name: `${r.first_name} ${r.last_name}`,
-        email: r.email,
-        orders: r.orders,
-        spend: Number(r.spend),
+        customer_name: `${r.first_name} ${r.last_name}`,
+        total_orders: r.orders,
+        total_spend: Number(r.spend),
       })),
+      loyalty_engagement: {
+        active_participants: loyalty_engagement.rows[0]?.active_participants ?? 0,
+        points_issued: loyalty_engagement.rows[0]?.points_issued ?? 0,
+        points_redeemed: loyalty_engagement.rows[0]?.points_redeemed ?? 0,
+      },
     });
   } catch (error) {
+    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+  }
+});
+
+app.get('/api/admin/analytics/time-analysis', authenticate_token, require_role(['admin']), async (req, res) => {
+  try {
+    const q_schema = z.object({ date_from: z.string().optional(), date_to: z.string().optional() });
+    const q = parse_query(q_schema, req.query);
+
+    const where = ["payment_status = 'paid'"];
+    const params = [];
+    if (q.date_from) {
+      params.push(q.date_from);
+      where.push(`created_at >= $${params.length}`);
+    }
+    if (q.date_to) {
+      params.push(q.date_to);
+      where.push(`created_at <= $${params.length}`);
+    }
+
+    // Peak order hours
+    const peak_hours = await pool.query(
+      `SELECT CAST(DATE_PART('hour', created_at::timestamp) AS INTEGER) as hour, COUNT(*)::int as order_count
+       FROM orders
+       WHERE ${where.join(' AND ')}
+       GROUP BY hour
+       ORDER BY order_count DESC`,
+      params
+    );
+
+    // Average fulfillment time (in minutes)
+    const fulfillment_time = await pool.query(
+      `SELECT COALESCE(AVG(DATE_PART('epoch', (completed_at::timestamp - created_at::timestamp)) / 60), 0)::int as avg_minutes
+       FROM orders
+       WHERE ${where.join(' AND ')} AND completed_at IS NOT NULL`,
+      params
+    );
+
+    // Orders by day of week
+    const orders_by_day = await pool.query(
+      `SELECT TO_CHAR(created_at::timestamp, 'Day') as day, COUNT(*)::int as order_count
+       FROM orders
+       WHERE ${where.join(' AND ')}
+       GROUP BY day, DATE_PART('dow', created_at::timestamp)
+       ORDER BY DATE_PART('dow', created_at::timestamp)`,
+      params
+    );
+
+    return ok(res, 200, {
+      peak_order_hours: peak_hours.rows.map((r) => ({ hour: r.hour, order_count: r.order_count })),
+      average_fulfillment_time: fulfillment_time.rows[0]?.avg_minutes ?? 0,
+      orders_by_day_of_week: orders_by_day.rows.map((r) => ({ day: r.day.trim(), order_count: r.order_count })),
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
     return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
   }
 });

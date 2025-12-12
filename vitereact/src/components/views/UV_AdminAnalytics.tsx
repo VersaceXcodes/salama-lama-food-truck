@@ -641,21 +641,21 @@ const UV_AdminAnalytics: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <MetricCard
                       title="New Customers"
-                      value={customerAnalytics.new_customers.toLocaleString()}
+                      value={(customerAnalytics.new_customers || 0).toLocaleString()}
                       icon={<Users className="w-6 h-6 text-blue-600" />}
                       color="bg-blue-50"
                     />
                     
                     <MetricCard
                       title="Repeat Customer Rate"
-                      value={formatPercentage(customerAnalytics.repeat_customer_rate)}
+                      value={formatPercentage(customerAnalytics.repeat_customer_rate || 0)}
                       icon={<TrendingUp className="w-6 h-6 text-green-600" />}
                       color="bg-green-50"
                     />
                     
                     <MetricCard
                       title="Customer Lifetime Value"
-                      value={formatCurrency(customerAnalytics.customer_lifetime_value)}
+                      value={formatCurrency(customerAnalytics.customer_lifetime_value || 0)}
                       icon={<Award className="w-6 h-6 text-purple-600" />}
                       color="bg-purple-50"
                     />
@@ -667,22 +667,26 @@ const UV_AdminAnalytics: React.FC = () => {
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                       <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Customers</h3>
                       <div className="space-y-3">
-                        {customerAnalytics.top_customers.slice(0, 5).map((customer, index) => (
-                          <div key={customer.user_id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-                            <div className="flex items-center space-x-3">
-                              <span className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-50 text-purple-600 font-semibold text-sm">
-                                {index + 1}
-                              </span>
-                              <div>
-                                <p className="font-medium text-gray-900">{customer.customer_name}</p>
-                                <p className="text-sm text-gray-500">{customer.total_orders} orders</p>
+                        {customerAnalytics.top_customers && customerAnalytics.top_customers.length > 0 ? (
+                          customerAnalytics.top_customers.slice(0, 5).map((customer, index) => (
+                            <div key={customer.user_id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+                              <div className="flex items-center space-x-3">
+                                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-50 text-purple-600 font-semibold text-sm">
+                                  {index + 1}
+                                </span>
+                                <div>
+                                  <p className="font-medium text-gray-900">{customer.customer_name}</p>
+                                  <p className="text-sm text-gray-500">{customer.total_orders} orders</p>
+                                </div>
                               </div>
+                              <span className="font-semibold text-gray-900">
+                                {formatCurrency(customer.total_spend)}
+                              </span>
                             </div>
-                            <span className="font-semibold text-gray-900">
-                              {formatCurrency(customer.total_spend)}
-                            </span>
-                          </div>
-                        ))}
+                          ))
+                        ) : (
+                          <div className="text-center text-gray-400 py-8">No customer data available</div>
+                        )}
                       </div>
                     </div>
 
@@ -694,7 +698,7 @@ const UV_AdminAnalytics: React.FC = () => {
                           <div>
                             <p className="text-sm text-gray-600">Active Participants</p>
                             <p className="text-2xl font-bold text-gray-900">
-                              {customerAnalytics.loyalty_engagement.active_participants.toLocaleString()}
+                              {(customerAnalytics.loyalty_engagement?.active_participants || 0).toLocaleString()}
                             </p>
                           </div>
                           <Award className="w-8 h-8 text-blue-600" />
@@ -704,7 +708,7 @@ const UV_AdminAnalytics: React.FC = () => {
                           <div>
                             <p className="text-sm text-gray-600">Points Issued</p>
                             <p className="text-2xl font-bold text-gray-900">
-                              {customerAnalytics.loyalty_engagement.points_issued.toLocaleString()}
+                              {(customerAnalytics.loyalty_engagement?.points_issued || 0).toLocaleString()}
                             </p>
                           </div>
                           <TrendingUp className="w-8 h-8 text-green-600" />
@@ -714,7 +718,7 @@ const UV_AdminAnalytics: React.FC = () => {
                           <div>
                             <p className="text-sm text-gray-600">Points Redeemed</p>
                             <p className="text-2xl font-bold text-gray-900">
-                              {customerAnalytics.loyalty_engagement.points_redeemed.toLocaleString()}
+                              {(customerAnalytics.loyalty_engagement?.points_redeemed || 0).toLocaleString()}
                             </p>
                           </div>
                           <ShoppingBag className="w-8 h-8 text-purple-600" />
@@ -724,7 +728,9 @@ const UV_AdminAnalytics: React.FC = () => {
                           <div className="flex items-center justify-between text-sm text-gray-600">
                             <span>Redemption Rate</span>
                             <span className="font-medium">
-                              {((customerAnalytics.loyalty_engagement.points_redeemed / customerAnalytics.loyalty_engagement.points_issued) * 100).toFixed(1)}%
+                              {customerAnalytics.loyalty_engagement?.points_issued && customerAnalytics.loyalty_engagement.points_issued > 0
+                                ? ((customerAnalytics.loyalty_engagement.points_redeemed / customerAnalytics.loyalty_engagement.points_issued) * 100).toFixed(1)
+                                : '0.0'}%
                             </span>
                           </div>
                         </div>
@@ -760,21 +766,25 @@ const UV_AdminAnalytics: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <MetricCard
                       title="Average Fulfillment Time"
-                      value={`${timeAnalytics.average_fulfillment_time} min`}
+                      value={`${timeAnalytics.average_fulfillment_time || 0} min`}
                       icon={<Clock className="w-6 h-6 text-blue-600" />}
                       color="bg-blue-50"
                     />
                     
                     <MetricCard
                       title="Peak Order Hour"
-                      value={`${timeAnalytics.peak_order_hours[0]?.hour || 0}:00`}
+                      value={timeAnalytics.peak_order_hours && timeAnalytics.peak_order_hours.length > 0 
+                        ? `${timeAnalytics.peak_order_hours[0].hour}:00` 
+                        : 'N/A'}
                       icon={<Calendar className="w-6 h-6 text-orange-600" />}
                       color="bg-orange-50"
                     />
                     
                     <MetricCard
                       title="Busiest Day"
-                      value={timeAnalytics.orders_by_day_of_week[0]?.day || 'N/A'}
+                      value={timeAnalytics.orders_by_day_of_week && timeAnalytics.orders_by_day_of_week.length > 0 
+                        ? timeAnalytics.orders_by_day_of_week[0].day 
+                        : 'N/A'}
                       icon={<TrendingUp className="w-6 h-6 text-green-600" />}
                       color="bg-green-50"
                     />
@@ -783,23 +793,35 @@ const UV_AdminAnalytics: React.FC = () => {
                   {/* Peak Order Hours Chart */}
                   <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Peak Order Hours</h3>
-                    <SimpleBarChart 
-                      data={timeAnalytics.peak_order_hours.map(h => ({
-                        label: `${h.hour}:00`,
-                        value: h.order_count,
-                      }))}
-                    />
+                    {timeAnalytics.peak_order_hours && timeAnalytics.peak_order_hours.length > 0 ? (
+                      <SimpleBarChart 
+                        data={timeAnalytics.peak_order_hours.map(h => ({
+                          label: `${h.hour}:00`,
+                          value: h.order_count,
+                        }))}
+                      />
+                    ) : (
+                      <div className="w-full h-64 flex items-center justify-center text-gray-400">
+                        No data available
+                      </div>
+                    )}
                   </div>
 
                   {/* Orders by Day of Week */}
                   <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Orders by Day of Week</h3>
-                    <SimpleBarChart 
-                      data={timeAnalytics.orders_by_day_of_week.map(d => ({
-                        label: d.day,
-                        value: d.order_count,
-                      }))}
-                    />
+                    {timeAnalytics.orders_by_day_of_week && timeAnalytics.orders_by_day_of_week.length > 0 ? (
+                      <SimpleBarChart 
+                        data={timeAnalytics.orders_by_day_of_week.map(d => ({
+                          label: d.day,
+                          value: d.order_count,
+                        }))}
+                      />
+                    ) : (
+                      <div className="w-full h-64 flex items-center justify-center text-gray-400">
+                        No data available
+                      </div>
+                    )}
                   </div>
                 </>
               ) : null}

@@ -1,0 +1,454 @@
+{
+  "generated_at": "2024-12-11T10:00:00Z",
+  "application_name": "Salama Lama Food Truck",
+  "frontend_url": "https://123salama-lama-food-truck.launchpulse.ai",
+  "backend_url": "https://123salama-lama-food-truck.launchpulse.ai",
+  "user_structure": {
+    "table_name": "users",
+    "role_field": "role",
+    "available_roles": ["admin", "staff", "customer"],
+    "registration_endpoint": "/api/auth/register",
+    "login_endpoint": "/api/auth/login",
+    "staff_login_endpoint": "/api/staff/login",
+    "admin_login_endpoint": "/api/admin/login",
+    "authentication_type": "JWT Bearer Token",
+    "password_storage": "Plain-text (for testing only)"
+  },
+  "total_users": 10,
+  "verified_users": 10,
+  "users": [
+    {
+      "user_id": "user_001",
+      "email": "admin@coffeeshop.ie",
+      "password": "admin123",
+      "phone": "+353871234567",
+      "role": "admin",
+      "first_name": "Sean",
+      "last_name": "Murphy",
+      "profile_photo_url": "https://images.unsplash.com/photo-1560250097-0b93528c311a",
+      "email_verified": true,
+      "verified": true,
+      "status": "active",
+      "created_at": "2023-01-15T10:00:00Z",
+      "referral_code": "SEAN2024",
+      "staff_permissions": {
+        "manage_orders": true,
+        "manage_menu": true,
+        "manage_users": true,
+        "view_reports": true,
+        "manage_settings": true
+      },
+      "description": "Admin user with full system access",
+      "login_url": "/admin/login"
+    },
+    {
+      "user_id": "user_002",
+      "email": "manager@coffeeshop.ie",
+      "password": "manager123",
+      "phone": "+353871234568",
+      "role": "staff",
+      "first_name": "Aoife",
+      "last_name": "O'Connor",
+      "profile_photo_url": "https://images.unsplash.com/photo-1494790108377-be9c29b29330",
+      "email_verified": true,
+      "verified": true,
+      "status": "active",
+      "created_at": "2023-02-10T11:00:00Z",
+      "referral_code": "AOIFE2024",
+      "staff_permissions": {
+        "manage_orders": true,
+        "manage_menu": true,
+        "view_reports": true
+      },
+      "description": "Staff/Manager user with order and menu management",
+      "login_url": "/staff/login"
+    },
+    {
+      "user_id": "user_003",
+      "email": "john.smith@email.ie",
+      "password": "password123",
+      "phone": "+353871234569",
+      "role": "customer",
+      "first_name": "John",
+      "last_name": "Smith",
+      "profile_photo_url": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
+      "email_verified": true,
+      "verified": true,
+      "status": "active",
+      "created_at": "2023-03-20T14:30:00Z",
+      "referral_code": "JOHN2024",
+      "dietary_preferences": ["vegetarian", "gluten-free"],
+      "first_order_discount_code": "FIRST10",
+      "first_order_discount_used": true,
+      "loyalty_points_balance": 320,
+      "total_points_earned": 500,
+      "description": "Active customer with order history and loyalty points",
+      "login_url": "/login"
+    },
+    {
+      "user_id": "user_004",
+      "email": "sarah.wilson@email.ie",
+      "password": "password123",
+      "phone": "+353871234570",
+      "role": "customer",
+      "first_name": "Sarah",
+      "last_name": "Wilson",
+      "profile_photo_url": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80",
+      "email_verified": true,
+      "verified": true,
+      "status": "active",
+      "created_at": "2023-04-05T09:15:00Z",
+      "referral_code": "SARAH2024",
+      "dietary_preferences": ["vegan"],
+      "first_order_discount_code": "FIRST10",
+      "first_order_discount_used": false,
+      "loyalty_points_balance": 450,
+      "total_points_earned": 600,
+      "referred_by_user_id": "user_003",
+      "description": "Customer with unused first order discount and referral",
+      "login_url": "/login"
+    },
+    {
+      "user_id": "user_005",
+      "email": "michael.byrne@email.ie",
+      "password": "password123",
+      "phone": "+353871234571",
+      "role": "customer",
+      "first_name": "Michael",
+      "last_name": "Byrne",
+      "profile_photo_url": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e",
+      "email_verified": true,
+      "verified": true,
+      "status": "active",
+      "created_at": "2023-05-12T16:20:00Z",
+      "referral_code": "MIKE2024",
+      "first_order_discount_code": "FIRST10",
+      "first_order_discount_used": true,
+      "loyalty_points_balance": 180,
+      "total_points_earned": 350,
+      "description": "Regular customer with completed orders",
+      "login_url": "/login"
+    },
+    {
+      "user_id": "user_006",
+      "email": "emma.kelly@email.ie",
+      "password": "password123",
+      "phone": "+353871234572",
+      "role": "customer",
+      "first_name": "Emma",
+      "last_name": "Kelly",
+      "profile_photo_url": "https://images.unsplash.com/photo-1544005313-94ddf0286df2",
+      "email_verified": true,
+      "verified": true,
+      "status": "active",
+      "created_at": "2023-06-18T13:45:00Z",
+      "referral_code": "EMMA2024",
+      "dietary_preferences": ["dairy-free"],
+      "loyalty_points_balance": 580,
+      "total_points_earned": 750,
+      "referred_by_user_id": "user_004",
+      "description": "High-value customer with multiple orders",
+      "login_url": "/login"
+    },
+    {
+      "user_id": "user_007",
+      "email": "james.ryan@email.ie",
+      "password": "password123",
+      "phone": "+353871234573",
+      "role": "customer",
+      "first_name": "James",
+      "last_name": "Ryan",
+      "profile_photo_url": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d",
+      "email_verified": false,
+      "verified": false,
+      "status": "active",
+      "created_at": "2023-07-22T11:10:00Z",
+      "referral_code": "JAMES2024",
+      "first_order_discount_code": "FIRST10",
+      "first_order_discount_used": false,
+      "loyalty_points_balance": 95,
+      "total_points_earned": 150,
+      "description": "Customer with unverified email",
+      "login_url": "/login"
+    },
+    {
+      "user_id": "user_008",
+      "email": "lisa.brennan@email.ie",
+      "password": "password123",
+      "phone": "+353871234574",
+      "role": "customer",
+      "first_name": "Lisa",
+      "last_name": "Brennan",
+      "profile_photo_url": "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f",
+      "email_verified": true,
+      "verified": true,
+      "status": "active",
+      "created_at": "2023-08-30T10:25:00Z",
+      "referral_code": "LISA2024",
+      "dietary_preferences": ["nut-free"],
+      "first_order_discount_code": "FIRST10",
+      "first_order_discount_used": true,
+      "loyalty_points_balance": 275,
+      "total_points_earned": 480,
+      "referred_by_user_id": "user_003",
+      "description": "Customer with dietary restrictions",
+      "login_url": "/login"
+    },
+    {
+      "user_id": "user_009",
+      "email": "david.walsh@email.ie",
+      "password": "password123",
+      "phone": "+353871234575",
+      "role": "customer",
+      "first_name": "David",
+      "last_name": "Walsh",
+      "profile_photo_url": "https://images.unsplash.com/photo-1519345182560-3f2917c472ef",
+      "email_verified": true,
+      "verified": true,
+      "status": "active",
+      "created_at": "2023-09-14T15:35:00Z",
+      "referral_code": "DAVID2024",
+      "loyalty_points_balance": 140,
+      "total_points_earned": 200,
+      "description": "Standard customer",
+      "login_url": "/login"
+    },
+    {
+      "user_id": "user_010",
+      "email": "claire.murphy@email.ie",
+      "password": "password123",
+      "phone": "+353871234576",
+      "role": "customer",
+      "first_name": "Claire",
+      "last_name": "Murphy",
+      "profile_photo_url": "https://images.unsplash.com/photo-1524504388940-b1c1722653e1",
+      "email_verified": true,
+      "verified": true,
+      "status": "active",
+      "created_at": "2023-10-08T12:50:00Z",
+      "referral_code": "CLAIRE2024",
+      "dietary_preferences": ["vegetarian"],
+      "first_order_discount_code": "FIRST10",
+      "first_order_discount_used": false,
+      "loyalty_points_balance": 360,
+      "total_points_earned": 520,
+      "referred_by_user_id": "user_006",
+      "description": "Customer with active discount",
+      "login_url": "/login"
+    }
+  ],
+  "by_role": {
+    "admin": [
+      {
+        "email": "admin@coffeeshop.ie",
+        "password": "admin123",
+        "verified": true,
+        "name": "Sean Murphy",
+        "login_url": "/admin/login"
+      }
+    ],
+    "staff": [
+      {
+        "email": "manager@coffeeshop.ie",
+        "password": "manager123",
+        "verified": true,
+        "name": "Aoife O'Connor",
+        "login_url": "/staff/login"
+      }
+    ],
+    "customer": [
+      {
+        "email": "john.smith@email.ie",
+        "password": "password123",
+        "verified": true,
+        "name": "John Smith",
+        "has_orders": true,
+        "loyalty_points": 320,
+        "login_url": "/login"
+      },
+      {
+        "email": "sarah.wilson@email.ie",
+        "password": "password123",
+        "verified": true,
+        "name": "Sarah Wilson",
+        "has_discount": true,
+        "loyalty_points": 450,
+        "login_url": "/login"
+      },
+      {
+        "email": "michael.byrne@email.ie",
+        "password": "password123",
+        "verified": true,
+        "name": "Michael Byrne",
+        "has_orders": true,
+        "loyalty_points": 180,
+        "login_url": "/login"
+      },
+      {
+        "email": "emma.kelly@email.ie",
+        "password": "password123",
+        "verified": true,
+        "name": "Emma Kelly",
+        "high_value": true,
+        "loyalty_points": 580,
+        "login_url": "/login"
+      },
+      {
+        "email": "james.ryan@email.ie",
+        "password": "password123",
+        "verified": false,
+        "name": "James Ryan",
+        "email_verified": false,
+        "login_url": "/login"
+      },
+      {
+        "email": "lisa.brennan@email.ie",
+        "password": "password123",
+        "verified": true,
+        "name": "Lisa Brennan",
+        "has_dietary_restrictions": true,
+        "loyalty_points": 275,
+        "login_url": "/login"
+      },
+      {
+        "email": "david.walsh@email.ie",
+        "password": "password123",
+        "verified": true,
+        "name": "David Walsh",
+        "loyalty_points": 140,
+        "login_url": "/login"
+      },
+      {
+        "email": "claire.murphy@email.ie",
+        "password": "password123",
+        "verified": true,
+        "name": "Claire Murphy",
+        "has_discount": true,
+        "loyalty_points": 360,
+        "login_url": "/login"
+      }
+    ]
+  },
+  "test_scenarios": {
+    "admin_full_access": {
+      "user": "admin@coffeeshop.ie",
+      "password": "admin123",
+      "description": "Test full admin functionality",
+      "available_features": [
+        "Dashboard analytics",
+        "Menu item management",
+        "Category management",
+        "Stock management",
+        "Order management",
+        "Customer management",
+        "Staff management",
+        "Discount code management",
+        "Catering inquiry management",
+        "Invoice management",
+        "Delivery zone settings",
+        "System settings"
+      ]
+    },
+    "staff_order_management": {
+      "user": "manager@coffeeshop.ie",
+      "password": "manager123",
+      "description": "Test staff order and stock management",
+      "available_features": [
+        "Order queue management",
+        "Order status updates",
+        "Stock level management",
+        "Daily reports"
+      ]
+    },
+    "customer_complete_journey": {
+      "user": "john.smith@email.ie",
+      "password": "password123",
+      "description": "Test complete customer ordering journey",
+      "flow": [
+        "Browse menu",
+        "Add items to cart with customizations",
+        "Apply discount code",
+        "Select order type (collection/delivery)",
+        "Enter contact information",
+        "Add payment method",
+        "Review and place order",
+        "Track order status",
+        "View order history",
+        "Check loyalty points"
+      ]
+    },
+    "loyalty_and_rewards": {
+      "user": "emma.kelly@email.ie",
+      "password": "password123",
+      "description": "Test loyalty program features",
+      "features": [
+        "View points balance (580 points)",
+        "Browse available rewards",
+        "Redeem rewards",
+        "View badges earned",
+        "Check referral status"
+      ]
+    },
+    "first_time_user_discount": {
+      "user": "claire.murphy@email.ie",
+      "password": "password123",
+      "description": "Test first order discount code usage",
+      "discount_code": "FIRST10",
+      "discount_type": "10% off first order"
+    }
+  },
+  "api_testing": {
+    "base_url": "https://123salama-lama-food-truck.launchpulse.ai",
+    "sample_requests": {
+      "login": {
+        "endpoint": "/api/auth/login",
+        "method": "POST",
+        "body": {
+          "email": "john.smith@email.ie",
+          "password": "password123",
+          "remember_me": false
+        }
+      },
+      "register": {
+        "endpoint": "/api/auth/register",
+        "method": "POST",
+        "body": {
+          "email": "newuser@email.ie",
+          "phone": "+353871234599",
+          "password": "NewPass123!",
+          "first_name": "New",
+          "last_name": "User",
+          "role": "customer"
+        }
+      },
+      "get_menu": {
+        "endpoint": "/api/menu/items",
+        "method": "GET",
+        "requires_auth": false
+      },
+      "add_to_cart": {
+        "endpoint": "/api/cart/add",
+        "method": "POST",
+        "requires_auth": true,
+        "body": {
+          "item_id": "item_002",
+          "quantity": 1,
+          "selected_customizations": {
+            "Milk Type": "Oat Milk",
+            "Size": "Large"
+          }
+        }
+      }
+    }
+  },
+  "notes": [
+    "All passwords are stored as plain-text for testing purposes only",
+    "JWT tokens are returned upon successful login and should be included in Authorization header",
+    "Customer users have saved addresses and payment methods for testing checkout flow",
+    "Admin and staff users have different login endpoints than regular customers",
+    "Loyalty points are automatically awarded on order completion",
+    "Discount codes have different types: percentage, fixed, delivery_fee",
+    "Stock levels are tracked for certain menu items (Cold Brew, Croissants, Muffins, etc.)",
+    "WebSocket connections available for real-time order updates (requires JWT token)"
+  ]
+}

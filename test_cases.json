@@ -1,0 +1,1452 @@
+{
+  "generated_at": "2024-12-11T10:00:00Z",
+  "application_name": "Salama Lama Food Truck",
+  "test_summary": {
+    "total_test_cases": 45,
+    "categories": {
+      "functionality": 15,
+      "authentication": 8,
+      "user_interface": 10,
+      "integration": 7,
+      "performance": 3,
+      "security": 2
+    },
+    "priority_breakdown": {
+      "critical": 12,
+      "high": 18,
+      "medium": 10,
+      "low": 5
+    }
+  },
+  "testCases": [
+    {
+      "id": "func-001",
+      "name": "Functional Application Verification",
+      "category": "functionality",
+      "priority": "critical",
+      "description": "Verify the application has actual functionality beyond basic placeholder content",
+      "preconditions": [
+        "Application is accessible at deployment URL",
+        "Database is seeded with test data"
+      ],
+      "steps": [
+        "Navigate to https://123salama-lama-food-truck.launchpulse.ai",
+        "Verify page loads without 'Vite + React' placeholder text",
+        "Verify navigation menu exists with links (Home, Menu, About, Contact, etc.)",
+        "Count interactive elements (buttons, forms, links) - should be 10+",
+        "Verify menu items are displayed with images and prices",
+        "Verify footer contains business information and social links",
+        "Test at least 3 navigation links work correctly"
+      ],
+      "expectedOutcome": "Application displays fully functional food truck ordering interface with menu, cart, and ordering features",
+      "failureCondition": "If page shows only 'Vite + React' text or lacks interactive features, this test FAILS",
+      "testData": null,
+      "automatable": true
+    },
+    {
+      "id": "func-002",
+      "name": "Menu Browse and Filter",
+      "category": "functionality",
+      "priority": "high",
+      "description": "Test menu browsing with category filtering and dietary tag filtering",
+      "preconditions": [
+        "User is on landing page or menu page"
+      ],
+      "steps": [
+        "Navigate to /menu",
+        "Verify menu items are displayed in grid/list format",
+        "Verify categories are visible (Hot Drinks, Cold Drinks, Pastries, Sandwiches, Salads, Breakfast)",
+        "Click on 'Hot Drinks' category filter",
+        "Verify only hot drink items are displayed",
+        "Apply dietary filter for 'Vegan'",
+        "Verify filtered results show only vegan items",
+        "Clear filters and verify all items return",
+        "Test search functionality with keyword 'Latte'",
+        "Verify search results contain relevant items"
+      ],
+      "expectedOutcome": "Menu filtering works correctly with categories and dietary tags, search returns relevant results",
+      "testData": {
+        "categories": ["Hot Drinks", "Cold Drinks", "Pastries", "Sandwiches", "Salads", "Breakfast"],
+        "dietary_tags": ["vegan", "vegetarian", "gluten-free", "dairy-free", "nut-free"],
+        "search_term": "Latte"
+      },
+      "automatable": true
+    },
+    {
+      "id": "func-003",
+      "name": "Add to Cart with Customizations",
+      "category": "functionality",
+      "priority": "high",
+      "description": "Test adding menu items to cart with customization options",
+      "preconditions": [
+        "User is viewing menu",
+        "Test items with customizations exist (e.g., Cappuccino, Latte)"
+      ],
+      "steps": [
+        "Click on 'Cappuccino' menu item",
+        "Verify customization modal/drawer opens",
+        "Verify customization groups are displayed (Milk Type, Size, Extra Shots)",
+        "Select 'Oat Milk' (+€0.50)",
+        "Select 'Large' size (+€0.80)",
+        "Select 'Extra Shot' (+€0.60)",
+        "Verify price updates dynamically (base €3.80 + customizations = €5.70)",
+        "Set quantity to 2",
+        "Click 'Add to Cart'",
+        "Verify success message appears",
+        "Verify cart icon shows quantity (2)",
+        "Verify cart badge updates"
+      ],
+      "expectedOutcome": "Item added to cart with correct customizations and price calculation",
+      "testData": {
+        "item": "Cappuccino",
+        "base_price": 3.80,
+        "customizations": {
+          "Milk Type": "Oat Milk (+€0.50)",
+          "Size": "Large (+€0.80)",
+          "Extra Shots": "Extra Shot (+€0.60)"
+        },
+        "expected_unit_price": 5.70,
+        "quantity": 2,
+        "expected_line_total": 11.40
+      },
+      "automatable": true
+    },
+    {
+      "id": "func-004",
+      "name": "Shopping Cart Management",
+      "category": "functionality",
+      "priority": "high",
+      "description": "Test cart operations - view, update quantity, remove items",
+      "preconditions": [
+        "User has items in cart"
+      ],
+      "steps": [
+        "Click cart icon or navigate to /cart",
+        "Verify all cart items are displayed with correct details",
+        "Verify subtotal, tax, and total are calculated correctly",
+        "Update quantity of first item (increase by 1)",
+        "Verify line total updates correctly",
+        "Verify cart totals recalculate",
+        "Click remove button on second item",
+        "Confirm removal in modal (if present)",
+        "Verify item is removed from cart",
+        "Verify totals recalculate",
+        "Test 'Empty Cart' button",
+        "Verify cart is empty after confirmation"
+      ],
+      "expectedOutcome": "Cart updates correctly with quantity changes and removals, totals always accurate",
+      "testData": null,
+      "automatable": true
+    },
+    {
+      "id": "func-005",
+      "name": "Discount Code Application",
+      "category": "functionality",
+      "priority": "high",
+      "description": "Test applying and validating discount codes in cart",
+      "preconditions": [
+        "User has items in cart with subtotal > €10"
+      ],
+      "steps": [
+        "Navigate to cart page",
+        "Note current subtotal amount",
+        "Enter discount code 'FIRST10' in discount code field",
+        "Click 'Apply' button",
+        "Verify discount is applied (10% off)",
+        "Verify discount amount line appears",
+        "Verify total is reduced correctly",
+        "Try applying invalid code 'INVALID123'",
+        "Verify error message appears",
+        "Verify discount is not applied",
+        "Try applying expired code 'EXPIRED'",
+        "Verify appropriate error message",
+        "Remove valid discount code",
+        "Verify total returns to original amount"
+      ],
+      "expectedOutcome": "Valid discount codes apply correctly, invalid codes show appropriate errors",
+      "testData": {
+        "valid_codes": [
+          {"code": "FIRST10", "type": "percentage", "value": 10, "min_order": 10.00},
+          {"code": "SAVE5", "type": "fixed", "value": 5.00, "min_order": 20.00},
+          {"code": "FREEDELIVERY", "type": "delivery_fee", "min_order": 25.00}
+        ],
+        "invalid_codes": ["INVALID123", "EXPIRED", "USED999"]
+      },
+      "automatable": true
+    },
+    {
+      "id": "func-006",
+      "name": "Complete Checkout Flow - Collection",
+      "category": "functionality",
+      "priority": "critical",
+      "description": "Test complete checkout process for collection order",
+      "preconditions": [
+        "User is logged in as customer",
+        "User has items in cart"
+      ],
+      "steps": [
+        "Navigate to cart and click 'Proceed to Checkout'",
+        "On Order Type page, select 'Collection'",
+        "Select time slot (e.g., '14:00-14:30')",
+        "Click 'Continue'",
+        "On Contact page, verify pre-filled name, email, phone",
+        "Add special instructions 'Extra hot please'",
+        "Click 'Continue'",
+        "On Payment page, select saved payment method or add new card",
+        "Enter CVV '123' (test mode)",
+        "Click 'Continue'",
+        "On Review page, verify all order details",
+        "Verify items, customizations, total, time slot",
+        "Click 'Place Order'",
+        "Wait for order processing",
+        "Verify redirect to order confirmation page",
+        "Verify order number is displayed",
+        "Verify order details are correct",
+        "Verify email confirmation (check logs)"
+      ],
+      "expectedOutcome": "Order is successfully placed, order number generated, confirmation displayed",
+      "testData": {
+        "order_type": "collection",
+        "time_slot": "14:00-14:30",
+        "special_instructions": "Extra hot please",
+        "cvv": "123"
+      },
+      "automatable": true
+    },
+    {
+      "id": "func-007",
+      "name": "Complete Checkout Flow - Delivery",
+      "category": "functionality",
+      "priority": "critical",
+      "description": "Test complete checkout process for delivery order",
+      "preconditions": [
+        "User is logged in as customer",
+        "User has items in cart with subtotal > delivery zone minimum",
+        "User has saved address in delivery zone"
+      ],
+      "steps": [
+        "Navigate to cart and click 'Proceed to Checkout'",
+        "On Order Type page, select 'Delivery'",
+        "Select saved address or add new address",
+        "Verify delivery zone validation",
+        "Verify delivery fee is added to total",
+        "Verify minimum order value is met",
+        "Click 'Continue'",
+        "Complete contact information",
+        "Click 'Continue'",
+        "Select payment method and enter CVV",
+        "Click 'Continue'",
+        "On Review page, verify delivery address is shown",
+        "Verify delivery fee is included in total",
+        "Click 'Place Order'",
+        "Verify order confirmation with delivery details",
+        "Verify estimated delivery time is shown"
+      ],
+      "expectedOutcome": "Delivery order placed successfully with correct address, delivery fee, and estimated time",
+      "testData": {
+        "order_type": "delivery",
+        "address": {
+          "label": "Home",
+          "address_line1": "15 Grafton Street",
+          "city": "Dublin",
+          "postal_code": "D02 X285"
+        },
+        "expected_delivery_fee": 2.50
+      },
+      "automatable": true
+    },
+    {
+      "id": "func-008",
+      "name": "Order Tracking and Status Updates",
+      "category": "functionality",
+      "priority": "high",
+      "description": "Test order tracking with real-time status updates via WebSocket",
+      "preconditions": [
+        "User has placed an order",
+        "User is logged in",
+        "WebSocket connection is established"
+      ],
+      "steps": [
+        "Navigate to /orders",
+        "Click on recent order to view details",
+        "Note current order status",
+        "Navigate to order tracking page (/orders/:id/track)",
+        "Verify order status timeline is displayed",
+        "Verify current status is highlighted",
+        "Have staff/admin update order status (or simulate via API)",
+        "Verify status update appears in real-time without refresh",
+        "Verify status timeline updates visually",
+        "Verify notification/toast appears for status change",
+        "Check that email/SMS notification was triggered (logs)"
+      ],
+      "expectedOutcome": "Order status updates in real-time via WebSocket, visual feedback provided",
+      "testData": {
+        "order_statuses": ["received", "preparing", "ready", "completed"]
+      },
+      "automatable": true
+    },
+    {
+      "id": "func-009",
+      "name": "Loyalty Points and Rewards",
+      "category": "functionality",
+      "priority": "medium",
+      "description": "Test loyalty points earning, viewing, and reward redemption",
+      "preconditions": [
+        "User is logged in as customer with loyalty account"
+      ],
+      "steps": [
+        "Navigate to /rewards (Loyalty Dashboard)",
+        "Verify current points balance is displayed",
+        "Verify total points earned is shown",
+        "View available rewards catalog",
+        "Verify rewards show points cost",
+        "Select reward within points balance (e.g., 'Free Coffee' - 100 points)",
+        "Click 'Redeem'",
+        "Confirm redemption",
+        "Verify success message",
+        "Verify points balance decreases",
+        "Verify reward code is generated and displayed",
+        "View points transaction history",
+        "Verify redemption transaction is recorded",
+        "Place a new order",
+        "After order completion, verify points are awarded",
+        "Verify points transaction shows order reference"
+      ],
+      "expectedOutcome": "Points are correctly earned on orders and deducted on redemptions, transaction history accurate",
+      "testData": {
+        "user": "emma.kelly@email.ie",
+        "initial_points": 580,
+        "reward": {
+          "name": "Free Coffee",
+          "points_cost": 100
+        },
+        "expected_final_points": 480
+      },
+      "automatable": true
+    },
+    {
+      "id": "func-010",
+      "name": "Catering Inquiry Submission",
+      "category": "functionality",
+      "priority": "medium",
+      "description": "Test submitting catering inquiry form",
+      "preconditions": [
+        "User can be logged in or guest"
+      ],
+      "steps": [
+        "Navigate to /catering",
+        "Click 'Request Quote' or 'Submit Inquiry'",
+        "Fill out catering form:",
+        "- Contact Name: 'Test Catering'",
+        "- Email: 'test@catering.ie'",
+        "- Phone: '+353871234599'",
+        "- Event Type: 'Corporate'",
+        "- Event Date: Future date",
+        "- Guest Count: 50",
+        "- Menu Preferences: 'Coffee and pastries'",
+        "- Dietary Requirements: Select 'Vegetarian' and 'Vegan'",
+        "Click 'Submit Inquiry'",
+        "Verify success message",
+        "Verify inquiry number is generated",
+        "If logged in, navigate to /catering/inquiries",
+        "Verify submitted inquiry appears in list"
+      ],
+      "expectedOutcome": "Catering inquiry is successfully submitted and saved, inquiry number generated",
+      "testData": {
+        "contact_name": "Test Catering",
+        "contact_email": "test@catering.ie",
+        "contact_phone": "+353871234599",
+        "event_type": "corporate",
+        "guest_count": 50
+      },
+      "automatable": true
+    },
+    {
+      "id": "func-011",
+      "name": "Staff Order Queue Management",
+      "category": "functionality",
+      "priority": "high",
+      "description": "Test staff order queue and status updates",
+      "preconditions": [
+        "User is logged in as staff",
+        "Active orders exist in system"
+      ],
+      "steps": [
+        "Login as staff (manager@coffeeshop.ie / manager123)",
+        "Navigate to /staff/orders",
+        "Verify order queue is displayed",
+        "Verify orders are sorted by creation time",
+        "Verify order cards show: order number, customer name, order type, items, status",
+        "Filter orders by status 'received'",
+        "Click on an order to view details",
+        "Verify order detail page loads with full information",
+        "Update order status from 'received' to 'preparing'",
+        "Verify status update succeeds",
+        "Verify order moves to correct section in queue",
+        "Update status to 'ready'",
+        "Verify customer receives real-time notification (check logs)",
+        "Mark order as 'completed'",
+        "Verify order moves to completed section"
+      ],
+      "expectedOutcome": "Staff can view order queue, update statuses, customers receive real-time updates",
+      "testData": {
+        "staff_user": "manager@coffeeshop.ie",
+        "staff_password": "manager123"
+      },
+      "automatable": true
+    },
+    {
+      "id": "func-012",
+      "name": "Admin Menu Item Management",
+      "category": "functionality",
+      "priority": "high",
+      "description": "Test admin CRUD operations for menu items",
+      "preconditions": [
+        "User is logged in as admin"
+      ],
+      "steps": [
+        "Login as admin (admin@coffeeshop.ie / admin123)",
+        "Navigate to /admin/menu",
+        "Verify menu items list is displayed",
+        "Click 'Add New Item' button",
+        "Fill out menu item form:",
+        "- Name: 'Test Smoothie'",
+        "- Category: 'Cold Drinks'",
+        "- Price: €5.50",
+        "- Description: 'Fresh fruit smoothie'",
+        "- Is Active: true",
+        "- Available for Delivery: true",
+        "Click 'Save'",
+        "Verify success message",
+        "Verify new item appears in list",
+        "Search for 'Test Smoothie' in customer menu",
+        "Verify item is visible to customers",
+        "Return to admin menu",
+        "Click edit on 'Test Smoothie'",
+        "Change price to €6.00",
+        "Save changes",
+        "Verify price updated",
+        "Delete 'Test Smoothie'",
+        "Confirm deletion",
+        "Verify item removed from list"
+      ],
+      "expectedOutcome": "Admin can create, read, update, and delete menu items successfully",
+      "testData": {
+        "admin_user": "admin@coffeeshop.ie",
+        "admin_password": "admin123",
+        "test_item": {
+          "name": "Test Smoothie",
+          "category": "Cold Drinks",
+          "price": 5.50,
+          "description": "Fresh fruit smoothie"
+        }
+      },
+      "automatable": true
+    },
+    {
+      "id": "func-013",
+      "name": "Admin Stock Management with Low Stock Alerts",
+      "category": "functionality",
+      "priority": "medium",
+      "description": "Test stock level updates and low stock alert system",
+      "preconditions": [
+        "User is logged in as admin",
+        "Stock-tracked items exist (e.g., Cold Brew, Croissant)"
+      ],
+      "steps": [
+        "Login as admin",
+        "Navigate to /admin/stock",
+        "Verify stock levels are displayed for tracked items",
+        "Identify item with current stock > low stock threshold",
+        "Click on 'Cold Brew' to adjust stock",
+        "Select change type 'Adjustment'",
+        "Set quantity to reduce stock below threshold (e.g., new stock = 3, threshold = 5)",
+        "Enter reason: 'Testing low stock'",
+        "Save changes",
+        "Verify success message",
+        "Verify low stock alert appears (toast/notification)",
+        "Verify item marked with low stock indicator",
+        "Navigate to /admin/stock/:itemId/history",
+        "Verify stock adjustment is recorded in history",
+        "Perform restock to above threshold",
+        "Verify low stock indicator clears"
+      ],
+      "expectedOutcome": "Stock updates correctly, low stock alerts triggered when threshold reached",
+      "testData": {
+        "item": "Cold Brew",
+        "low_stock_threshold": 5,
+        "test_stock_level": 3
+      },
+      "automatable": true
+    },
+    {
+      "id": "func-014",
+      "name": "Admin Discount Code Creation and Usage",
+      "category": "functionality",
+      "priority": "medium",
+      "description": "Test creating discount code and tracking its usage",
+      "preconditions": [
+        "User is logged in as admin"
+      ],
+      "steps": [
+        "Login as admin",
+        "Navigate to /admin/discounts",
+        "Click 'Create Discount Code'",
+        "Fill form:",
+        "- Code: 'TEST20'",
+        "- Type: 'Percentage'",
+        "- Value: 20",
+        "- Min Order: €15",
+        "- Valid From: Today",
+        "- Valid Until: +30 days",
+        "- Total Usage Limit: 10",
+        "- Per Customer Limit: 1",
+        "Save discount code",
+        "Verify code appears in list",
+        "Logout and login as customer",
+        "Add items worth €20 to cart",
+        "Apply discount code 'TEST20'",
+        "Verify 20% discount applied (€4 off)",
+        "Complete order",
+        "Login as admin",
+        "View discount code usage",
+        "Verify usage count increased to 1",
+        "View detailed usage log",
+        "Verify customer and order details recorded"
+      ],
+      "expectedOutcome": "Discount code created, applies correctly, usage tracked accurately",
+      "testData": {
+        "code": "TEST20",
+        "discount_type": "percentage",
+        "discount_value": 20,
+        "min_order": 15.00
+      },
+      "automatable": true
+    },
+    {
+      "id": "func-015",
+      "name": "Admin Analytics Dashboard",
+      "category": "functionality",
+      "priority": "medium",
+      "description": "Test admin analytics and reporting features",
+      "preconditions": [
+        "User is logged in as admin",
+        "Historical order data exists"
+      ],
+      "steps": [
+        "Login as admin",
+        "Navigate to /admin/analytics",
+        "Verify sales analytics section loads",
+        "Verify sales chart is displayed with data",
+        "Select date range filter (e.g., Last 7 Days)",
+        "Verify chart updates with filtered data",
+        "Verify key metrics displayed:",
+        "- Total Revenue",
+        "- Total Orders",
+        "- Average Order Value",
+        "- Top Selling Items",
+        "Navigate to customer analytics tab",
+        "Verify customer metrics:",
+        "- Total Customers",
+        "- New Customers",
+        "- Repeat Customer Rate",
+        "Navigate to coupon analytics",
+        "Verify discount code usage statistics",
+        "Test export functionality (if available)",
+        "Verify data is accurate by spot-checking against order data"
+      ],
+      "expectedOutcome": "Analytics dashboard displays accurate metrics with functional filtering",
+      "testData": null,
+      "automatable": true
+    },
+    {
+      "id": "auth-001",
+      "name": "Customer Registration Flow",
+      "category": "authentication",
+      "priority": "critical",
+      "description": "Test new customer registration with email verification",
+      "preconditions": [
+        "User is on landing page",
+        "Email address is not already registered"
+      ],
+      "steps": [
+        "Click 'Sign Up' or navigate to /signup",
+        "Fill registration form:",
+        "- Email: 'newcustomer@test.ie'",
+        "- Phone: '+353871234588'",
+        "- Password: 'TestPass123!'",
+        "- Confirm Password: 'TestPass123!'",
+        "- First Name: 'New'",
+        "- Last Name: 'Customer'",
+        "- Accept Terms: checked",
+        "Click 'Sign Up'",
+        "Verify success message",
+        "Verify JWT token is returned",
+        "Verify user is redirected to dashboard",
+        "Verify email verification banner/notice shown",
+        "Check backend logs for verification email sent",
+        "Verify referral code generated",
+        "Verify first order discount code generated",
+        "Verify loyalty account created"
+      ],
+      "expectedOutcome": "User successfully registered, logged in, loyalty account created, verification email sent",
+      "testData": {
+        "email": "newcustomer@test.ie",
+        "phone": "+353871234588",
+        "password": "TestPass123!",
+        "first_name": "New",
+        "last_name": "Customer"
+      },
+      "automatable": true
+    },
+    {
+      "id": "auth-002",
+      "name": "Customer Login",
+      "category": "authentication",
+      "priority": "critical",
+      "description": "Test customer login with email and password",
+      "preconditions": [
+        "Customer account exists (john.smith@email.ie / password123)"
+      ],
+      "steps": [
+        "Navigate to /login",
+        "Enter email: 'john.smith@email.ie'",
+        "Enter password: 'password123'",
+        "Check 'Remember Me' (optional)",
+        "Click 'Login'",
+        "Verify success message",
+        "Verify JWT token is stored",
+        "Verify user is redirected to dashboard or previous page",
+        "Verify user name displayed in header",
+        "Verify last login time updated in database",
+        "Verify loyalty points balance displayed"
+      ],
+      "expectedOutcome": "User successfully logged in and redirected to appropriate page",
+      "testData": {
+        "email": "john.smith@email.ie",
+        "password": "password123"
+      },
+      "automatable": true
+    },
+    {
+      "id": "auth-003",
+      "name": "Staff Login",
+      "category": "authentication",
+      "priority": "high",
+      "description": "Test staff/manager login with separate endpoint",
+      "preconditions": [
+        "Staff account exists (manager@coffeeshop.ie / manager123)"
+      ],
+      "steps": [
+        "Navigate to /staff/login",
+        "Enter email: 'manager@coffeeshop.ie'",
+        "Enter password: 'manager123'",
+        "Click 'Login'",
+        "Verify JWT token includes login_at timestamp",
+        "Verify user is redirected to /staff/dashboard",
+        "Verify staff-specific navigation is shown",
+        "Verify customer routes are not accessible",
+        "Verify admin routes are not accessible",
+        "Test session enforcement by logging in from another device/session",
+        "Verify first session is invalidated"
+      ],
+      "expectedOutcome": "Staff user logged in with correct permissions and single session enforced",
+      "testData": {
+        "email": "manager@coffeeshop.ie",
+        "password": "manager123"
+      },
+      "automatable": true
+    },
+    {
+      "id": "auth-004",
+      "name": "Admin Login",
+      "category": "authentication",
+      "priority": "high",
+      "description": "Test admin login with full system access",
+      "preconditions": [
+        "Admin account exists (admin@coffeeshop.ie / admin123)"
+      ],
+      "steps": [
+        "Navigate to /admin/login",
+        "Enter email: 'admin@coffeeshop.ie'",
+        "Enter password: 'admin123'",
+        "Click 'Login'",
+        "Verify JWT token includes login_at timestamp",
+        "Verify user is redirected to /admin/dashboard",
+        "Verify admin sidebar is displayed",
+        "Verify all admin menu items are accessible",
+        "Verify staff routes are accessible (admin has all permissions)",
+        "Test that regular customer cannot access /admin routes",
+        "Test single session enforcement"
+      ],
+      "expectedOutcome": "Admin logged in with full access and single session enforced",
+      "testData": {
+        "email": "admin@coffeeshop.ie",
+        "password": "admin123"
+      },
+      "automatable": true
+    },
+    {
+      "id": "auth-005",
+      "name": "Password Reset Flow",
+      "category": "authentication",
+      "priority": "high",
+      "description": "Test password reset request and completion",
+      "preconditions": [
+        "User account exists"
+      ],
+      "steps": [
+        "Navigate to /forgot-password",
+        "Enter email: 'john.smith@email.ie'",
+        "Click 'Send Reset Link'",
+        "Verify success message (generic for security)",
+        "Check backend logs for reset email sent",
+        "Extract reset token from logs/email",
+        "Navigate to /reset-password/:token",
+        "Enter new password: 'NewPass123!'",
+        "Confirm new password: 'NewPass123!'",
+        "Click 'Reset Password'",
+        "Verify success message",
+        "Verify redirect to login page",
+        "Login with old password - should fail",
+        "Login with new password - should succeed",
+        "Verify reset token is marked as used",
+        "Try using same reset token again - should fail"
+      ],
+      "expectedOutcome": "Password successfully reset, old password invalid, new password works",
+      "testData": {
+        "email": "john.smith@email.ie",
+        "new_password": "NewPass123!"
+      },
+      "automatable": true
+    },
+    {
+      "id": "auth-006",
+      "name": "Email Verification",
+      "category": "authentication",
+      "priority": "medium",
+      "description": "Test email verification process",
+      "preconditions": [
+        "User is registered but email not verified (james.ryan@email.ie)"
+      ],
+      "steps": [
+        "Login as unverified user (james.ryan@email.ie / password123)",
+        "Verify email verification banner is shown",
+        "Click 'Resend Verification Email'",
+        "Verify success message",
+        "Check backend logs for verification email sent",
+        "Extract verification token from logs",
+        "Navigate to /verify-email/:token",
+        "Verify success message",
+        "Verify email_verified flag set to true in database",
+        "Verify banner no longer shown after refresh",
+        "Try using same verification token again - should show already verified message"
+      ],
+      "expectedOutcome": "Email successfully verified, user account updated",
+      "testData": {
+        "email": "james.ryan@email.ie",
+        "password": "password123"
+      },
+      "automatable": true
+    },
+    {
+      "id": "auth-007",
+      "name": "Logout Functionality",
+      "category": "authentication",
+      "priority": "medium",
+      "description": "Test user logout across all role types",
+      "preconditions": [
+        "User is logged in"
+      ],
+      "steps": [
+        "Login as customer",
+        "Click logout button in header/menu",
+        "Verify redirect to landing page",
+        "Verify JWT token removed from storage",
+        "Verify navigation updated to public view",
+        "Try accessing protected route /dashboard",
+        "Verify redirect to /login",
+        "Repeat test for staff user",
+        "Repeat test for admin user",
+        "Verify activity log entry created for logout"
+      ],
+      "expectedOutcome": "User successfully logged out, token cleared, protected routes inaccessible",
+      "testData": null,
+      "automatable": true
+    },
+    {
+      "id": "auth-008",
+      "name": "Role-Based Access Control",
+      "category": "authentication",
+      "priority": "critical",
+      "description": "Test that users can only access routes appropriate for their role",
+      "preconditions": [
+        "Users of each role exist"
+      ],
+      "steps": [
+        "Login as customer (john.smith@email.ie)",
+        "Attempt to access /admin/dashboard",
+        "Verify redirect to /dashboard or 403 error",
+        "Attempt to access /staff/orders",
+        "Verify redirect or 403 error",
+        "Verify access to /dashboard, /orders, /profile works",
+        "Logout and login as staff (manager@coffeeshop.ie)",
+        "Attempt to access /admin/settings",
+        "Verify redirect or 403 error",
+        "Verify access to /staff/dashboard, /staff/orders works",
+        "Logout and login as admin (admin@coffeeshop.ie)",
+        "Verify access to all /admin routes",
+        "Verify access to all /staff routes",
+        "Verify access to customer routes"
+      ],
+      "expectedOutcome": "Each role can only access routes appropriate for their permission level",
+      "testData": {
+        "customer": "john.smith@email.ie",
+        "staff": "manager@coffeeshop.ie",
+        "admin": "admin@coffeeshop.ie",
+        "password": "password123 or role-specific"
+      },
+      "automatable": true
+    },
+    {
+      "id": "ui-001",
+      "name": "Responsive Design - Mobile View",
+      "category": "user_interface",
+      "priority": "high",
+      "description": "Test application responsiveness on mobile devices",
+      "preconditions": [
+        "Application accessible"
+      ],
+      "steps": [
+        "Open application in mobile viewport (375x667)",
+        "Verify landing page renders correctly",
+        "Verify navigation menu collapses to hamburger icon",
+        "Click hamburger menu",
+        "Verify mobile menu opens/slides in",
+        "Verify all menu items are accessible",
+        "Navigate to /menu",
+        "Verify menu items stack vertically",
+        "Verify images scale appropriately",
+        "Test add to cart flow on mobile",
+        "Verify checkout flow works on mobile viewport",
+        "Test all interactive elements are touch-friendly (44x44px minimum)",
+        "Verify no horizontal scrolling required"
+      ],
+      "expectedOutcome": "Application is fully functional and visually correct on mobile devices",
+      "testData": {
+        "viewport": "375x667"
+      },
+      "automatable": true
+    },
+    {
+      "id": "ui-002",
+      "name": "Responsive Design - Tablet View",
+      "category": "user_interface",
+      "priority": "medium",
+      "description": "Test application responsiveness on tablet devices",
+      "preconditions": [
+        "Application accessible"
+      ],
+      "steps": [
+        "Open application in tablet viewport (768x1024)",
+        "Verify landing page renders with tablet layout",
+        "Verify navigation is appropriate (full or collapsed)",
+        "Verify menu items display in grid (2-3 columns)",
+        "Test cart sidebar/drawer on tablet",
+        "Verify admin sidebar behavior on tablet",
+        "Test all major flows work correctly",
+        "Verify touch targets are appropriately sized"
+      ],
+      "expectedOutcome": "Application adapts correctly to tablet viewport",
+      "testData": {
+        "viewport": "768x1024"
+      },
+      "automatable": true
+    },
+    {
+      "id": "ui-003",
+      "name": "Navigation Menu Functionality",
+      "category": "user_interface",
+      "priority": "high",
+      "description": "Test all navigation menu links and state changes",
+      "preconditions": [
+        "Application accessible"
+      ],
+      "steps": [
+        "Verify public navigation shows: Home, Menu, About, Contact, Login, Sign Up",
+        "Click each navigation link and verify correct page loads",
+        "Login as customer",
+        "Verify navigation updates to: Home, Menu, Dashboard, Orders, Rewards, Logout",
+        "Test each customer navigation link",
+        "Login as staff",
+        "Verify staff navigation: Dashboard, Orders, Stock, Reports, Profile, Logout",
+        "Test each staff navigation link",
+        "Login as admin",
+        "Verify admin sidebar displays all admin sections",
+        "Test admin sidebar navigation",
+        "Verify active/current page is highlighted in navigation"
+      ],
+      "expectedOutcome": "Navigation menu displays correct links for each user state and all links work",
+      "testData": null,
+      "automatable": true
+    },
+    {
+      "id": "ui-004",
+      "name": "Form Validation and Error Display",
+      "category": "user_interface",
+      "priority": "high",
+      "description": "Test form validation messages and error display",
+      "preconditions": [
+        "User on form page (registration, login, checkout, etc.)"
+      ],
+      "steps": [
+        "Navigate to registration form",
+        "Submit form without filling any fields",
+        "Verify all required field errors displayed",
+        "Verify errors are shown inline next to fields",
+        "Enter invalid email format",
+        "Verify email format error",
+        "Enter password without letter (e.g., '12345678')",
+        "Verify password validation error",
+        "Enter mismatched password confirmation",
+        "Verify password match error",
+        "Fix all errors and submit",
+        "Verify form submits successfully",
+        "Test validation on other forms (login, profile, menu item, etc.)",
+        "Verify consistent error messaging style"
+      ],
+      "expectedOutcome": "Form validation errors are clear, helpful, and consistently styled",
+      "testData": null,
+      "automatable": true
+    },
+    {
+      "id": "ui-005",
+      "name": "Loading States and Spinners",
+      "category": "user_interface",
+      "priority": "medium",
+      "description": "Test loading indicators during async operations",
+      "preconditions": [
+        "Application accessible"
+      ],
+      "steps": [
+        "Click login button after entering credentials",
+        "Verify loading spinner appears on button",
+        "Verify button is disabled during loading",
+        "After login, verify loading spinner on initial data fetch",
+        "Navigate to menu page",
+        "Verify loading state while menu items fetch",
+        "Add item to cart",
+        "Verify loading state on add to cart button",
+        "Place order",
+        "Verify loading state during order processing",
+        "Verify loading states don't cause layout shift",
+        "Verify loading states clear after operation completes"
+      ],
+      "expectedOutcome": "Loading indicators appear during all async operations, UX is smooth",
+      "testData": null,
+      "automatable": true
+    },
+    {
+      "id": "ui-006",
+      "name": "Toast Notifications and Feedback",
+      "category": "user_interface",
+      "priority": "medium",
+      "description": "Test toast/notification system for user feedback",
+      "preconditions": [
+        "Application accessible"
+      ],
+      "steps": [
+        "Perform action that triggers success (e.g., add to cart)",
+        "Verify success toast appears",
+        "Verify toast displays appropriate message",
+        "Verify toast auto-dismisses after ~3-5 seconds",
+        "Perform action that triggers error (e.g., invalid discount code)",
+        "Verify error toast appears with error message",
+        "Verify toast can be manually dismissed",
+        "Test info toast (e.g., order status update)",
+        "Verify multiple toasts can stack or queue appropriately",
+        "Verify toast positioning is consistent (usually top-right)"
+      ],
+      "expectedOutcome": "Toast notifications provide clear feedback for user actions",
+      "testData": null,
+      "automatable": true
+    },
+    {
+      "id": "ui-007",
+      "name": "Modal and Dialog Interactions",
+      "category": "user_interface",
+      "priority": "medium",
+      "description": "Test modal dialogs for customizations, confirmations, etc.",
+      "preconditions": [
+        "Application accessible"
+      ],
+      "steps": [
+        "Click on menu item to open customization modal",
+        "Verify modal opens with backdrop",
+        "Verify clicking backdrop closes modal",
+        "Verify ESC key closes modal",
+        "Verify X close button works",
+        "Test scrolling within modal if content is long",
+        "Verify focus trapping (tab cycles through modal elements)",
+        "Test confirmation dialog (e.g., delete action)",
+        "Verify confirmation buttons work",
+        "Verify cancel closes dialog without action",
+        "Test mobile drawer/sheet behavior on small screens"
+      ],
+      "expectedOutcome": "Modals open/close correctly, focus managed properly, accessible",
+      "testData": null,
+      "automatable": true
+    },
+    {
+      "id": "ui-008",
+      "name": "Image Loading and Display",
+      "category": "user_interface",
+      "priority": "medium",
+      "description": "Test image loading, lazy loading, and fallbacks",
+      "preconditions": [
+        "Menu items have images"
+      ],
+      "steps": [
+        "Navigate to menu page",
+        "Verify menu item images load",
+        "Verify placeholder or skeleton shown during load",
+        "Test with slow network (throttle in DevTools)",
+        "Verify lazy loading works (images load as scrolled into view)",
+        "Test image with broken URL",
+        "Verify fallback image or placeholder shown",
+        "Verify images have alt text for accessibility",
+        "Test image aspect ratios are maintained",
+        "Verify images are responsive (scale on mobile)"
+      ],
+      "expectedOutcome": "Images load efficiently with lazy loading, fallbacks work, accessible",
+      "testData": null,
+      "automatable": true
+    },
+    {
+      "id": "ui-009",
+      "name": "Footer Content and Links",
+      "category": "user_interface",
+      "priority": "low",
+      "description": "Test footer displays correct information and links work",
+      "preconditions": [
+        "User on any public or customer page (footer should show)"
+      ],
+      "steps": [
+        "Scroll to page footer",
+        "Verify business information displayed (name, address, phone, email)",
+        "Verify operating hours displayed",
+        "Verify social media links present and styled correctly",
+        "Click each social media link (should open in new tab)",
+        "Verify footer navigation links work (About, Contact, Terms, Privacy, FAQs)",
+        "Verify copyright year is current",
+        "Verify newsletter subscription form (if present) works",
+        "Verify footer is responsive on mobile"
+      ],
+      "expectedOutcome": "Footer displays all information correctly, all links functional",
+      "testData": null,
+      "automatable": false
+    },
+    {
+      "id": "ui-010",
+      "name": "Cookie Consent Banner",
+      "category": "user_interface",
+      "priority": "low",
+      "description": "Test cookie consent banner display and functionality",
+      "preconditions": [
+        "User is new visitor (no cookie consent stored)"
+      ],
+      "steps": [
+        "Clear browser cookies and storage",
+        "Visit application",
+        "Verify cookie consent banner appears",
+        "Verify banner explains cookie usage",
+        "Click 'Accept' button",
+        "Verify banner dismisses",
+        "Verify cookie consent stored in localStorage/cookies",
+        "Refresh page",
+        "Verify banner does not reappear",
+        "Clear storage and test 'Decline' button (if present)",
+        "Verify appropriate cookies are not set"
+      ],
+      "expectedOutcome": "Cookie consent banner works correctly, preference is remembered",
+      "testData": null,
+      "automatable": true
+    },
+    {
+      "id": "int-001",
+      "name": "Real-time Order Status via WebSocket",
+      "category": "integration",
+      "priority": "high",
+      "description": "Test Socket.IO real-time updates for order status changes",
+      "preconditions": [
+        "Customer has placed an order",
+        "Staff user can update order status"
+      ],
+      "steps": [
+        "Login as customer with active order",
+        "Open order tracking page",
+        "Verify WebSocket connection established (check DevTools Network)",
+        "In separate browser/tab, login as staff",
+        "Update order status from 'received' to 'preparing'",
+        "Verify customer page updates in real-time without refresh",
+        "Verify toast notification appears on customer page",
+        "Update status to 'ready'",
+        "Verify update appears on customer page",
+        "Verify status timeline updates visually",
+        "Disconnect internet briefly",
+        "Verify connection lost message (if implemented)",
+        "Reconnect internet",
+        "Verify WebSocket reconnects automatically"
+      ],
+      "expectedOutcome": "Order status updates appear in real-time via WebSocket connection",
+      "testData": null,
+      "automatable": true
+    },
+    {
+      "id": "int-002",
+      "name": "Low Stock Alert to Admin/Staff",
+      "category": "integration",
+      "priority": "medium",
+      "description": "Test real-time low stock alerts via WebSocket",
+      "preconditions": [
+        "Admin or staff user is logged in",
+        "Stock-tracked items exist"
+      ],
+      "steps": [
+        "Login as admin",
+        "Open dashboard or stock page",
+        "Verify WebSocket connection for 'admin' room",
+        "In separate session, place order that reduces stock below threshold",
+        "Verify low stock alert appears on admin dashboard",
+        "Verify alert contains item name and current stock level",
+        "Login as staff with stock permissions",
+        "Verify staff also receives low stock alerts",
+        "Restock item above threshold",
+        "Verify alert clears or updates"
+      ],
+      "expectedOutcome": "Low stock alerts delivered in real-time to admin and authorized staff",
+      "testData": null,
+      "automatable": true
+    },
+    {
+      "id": "int-003",
+      "name": "Email Notification Integration",
+      "category": "integration",
+      "priority": "medium",
+      "description": "Test email notifications are triggered (mocked in development)",
+      "preconditions": [
+        "Email service is configured (mocked)"
+      ],
+      "steps": [
+        "Register new user",
+        "Check backend logs for email verification sent",
+        "Verify log shows recipient, subject, and preview",
+        "Request password reset",
+        "Check logs for password reset email",
+        "Place order",
+        "Check logs for order confirmation email",
+        "Update order status as staff",
+        "Check logs for order status update email",
+        "Verify all emails include appropriate content",
+        "Verify mock message_id is generated"
+      ],
+      "expectedOutcome": "Email notifications are triggered for appropriate events (logged in development)",
+      "testData": null,
+      "automatable": true
+    },
+    {
+      "id": "int-004",
+      "name": "Payment Gateway Integration",
+      "category": "integration",
+      "priority": "high",
+      "description": "Test SumUp payment processing (mocked in development)",
+      "preconditions": [
+        "User has items in cart"
+      ],
+      "steps": [
+        "Proceed to checkout",
+        "Enter payment details",
+        "Enter CVV '123' (should succeed)",
+        "Place order",
+        "Verify order is marked as 'paid'",
+        "Verify mock transaction_id is generated",
+        "Check logs for successful charge mock",
+        "Test refund flow as admin",
+        "Refund an order",
+        "Verify order status updated to 'refunded'",
+        "Verify refund amount recorded",
+        "Check logs for refund mock call",
+        "Test failed payment with CVV '000'",
+        "Verify payment fails with appropriate error message"
+      ],
+      "expectedOutcome": "Payment processing works with mock gateway, success and failure cases handled",
+      "testData": {
+        "success_cvv": "123",
+        "failure_cvv": "000"
+      },
+      "automatable": true
+    },
+    {
+      "id": "int-005",
+      "name": "Geocoding for Delivery Addresses",
+      "category": "integration",
+      "priority": "medium",
+      "description": "Test address geocoding and delivery zone matching",
+      "preconditions": [
+        "User is adding delivery address"
+      ],
+      "steps": [
+        "Navigate to add address form",
+        "Enter address:",
+        "- Address: '15 Grafton Street'",
+        "- City: 'Dublin'",
+        "- Postal Code: 'D02 X285'",
+        "Save address",
+        "Verify address is geocoded (mock function called)",
+        "Check logs for mock geocoding call",
+        "Verify latitude and longitude assigned",
+        "During checkout, select this address",
+        "Verify delivery zone is matched based on coordinates",
+        "Verify appropriate delivery fee applied",
+        "Test address outside delivery zones",
+        "Verify error message shown"
+      ],
+      "expectedOutcome": "Addresses are geocoded and matched to delivery zones correctly",
+      "testData": {
+        "address": "15 Grafton Street, Dublin, D02 X285"
+      },
+      "automatable": true
+    },
+    {
+      "id": "int-006",
+      "name": "Invoice PDF Generation",
+      "category": "integration",
+      "priority": "medium",
+      "description": "Test PDF invoice generation for orders and catering",
+      "preconditions": [
+        "Order exists or catering quote exists"
+      ],
+      "steps": [
+        "Place an order as customer",
+        "Wait for order completion",
+        "Navigate to order details",
+        "Click 'Download Invoice' button",
+        "Verify PDF is generated and downloaded",
+        "Open PDF and verify contents:",
+        "- Invoice number",
+        "- Customer details",
+        "- Line items with prices",
+        "- Subtotal, tax, total",
+        "- Business information",
+        "Login as admin",
+        "Generate invoice for catering quote",
+        "Verify catering invoice PDF generated",
+        "Verify PDF stored in /storage/invoices/",
+        "Verify invoice_pdf_url recorded in database"
+      ],
+      "expectedOutcome": "PDF invoices generated correctly with all required information",
+      "testData": null,
+      "automatable": false
+    },
+    {
+      "id": "int-007",
+      "name": "Activity Logging System",
+      "category": "integration",
+      "priority": "low",
+      "description": "Test that user actions are logged in activity_logs table",
+      "preconditions": [
+        "User is performing actions"
+      ],
+      "steps": [
+        "Login as admin",
+        "Perform various actions:",
+        "- Create menu item",
+        "- Update discount code",
+        "- Adjust customer loyalty points",
+        "- Update order status",
+        "Query activity_logs table or view logs page",
+        "Verify each action is logged with:",
+        "- user_id",
+        "- action_type (create, update, delete)",
+        "- entity_type and entity_id",
+        "- description",
+        "- changes (before/after values)",
+        "- IP address",
+        "- User agent",
+        "- timestamp",
+        "Verify sensitive data is not logged (passwords, tokens)"
+      ],
+      "expectedOutcome": "All significant user actions are logged with appropriate detail",
+      "testData": null,
+      "automatable": true
+    },
+    {
+      "id": "perf-001",
+      "name": "Page Load Performance",
+      "category": "performance",
+      "priority": "medium",
+      "description": "Test page load times are acceptable",
+      "preconditions": [
+        "Application deployed"
+      ],
+      "steps": [
+        "Clear browser cache",
+        "Navigate to landing page",
+        "Measure time to first contentful paint (FCP)",
+        "Measure time to interactive (TTI)",
+        "Verify FCP < 1.5 seconds",
+        "Verify TTI < 3.5 seconds",
+        "Test menu page load time",
+        "Verify menu items load within 2 seconds",
+        "Test admin dashboard load time",
+        "Verify dashboard analytics load within 3 seconds",
+        "Use Lighthouse to audit performance",
+        "Verify performance score > 80"
+      ],
+      "expectedOutcome": "Page load times meet acceptable thresholds for good UX",
+      "testData": {
+        "fcp_threshold": 1.5,
+        "tti_threshold": 3.5,
+        "lighthouse_target": 80
+      },
+      "automatable": true
+    },
+    {
+      "id": "perf-002",
+      "name": "API Response Times",
+      "category": "performance",
+      "priority": "medium",
+      "description": "Test API endpoints respond within acceptable time",
+      "preconditions": [
+        "Backend is running"
+      ],
+      "steps": [
+        "Make GET request to /api/menu/items",
+        "Measure response time",
+        "Verify response < 500ms",
+        "Make GET request to /api/orders/history (authenticated)",
+        "Verify response < 800ms",
+        "Make POST request to /api/cart/add",
+        "Verify response < 300ms",
+        "Make POST request to /api/checkout/create-order",
+        "Verify response < 2 seconds",
+        "Test multiple requests concurrently (10 requests)",
+        "Verify all responses within acceptable time",
+        "Verify no requests timeout"
+      ],
+      "expectedOutcome": "API endpoints respond within acceptable time limits",
+      "testData": {
+        "get_threshold": 500,
+        "post_threshold": 300,
+        "order_create_threshold": 2000
+      },
+      "automatable": true
+    },
+    {
+      "id": "perf-003",
+      "name": "Database Query Performance",
+      "category": "performance",
+      "priority": "low",
+      "description": "Test database queries are optimized with indexes",
+      "preconditions": [
+        "Database is populated with test data"
+      ],
+      "steps": [
+        "Check database indexes are created (per db.sql schema)",
+        "Query users table by email (should use idx_users_email)",
+        "Verify query execution time < 10ms",
+        "Query orders by user_id (should use idx_orders_user_id)",
+        "Verify query execution time < 20ms",
+        "Query menu_items by category_id (should use idx_menu_items_category_id)",
+        "Verify query execution time < 15ms",
+        "Run EXPLAIN ANALYZE on complex queries",
+        "Verify indexes are being used",
+        "Verify no full table scans on large tables"
+      ],
+      "expectedOutcome": "Database queries are optimized and use appropriate indexes",
+      "testData": null,
+      "automatable": true
+    },
+    {
+      "id": "sec-001",
+      "name": "SQL Injection Prevention",
+      "category": "security",
+      "priority": "critical",
+      "description": "Test that SQL injection attacks are prevented",
+      "preconditions": [
+        "Application accessible"
+      ],
+      "steps": [
+        "Attempt SQL injection in login email field:",
+        "- Enter: admin@test.com' OR '1'='1",
+        "- Verify login fails",
+        "Attempt SQL injection in search field:",
+        "- Enter: ' OR 1=1 --",
+        "- Verify search returns safe results or error",
+        "Attempt SQL injection in order_id parameter:",
+        "- Navigate to /api/orders/'; DROP TABLE orders; --",
+        "- Verify error is returned safely",
+        "Review backend code for parameterized queries",
+        "Verify all queries use $1, $2 placeholders",
+        "Verify no string concatenation in SQL queries"
+      ],
+      "expectedOutcome": "All SQL injection attempts are safely prevented",
+      "testData": null,
+      "automatable": true
+    },
+    {
+      "id": "sec-002",
+      "name": "Authorization Bypass Prevention",
+      "category": "security",
+      "priority": "critical",
+      "description": "Test that users cannot bypass authorization checks",
+      "preconditions": [
+        "Multiple user accounts exist"
+      ],
+      "steps": [
+        "Login as customer user_003 (john.smith@email.ie)",
+        "Note an order ID belonging to another user (e.g., user_004's order)",
+        "Attempt to access /api/orders/:other_user_order_id",
+        "Verify 403 Forbidden or order not found",
+        "Attempt to access /api/profile with another user's token",
+        "Verify access denied",
+        "Attempt to access admin endpoints with customer token",
+        "Verify 403 Forbidden",
+        "Attempt to modify order status as customer",
+        "Verify permission denied",
+        "Test that JWT tokens cannot be tampered with"
+      ],
+      "expectedOutcome": "Authorization checks prevent unauthorized access to resources",
+      "testData": null,
+      "automatable": true
+    }
+  ],
+  "test_execution_notes": [
+    "Browser agents can use test_users.json for credentials",
+    "Many tests can be automated with Playwright or Cypress",
+    "Real-time WebSocket tests require multiple concurrent sessions",
+    "Performance tests should be run on production-like environment",
+    "Security tests should be run regularly and after code changes",
+    "Integration tests may require mocking external services",
+    "All tests should be run on both desktop and mobile viewports",
+    "Database should be in consistent state before test execution",
+    "Test data cleanup may be required between test runs",
+    "Automated test suite should cover critical and high priority tests first"
+  ],
+  "recommended_test_tools": {
+    "frontend": [
+      "Vitest + React Testing Library (unit/component tests)",
+      "Playwright or Cypress (E2E tests)",
+      "Lighthouse (performance auditing)"
+    ],
+    "backend": [
+      "Jest + Supertest (API integration tests)",
+      "Artillery or k6 (load testing)"
+    ],
+    "cross_functional": [
+      "Postman or Insomnia (API testing)",
+      "Socket.IO Client (WebSocket testing)",
+      "Chrome DevTools (debugging, network analysis)"
+    ]
+  }
+}

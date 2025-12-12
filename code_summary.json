@@ -1,0 +1,725 @@
+{
+  "generated_at": "2024-12-11T10:00:00Z",
+  "application_name": "Salama Lama Food Truck",
+  "application_type": "Food Ordering & Catering Platform",
+  "deployment_url": {
+    "frontend": "https://123salama-lama-food-truck.launchpulse.ai",
+    "backend": "https://123salama-lama-food-truck.launchpulse.ai"
+  },
+  "tech_stack": {
+    "frontend": [
+      "React 18.3.1",
+      "TypeScript 5.5.3",
+      "Vite 5.4.0",
+      "React Router DOM 6.26.0",
+      "TailwindCSS 3.4.8",
+      "Radix UI Components",
+      "Zustand (State Management)",
+      "React Query (Data Fetching)",
+      "Socket.IO Client (Real-time)",
+      "Framer Motion (Animations)",
+      "Recharts (Analytics Charts)",
+      "Zod (Validation)"
+    ],
+    "backend": [
+      "Node.js",
+      "Express 4.19.2",
+      "TypeScript",
+      "PostgreSQL (via pg 8.13.3)",
+      "JWT (jsonwebtoken 9.0.2)",
+      "Zod (Schema Validation)",
+      "Socket.IO (Real-time)",
+      "PDFKit (Invoice Generation)",
+      "Morgan (HTTP Logging)",
+      "Multer (File Upload)",
+      "Nanoid (ID Generation)"
+    ],
+    "database": "PostgreSQL",
+    "authentication": "JWT with plain-text passwords (testing)",
+    "real_time": "Socket.IO",
+    "testing": [
+      "Jest 29.7.0",
+      "Vitest 3.2.4",
+      "Supertest 6.3.3",
+      "React Testing Library"
+    ]
+  },
+  "architecture": {
+    "type": "Monorepo with separate frontend and backend",
+    "frontend_structure": "Component-based React with centralized Zustand store",
+    "backend_structure": "Express REST API with Socket.IO for real-time updates",
+    "state_management": "Zustand with persist middleware",
+    "routing": "React Router v6 with role-based route protection",
+    "api_architecture": "RESTful with consistent error handling",
+    "file_storage": "Local filesystem (development mode)"
+  },
+  "database_tables": [
+    "users",
+    "addresses",
+    "payment_methods",
+    "password_resets",
+    "email_verifications",
+    "newsletter_subscribers",
+    "categories",
+    "menu_items",
+    "customization_groups",
+    "customization_options",
+    "orders",
+    "order_items",
+    "order_status_history",
+    "stock_history",
+    "delivery_zones",
+    "discount_codes",
+    "discount_usage",
+    "loyalty_accounts",
+    "points_transactions",
+    "badges",
+    "user_badges",
+    "rewards",
+    "redeemed_rewards",
+    "catering_inquiries",
+    "catering_quotes",
+    "invoices",
+    "system_settings",
+    "activity_logs"
+  ],
+  "api_endpoints": {
+    "authentication": [
+      "POST /api/auth/register - Customer registration",
+      "POST /api/auth/login - Customer/general login",
+      "POST /api/staff/login - Staff login",
+      "POST /api/admin/login - Admin login",
+      "POST /api/auth/logout - Logout",
+      "POST /api/auth/password-reset-request - Request password reset",
+      "POST /api/auth/password-reset - Complete password reset",
+      "POST /api/auth/verify-email - Verify email address",
+      "POST /api/auth/resend-verification - Resend verification email"
+    ],
+    "business_public": [
+      "GET /api/business/info - Get business information",
+      "GET /api/business/reviews - Get Google reviews (mocked)"
+    ],
+    "menu_public": [
+      "GET /api/menu/categories - Get all categories",
+      "GET /api/menu/items - Get menu items with filters",
+      "GET /api/menu/item/:id - Get single menu item details"
+    ],
+    "cart": [
+      "GET /api/cart - Get cart contents",
+      "POST /api/cart/add - Add item to cart",
+      "PUT /api/cart/item/:id - Update cart item",
+      "DELETE /api/cart/item/:id - Remove cart item"
+    ],
+    "checkout": [
+      "POST /api/discount/validate - Validate discount code",
+      "POST /api/checkout/validate - Validate checkout",
+      "POST /api/checkout/create-order - Create order"
+    ],
+    "customer_orders": [
+      "GET /api/orders/history - Get order history",
+      "GET /api/orders/:id - Get order details",
+      "POST /api/orders/:id/cancel - Cancel order"
+    ],
+    "customer_profile": [
+      "GET /api/profile - Get profile",
+      "PUT /api/profile - Update profile",
+      "PUT /api/profile/password - Change password",
+      "DELETE /api/profile - Delete account"
+    ],
+    "newsletter": [
+      "POST /api/newsletter/subscribe - Subscribe to newsletter"
+    ],
+    "catering_public": [
+      "GET /api/catering/info - Get catering information",
+      "POST /api/catering/inquiry - Submit catering inquiry"
+    ],
+    "catering_customer": [
+      "GET /api/catering/inquiries - Get user's inquiries",
+      "GET /api/invoices/:id/download - Download invoice"
+    ],
+    "loyalty": [
+      "GET /api/loyalty/balance - Get points balance",
+      "GET /api/loyalty/rewards - Get available rewards",
+      "GET /api/loyalty/badges - Get earned badges",
+      "POST /api/loyalty/redeem - Redeem reward"
+    ],
+    "staff": [
+      "GET /api/staff/dashboard - Staff dashboard stats",
+      "GET /api/staff/orders - Get order queue",
+      "PUT /api/staff/orders/:id/status - Update order status",
+      "GET /api/staff/stock - Get stock levels",
+      "PUT /api/staff/stock/:itemId - Update stock",
+      "GET /api/staff/reports/daily - Get daily reports"
+    ],
+    "admin_dashboard": [
+      "GET /api/admin/dashboard - Admin dashboard stats"
+    ],
+    "admin_menu": [
+      "GET /api/admin/menu/items - Get all menu items",
+      "POST /api/admin/menu/items - Create menu item",
+      "PUT /api/admin/menu/items/:id - Update menu item",
+      "DELETE /api/admin/menu/items/:id - Delete menu item",
+      "GET /api/admin/categories - Get categories",
+      "POST /api/admin/categories - Create category",
+      "PUT /api/admin/categories/:id - Update category",
+      "DELETE /api/admin/categories/:id - Delete category"
+    ],
+    "admin_stock": [
+      "GET /api/admin/stock - Get stock levels",
+      "PUT /api/admin/stock/:itemId - Update stock",
+      "GET /api/admin/stock/:itemId/history - Get stock history"
+    ],
+    "admin_orders": [
+      "GET /api/admin/orders - Get all orders",
+      "GET /api/admin/orders/:id - Get order details",
+      "PUT /api/admin/orders/:id - Update order",
+      "POST /api/admin/orders/:id/refund - Refund order",
+      "POST /api/admin/orders/:id/cancel - Cancel order"
+    ],
+    "admin_delivery": [
+      "GET /api/admin/delivery/settings - Get delivery settings",
+      "PUT /api/admin/delivery/settings - Update delivery settings"
+    ],
+    "admin_discounts": [
+      "GET /api/admin/discounts - Get discount codes",
+      "POST /api/admin/discounts - Create discount code",
+      "PUT /api/admin/discounts/:id - Update discount code",
+      "DELETE /api/admin/discounts/:id - Delete discount code"
+    ],
+    "admin_customers": [
+      "GET /api/admin/customers - Get customers",
+      "GET /api/admin/customers/:id - Get customer details",
+      "PUT /api/admin/customers/:id/points - Adjust loyalty points"
+    ],
+    "admin_staff": [
+      "GET /api/admin/staff - Get staff members",
+      "POST /api/admin/staff - Create staff member",
+      "PUT /api/admin/staff/:id - Update staff member",
+      "DELETE /api/admin/staff/:id - Delete staff member"
+    ],
+    "admin_catering": [
+      "GET /api/admin/catering/inquiries - Get catering inquiries",
+      "GET /api/admin/catering/inquiries/:id - Get inquiry details",
+      "PUT /api/admin/catering/inquiries/:id - Update inquiry",
+      "POST /api/admin/catering/inquiries/:id/quote - Create quote"
+    ],
+    "admin_invoices": [
+      "GET /api/admin/invoices - Get invoices",
+      "GET /api/admin/invoices/:id - Get invoice details",
+      "POST /api/admin/invoices/generate - Generate invoice"
+    ],
+    "admin_analytics": [
+      "GET /api/admin/analytics/sales - Get sales analytics",
+      "GET /api/admin/analytics/customers - Get customer analytics",
+      "GET /api/admin/analytics/coupons - Get coupon analytics"
+    ],
+    "admin_settings": [
+      "GET /api/admin/settings - Get system settings",
+      "PUT /api/admin/settings - Update system settings"
+    ],
+    "admin_upload": [
+      "POST /api/admin/upload/image - Upload image"
+    ]
+  },
+  "features": [
+    {
+      "name": "User Authentication & Authorization",
+      "description": "JWT-based authentication with role-based access control (Customer, Staff, Admin)",
+      "files": [
+        "backend/server.ts:1329-1873",
+        "vitereact/src/components/views/UV_Login.tsx",
+        "vitereact/src/components/views/UV_Signup.tsx",
+        "vitereact/src/components/views/UV_StaffLogin.tsx",
+        "vitereact/src/components/views/UV_AdminLogin.tsx",
+        "vitereact/src/store/main.tsx"
+      ],
+      "features": [
+        "Customer registration with referral codes",
+        "Separate login endpoints for staff and admin",
+        "Email verification system",
+        "Password reset flow",
+        "JWT token with role-based expiration",
+        "Single session enforcement for staff/admin"
+      ]
+    },
+    {
+      "name": "Menu Management",
+      "description": "Complete menu system with categories, items, and customizations",
+      "files": [
+        "backend/server.ts:1932-2034",
+        "vitereact/src/components/views/UV_Menu.tsx",
+        "vitereact/src/components/views/UV_AdminMenuList.tsx",
+        "vitereact/src/components/views/UV_AdminMenuItemForm.tsx",
+        "vitereact/src/components/views/UV_AdminCategoryManagement.tsx"
+      ],
+      "features": [
+        "Browse menu by category",
+        "Search and filter items",
+        "Dietary tag filtering (vegan, vegetarian, gluten-free, etc.)",
+        "Menu item customization groups (single/multiple select)",
+        "Featured and limited edition items",
+        "Admin CRUD operations for menu items and categories",
+        "Stock tracking for select items"
+      ]
+    },
+    {
+      "name": "Shopping Cart & Checkout",
+      "description": "Full shopping cart with multi-step checkout process",
+      "files": [
+        "backend/server.ts:2036-2472",
+        "vitereact/src/components/views/UV_Cart.tsx",
+        "vitereact/src/components/views/UV_CheckoutOrderType.tsx",
+        "vitereact/src/components/views/UV_CheckoutContact.tsx",
+        "vitereact/src/components/views/UV_CheckoutPayment.tsx",
+        "vitereact/src/components/views/UV_CheckoutReview.tsx",
+        "vitereact/src/components/views/GV_FloatingCart.tsx"
+      ],
+      "features": [
+        "Add/update/remove items with customizations",
+        "Real-time cart totals calculation",
+        "Discount code validation and application",
+        "Order type selection (collection/delivery)",
+        "Delivery zone validation with fee calculation",
+        "Address management",
+        "Payment method integration (SumUp mock)",
+        "Order review and confirmation",
+        "Floating cart widget"
+      ]
+    },
+    {
+      "name": "Order Management",
+      "description": "Complete order lifecycle management with real-time updates",
+      "files": [
+        "backend/server.ts:2474-2900",
+        "vitereact/src/components/views/UV_OrderHistory.tsx",
+        "vitereact/src/components/views/UV_OrderDetail.tsx",
+        "vitereact/src/components/views/UV_OrderTracking.tsx",
+        "vitereact/src/components/views/UV_OrderConfirmation.tsx",
+        "vitereact/src/components/views/UV_StaffOrderQueue.tsx",
+        "vitereact/src/components/views/UV_StaffOrderDetail.tsx",
+        "vitereact/src/components/views/UV_AdminOrders.tsx",
+        "vitereact/src/components/views/UV_AdminOrderDetail.tsx"
+      ],
+      "features": [
+        "Order status tracking (received, preparing, ready, out_for_delivery, completed, cancelled)",
+        "Real-time Socket.IO updates for order status changes",
+        "Customer order history with filters",
+        "Staff order queue management",
+        "Order cancellation with refund",
+        "Email and SMS notifications (mocked)",
+        "Internal order notes",
+        "Collection time slot selection",
+        "Invoice generation"
+      ]
+    },
+    {
+      "name": "Loyalty & Rewards Program",
+      "description": "Points-based loyalty system with badges and rewards",
+      "files": [
+        "backend/server.ts:2902-3200",
+        "vitereact/src/components/views/UV_LoyaltyDashboard.tsx"
+      ],
+      "features": [
+        "Points earned on orders (€1 = 1 point)",
+        "Referral system with codes",
+        "Redeemable rewards catalog",
+        "Badge achievements",
+        "Points transaction history",
+        "Spin wheel feature",
+        "Points expiration tracking",
+        "Manual admin adjustments"
+      ]
+    },
+    {
+      "name": "Catering Service",
+      "description": "Catering inquiry and quote management system",
+      "files": [
+        "backend/server.ts:3202-3450",
+        "vitereact/src/components/views/UV_CateringInfo.tsx",
+        "vitereact/src/components/views/UV_CateringInquiryForm.tsx",
+        "vitereact/src/components/views/UV_MyCateringInquiries.tsx",
+        "vitereact/src/components/views/UV_CateringInquiryDetail.tsx",
+        "vitereact/src/components/views/UV_AdminCateringList.tsx",
+        "vitereact/src/components/views/UV_AdminCateringInquiryDetail.tsx"
+      ],
+      "features": [
+        "Catering inquiry submission form",
+        "Event details capture (type, date, guest count, dietary needs)",
+        "Admin inquiry management",
+        "Quote generation with PDF",
+        "Quote acceptance tracking",
+        "Invoice generation for catering",
+        "File attachments support"
+      ]
+    },
+    {
+      "name": "Discount & Coupon System",
+      "description": "Flexible discount code system with multiple types and restrictions",
+      "files": [
+        "backend/server.ts:806-868",
+        "vitereact/src/components/views/UV_AdminDiscounts.tsx",
+        "vitereact/src/components/views/UV_AdminDiscountForm.tsx",
+        "vitereact/src/components/views/UV_AdminCouponUsage.tsx"
+      ],
+      "features": [
+        "Discount types: percentage, fixed amount, free delivery",
+        "Order type restrictions (collection/delivery)",
+        "Minimum order value requirements",
+        "Usage limits (total and per customer)",
+        "Valid date range",
+        "Auto-generated first order discounts",
+        "Category and item restrictions",
+        "Usage tracking and analytics"
+      ]
+    },
+    {
+      "name": "Stock Management",
+      "description": "Inventory tracking for perishable items",
+      "files": [
+        "backend/server.ts:1107-1132",
+        "vitereact/src/components/views/UV_StaffStock.tsx",
+        "vitereact/src/components/views/UV_AdminStock.tsx",
+        "vitereact/src/components/views/UV_AdminStockHistory.tsx"
+      ],
+      "features": [
+        "Real-time stock level tracking",
+        "Low stock alerts via Socket.IO",
+        "Stock change types (restock, adjustment, waste, sale)",
+        "Stock history with reasons and notes",
+        "Automated stock deduction on order",
+        "Low stock threshold configuration"
+      ]
+    },
+    {
+      "name": "Delivery Zone Management",
+      "description": "Geographic delivery zone configuration with polygon-based areas",
+      "files": [
+        "backend/server.ts:380-423",
+        "vitereact/src/components/views/UV_AdminDeliverySettings.tsx"
+      ],
+      "features": [
+        "Polygon-based delivery zones",
+        "Zone-specific delivery fees",
+        "Minimum order values per zone",
+        "Estimated delivery times",
+        "Zone priority system",
+        "Address geocoding (mocked)",
+        "Global delivery enable/disable"
+      ]
+    },
+    {
+      "name": "Staff Management",
+      "description": "Staff user management with granular permissions",
+      "files": [
+        "backend/server.ts:358-377",
+        "vitereact/src/components/views/UV_AdminStaff.tsx",
+        "vitereact/src/components/views/UV_AdminStaffForm.tsx",
+        "vitereact/src/components/views/UV_StaffDashboard.tsx",
+        "vitereact/src/components/views/UV_StaffProfile.tsx"
+      ],
+      "features": [
+        "Create/update/delete staff accounts",
+        "Granular permission management (manage_orders, manage_menu, view_reports, etc.)",
+        "Staff dashboard with order queue",
+        "Daily reports for staff",
+        "Staff activity logging"
+      ]
+    },
+    {
+      "name": "Customer Management",
+      "description": "Customer profile and activity management",
+      "files": [
+        "vitereact/src/components/views/UV_CustomerDashboard.tsx",
+        "vitereact/src/components/views/UV_CustomerProfile.tsx",
+        "vitereact/src/components/views/UV_SavedAddresses.tsx",
+        "vitereact/src/components/views/UV_SavedPaymentMethods.tsx",
+        "vitereact/src/components/views/UV_AdminCustomers.tsx",
+        "vitereact/src/components/views/UV_AdminCustomerProfile.tsx"
+      ],
+      "features": [
+        "Customer profile management",
+        "Saved delivery addresses",
+        "Saved payment methods (SumUp tokens)",
+        "Order history",
+        "Dietary preferences",
+        "Marketing preferences",
+        "Admin view of customer details",
+        "Manual loyalty points adjustment"
+      ]
+    },
+    {
+      "name": "Analytics & Reporting",
+      "description": "Business intelligence and reporting dashboards",
+      "files": [
+        "vitereact/src/components/views/UV_AdminAnalytics.tsx",
+        "vitereact/src/components/views/UV_AdminDashboard.tsx",
+        "vitereact/src/components/views/UV_StaffReports.tsx"
+      ],
+      "features": [
+        "Sales analytics with charts",
+        "Customer analytics",
+        "Coupon usage analytics",
+        "Daily reports for staff",
+        "Order status breakdown",
+        "Revenue tracking",
+        "Top-selling items",
+        "Customer retention metrics"
+      ]
+    },
+    {
+      "name": "System Settings",
+      "description": "Configurable business settings",
+      "files": [
+        "backend/server.ts:262-295",
+        "vitereact/src/components/views/UV_AdminSettings.tsx"
+      ],
+      "features": [
+        "Operating hours configuration",
+        "Tax rate settings",
+        "Loyalty program settings",
+        "Collection time slots",
+        "Business information",
+        "Email/SMS notification toggles",
+        "Maintenance mode",
+        "Featured categories"
+      ]
+    },
+    {
+      "name": "Invoice Management",
+      "description": "Invoice generation and management for orders and catering",
+      "files": [
+        "backend/server.ts:1136-1202",
+        "vitereact/src/components/views/UV_AdminInvoices.tsx",
+        "vitereact/src/components/views/UV_AdminInvoiceDetail.tsx"
+      ],
+      "features": [
+        "Automatic invoice generation on order",
+        "PDF invoice generation with PDFKit",
+        "Catering quote PDF generation",
+        "Invoice status tracking (pending, paid)",
+        "Payment method recording",
+        "Due date tracking",
+        "Invoice download"
+      ]
+    },
+    {
+      "name": "Real-time Notifications",
+      "description": "Socket.IO-based real-time updates",
+      "files": [
+        "backend/server.ts:1267-1325",
+        "backend/server.ts:1070-1103"
+      ],
+      "features": [
+        "Order status updates to customers",
+        "Order updates to staff/admin",
+        "Low stock alerts to admin/staff",
+        "Role-based socket rooms",
+        "JWT authentication for WebSocket",
+        "Single session enforcement"
+      ]
+    },
+    {
+      "name": "Activity Logging",
+      "description": "Comprehensive audit trail system",
+      "files": [
+        "backend/db.sql:510-523"
+      ],
+      "features": [
+        "User action logging",
+        "Change tracking with before/after values",
+        "IP address and user agent capture",
+        "Entity type and ID tracking",
+        "Admin activity monitoring"
+      ]
+    }
+  ],
+  "user_roles_and_permissions": {
+    "customer": {
+      "description": "End users who place orders",
+      "permissions": [
+        "Browse menu",
+        "Add items to cart",
+        "Place orders",
+        "Track orders",
+        "View order history",
+        "Manage profile and addresses",
+        "Manage payment methods",
+        "Submit catering inquiries",
+        "View and redeem loyalty rewards",
+        "Cancel own orders (before preparation)"
+      ],
+      "restricted_areas": [
+        "/admin/*",
+        "/staff/*"
+      ]
+    },
+    "staff": {
+      "description": "Staff members with order and stock management",
+      "permissions": [
+        "View order queue",
+        "Update order status",
+        "View stock levels",
+        "Update stock",
+        "View daily reports",
+        "Manage menu (if permission granted)",
+        "View orders (if permission granted)"
+      ],
+      "restricted_areas": [
+        "/admin/*"
+      ],
+      "permission_based": true
+    },
+    "admin": {
+      "description": "Full system access",
+      "permissions": [
+        "All staff permissions",
+        "Manage menu items and categories",
+        "Manage discount codes",
+        "Manage customers",
+        "Manage staff and permissions",
+        "View analytics",
+        "Manage system settings",
+        "Manage delivery zones",
+        "Generate invoices",
+        "Manage catering inquiries and quotes",
+        "View activity logs"
+      ],
+      "full_access": true
+    }
+  },
+  "key_directories": {
+    "backend": {
+      "path": "/app/backend",
+      "description": "Express API server",
+      "key_files": [
+        "server.ts - Main application file with all routes",
+        "schema.ts - Zod validation schemas",
+        "db.sql - Database schema and seed data",
+        "package.json - Dependencies"
+      ]
+    },
+    "frontend": {
+      "path": "/app/vitereact",
+      "description": "React frontend application",
+      "key_directories": [
+        "src/components/views/ - All page components (GV_ = Global Views, UV_ = Unique Views)",
+        "src/components/ui/ - Reusable UI components (Radix UI based)",
+        "src/store/ - Zustand state management",
+        "src/hooks/ - Custom React hooks",
+        "src/lib/ - Utility functions"
+      ]
+    }
+  },
+  "external_services_mocked": {
+    "email_service": {
+      "description": "SendGrid/Mailgun/SES for transactional emails",
+      "mock_function": "send_email_mock",
+      "use_cases": [
+        "Email verification",
+        "Password reset",
+        "Order confirmation",
+        "Order status updates"
+      ]
+    },
+    "sms_service": {
+      "description": "Twilio for SMS notifications",
+      "mock_function": "send_sms_mock",
+      "use_cases": [
+        "Order status updates",
+        "Marketing messages"
+      ]
+    },
+    "payment_gateway": {
+      "description": "SumUp payment processing",
+      "mock_functions": [
+        "sumup_charge_mock",
+        "sumup_refund_mock"
+      ],
+      "use_cases": [
+        "Process card payments",
+        "Process refunds"
+      ]
+    },
+    "geocoding_service": {
+      "description": "Google Geocoding API for address coordinates",
+      "mock_function": "geocode_address_mock",
+      "use_cases": [
+        "Convert addresses to lat/lng for delivery zone matching"
+      ]
+    },
+    "reviews_service": {
+      "description": "Google Places API for business reviews",
+      "mock_function": "get_google_reviews_mock",
+      "use_cases": [
+        "Display business reviews on landing page"
+      ]
+    }
+  },
+  "environment_variables": {
+    "backend": [
+      "PORT - Server port (default: 3000)",
+      "JWT_SECRET - JWT signing secret (default: 'dev-secret')",
+      "FRONTEND_URL - Frontend URL for CORS (default: 'http://localhost:5173')",
+      "DATABASE_URL - PostgreSQL connection string",
+      "PGHOST - PostgreSQL host",
+      "PGDATABASE - PostgreSQL database name",
+      "PGUSER - PostgreSQL username",
+      "PGPASSWORD - PostgreSQL password",
+      "PGPORT - PostgreSQL port (default: 5432)"
+    ]
+  },
+  "data_storage": {
+    "database": "PostgreSQL with 30+ tables",
+    "file_storage": {
+      "location": "backend/storage/",
+      "directories": [
+        "uploads/ - User uploaded images",
+        "invoices/ - Generated invoice PDFs",
+        "quotes/ - Generated quote PDFs",
+        "catering_attachments/ - Catering inquiry attachments",
+        "carts/ - User cart data (JSON files)"
+      ]
+    },
+    "session_storage": "JWT tokens (client-side)",
+    "cart_storage": "File-based JSON per user"
+  },
+  "testing_setup": {
+    "backend": {
+      "framework": "Jest",
+      "test_files": [
+        "server.test.ts"
+      ],
+      "run_command": "npm test"
+    },
+    "frontend": {
+      "framework": "Vitest + React Testing Library",
+      "test_files": [
+        "src/__tests__/auth.e2e.test.tsx"
+      ],
+      "run_command": "npm test"
+    }
+  },
+  "notable_patterns": {
+    "error_handling": "Consistent error envelope with request_id, error_code, and debug info",
+    "request_logging": "Morgan with enriched metadata (params, query, body, headers)",
+    "request_tracing": "Unique request_id (nanoid) for each request",
+    "database_operations": "with_client wrapper for connection pooling",
+    "number_coercion": "coerce_numbers helper for PostgreSQL DECIMAL fields",
+    "authorization": "require_role and require_permission middleware",
+    "socket_authentication": "JWT verification in Socket.IO handshake",
+    "id_generation": "gen_id with prefixes (user_, order_, item_, etc.)",
+    "cart_persistence": "File-based JSON storage per user_id"
+  },
+  "development_notes": [
+    "Application uses plain-text password storage for testing/development only",
+    "External APIs (email, SMS, payment, geocoding) are mocked for development",
+    "Socket.IO enabled for real-time order updates",
+    "File uploads stored locally (not production-ready)",
+    "Cart data stored in JSON files (not production-ready)",
+    "No rate limiting implemented",
+    "CORS configured for single frontend origin",
+    "All API responses include timestamp and request_id",
+    "Database uses TEXT for date/time fields (ISO 8601 strings)",
+    "Tax rate configurable via system settings (default 23% VAT)"
+  ]
+}

@@ -1877,6 +1877,57 @@ app.post('/api/cart/add', authenticate_token, async (req, res) => {
         return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
     }
 });
+// Alias endpoint for /api/cart/add (used by frontend)
+app.post('/api/cart/items', authenticate_token, async (req, res) => {
+    try {
+        const body = cart_add_input_schema.parse({
+            ...req.body,
+            quantity: Number(req.body?.quantity),
+        });
+        const menu_res = await pool.query('SELECT item_id, is_active, stock_tracked, current_stock FROM menu_items WHERE item_id = $1', [body.item_id]);
+        if (menu_res.rows.length === 0 || !menu_res.rows[0].is_active) {
+            return res.status(400).json(createErrorResponse('Item is unavailable', null, 'ITEM_UNAVAILABLE', req.request_id));
+        }
+        const menu_item = menu_res.rows[0];
+        const current_stock = menu_item.current_stock === null || menu_item.current_stock === undefined ? null : Number(menu_item.current_stock);
+        if (menu_item.stock_tracked && (current_stock ?? 0) < body.quantity) {
+            return res.status(400).json(createErrorResponse('Item is out of stock', null, 'ITEM_OUT_OF_STOCK', req.request_id));
+        }
+        const cart = read_cart_sync(req.user.user_id);
+        const cart_item_id = gen_id('cart');
+        cart.items.push({
+            cart_item_id,
+            item_id: body.item_id,
+            quantity: body.quantity,
+            selected_customizations: body.selected_customizations ?? null,
+            added_at: now_iso(),
+        });
+        write_cart_sync(req.user.user_id, cart);
+        const totals = await compute_cart_totals({
+            user_id: req.user.user_id,
+            cart,
+            order_type: 'collection',
+            delivery_address_id: null,
+            discount_code: cart.discount_code,
+        });
+        return ok(res, 200, {
+            items: totals.items,
+            subtotal: totals.subtotal,
+            discount_code: totals.discount_code,
+            discount_amount: totals.discount_amount,
+            delivery_fee: totals.delivery_fee,
+            tax_amount: totals.tax_amount,
+            total: totals.total,
+            validation_errors: totals.validation_errors,
+        });
+    }
+    catch (error) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+        }
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
 app.put('/api/cart/item/:id', authenticate_token, async (req, res) => {
     try {
         const cart_item_id = req.params.id;

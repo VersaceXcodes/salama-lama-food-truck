@@ -469,26 +469,44 @@ function cart_file_path(user_id) {
     return path.join(storage_carts_dir, `${user_id}.json`);
 }
 function read_cart_sync(user_id) {
-    const fp = cart_file_path(user_id);
-    if (!fs.existsSync(fp))
-        return { items: [], discount_code: null, updated_at: now_iso() };
     try {
-        const parsed = JSON.parse(fs.readFileSync(fp, 'utf8'));
-        if (!parsed || typeof parsed !== 'object')
+        const fp = cart_file_path(user_id);
+        console.log(`[CART READ] Attempting to read cart for user ${user_id} from ${fp}`);
+        if (!fs.existsSync(fp)) {
+            console.log(`[CART READ] Cart file does not exist, returning empty cart`);
             return { items: [], discount_code: null, updated_at: now_iso() };
-        if (!Array.isArray(parsed.items))
+        }
+        const content = fs.readFileSync(fp, 'utf8');
+        const parsed = JSON.parse(content);
+        if (!parsed || typeof parsed !== 'object') {
+            console.warn(`[CART READ] Invalid cart data structure, returning empty cart`);
+            return { items: [], discount_code: null, updated_at: now_iso() };
+        }
+        if (!Array.isArray(parsed.items)) {
+            console.warn(`[CART READ] Cart items is not an array, fixing`);
             parsed.items = [];
+        }
+        console.log(`[CART READ] Successfully read cart with ${parsed.items.length} items`);
         return { items: parsed.items, discount_code: parsed.discount_code ?? null, updated_at: parsed.updated_at ?? now_iso() };
     }
-    catch {
+    catch (error) {
+        console.error(`[CART READ ERROR] Failed to read cart for user ${user_id}:`, error);
         return { items: [], discount_code: null, updated_at: now_iso() };
     }
 }
 function write_cart_sync(user_id, cart) {
-    const fp = cart_file_path(user_id);
-    const next = { ...cart, updated_at: now_iso() };
-    fs.writeFileSync(fp, JSON.stringify(next, null, 2), 'utf8');
-    return next;
+    try {
+        const fp = cart_file_path(user_id);
+        const next = { ...cart, updated_at: now_iso() };
+        console.log(`[CART WRITE] Writing cart for user ${user_id} with ${next.items.length} items`);
+        fs.writeFileSync(fp, JSON.stringify(next, null, 2), 'utf8');
+        console.log(`[CART WRITE] Successfully wrote cart to ${fp}`);
+        return next;
+    }
+    catch (error) {
+        console.error(`[CART WRITE ERROR] Failed to write cart for user ${user_id}:`, error);
+        throw error;
+    }
 }
 /**
  * Cart schemas (not provided in schema.ts), so we define minimal local schemas.
@@ -821,6 +839,38 @@ async function compute_cart_totals({ user_id, cart, order_type, delivery_address
     const validation_errors = [];
     const computed_items = [];
     let subtotal = 0;
+    // Collect all customization option IDs from all cart items for batch query
+    const all_option_ids = [];
+    for (const cart_item of cart.items) {
+        const selected = cart_item.selected_customizations || null;
+        if (selected && typeof selected === 'object') {
+            for (const v of Object.values(selected)) {
+                if (typeof v === 'string') {
+                    all_option_ids.push(v);
+                }
+                else if (Array.isArray(v)) {
+                    for (const sub of v) {
+                        if (typeof sub === 'string')
+                            all_option_ids.push(sub);
+                        else if (sub && typeof sub === 'object' && sub.option_id)
+                            all_option_ids.push(sub.option_id);
+                    }
+                }
+            }
+        }
+    }
+    // Batch query all customization options at once
+    const options_map = new Map();
+    if (all_option_ids.length > 0) {
+        const unique_option_ids = [...new Set(all_option_ids)];
+        const options_res = await pool.query(`SELECT co.option_id, co.additional_price
+       FROM customization_options co
+       WHERE co.option_id = ANY($1)`, [unique_option_ids]);
+        for (const o of options_res.rows) {
+            options_map.set(o.option_id, Number(o.additional_price ?? 0));
+        }
+    }
+    // Now process each cart item
     for (const cart_item of cart.items) {
         const menu_item = menu_map.get(cart_item.item_id);
         if (!menu_item || !menu_item.is_active) {
@@ -832,32 +882,25 @@ async function compute_cart_totals({ user_id, cart, order_type, delivery_address
             continue;
         }
         // Customizations are stored as snapshot; to keep UX consistent we assume unit_price is base price.
-        // For production, compute customization price from customization_options.
         let unit_price = Number(menu_item.price);
         let customizations_total = 0;
-        // If selected_customizations includes option ids array/object, we can compute prices.
+        // Calculate customization prices using the pre-fetched options_map
         const selected = cart_item.selected_customizations || null;
-        const option_ids = [];
         if (selected && typeof selected === 'object') {
             for (const v of Object.values(selected)) {
                 if (typeof v === 'string') {
-                    // Might be an option_id; if not, it won't match.
-                    option_ids.push(v);
+                    customizations_total += options_map.get(v) ?? 0;
                 }
                 else if (Array.isArray(v)) {
                     for (const sub of v) {
-                        if (typeof sub === 'string')
-                            option_ids.push(sub);
+                        if (typeof sub === 'string') {
+                            customizations_total += options_map.get(sub) ?? 0;
+                        }
+                        else if (sub && typeof sub === 'object' && sub.option_id) {
+                            customizations_total += options_map.get(sub.option_id) ?? 0;
+                        }
                     }
                 }
-            }
-        }
-        if (option_ids.length > 0) {
-            const options_res = await pool.query(`SELECT co.option_id, co.additional_price
-         FROM customization_options co
-         WHERE co.option_id = ANY($1)`, [option_ids]);
-            for (const o of options_res.rows) {
-                customizations_total += Number(o.additional_price ?? 0);
             }
         }
         unit_price = Number((unit_price + customizations_total).toFixed(2));
@@ -1827,7 +1870,9 @@ app.get('/api/menu/item/:id', async (req, res) => {
  */
 app.get('/api/cart', authenticate_token, async (req, res) => {
     try {
+        console.log(`[CART GET] User ${req.user.user_id} requesting cart`);
         const cart = read_cart_sync(req.user.user_id);
+        console.log(`[CART GET] Cart loaded with ${cart.items.length} items`);
         const totals = await compute_cart_totals({
             user_id: req.user.user_id,
             cart,
@@ -1835,6 +1880,7 @@ app.get('/api/cart', authenticate_token, async (req, res) => {
             delivery_address_id: null,
             discount_code: cart.discount_code,
         });
+        console.log(`[CART GET] Totals computed: subtotal=${totals.subtotal}, total=${totals.total}, items=${totals.items.length}`);
         return ok(res, 200, {
             items: totals.items,
             subtotal: totals.subtotal,
@@ -1847,6 +1893,7 @@ app.get('/api/cart', authenticate_token, async (req, res) => {
         });
     }
     catch (error) {
+        console.error(`[CART GET ERROR] User ${req.user?.user_id}:`, error);
         return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
     }
 });
@@ -1917,6 +1964,10 @@ app.post('/api/cart/items', authenticate_token, async (req, res) => {
             return res.status(400).json(createErrorResponse('Item is out of stock', null, 'ITEM_OUT_OF_STOCK', req.request_id));
         }
         const cart = read_cart_sync(req.user.user_id);
+        // Prevent cart from becoming too large (max 50 unique items)
+        if (cart.items.length >= 50) {
+            return res.status(400).json(createErrorResponse('Cart is full. Please remove some items before adding more.', null, 'CART_FULL', req.request_id));
+        }
         const cart_item_id = gen_id('cart');
         cart.items.push({
             cart_item_id,

@@ -3831,11 +3831,13 @@ app.put('/api/admin/menu/items/:id', authenticate_token, require_role(['admin'])
         params.push(now_iso());
         fields.push(`updated_at = $${params.length}`);
         params.push(item_id);
-        const upd = await pool.query(`UPDATE menu_items SET ${fields.join(', ')} WHERE item_id = $${params.length} RETURNING item_id`, params);
+        const upd = await pool.query(`UPDATE menu_items SET ${fields.join(', ')} WHERE item_id = $${params.length} RETURNING *`, params);
         if (upd.rows.length === 0) {
             return res.status(404).json(createErrorResponse('Menu item not found', null, 'NOT_FOUND', req.request_id));
         }
-        return ok(res, 200, { item_id });
+        // Return the full updated item with proper number coercion
+        const updated_item = coerce_numbers(upd.rows[0], ['price', 'current_stock', 'low_stock_threshold', 'sort_order']);
+        return ok(res, 200, { item: updated_item });
     }
     catch (error) {
         if (error instanceof z.ZodError)

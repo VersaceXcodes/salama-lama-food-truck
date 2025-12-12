@@ -238,7 +238,8 @@ const UV_AdminMenuList: React.FC = () => {
         debouncedSearch
       ),
     enabled: !!authToken,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 0, // Always fetch fresh data to ensure updates are immediately visible
+    refetchOnMount: 'always', // Always refetch when component mounts
   });
 
   // Toggle item status mutation

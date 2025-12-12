@@ -250,9 +250,13 @@ const UV_AdminMenuItemForm: React.FC = () => {
   const updateMutation = useMutation({
     mutationFn: (payload: Partial<CreateMenuItemPayload>) =>
       updateMenuItem(itemIdParam!, payload, authToken!),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-menu-items'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-menu-item', itemIdParam] });
+    onSuccess: async () => {
+      // Aggressively invalidate all related queries and wait for them to refetch
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['admin-menu-items'] }),
+        queryClient.invalidateQueries({ queryKey: ['admin-menu-item', itemIdParam] }),
+        queryClient.refetchQueries({ queryKey: ['admin-menu-items'] }),
+      ]);
       setSuccessMessage('Menu item updated successfully!');
       setTimeout(() => {
         navigate('/admin/menu');

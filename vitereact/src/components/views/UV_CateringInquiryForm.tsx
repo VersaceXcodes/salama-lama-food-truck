@@ -606,7 +606,7 @@ const UV_CateringInquiryForm: React.FC = () => {
                     <label htmlFor="event_date" className="block text-sm font-medium text-gray-700 mb-1">
                       Event Date <span className="text-red-600">*</span>
                     </label>
-                    <input
+                     <input
                       type="date"
                       id="event_date"
                       name="event_date"
@@ -625,7 +625,17 @@ const UV_CateringInquiryForm: React.FC = () => {
                           });
                         }
                       }}
-                      onBlur={() => handleInputBlur('event_date')}
+                      onBlur={(e) => {
+                        // Validate using the current input value directly to avoid state timing issues
+                        const currentValue = e.target.value;
+                        const error = validateField('event_date', currentValue);
+                        if (error) {
+                          setValidationErrors(prev => ({
+                            ...prev,
+                            event_date: error,
+                          }));
+                        }
+                      }}
                       min={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
                       className={`w-full px-4 py-3 rounded-lg border-2 transition-colors ${
                         validationErrors.event_date
@@ -644,7 +654,7 @@ const UV_CateringInquiryForm: React.FC = () => {
                     <label htmlFor="event_start_time" className="block text-sm font-medium text-gray-700 mb-1">
                       Start Time <span className="text-red-600">*</span>
                     </label>
-                    <input
+                     <input
                       type="time"
                       id="event_start_time"
                       name="event_start_time"
@@ -663,7 +673,17 @@ const UV_CateringInquiryForm: React.FC = () => {
                           });
                         }
                       }}
-                      onBlur={() => handleInputBlur('event_start_time')}
+                      onBlur={(e) => {
+                        // Validate using the current input value directly to avoid state timing issues
+                        const currentValue = e.target.value;
+                        const error = validateField('event_start_time', currentValue);
+                        if (error) {
+                          setValidationErrors(prev => ({
+                            ...prev,
+                            event_start_time: error,
+                          }));
+                        }
+                      }}
                       className={`w-full px-4 py-3 rounded-lg border-2 transition-colors ${
                         validationErrors.event_start_time
                           ? 'border-red-500 focus:border-red-600'
@@ -680,7 +700,7 @@ const UV_CateringInquiryForm: React.FC = () => {
                     <label htmlFor="event_end_time" className="block text-sm font-medium text-gray-700 mb-1">
                       End Time <span className="text-red-600">*</span>
                     </label>
-                    <input
+                     <input
                       type="time"
                       id="event_end_time"
                       name="event_end_time"
@@ -690,7 +710,6 @@ const UV_CateringInquiryForm: React.FC = () => {
                         // Don't validate format on change - just set the value
                         // Browser native time input handles the format
                         const value = e.target.value;
-                        console.log('Event End Time onChange:', value);
                         setFormData(prev => ({ ...prev, event_end_time: value }));
                         if (validationErrors.event_end_time) {
                           setValidationErrors(prev => {
@@ -701,8 +720,15 @@ const UV_CateringInquiryForm: React.FC = () => {
                         }
                       }}
                       onBlur={(e) => {
-                        console.log('Event End Time onBlur:', e.target.value, 'formData:', formData.event_end_time);
-                        handleInputBlur('event_end_time');
+                        // Validate using the current input value directly to avoid state timing issues
+                        const currentValue = e.target.value;
+                        const error = validateField('event_end_time', currentValue);
+                        if (error) {
+                          setValidationErrors(prev => ({
+                            ...prev,
+                            event_end_time: error,
+                          }));
+                        }
                       }}
                       className={`w-full px-4 py-3 rounded-lg border-2 transition-colors ${
                         validationErrors.event_end_time

@@ -22,13 +22,20 @@ import {
 // ===========================
 
 interface SalesAnalytics {
-  total_revenue: number;
-  total_orders: number;
-  average_order_value: number;
-  revenue_by_day: Array<{ date: string; revenue: number }>;
-  orders_breakdown: { collection: number; delivery: number };
+  success: boolean;
+  summary: {
+    orders: number;
+    revenue: number;
+    average_order_value: number;
+  };
+  breakdown_by_type: Array<{
+    order_type: string;
+    orders: number;
+    revenue: number;
+  }>;
+  revenue_by_day?: Array<{ date: string; revenue: number }>;
   top_items: Array<{
-    item_id: string;
+    item_id?: string;
     item_name: string;
     quantity_sold: number;
     revenue: number;
@@ -517,31 +524,33 @@ const UV_AdminAnalytics: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <MetricCard
                       title="Total Revenue"
-                      value={formatCurrency(salesAnalytics.total_revenue)}
+                      value={formatCurrency(salesAnalytics.summary?.revenue || 0)}
                       icon={<DollarSign className="w-6 h-6 text-green-600" />}
                       color="bg-green-50"
                     />
                     
                     <MetricCard
                       title="Total Orders"
-                      value={salesAnalytics.total_orders.toLocaleString()}
+                      value={(salesAnalytics.summary?.orders || 0).toLocaleString()}
                       icon={<ShoppingBag className="w-6 h-6 text-blue-600" />}
                       color="bg-blue-50"
                     />
                     
                     <MetricCard
                       title="Average Order Value"
-                      value={formatCurrency(salesAnalytics.average_order_value)}
+                      value={formatCurrency(salesAnalytics.summary?.average_order_value || 0)}
                       icon={<TrendingUp className="w-6 h-6 text-purple-600" />}
                       color="bg-purple-50"
                     />
                   </div>
 
                   {/* Revenue Trend Chart */}
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue Trend</h3>
-                    <SimpleLineChart data={salesAnalytics.revenue_by_day} />
-                  </div>
+                  {salesAnalytics.revenue_by_day && salesAnalytics.revenue_by_day.length > 0 && (
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue Trend</h3>
+                      <SimpleLineChart data={salesAnalytics.revenue_by_day} />
+                    </div>
+                  )}
 
                   {/* Orders Breakdown & Top Items */}
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
@@ -549,40 +558,34 @@ const UV_AdminAnalytics: React.FC = () => {
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                       <h3 className="text-lg font-semibold text-gray-900 mb-4">Orders Breakdown</h3>
                       <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            <div className="w-4 h-4 bg-blue-600 rounded mr-3"></div>
-                            <span className="text-gray-700">Collection</span>
+                        {salesAnalytics.breakdown_by_type?.map((breakdown) => (
+                          <div key={breakdown.order_type} className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <div className={`w-4 h-4 rounded mr-3 ${
+                                breakdown.order_type === 'collection' ? 'bg-blue-600' : 'bg-green-600'
+                              }`}></div>
+                              <span className="text-gray-700 capitalize">{breakdown.order_type}</span>
+                            </div>
+                            <span className="font-semibold text-gray-900">
+                              {breakdown.orders} orders
+                            </span>
                           </div>
-                          <span className="font-semibold text-gray-900">
-                            {salesAnalytics.orders_breakdown.collection} orders
-                          </span>
-                        </div>
-                        
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            <div className="w-4 h-4 bg-green-600 rounded mr-3"></div>
-                            <span className="text-gray-700">Delivery</span>
-                          </div>
-                          <span className="font-semibold text-gray-900">
-                            {salesAnalytics.orders_breakdown.delivery} orders
-                          </span>
-                        </div>
+                        ))}
 
-                        <div className="pt-4 border-t border-gray-200">
-                          <div className="flex items-center justify-between text-sm text-gray-600">
-                            <span>Collection Rate</span>
-                            <span className="font-medium">
-                              {((salesAnalytics.orders_breakdown.collection / salesAnalytics.total_orders) * 100).toFixed(1)}%
-                            </span>
+                        {salesAnalytics.breakdown_by_type && salesAnalytics.breakdown_by_type.length > 0 && (
+                          <div className="pt-4 border-t border-gray-200">
+                            {salesAnalytics.breakdown_by_type.map((breakdown) => (
+                              <div key={breakdown.order_type} className="flex items-center justify-between text-sm text-gray-600 mt-2 first:mt-0">
+                                <span className="capitalize">{breakdown.order_type} Rate</span>
+                                <span className="font-medium">
+                                  {salesAnalytics.summary?.orders 
+                                    ? ((breakdown.orders / salesAnalytics.summary.orders) * 100).toFixed(1)
+                                    : '0.0'}%
+                                </span>
+                              </div>
+                            ))}
                           </div>
-                          <div className="flex items-center justify-between text-sm text-gray-600 mt-2">
-                            <span>Delivery Rate</span>
-                            <span className="font-medium">
-                              {((salesAnalytics.orders_breakdown.delivery / salesAnalytics.total_orders) * 100).toFixed(1)}%
-                            </span>
-                          </div>
-                        </div>
+                        )}
                       </div>
                     </div>
 
@@ -590,8 +593,8 @@ const UV_AdminAnalytics: React.FC = () => {
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                       <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Selling Items</h3>
                       <div className="space-y-3">
-                        {salesAnalytics.top_items.slice(0, 5).map((item, index) => (
-                          <div key={item.item_id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                        {salesAnalytics.top_items?.slice(0, 5).map((item, index) => (
+                          <div key={item.item_id || item.item_name} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
                             <div className="flex items-center space-x-3">
                               <span className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-50 text-blue-600 font-semibold text-sm">
                                 {index + 1}

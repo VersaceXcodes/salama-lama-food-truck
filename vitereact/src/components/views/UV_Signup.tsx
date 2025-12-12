@@ -75,31 +75,30 @@ const UV_Signup: React.FC = () => {
 
   // Scroll error banner into view when error appears
   useEffect(() => {
-    if (registration_error) {
-      console.log('Error detected - waiting for banner to render');
+    if (registration_error && errorBannerRef.current) {
+      console.log('Error detected - scrolling banner into view');
       
-      // Use requestAnimationFrame to ensure React has finished rendering
-      // Double RAF ensures the DOM has been painted
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          if (errorBannerRef.current) {
-            console.log('Scrolling error banner into view');
-            errorBannerRef.current.scrollIntoView({ 
-              behavior: 'smooth', 
-              block: 'center' 
-            });
-            
-            // Also focus the email field if there's an email error
-            if (form_validation_errors.email && emailFieldRef.current) {
-              setTimeout(() => {
-                emailFieldRef.current?.focus();
-              }, 400);
-            }
-          } else {
-            console.warn('Error banner ref not available after RAF');
+      // Use setTimeout to ensure React has finished rendering and the DOM has updated
+      setTimeout(() => {
+        if (errorBannerRef.current) {
+          console.log('Scrolling error banner into view now');
+          
+          // Scroll the banner into view
+          errorBannerRef.current.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+          });
+          
+          // Also focus the email field if there's an email error
+          if (form_validation_errors.email && emailFieldRef.current) {
+            setTimeout(() => {
+              emailFieldRef.current?.focus();
+            }, 300);
           }
-        });
-      });
+        } else {
+          console.warn('Error banner ref not available after timeout');
+        }
+      }, 100);
     }
   }, [registration_error, form_validation_errors.email]);
 
@@ -477,10 +476,17 @@ const UV_Signup: React.FC = () => {
               {registration_error && (
                 <div 
                   ref={errorBannerRef}
-                  className="mb-6 bg-red-50 border-4 border-red-400 rounded-lg p-5 shadow-lg transition-all duration-300 animate-in fade-in slide-in-from-top-4"
+                  className="mb-6 bg-red-50 border-4 border-red-400 rounded-lg p-5 shadow-lg"
                   role="alert"
                   aria-live="assertive"
                   aria-atomic="true"
+                  style={{ 
+                    opacity: 1, 
+                    visibility: 'visible',
+                    display: 'block',
+                    position: 'relative',
+                    zIndex: 10
+                  }}
                 >
                   <div className="flex items-start">
                     <div className="flex-shrink-0">

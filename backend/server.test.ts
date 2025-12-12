@@ -19,7 +19,8 @@ beforeAll(async () => {
   
   // Initialize WebSocket server for testing
   const httpServer = app.listen(0); // Random port
-  const port = httpServer.address().port;
+  const address = httpServer.address();
+  const port = typeof address === 'string' ? 0 : address?.port || 0;
   
   // Wait for database connection
   await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -375,7 +376,7 @@ describe('Authentication', () => {
       expect(response.body.user.email).toBe('login@test.com');
       
       // Verify JWT token
-      const decoded = jwt.verify(response.body.token, process.env.JWT_SECRET || 'test-secret');
+      const decoded = jwt.verify(response.body.token, process.env.JWT_SECRET || 'test-secret') as jwt.JwtPayload;
       expect(decoded.user_id).toBe(user.user_id);
       expect(decoded.role).toBe('customer');
       
@@ -484,7 +485,7 @@ describe('Authentication', () => {
       // Verify token expires in 1 hour
       const expiresAt = new Date(resetResult.rows[0].expires_at);
       const createdAt = new Date(resetResult.rows[0].created_at);
-      const diffMinutes = (expiresAt - createdAt) / (1000 * 60);
+      const diffMinutes = (expiresAt.getTime() - createdAt.getTime()) / (1000 * 60);
       expect(diffMinutes).toBe(60);
     });
     

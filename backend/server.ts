@@ -21,7 +21,7 @@ const pool = new Pool(
   DATABASE_URL
     ? {
         connectionString: DATABASE_URL,
-        ssl: { require: true },
+        ssl: { rejectUnauthorized: false },
       }
     : {
         host: PGHOST,
@@ -29,7 +29,7 @@ const pool = new Pool(
         user: PGUSER,
         password: PGPASSWORD,
         port: Number(PGPORT),
-        ssl: { require: true },
+        ssl: { rejectUnauthorized: false },
       }
 );
 /* then, can be used like this :
@@ -127,16 +127,17 @@ app.use(express.json({ limit: '10mb' }));
   We keep it as morgan (requirement) but enrich the format with params/query/body.
 */
 morgan.token('req_meta', (req) => {
+  const expressReq = req as any;
   const safe_headers = { ...req.headers };
   if (safe_headers.authorization) safe_headers.authorization = '[redacted]';
   return JSON.stringify({
-    request_id: req.request_id,
+    request_id: expressReq.request_id,
     method: req.method,
-    path: req.originalUrl,
-    params: req.params,
-    query: req.query,
+    path: expressReq.originalUrl,
+    params: expressReq.params,
+    query: expressReq.query,
     headers: safe_headers,
-    body: req.body,
+    body: expressReq.body,
   });
 });
 app.use(morgan(':method :url :status :response-time ms - :req_meta'));
@@ -163,9 +164,9 @@ app.use(express.static(publicDir));
  * Build a consistent error envelope.
  * We include request_id for traceability, and optionally details for debugging.
  */
-function createErrorResponse(message, error = null, error_code = 'INTERNAL_ERROR', request_id = null, details = null) {
+function createErrorResponse(message, error = null, error_code = 'INTERNAL_ERROR', request_id = null, details = null): any {
   const include_error = !!error;
-  const payload = {
+  const payload: any = {
     success: false,
     message,
     error_code,
@@ -300,7 +301,7 @@ async function upsert_setting(client, { setting_key, setting_value, setting_type
 function sign_token({ user_id, role, email, remember_me = false, login_at = null }) {
   const is_staff_like = role === 'staff' || role === 'admin';
   const expires_in = is_staff_like ? '8h' : remember_me ? '30d' : '1d';
-  const payload = {
+  const payload: any = {
     user_id,
     role,
     email,
@@ -320,7 +321,7 @@ async function authenticate_token(req, res, next) {
     return res.status(401).json(createErrorResponse('Access token required', null, 'AUTH_TOKEN_REQUIRED', req.request_id));
   }
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET) as jwt.JwtPayload;
     const result = await pool.query('SELECT user_id, email, first_name, last_name, role, status, email_verified, last_login_at FROM users WHERE user_id = $1', [decoded.user_id]);
     if (result.rows.length === 0) {
       return res.status(401).json(createErrorResponse('Invalid token', null, 'AUTH_TOKEN_INVALID', req.request_id));
@@ -1191,8 +1192,8 @@ async function generate_invoice_pdf({ invoice_id }) {
 
     doc.end();
 
-    ws.on('finish', resolve);
-    ws.on('error', reject);
+    ws.on('finish', () => resolve(undefined));
+    ws.on('error', (err) => reject(err));
   });
 
   const public_url = `/storage/invoices/${encodeURIComponent(file_name)}`;
@@ -1253,8 +1254,8 @@ async function generate_quote_pdf({ quote_id }) {
     }
 
     doc.end();
-    ws.on('finish', resolve);
-    ws.on('error', reject);
+    ws.on('finish', () => resolve(undefined));
+    ws.on('error', (err) => reject(err));
   });
 
   const public_url = `/storage/quotes/${encodeURIComponent(file_name)}`;
@@ -1270,7 +1271,7 @@ io.use(async (socket, next) => {
   try {
     const token = socket.handshake?.auth?.token || null;
     if (!token) return next(new Error('AUTH_TOKEN_REQUIRED'));
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET) as jwt.JwtPayload;
     const result = await pool.query('SELECT user_id, email, first_name, last_name, role, status, last_login_at, staff_permissions FROM users WHERE user_id = $1', [decoded.user_id]);
     if (result.rows.length === 0) return next(new Error('AUTH_TOKEN_INVALID'));
     const user = result.rows[0];
@@ -4915,7 +4916,10 @@ app.get('/api/admin/staff', authenticate_token, require_role(['admin']), async (
 
 app.post('/api/admin/staff', authenticate_token, require_role(['admin']), async (req, res) => {
   try {
-    const schema = createUserInputSchema.extend({ role: z.enum(['staff', 'admin']) });
+    const schema = createUserInputSchema.extend({ 
+      role: z.enum(['staff', 'admin']),
+      staff_permissions: z.record(z.boolean()).nullable().optional()
+    });
     const input = schema.parse(req.body);
 
     const user_id = gen_id('user');
@@ -5236,7 +5240,11 @@ app.get('/api/admin/invoices/:id', authenticate_token, require_role(['admin']), 
 
 app.post('/api/admin/invoices/generate', authenticate_token, require_role(['admin']), async (req, res) => {
   try {
-    const input = createInvoiceInputSchema.parse({
+    const extendedSchema = createInvoiceInputSchema.extend({
+      sumup_transaction_id: z.string().nullable().optional(),
+      paid_at: z.string().nullable().optional(),
+    });
+    const input = extendedSchema.parse({
       ...req.body,
       subtotal: Number(req.body?.subtotal),
       discount_amount: req.body?.discount_amount === undefined ? 0 : Number(req.body.discount_amount),
@@ -5510,4 +5518,4 @@ export { app, pool };
 
 server.listen(Number(PORT) || 3000, '0.0.0.0', () => {
   console.log(`Server running on port ${Number(PORT) || 3000} and listening on 0.0.0.0`);
-}
+});

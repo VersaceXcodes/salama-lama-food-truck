@@ -159,14 +159,18 @@ const UV_AdminStock: React.FC = () => {
     queryFn: () => fetchStockOverview(auth_token!, category_filter, status_filter),
     enabled: !!auth_token,
     staleTime: 60 * 1000, // 1 minute
-    select: (data) => ({
-      ...data,
-      items: data.items.map(item => ({
-        ...item,
-        current_stock: item.current_stock !== null ? Number(item.current_stock) : null,
-        low_stock_threshold: item.low_stock_threshold !== null ? Number(item.low_stock_threshold) : null,
-      }))
-    }),
+    select: (data) => {
+      // Ensure items is an array before mapping
+      const items = Array.isArray(data?.items) ? data.items : [];
+      return {
+        ...data,
+        items: items.map(item => ({
+          ...item,
+          current_stock: item.current_stock !== null ? Number(item.current_stock) : null,
+          low_stock_threshold: item.low_stock_threshold !== null ? Number(item.low_stock_threshold) : null,
+        }))
+      };
+    },
   });
 
   // Stock adjustment mutation

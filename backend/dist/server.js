@@ -3697,7 +3697,7 @@ app.put('/api/staff/orders/:id/status', authenticate_token, require_role(['staff
         return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
     }
 });
-app.get('/api/staff/stock', authenticate_token, require_role(['staff', 'manager', 'admin']), async (req, res) => {
+app.get('/api/staff/stock', authenticate_token, require_role(['staff', 'admin']), async (req, res) => {
     try {
         const rows = await pool.query(`SELECT mi.item_id, mi.name, mi.category_id, c.name as category_name,
               mi.stock_tracked, mi.current_stock, mi.low_stock_threshold
@@ -3727,7 +3727,7 @@ app.get('/api/staff/stock', authenticate_token, require_role(['staff', 'manager'
         return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
     }
 });
-app.put('/api/staff/stock/:itemId', authenticate_token, require_role(['staff', 'admin']), async (req, res) => {
+app.put('/api/staff/stock/:itemId', authenticate_token, require_role(['staff', 'manager', 'admin']), async (req, res) => {
     try {
         const item_id = req.params.itemId;
         const body = admin_stock_update_schema.parse({

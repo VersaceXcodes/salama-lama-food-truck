@@ -4236,7 +4236,7 @@ app.put('/api/staff/orders/:id/status', authenticate_token, require_role(['staff
   }
 });
 
-app.get('/api/staff/stock', authenticate_token, require_role(['staff', 'manager', 'admin']), async (req, res) => {
+app.get('/api/staff/stock', authenticate_token, require_role(['staff', 'admin']), async (req, res) => {
   try {
     const rows = await pool.query(
       `SELECT mi.item_id, mi.name, mi.category_id, c.name as category_name,
@@ -4270,7 +4270,7 @@ app.get('/api/staff/stock', authenticate_token, require_role(['staff', 'manager'
   }
 });
 
-app.put('/api/staff/stock/:itemId', authenticate_token, require_role(['staff', 'admin']), async (req, res) => {
+app.put('/api/staff/stock/:itemId', authenticate_token, require_role(['staff', 'manager', 'admin']), async (req, res) => {
   try {
     const item_id = req.params.itemId;
     const body = admin_stock_update_schema.parse({

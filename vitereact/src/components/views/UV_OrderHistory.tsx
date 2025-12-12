@@ -338,6 +338,11 @@ const UV_OrderHistory: React.FC = () => {
     }
 
     // Add all items from order to cart
+    if (!order.items || order.items.length === 0) {
+      alert('This order has no items to reorder.');
+      return;
+    }
+
     order.items.forEach((item) => {
       // Convert order item to cart item format
       const customizations = item.selected_customizations
@@ -609,7 +614,7 @@ const UV_OrderHistory: React.FC = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
-                            {order.items.length} {order.items.length === 1 ? 'item' : 'items'}
+                            {order.items?.length || 0} {(order.items?.length || 0) === 1 ? 'item' : 'items'}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -706,7 +711,7 @@ const UV_OrderHistory: React.FC = () => {
                       <div>
                         <div className="text-xs text-gray-500 uppercase mb-1">Items</div>
                         <div className="text-sm text-gray-900">
-                          {order.items.length} {order.items.length === 1 ? 'item' : 'items'}
+                          {order.items?.length || 0} {(order.items?.length || 0) === 1 ? 'item' : 'items'}
                         </div>
                       </div>
                     </div>

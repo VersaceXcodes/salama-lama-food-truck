@@ -8,7 +8,6 @@ import {
   Mail, 
   Phone, 
   Calendar, 
-  Shield, 
   Award, 
   ShoppingBag, 
   TrendingUp, 
@@ -121,7 +120,6 @@ const UV_AdminCustomerProfile: React.FC = () => {
 
   // Global state - CRITICAL: Individual selectors
   const auth_token = useAppStore(state => state.authentication_state.auth_token);
-  const current_user = useAppStore(state => state.authentication_state.current_user);
 
   // Local state
   const [edit_mode, set_edit_mode] = useState(false);

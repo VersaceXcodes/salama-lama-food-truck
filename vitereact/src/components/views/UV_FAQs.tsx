@@ -310,7 +310,7 @@ const UV_FAQs: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [expandedFaqIds, setExpandedFaqIds] = useState<Set<string>>(new Set());
-  const [loadingState, setLoadingState] = useState<boolean>(false);
+  const [_loadingState, _setLoadingState] = useState<boolean>(false);
 
   // Filtered FAQs based on search and category
   const filteredFaqs = useMemo(() => {

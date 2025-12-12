@@ -62,12 +62,12 @@ const UV_CheckoutOrderType: React.FC = () => {
   // Global State (Individual Selectors)
   // ===========================
 
-  const currentUser = useAppStore(state => state.authentication_state.current_user);
+  // const currentUser = useAppStore(state => state.authentication_state.current_user);
   const authToken = useAppStore(state => state.authentication_state.auth_token);
   const cartItems = useAppStore(state => state.cart_state.items);
   const cartSubtotal = useAppStore(state => state.cart_state.subtotal);
   const deliveryEnabled = useAppStore(state => state.business_settings.delivery_enabled);
-  const operatingHours = useAppStore(state => state.business_settings.operating_hours);
+  // const operatingHours = useAppStore(state => state.business_settings.operating_hours);
   const updateCartFees = useAppStore(state => state.update_cart_fees);
 
   // ===========================

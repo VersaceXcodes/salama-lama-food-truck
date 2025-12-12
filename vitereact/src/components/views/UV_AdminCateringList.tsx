@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppStore } from '@/store/main';
@@ -7,7 +7,6 @@ import {
   CalendarIcon, 
   UserGroupIcon, 
   BuildingOfficeIcon,
-  CheckCircleIcon,
   XCircleIcon,
   ChevronLeftIcon,
   ChevronRightIcon,

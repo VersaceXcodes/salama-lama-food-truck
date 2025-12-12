@@ -142,10 +142,10 @@ const UV_CheckoutReview: React.FC = () => {
   // ===========================
   
   const auth_token = useAppStore(state => state.authentication_state.auth_token);
-  const current_user = useAppStore(state => state.authentication_state.current_user);
+  // const current_user = useAppStore(state => state.authentication_state.current_user);
   const cart_items = useAppStore(state => state.cart_state.items);
   const cart_discount_code = useAppStore(state => state.cart_state.discount_code);
-  const cart_discount_amount = useAppStore(state => state.cart_state.discount_amount);
+  // const cart_discount_amount = useAppStore(state => state.cart_state.discount_amount);
   const clear_cart = useAppStore(state => state.clear_cart);
 
   // ===========================
@@ -192,7 +192,7 @@ const UV_CheckoutReview: React.FC = () => {
     // Check if we have previous checkout data in sessionStorage
     const order_type = sessionStorage.getItem('checkout_order_type') as 'collection' | 'delivery' | null;
     const collection_time_slot = sessionStorage.getItem('checkout_collection_time_slot');
-    const delivery_address_id = sessionStorage.getItem('checkout_delivery_address_id');
+    // const delivery_address_id = sessionStorage.getItem('checkout_delivery_address_id');
     const delivery_address_data = sessionStorage.getItem('checkout_delivery_address_data');
     const customer_name = sessionStorage.getItem('checkout_customer_name');
     const customer_email = sessionStorage.getItem('checkout_customer_email');

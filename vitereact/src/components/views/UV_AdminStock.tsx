@@ -28,11 +28,7 @@ interface StockItem {
   last_updated?: string;
 }
 
-interface StockSummary {
-  total_items_tracked: number;
-  low_stock_count: number;
-  out_of_stock_count: number;
-}
+
 
 interface StockOverviewResponse {
   total_items_tracked: number;

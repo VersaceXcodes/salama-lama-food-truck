@@ -164,7 +164,6 @@ const UV_AdminDeliverySettings: React.FC = () => {
 
   // Global state - use individual selectors to avoid infinite loops
   const auth_token = useAppStore(state => state.authentication_state.auth_token);
-  const current_user = useAppStore(state => state.authentication_state.current_user);
 
   // Local state
   const [delivery_enabled, set_delivery_enabled] = useState<boolean>(false);

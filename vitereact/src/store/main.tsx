@@ -247,7 +247,7 @@ export const useAppStore = create<AppStore>()(
 
           const { user, token } = response.data;
 
-          set((state) => ({
+          set((_state) => ({
             authentication_state: {
               current_user: user,
               auth_token: token,
@@ -265,7 +265,7 @@ export const useAppStore = create<AppStore>()(
         } catch (error: any) {
           const errorMessage = error.response?.data?.message || error.message || 'Login failed';
           
-          set((state) => ({
+          set((_state) => ({
             authentication_state: {
               current_user: null,
               auth_token: null,
@@ -302,7 +302,7 @@ export const useAppStore = create<AppStore>()(
 
           const { user, token, first_order_discount_code } = response.data;
 
-          set((state) => ({
+          set((_state) => ({
             authentication_state: {
               current_user: user,
               auth_token: token,
@@ -322,7 +322,7 @@ export const useAppStore = create<AppStore>()(
         } catch (error: any) {
           const errorMessage = error.response?.data?.message || error.message || 'Registration failed';
           
-          set((state) => ({
+          set((_state) => ({
             authentication_state: {
               current_user: null,
               auth_token: null,
@@ -357,7 +357,7 @@ export const useAppStore = create<AppStore>()(
         get().disconnect_websocket();
 
         // Clear all state
-        set((state) => ({
+        set((_state) => ({
           authentication_state: {
             current_user: null,
             auth_token: null,
@@ -408,7 +408,7 @@ export const useAppStore = create<AppStore>()(
 
           const user = response.data;
 
-          set((state) => ({
+          set((_state) => ({
             authentication_state: {
               current_user: user,
               auth_token: token,
@@ -427,7 +427,7 @@ export const useAppStore = create<AppStore>()(
           console.error('Token verification failed:', error);
           
           // Token is invalid, clear auth state
-          set((state) => ({
+          set((_state) => ({
             authentication_state: {
               current_user: null,
               auth_token: null,
@@ -582,7 +582,7 @@ export const useAppStore = create<AppStore>()(
       },
 
       clear_cart: () => {
-        set((state) => ({
+        set((_state) => ({
           cart_state: {
             items: [],
             subtotal: 0,
@@ -704,7 +704,7 @@ export const useAppStore = create<AppStore>()(
       },
 
       clear_notifications: () => {
-        set((state) => ({
+        set((_state) => ({
           notification_state: {
             notifications: [],
             unread_count: 0,
@@ -833,7 +833,7 @@ export const useAppStore = create<AppStore>()(
 
           // Loyalty points updates (customer)
           new_socket.on('loyalty.points_updated', (data) => {
-            const { points_amount, new_balance, transaction_type } = data.data;
+            const { points_amount, transaction_type } = data.data;
             
             get().add_notification({
               type: 'loyalty_points',
@@ -860,7 +860,7 @@ export const useAppStore = create<AppStore>()(
 
           // Catering inquiry notifications (admin)
           new_socket.on('new_catering_inquiry', (data) => {
-            const { inquiry_number, contact_name, event_type } = data.data;
+            const { contact_name, event_type } = data.data;
             
             get().add_notification({
               type: 'new_catering_inquiry',
@@ -893,7 +893,7 @@ export const useAppStore = create<AppStore>()(
         if (socket) {
           socket.disconnect();
           
-          set((state) => ({
+          set((_state) => ({
             websocket_state: {
               socket: null,
               connected: false,

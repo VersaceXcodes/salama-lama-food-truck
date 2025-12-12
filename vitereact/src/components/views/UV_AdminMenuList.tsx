@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
@@ -11,15 +11,12 @@ import {
   Trash2,
   ToggleLeft,
   ToggleRight,
-  Tag,
   Package,
   AlertCircle,
   CheckCircle,
   Loader2,
   GripVertical,
   Folder,
-  X,
-  Filter,
 } from 'lucide-react';
 
 // ===========================
@@ -166,7 +163,6 @@ const updateItemSortOrder = async (
 const UV_AdminMenuList: React.FC = () => {
   // Global state - CRITICAL: Individual selectors only
   const authToken = useAppStore((state) => state.authentication_state.auth_token);
-  const currentUser = useAppStore((state) => state.authentication_state.current_user);
 
   // Router hooks
   const [searchParams, setSearchParams] = useSearchParams();

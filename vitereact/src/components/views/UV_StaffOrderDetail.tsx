@@ -186,7 +186,7 @@ const UV_StaffOrderDetail: React.FC = () => {
 
   // Zustand state - CRITICAL: Individual selectors, no object destructuring
   const auth_token = useAppStore(state => state.authentication_state.auth_token);
-  const current_user = useAppStore(state => state.authentication_state.current_user);
+  // const current_user = useAppStore(state => state.authentication_state.current_user);
   const socket = useAppStore(state => state.websocket_state.socket);
   const add_notification = useAppStore(state => state.add_notification);
 

@@ -194,7 +194,7 @@ const UV_OrderDetail: React.FC = () => {
 
   // Global state - CRITICAL: Individual selectors
   const auth_token = useAppStore(state => state.authentication_state.auth_token);
-  const current_user = useAppStore(state => state.authentication_state.current_user);
+  // const current_user = useAppStore(state => state.authentication_state.current_user);
   const add_to_cart = useAppStore(state => state.add_to_cart);
 
   // Local state

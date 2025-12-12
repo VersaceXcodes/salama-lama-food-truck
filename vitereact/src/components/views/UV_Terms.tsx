@@ -691,7 +691,7 @@ const UV_Terms: React.FC = () => {
 
                   {/* Terms Sections */}
                   <article className="prose prose-gray max-w-none">
-                    {termsContent.sections.map((section, sectionIdx) => (
+                    {termsContent.sections.map((section) => (
                       <section
                         key={section.id}
                         id={section.id}

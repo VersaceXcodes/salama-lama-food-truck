@@ -18,14 +18,14 @@ interface CartItem {
   line_total: number;
 }
 
-interface PricingSummary {
+/* interface PricingSummary {
   subtotal: number;
   discount_code: string | null;
   discount_amount: number;
   delivery_fee: number;
   tax_amount: number;
   total: number;
-}
+} */
 
 interface CartResponse {
   items: CartItem[];

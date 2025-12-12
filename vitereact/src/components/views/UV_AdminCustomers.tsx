@@ -63,7 +63,6 @@ const UV_AdminCustomers: React.FC = () => {
   // Zustand Store (Individual Selectors - CRITICAL)
   // ===========================
   const auth_token = useAppStore(state => state.authentication_state.auth_token);
-  const current_user = useAppStore(state => state.authentication_state.current_user);
 
   // ===========================
   // Router Hooks

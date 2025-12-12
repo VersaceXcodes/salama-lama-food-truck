@@ -424,7 +424,7 @@ const UV_StaffOrderQueue: React.FC = () => {
 
   // Handle WebSocket new order event
   useEffect(() => {
-    const handleNewOrder = () => {
+    const _handleNewOrder = () => {
       queryClient.invalidateQueries({ queryKey: ['staff', 'orders'] });
       
       const isMuted = notificationSettings.muted_until && new Date(notificationSettings.muted_until) > new Date();
@@ -438,6 +438,7 @@ const UV_StaffOrderQueue: React.FC = () => {
         message: 'New order received!',
       });
     };
+    // handleNewOrder is defined but currently not called - placeholder for WebSocket integration
 
     // In a real implementation, this would be connected to the WebSocket event listener
     // For now, we'll just set up the handler structure

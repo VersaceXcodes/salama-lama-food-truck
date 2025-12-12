@@ -47,12 +47,12 @@ const EVENT_TYPE_LABELS: Record<string, string> = {
 
 const UV_MyCateringInquiries: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
+
   const queryClient = useQueryClient();
 
   // Zustand store access - INDIVIDUAL SELECTORS (CRITICAL PATTERN)
   const authToken = useAppStore(state => state.authentication_state.auth_token);
-  const currentUser = useAppStore(state => state.authentication_state.current_user);
+  // const currentUser = useAppStore(state => state.authentication_state.current_user);
 
   // Local state
   const [cancelingInquiryId, setCancelingInquiryId] = useState<string | null>(null);

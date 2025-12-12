@@ -192,7 +192,7 @@ const UV_OrderHistory: React.FC = () => {
   // ===========================
   
   const auth_token = useAppStore(state => state.authentication_state.auth_token);
-  const current_user = useAppStore(state => state.authentication_state.current_user);
+  // const current_user = useAppStore(state => state.authentication_state.current_user);
   const add_to_cart = useAppStore(state => state.add_to_cart);
   const cart_items = useAppStore(state => state.cart_state.items);
   const clear_cart = useAppStore(state => state.clear_cart);

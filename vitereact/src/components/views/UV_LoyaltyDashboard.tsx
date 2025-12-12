@@ -200,8 +200,8 @@ const UV_LoyaltyDashboard: React.FC = () => {
 
   const {
     data: redeemedRewards,
-    isLoading: redeemedLoading,
-    error: redeemedError,
+
+
   } = useQuery<RedeemedReward[]>({
     queryKey: ['redeemed-rewards', currentUser?.user_id],
     queryFn: () => fetchRedeemedRewards(authToken!),
@@ -222,8 +222,8 @@ const UV_LoyaltyDashboard: React.FC = () => {
 
   const {
     data: referralInfo,
-    isLoading: referralLoading,
-    error: referralError,
+
+
   } = useQuery<ReferralInfo>({
     queryKey: ['referral-info', currentUser?.user_id],
     queryFn: () => fetchReferralInfo(authToken!),

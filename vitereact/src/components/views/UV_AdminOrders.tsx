@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
@@ -17,7 +17,6 @@ import {
   Truck,
   ShoppingBag,
   AlertCircle,
-  MoreVertical,
   Eye,
   RotateCcw,
   Ban,

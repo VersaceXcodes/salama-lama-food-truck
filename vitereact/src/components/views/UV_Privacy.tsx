@@ -340,7 +340,7 @@ const UV_Privacy: React.FC = () => {
   // Global State Access (individual selectors)
   const currentUser = useAppStore(state => state.authentication_state.current_user);
   const authToken = useAppStore(state => state.authentication_state.auth_token);
-  const businessInfo = useAppStore(state => state.business_settings.business_info);
+  // const businessInfo = useAppStore(state => state.business_settings.business_info);
 
   // Local State
   const [activeSection, setActiveSection] = useState<string | null>(null);

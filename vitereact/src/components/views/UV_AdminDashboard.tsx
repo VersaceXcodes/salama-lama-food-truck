@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
@@ -240,7 +240,6 @@ const UV_AdminDashboard: React.FC = () => {
   const {
     data: pendingAlerts,
     isLoading: alertsLoading,
-    error: alertsError,
     refetch: refetchAlerts,
   } = useQuery({
     queryKey: ['admin-dashboard-alerts'],

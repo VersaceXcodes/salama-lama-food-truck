@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppStore } from '@/store/main';
@@ -228,12 +228,12 @@ const getStatusIcon = (status: string) => {
 
 const UV_AdminOrderDetail: React.FC = () => {
   const { order_id } = useParams<{ order_id: string }>();
-  const navigate = useNavigate();
+  
   const queryClient = useQueryClient();
 
   // Zustand store access - CRITICAL: Individual selectors only
   const auth_token = useAppStore(state => state.authentication_state.auth_token);
-  const current_user = useAppStore(state => state.authentication_state.current_user);
+  // const current_user = useAppStore(state => state.authentication_state.current_user);
 
   // Local state
   const [selectedStatus, setSelectedStatus] = useState('');

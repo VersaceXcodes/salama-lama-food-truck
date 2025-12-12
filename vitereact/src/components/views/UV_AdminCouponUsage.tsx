@@ -11,7 +11,6 @@ import {
   TrendingDown,
   Users,
   DollarSign,
-  Percent,
   ShoppingCart,
   AlertCircle,
   Copy,
@@ -217,7 +216,6 @@ const UV_AdminCouponUsage: React.FC = () => {
     isLoading: is_loading_usage,
     isError: is_error_usage,
     error: error_usage,
-    refetch: refetch_usage,
   } = useQuery<{ usage_analytics: UsageAnalytics; usage_details: UsageDetail[] }, Error>({
     queryKey: ['admin-discount-usage', code_id, date_filter],
     queryFn: () => fetchUsageAnalytics(code_id!, auth_token!, date_filter),

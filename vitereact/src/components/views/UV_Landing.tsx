@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppStore } from '@/store/main';
@@ -112,7 +112,7 @@ const subscribeToNewsletter = async (email: string): Promise<void> => {
 // ===========================
 
 const UV_Landing: React.FC = () => {
-  const navigate = useNavigate();
+
 
   // Local state
   const [newsletter_email, setNewsletterEmail] = useState('');

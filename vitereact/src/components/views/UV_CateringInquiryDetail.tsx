@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppStore } from '@/store/main';
@@ -220,7 +220,7 @@ const isQuoteExpired = (validUntil: string): boolean => {
 
 const UV_CateringInquiryDetail: React.FC = () => {
   const { inquiry_id } = useParams<{ inquiry_id: string }>();
-  const navigate = useNavigate();
+
   const queryClient = useQueryClient();
 
   // CRITICAL: Individual Zustand selectors - no object destructuring

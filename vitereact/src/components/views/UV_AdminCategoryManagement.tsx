@@ -98,7 +98,6 @@ const UV_AdminCategoryManagement: React.FC = () => {
   // Local state
   const [form_visible, setFormVisible] = useState(false);
   const [form_mode, setFormMode] = useState<'create' | 'edit'>('create');
-  const [selected_category_id, setSelectedCategoryId] = useState<string | null>(null);
   const [category_form, setCategoryForm] = useState<CategoryFormData>({
     category_id: null,
     name: '',
@@ -177,7 +176,6 @@ const UV_AdminCategoryManagement: React.FC = () => {
       description: null,
       sort_order: 0,
     });
-    setSelectedCategoryId(null);
     setFormMode('create');
   };
 
@@ -199,7 +197,6 @@ const UV_AdminCategoryManagement: React.FC = () => {
       description: category.description,
       sort_order: category.sort_order,
     });
-    setSelectedCategoryId(category.category_id);
     setFormMode('edit');
     setFormVisible(true);
     setErrorMessage(null);

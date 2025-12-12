@@ -150,7 +150,7 @@ const generateMockSumUpToken = (): string => {
 const UV_SavedPaymentMethods: React.FC = () => {
   // Global state - CRITICAL: Individual selectors only
   const auth_token = useAppStore(state => state.authentication_state.auth_token);
-  const current_user = useAppStore(state => state.authentication_state.current_user);
+  // const current_user = useAppStore(state => state.authentication_state.current_user);
 
   // Local state
   const [sumup_form_visible, setSumupFormVisible] = useState(false);

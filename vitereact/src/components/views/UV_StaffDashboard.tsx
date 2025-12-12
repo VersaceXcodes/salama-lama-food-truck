@@ -177,7 +177,7 @@ const UV_StaffDashboard: React.FC = () => {
   const {
     data: metricsData,
     isLoading: metricsLoading,
-    error: metricsError,
+
     refetch: refetchMetrics,
   } = useQuery({
     queryKey: ['staffDashboardMetrics'],
@@ -321,7 +321,7 @@ const UV_StaffDashboard: React.FC = () => {
       : { text: 'Delivery', color: 'bg-purple-100 text-purple-800' };
   };
 
-  const getNextStatusAction = (currentStatus: string): { status: string; label: string; color: string } | null => {
+  const _getNextStatusAction = (currentStatus: string): { status: string; label: string; color: string } | null => {
     const statusMap: Record<string, { status: string; label: string; color: string }> = {
       received: { status: 'preparing', label: 'Start Preparing', color: 'bg-blue-600 hover:bg-blue-700' },
       preparing: { status: 'ready', label: 'Mark Ready', color: 'bg-green-600 hover:bg-green-700' },
@@ -329,6 +329,7 @@ const UV_StaffDashboard: React.FC = () => {
     };
     return statusMap[currentStatus] || null;
   };
+  // getNextStatusAction is defined but currently unused - placeholder for future feature
 
   // ===========================
   // Loading State

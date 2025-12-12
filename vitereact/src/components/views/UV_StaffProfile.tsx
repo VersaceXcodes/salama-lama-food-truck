@@ -91,7 +91,7 @@ const UV_StaffProfile: React.FC = () => {
   // Global State (Individual Selectors)
   // ===========================
   const authToken = useAppStore(state => state.authentication_state.auth_token);
-  const currentUser = useAppStore(state => state.authentication_state.current_user);
+  // const currentUser = useAppStore(state => state.authentication_state.current_user);
 
   // ===========================
   // Local State

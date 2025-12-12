@@ -74,16 +74,22 @@ const fetchCategories = async (token: string): Promise<{ categories: Category[] 
 };
 
 const fetchMenuItem = async (itemId: string, token: string): Promise<MenuItem> => {
+  console.log('[AdminMenuItemForm] Fetching item:', itemId);
   const response = await axios.get(
     `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api/admin/menu/items/${itemId}`,
     {
       headers: {
         Authorization: `Bearer ${token}`,
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
       },
     }
   );
+  console.log('[AdminMenuItemForm] Fetched item response:', response.data);
   // Backend now returns { success: true, item, ... }, so we need to extract the item
-  return response.data.item || response.data;
+  const item = response.data.item || response.data;
+  console.log('[AdminMenuItemForm] Extracted item price:', item.price);
+  return item;
 };
 
 const createMenuItem = async (payload: CreateMenuItemPayload, token: string): Promise<MenuItem> => {
@@ -106,6 +112,9 @@ const updateMenuItem = async (
   payload: Partial<CreateMenuItemPayload>,
   token: string
 ): Promise<MenuItem> => {
+  console.log('[AdminMenuItemForm] PUT request to update item:', itemId);
+  console.log('[AdminMenuItemForm] Update payload:', JSON.stringify(payload, null, 2));
+  
   const response = await axios.put(
     `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api/admin/menu/items/${itemId}`,
     payload,
@@ -116,6 +125,10 @@ const updateMenuItem = async (
       },
     }
   );
+  
+  console.log('[AdminMenuItemForm] PUT response:', response.data);
+  console.log('[AdminMenuItemForm] Updated item price from response:', response.data.item?.price);
+  
   // Backend now returns { success: true, item, ... }, so we need to extract the item
   return response.data.item || response.data;
 };
@@ -206,6 +219,9 @@ const UV_AdminMenuItemForm: React.FC = () => {
   // Populate form when item data loads
   useEffect(() => {
     if (itemData && isEditMode) {
+      console.log('[AdminMenuItemForm] Populating form with item data:', itemData);
+      console.log('[AdminMenuItemForm] Setting price to:', itemData.price, 'type:', typeof itemData.price);
+      
       setName(itemData.name || '');
       setDescription(itemData.description || '');
       setCategoryId(itemData.category_id || '');
@@ -291,10 +307,13 @@ const UV_AdminMenuItemForm: React.FC = () => {
   // ===========================
 
   const updateMutation = useMutation({
-    mutationFn: (payload: Partial<CreateMenuItemPayload>) =>
-      updateMenuItem(itemIdParam!, payload, authToken!),
+    mutationFn: (payload: Partial<CreateMenuItemPayload>) => {
+      console.log('[AdminMenuItemForm] Submitting update for item:', itemIdParam, 'with payload:', payload);
+      return updateMenuItem(itemIdParam!, payload, authToken!);
+    },
     onSuccess: async (updatedItem) => {
       console.log('[AdminMenuItemForm] Update successful, item:', updatedItem);
+      console.log('[AdminMenuItemForm] Updated price:', updatedItem.price);
       
       // CRITICAL FIX: Aggressive cache invalidation strategy
       // Step 1: Remove ALL cached menu queries to force fresh fetches
@@ -312,7 +331,7 @@ const UV_AdminMenuItemForm: React.FC = () => {
       
       // Step 3: Wait longer to ensure backend transaction commits and cache is fully cleared
       // This prevents race conditions where navigation happens before DB update completes
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       // Step 4: Pre-fetch fresh data before navigation to ensure it's ready
       try {
@@ -399,7 +418,11 @@ const UV_AdminMenuItemForm: React.FC = () => {
     setValidationErrors([]);
     setSuccessMessage('');
 
+    console.log('[AdminMenuItemForm] Form submitted, isEditMode:', isEditMode);
+    console.log('[AdminMenuItemForm] Current price value:', price, 'type:', typeof price);
+
     if (!validateForm()) {
+      console.log('[AdminMenuItemForm] Form validation failed');
       return;
     }
 
@@ -424,9 +447,13 @@ const UV_AdminMenuItemForm: React.FC = () => {
       image_alt_text: imageAltText.trim() || null,
     };
 
+    console.log('[AdminMenuItemForm] Submitting payload:', payload);
+
     if (isEditMode) {
+      console.log('[AdminMenuItemForm] Calling updateMutation.mutate');
       updateMutation.mutate(payload);
     } else {
+      console.log('[AdminMenuItemForm] Calling createMutation.mutate');
       createMutation.mutate(payload);
     }
   };
@@ -630,7 +657,11 @@ const UV_AdminMenuItemForm: React.FC = () => {
                       type="number"
                       id="price"
                       value={price}
-                      onChange={(e) => setPrice(Number(e.target.value))}
+                      onChange={(e) => {
+                        const newPrice = Number(e.target.value);
+                        console.log('[AdminMenuItemForm] Price changed from', price, 'to', newPrice);
+                        setPrice(newPrice);
+                      }}
                       step="0.01"
                       min="0"
                       className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 focus:ring-4 focus:ring-orange-100 transition-all"

@@ -3855,6 +3855,11 @@ app.put('/api/admin/menu/items/:id', authenticate_token, require_role(['admin'])
                 params.push(v === null ? null : JSON.stringify(v));
                 fields.push(`${k} = $${params.length}::jsonb`);
             }
+            else if (k === 'price') {
+                // CRITICAL: Explicitly cast price to NUMERIC to ensure proper storage
+                params.push(Number(v));
+                fields.push(`${k} = $${params.length}::NUMERIC(10,2)`);
+            }
             else {
                 params.push(v);
                 fields.push(`${k} = $${params.length}`);
@@ -3872,6 +3877,11 @@ app.put('/api/admin/menu/items/:id', authenticate_token, require_role(['admin'])
         const upd = await pool.query(`UPDATE menu_items SET ${fields.join(', ')} WHERE item_id = $${params.length} RETURNING *`, params);
         if (upd.rows.length === 0) {
             return res.status(404).json(createErrorResponse('Menu item not found', null, 'NOT_FOUND', req.request_id));
+        }
+        // CRITICAL: Verify the update persisted by reading back from DB
+        const verify = await pool.query('SELECT item_id, name, price FROM menu_items WHERE item_id = $1', [item_id]);
+        if (verify.rows.length > 0) {
+            console.log(`[admin/menu/items/:id PUT] VERIFICATION - DB shows price: ${verify.rows[0].price} (type: ${typeof verify.rows[0].price})`);
         }
         // Return the full updated item with proper number coercion
         const updated_row = upd.rows[0];

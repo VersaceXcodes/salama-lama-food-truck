@@ -3752,6 +3752,22 @@ app.get('/api/admin/menu/items', authenticate_token, require_role(['admin']), as
         return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
     }
 });
+// Admin get single menu item
+app.get('/api/admin/menu/items/:id', authenticate_token, require_role(['admin']), async (req, res) => {
+    try {
+        const item_id = req.params.id;
+        const result = await pool.query('SELECT * FROM menu_items WHERE item_id = $1', [item_id]);
+        if (result.rows.length === 0) {
+            return res.status(404).json(createErrorResponse('Menu item not found', null, 'NOT_FOUND', req.request_id));
+        }
+        // Return the item with proper number coercion
+        const item = coerce_numbers(result.rows[0], ['price', 'current_stock', 'low_stock_threshold', 'sort_order']);
+        return ok(res, 200, item);
+    }
+    catch (error) {
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
 // Admin create menu item
 app.post('/api/admin/menu/items', authenticate_token, require_role(['admin']), async (req, res) => {
     try {

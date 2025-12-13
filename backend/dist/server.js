@@ -5736,6 +5736,69 @@ app.delete('/api/admin/discounts/:id', authenticate_token, require_role(['admin'
         return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
     }
 });
+// Get discount usage analytics
+app.get('/api/admin/discounts/:id/usage', authenticate_token, require_role(['admin']), async (req, res) => {
+    try {
+        const code_id = req.params.id;
+        // First verify the discount code exists
+        const discount_res = await pool.query('SELECT code, discount_type, discount_value, total_used_count FROM discount_codes WHERE code_id = $1', [code_id]);
+        if (discount_res.rows.length === 0) {
+            return res.status(404).json(createErrorResponse('Discount not found', null, 'NOT_FOUND', req.request_id));
+        }
+        const discount = discount_res.rows[0];
+        // Get usage details with customer and order information
+        const usage_res = await pool.query(`SELECT 
+        du.usage_id,
+        du.user_id,
+        du.order_id,
+        du.discount_amount_applied,
+        du.used_at,
+        u.email as customer_email,
+        u.first_name || ' ' || u.last_name as customer_name,
+        o.order_number,
+        o.total_amount as order_total,
+        o.status as order_status
+      FROM discount_usage du
+      JOIN users u ON du.user_id = u.user_id
+      JOIN orders o ON du.order_id = o.order_id
+      WHERE du.code_id = $1
+      ORDER BY du.used_at DESC`, [code_id]);
+        // Calculate summary statistics
+        const total_usage_count = usage_res.rows.length;
+        const total_discount_given = usage_res.rows.reduce((sum, row) => sum + Number(row.discount_amount_applied), 0);
+        const total_order_value = usage_res.rows.reduce((sum, row) => sum + Number(row.order_total), 0);
+        // Format usage details
+        const usage_details = usage_res.rows.map((row) => ({
+            usage_id: row.usage_id,
+            user_id: row.user_id,
+            customer_email: row.customer_email,
+            customer_name: row.customer_name,
+            order_id: row.order_id,
+            order_number: row.order_number,
+            order_total: Number(row.order_total),
+            order_status: row.order_status,
+            discount_amount_applied: Number(row.discount_amount_applied),
+            used_at: row.used_at,
+        }));
+        return ok(res, 200, {
+            code: discount.code,
+            discount_type: discount.discount_type,
+            discount_value: Number(discount.discount_value),
+            summary: {
+                total_usage_count,
+                total_discount_given: Number(total_discount_given.toFixed(2)),
+                total_order_value: Number(total_order_value.toFixed(2)),
+                average_order_value: total_usage_count > 0 ? Number((total_order_value / total_usage_count).toFixed(2)) : 0,
+                average_discount_per_use: total_usage_count > 0 ? Number((total_discount_given / total_usage_count).toFixed(2)) : 0,
+            },
+            usage_details,
+        });
+    }
+    catch (error) {
+        console.error('Error fetching discount usage:', error);
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
 // Admin customers
 app.get('/api/admin/customers', authenticate_token, require_role(['admin']), async (req, res) => {
     try {

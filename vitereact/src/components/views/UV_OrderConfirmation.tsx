@@ -169,6 +169,9 @@ const UV_OrderConfirmation: React.FC = () => {
     },
   });
 
+  // State for notifications
+  const [notification, setNotification] = React.useState<{type: 'success' | 'error', message: string} | null>(null);
+
   // Handle invoice download
   const handleDownloadInvoice = async () => {
     if (!order_id || !authToken) return;
@@ -178,7 +181,8 @@ const UV_OrderConfirmation: React.FC = () => {
       window.open(invoiceUrl, '_blank');
     } catch (error) {
       console.error('Failed to download invoice:', error);
-      alert('Failed to download invoice. Please try again.');
+      setNotification({ type: 'error', message: 'Failed to download invoice. Please try again.' });
+      setTimeout(() => setNotification(null), 3000);
     }
   };
 
@@ -265,6 +269,15 @@ const UV_OrderConfirmation: React.FC = () => {
   // ===========================
   return (
     <>
+      {/* Notification Toast */}
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg ${
+          notification.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+        }`}>
+          {notification.message}
+        </div>
+      )}
+
       <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-100 py-8 px-4 sm:py-12 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           

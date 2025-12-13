@@ -133,6 +133,7 @@ const UV_SavedAddresses: React.FC = () => {
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorNotification, setErrorNotification] = useState<string | null>(null);
 
   // ===========================
   // React Query Setup
@@ -192,7 +193,8 @@ const UV_SavedAddresses: React.FC = () => {
     },
     onError: (error: any) => {
       const errorMessage = error.response?.data?.message || 'Failed to delete address';
-      alert(errorMessage);
+      setErrorNotification(errorMessage);
+      setTimeout(() => setErrorNotification(null), 3000);
     }
   });
 
@@ -205,7 +207,8 @@ const UV_SavedAddresses: React.FC = () => {
     },
     onError: (error: any) => {
       const errorMessage = error.response?.data?.message || 'Failed to set default address';
-      alert(errorMessage);
+      setErrorNotification(errorMessage);
+      setTimeout(() => setErrorNotification(null), 3000);
     }
   });
 
@@ -372,6 +375,13 @@ const UV_SavedAddresses: React.FC = () => {
               >
                 <X className="w-5 h-5" />
               </button>
+            </div>
+          )}
+
+          {/* Error Notification */}
+          {errorNotification && (
+            <div className="fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg bg-red-600 text-white">
+              {errorNotification}
             </div>
           )}
 

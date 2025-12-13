@@ -210,6 +210,8 @@ const UV_OrderHistory: React.FC = () => {
   
   const [search_query, set_search_query] = useState('');
   const [search_input, set_search_input] = useState('');
+  const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
+  const [confirmReorderModal, setConfirmReorderModal] = useState<{isOpen: boolean, order: Order | null}>({isOpen: false, order: null});
 
   // Extract filters from URL params
   const filter_status = searchParams.get('status');
@@ -261,7 +263,8 @@ const UV_OrderHistory: React.FC = () => {
     },
     onError: (error) => {
       console.error('Failed to download invoice:', error);
-      alert('Failed to download invoice. Please try again.');
+      setNotification({ type: 'error', message: 'Failed to download invoice. Please try again.' });
+      setTimeout(() => setNotification(null), 3000);
     },
   });
 
@@ -329,17 +332,14 @@ const UV_OrderHistory: React.FC = () => {
   const handle_reorder = (order: Order) => {
     // Confirm action if cart has items
     if (cart_items.length > 0) {
-      const confirmed = window.confirm(
-        'Your cart will be cleared and replaced with items from this order. Continue?'
-      );
-      if (!confirmed) return;
-      
-      clear_cart();
+      setConfirmReorderModal({isOpen: true, order});
+      return;
     }
 
     // Add all items from order to cart
     if (!order.items || order.items.length === 0) {
-      alert('This order has no items to reorder.');
+      setNotification({ type: 'error', message: 'This order has no items to reorder.' });
+      setTimeout(() => setNotification(null), 3000);
       return;
     }
 
@@ -365,6 +365,42 @@ const UV_OrderHistory: React.FC = () => {
 
     // Navigate to cart
     navigate('/cart');
+  };
+
+  const confirmReorder = () => {
+    if (confirmReorderModal.order) {
+      clear_cart();
+      const order = confirmReorderModal.order;
+      
+      if (!order.items || order.items.length === 0) {
+        setNotification({ type: 'error', message: 'This order has no items to reorder.' });
+        setTimeout(() => setNotification(null), 3000);
+        setConfirmReorderModal({isOpen: false, order: null});
+        return;
+      }
+
+      order.items.forEach((item) => {
+        const customizations = item.selected_customizations
+          ? Object.entries(item.selected_customizations).map(([group_name, option]) => ({
+              group_name,
+              option_name: typeof option === 'string' ? option : option.name || '',
+              additional_price: 0,
+            }))
+          : [];
+
+        add_to_cart({
+          item_id: item.item_id,
+          item_name: item.item_name,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          customizations,
+          line_total: item.line_total,
+        });
+      });
+
+      setConfirmReorderModal({isOpen: false, order: null});
+      navigate('/cart');
+    }
   };
 
   // ===========================
@@ -394,6 +430,54 @@ const UV_OrderHistory: React.FC = () => {
   
   return (
     <>
+      {/* Notification Toast */}
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg ${
+          notification.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+        }`}>
+          {notification.message}
+        </div>
+      )}
+
+      {/* Confirm Reorder Modal */}
+      {confirmReorderModal.isOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" onClick={() => setConfirmReorderModal({isOpen: false, order: null})}></div>
+            <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+              <div>
+                <div className="mt-3 text-center sm:mt-5">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900">
+                    Replace Cart Items?
+                  </h3>
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-500">
+                      Your cart will be cleared and replaced with items from this order. Continue?
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
+                <button
+                  type="button"
+                  onClick={confirmReorder}
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-orange-600 text-base font-medium text-white hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 sm:col-start-2 sm:text-sm"
+                >
+                  Yes, Replace Cart
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmReorderModal({isOpen: false, order: null})}
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:col-start-1 sm:text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Page Header */}

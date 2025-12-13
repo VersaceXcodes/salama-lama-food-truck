@@ -159,6 +159,7 @@ const UV_LoyaltyDashboard: React.FC = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [redeemedRewardData, setRedeemedRewardData] = useState<RedeemedReward | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
 
   const itemsPerPage = 50;
   const queryClient = useQueryClient();
@@ -247,7 +248,8 @@ const UV_LoyaltyDashboard: React.FC = () => {
       setRedeemingRewardId(null);
     },
     onError: (error: any) => {
-      alert(error.response?.data?.message || 'Failed to redeem reward. Please try again.');
+      setNotification({ type: 'error', message: error.response?.data?.message || 'Failed to redeem reward. Please try again.' });
+      setTimeout(() => setNotification(null), 3000);
       setRedeemingRewardId(null);
       setShowRedeemModal(false);
     },
@@ -256,7 +258,8 @@ const UV_LoyaltyDashboard: React.FC = () => {
   // Helper functions
   const handleRedeemClick = (reward: Reward) => {
     if (!loyaltyAccount || loyaltyAccount.current_points_balance < reward.points_cost) {
-      alert(`You need ${reward.points_cost - (loyaltyAccount?.current_points_balance || 0)} more points to redeem this reward.`);
+      setNotification({ type: 'error', message: `You need ${reward.points_cost - (loyaltyAccount?.current_points_balance || 0)} more points to redeem this reward.` });
+      setTimeout(() => setNotification(null), 3000);
       return;
     }
     setSelectedReward(reward);
@@ -285,7 +288,8 @@ const UV_LoyaltyDashboard: React.FC = () => {
   const copyRewardCode = async (code: string) => {
     try {
       await navigator.clipboard.writeText(code);
-      alert('Reward code copied to clipboard!');
+      setNotification({ type: 'success', message: 'Reward code copied to clipboard!' });
+      setTimeout(() => setNotification(null), 3000);
     } catch (err) {
       console.error('Failed to copy:', err);
     }
@@ -304,7 +308,8 @@ const UV_LoyaltyDashboard: React.FC = () => {
       } else {
         // Fallback: Copy to clipboard
         navigator.clipboard.writeText(referralInfo.referral_link);
-        alert('Referral link copied to clipboard!');
+        setNotification({ type: 'success', message: 'Referral link copied to clipboard!' });
+        setTimeout(() => setNotification(null), 3000);
       }
     }
   };
@@ -340,6 +345,15 @@ const UV_LoyaltyDashboard: React.FC = () => {
 
   return (
     <>
+      {/* Notification Toast */}
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg ${
+          notification.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+        }`}>
+          {notification.message}
+        </div>
+      )}
+
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Page Header */}

@@ -147,6 +147,7 @@ const UV_Menu: React.FC = () => {
     total_price: 0,
     quantity: 1,
   });
+  const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
 
   // React Query: Fetch Categories
   const { data: categoriesData } = useQuery({
@@ -228,8 +229,9 @@ const UV_Menu: React.FC = () => {
         quantity: 1,
       });
 
-      // Show success notification (optional: could use a toast library)
-      alert('Item added to cart!');
+      // Show success notification
+      setNotification({ type: 'success', message: 'Item added to cart!' });
+      setTimeout(() => setNotification(null), 3000);
     },
     onError: (error: any) => {
       // Clear loading state
@@ -237,11 +239,14 @@ const UV_Menu: React.FC = () => {
       
       // Check if it's an authentication error
       if (error.response?.status === 401) {
-        alert('Please log in or register to add items to your cart.');
-        // Redirect to login page
-        window.location.href = '/login?redirect=/menu';
+        setNotification({ type: 'error', message: 'Please log in or register to add items to your cart.' });
+        setTimeout(() => {
+          setNotification(null);
+          window.location.href = '/login?redirect=/menu';
+        }, 2000);
       } else {
-        alert(error.response?.data?.message || 'Failed to add item to cart');
+        setNotification({ type: 'error', message: error.response?.data?.message || 'Failed to add item to cart' });
+        setTimeout(() => setNotification(null), 3000);
       }
     },
   });
@@ -391,8 +396,11 @@ const UV_Menu: React.FC = () => {
 
     // Check if user is authenticated
     if (!authToken) {
-      alert('Please log in or register to add items to your cart.');
-      window.location.href = '/login?redirect=/menu';
+      setNotification({ type: 'error', message: 'Please log in or register to add items to your cart.' });
+      setTimeout(() => {
+        setNotification(null);
+        window.location.href = '/login?redirect=/menu';
+      }, 2000);
       return;
     }
 
@@ -402,7 +410,8 @@ const UV_Menu: React.FC = () => {
     
     for (const group of requiredGroups) {
       if (!selectedGroupIds.has(group.group_id)) {
-        alert(`Please select an option for "${group.name}"`);
+        setNotification({ type: 'error', message: `Please select an option for "${group.name}"` });
+        setTimeout(() => setNotification(null), 3000);
         return;
       }
     }
@@ -410,7 +419,8 @@ const UV_Menu: React.FC = () => {
     // Check stock
     if (customizationModal.item.stock_tracked && customizationModal.item.current_stock !== null) {
       if (customizationModal.item.current_stock < customizationModal.quantity) {
-        alert('Insufficient stock available');
+        setNotification({ type: 'error', message: 'Insufficient stock available' });
+        setTimeout(() => setNotification(null), 3000);
         return;
       }
     }
@@ -438,8 +448,11 @@ const UV_Menu: React.FC = () => {
   const handleQuickAddToCart = (item: MenuItem) => {
     // Check if user is authenticated
     if (!authToken) {
-      alert('Please log in or register to add items to your cart.');
-      window.location.href = '/login?redirect=/menu';
+      setNotification({ type: 'error', message: 'Please log in or register to add items to your cart.' });
+      setTimeout(() => {
+        setNotification(null);
+        window.location.href = '/login?redirect=/menu';
+      }, 2000);
       return;
     }
 
@@ -476,6 +489,15 @@ const UV_Menu: React.FC = () => {
 
   return (
     <>
+      {/* Notification Toast */}
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg ${
+          notification.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+        }`}>
+          {notification.message}
+        </div>
+      )}
+
       {/* Page Header */}
       <div className="bg-gradient-to-br from-orange-50 to-red-50 border-b border-orange-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

@@ -221,6 +221,7 @@ const UV_OrderDetail: React.FC = () => {
   // Local state
   const [show_cancel_modal, setShowCancelModal] = useState(false);
   const [cancellation_reason, setCancellationReason] = useState('');
+  const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
 
   // Fetch order details
   const {
@@ -260,7 +261,8 @@ const UV_OrderDetail: React.FC = () => {
       window.open(response.invoice_url, '_blank');
     } catch (error) {
       console.error('Failed to download invoice:', error);
-      alert('Failed to download invoice. Please try again.');
+      setNotification({ type: 'error', message: 'Failed to download invoice. Please try again.' });
+      setTimeout(() => setNotification(null), 3000);
     }
   }, [order_id, auth_token]);
 
@@ -297,7 +299,8 @@ const UV_OrderDetail: React.FC = () => {
 
   const handleCancelOrder = useCallback(() => {
     if (!cancellation_reason.trim()) {
-      alert('Please provide a reason for cancellation');
+      setNotification({ type: 'error', message: 'Please provide a reason for cancellation' });
+      setTimeout(() => setNotification(null), 3000);
       return;
     }
 
@@ -368,6 +371,15 @@ const UV_OrderDetail: React.FC = () => {
 
   return (
     <>
+      {/* Notification Toast */}
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg ${
+          notification.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+        }`}>
+          {notification.message}
+        </div>
+      )}
+
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}

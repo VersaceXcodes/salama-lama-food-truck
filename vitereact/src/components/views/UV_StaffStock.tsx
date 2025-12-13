@@ -223,6 +223,8 @@ const UV_StaffStock: React.FC = () => {
     reason: string;
     notes: string;
   }>>({});
+  const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
+  const [confirmModal, setConfirmModal] = useState<{isOpen: boolean, itemId: string, itemName: string} | null>(null);
 
   // React Query client
   const queryClient = useQueryClient();
@@ -388,7 +390,8 @@ const UV_StaffStock: React.FC = () => {
 
     const quantity = parseInt(form.quantity, 10);
     if (isNaN(quantity) || quantity <= 0) {
-      alert('Please enter a valid quantity');
+      setNotification({ type: 'error', message: 'Please enter a valid quantity' });
+      setTimeout(() => setNotification(null), 3000);
       return;
     }
 
@@ -404,12 +407,13 @@ const UV_StaffStock: React.FC = () => {
   };
 
   const handleMarkOutOfStock = (item_id: string, item_name: string) => {
-    if (
-      window.confirm(
-        `Mark "${item_name}" as out of stock? This will notify the admin.`
-      )
-    ) {
-      markOutOfStockMutation.mutate(item_id);
+    setConfirmModal({ isOpen: true, itemId: item_id, itemName: item_name });
+  };
+
+  const confirmMarkOutOfStock = () => {
+    if (confirmModal) {
+      markOutOfStockMutation.mutate(confirmModal.itemId);
+      setConfirmModal(null);
     }
   };
 
@@ -506,6 +510,54 @@ const UV_StaffStock: React.FC = () => {
 
   return (
     <>
+      {/* Notification Toast */}
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg ${
+          notification.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+        }`}>
+          {notification.message}
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {confirmModal?.isOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" onClick={() => setConfirmModal(null)}></div>
+            <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+              <div>
+                <div className="mt-3 text-center sm:mt-5">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900">
+                    Mark Out of Stock?
+                  </h3>
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-500">
+                      Mark "{confirmModal.itemName}" as out of stock? This will notify the admin.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
+                <button
+                  type="button"
+                  onClick={confirmMarkOutOfStock}
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:col-start-2 sm:text-sm"
+                >
+                  Confirm
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmModal(null)}
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:col-start-1 sm:text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
           {/* Header */}

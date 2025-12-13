@@ -262,6 +262,35 @@ const UV_Menu: React.FC = () => {
     setSearchParams(params, { replace: true });
   }, [activeCategory, searchQuery, dietaryFilters, sortOption, setSearchParams]);
 
+  // Process pending cart item after login
+  useEffect(() => {
+    if (authToken) {
+      const pendingItemStr = localStorage.getItem('pendingCartItem');
+      if (pendingItemStr) {
+        try {
+          const pendingItem = JSON.parse(pendingItemStr);
+          // Check if item is not too old (within last 30 minutes)
+          if (Date.now() - pendingItem.timestamp < 30 * 60 * 1000) {
+            // Add the pending item to cart
+            addToCartMutation.mutate({
+              item_id: pendingItem.item_id,
+              quantity: pendingItem.quantity,
+              selected_customizations: pendingItem.selected_customizations,
+            });
+            // Show success notification
+            setNotification({ type: 'success', message: `${pendingItem.item_name} added to cart!` });
+            setTimeout(() => setNotification(null), 3000);
+          }
+        } catch (error) {
+          console.error('Failed to process pending cart item:', error);
+        } finally {
+          // Clear pending item from localStorage
+          localStorage.removeItem('pendingCartItem');
+        }
+      }
+    }
+  }, [authToken]);
+
   // Handlers
   const handleCategoryChange = (categoryId: string | null) => {
     setActiveCategory(categoryId);
@@ -394,16 +423,6 @@ const UV_Menu: React.FC = () => {
   const handleAddToCart = () => {
     if (!customizationModal.item) return;
 
-    // Check if user is authenticated
-    if (!authToken) {
-      setNotification({ type: 'error', message: 'Please log in or register to add items to your cart.' });
-      setTimeout(() => {
-        setNotification(null);
-        window.location.href = '/login?redirect=/menu';
-      }, 2000);
-      return;
-    }
-
     // Validate required customizations
     const requiredGroups = customizationModal.item.customization_groups.filter(g => g.is_required);
     const selectedGroupIds = new Set(customizationModal.selected_customizations.map(c => c.group_id));
@@ -438,6 +457,36 @@ const UV_Menu: React.FC = () => {
       });
     });
 
+    // Check if user is authenticated
+    if (!authToken) {
+      // Save pending cart item to localStorage
+      const pendingItem = {
+        item_id: customizationModal.item.item_id,
+        quantity: customizationModal.quantity,
+        selected_customizations: customizationsObject,
+        item_name: customizationModal.item.name,
+        timestamp: Date.now(),
+      };
+      localStorage.setItem('pendingCartItem', JSON.stringify(pendingItem));
+      
+      // Show notification and redirect to login
+      setNotification({ type: 'success', message: 'Redirecting to login. Item will be added after login.' });
+      setTimeout(() => {
+        setNotification(null);
+        window.location.href = '/login?redirect=/menu';
+      }, 1500);
+      
+      // Close modal
+      setCustomizationModal({
+        is_open: false,
+        item: null,
+        selected_customizations: [],
+        total_price: 0,
+        quantity: 1,
+      });
+      return;
+    }
+
     addToCartMutation.mutate({
       item_id: customizationModal.item.item_id,
       quantity: customizationModal.quantity,
@@ -446,18 +495,29 @@ const UV_Menu: React.FC = () => {
   };
 
   const handleQuickAddToCart = (item: MenuItem) => {
-    // Check if user is authenticated
-    if (!authToken) {
-      setNotification({ type: 'error', message: 'Please log in or register to add items to your cart.' });
-      setTimeout(() => {
-        setNotification(null);
-        window.location.href = '/login?redirect=/menu';
-      }, 2000);
-      return;
-    }
-
     // For items without customizations or without required customizations
     if (item.customization_groups.length === 0 || !item.customization_groups.some(g => g.is_required)) {
+      // Check if user is authenticated
+      if (!authToken) {
+        // Save pending cart item to localStorage
+        const pendingItem = {
+          item_id: item.item_id,
+          quantity: 1,
+          selected_customizations: {},
+          item_name: item.name,
+          timestamp: Date.now(),
+        };
+        localStorage.setItem('pendingCartItem', JSON.stringify(pendingItem));
+        
+        // Show notification and redirect to login
+        setNotification({ type: 'success', message: 'Redirecting to login. Item will be added after login.' });
+        setTimeout(() => {
+          setNotification(null);
+          window.location.href = '/login?redirect=/menu';
+        }, 1500);
+        return;
+      }
+
       // Make API call to add to cart
       addToCartMutation.mutate({
         item_id: item.item_id,
@@ -465,7 +525,7 @@ const UV_Menu: React.FC = () => {
         selected_customizations: {},
       });
     } else {
-      // Open customization modal
+      // Open customization modal (will handle auth check inside modal)
       handleOpenCustomizationModal(item);
     }
   };
@@ -491,10 +551,15 @@ const UV_Menu: React.FC = () => {
     <>
       {/* Notification Toast */}
       {notification && (
-        <div className={`fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg ${
-          notification.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
-        }`}>
-          {notification.message}
+        <div className={`fixed top-20 right-4 z-[9999] px-6 py-4 rounded-lg shadow-2xl border-2 ${
+          notification.type === 'success' 
+            ? 'bg-green-600 text-white border-green-700' 
+            : 'bg-red-600 text-white border-red-700'
+        } animate-in slide-in-from-right duration-300`}>
+          <div className="flex items-center gap-3">
+            <span className="text-lg">{notification.type === 'success' ? '✓' : '✗'}</span>
+            <span className="font-medium">{notification.message}</span>
+          </div>
         </div>
       )}
 

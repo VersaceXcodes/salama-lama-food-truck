@@ -2361,6 +2361,32 @@ app.delete('/api/cart/item/:id', authenticate_token, async (req, res) => {
   }
 });
 
+app.delete('/api/cart', authenticate_token, async (req, res) => {
+  try {
+    console.log(`[CART DELETE] User ${req.user.user_id} clearing cart`);
+    const cart = read_cart_sync(req.user.user_id);
+    cart.items = [];
+    cart.discount_code = null;
+    write_cart_sync(req.user.user_id, cart);
+    
+    console.log(`[CART DELETE] Cart cleared for user ${req.user.user_id}`);
+    
+    return ok(res, 200, {
+      items: [],
+      subtotal: 0,
+      discount_code: null,
+      discount_amount: 0,
+      delivery_fee: 0,
+      tax_amount: 0,
+      total: 0,
+      validation_errors: [],
+    });
+  } catch (error) {
+    console.error(`[CART DELETE ERROR] User ${req.user?.user_id}:`, error);
+    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+  }
+});
+
 /**
  * DISCOUNT VALIDATION
  */

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '@/store/main';
 import axios from 'axios';
-import { ShoppingBag, Trash2, Minus, Plus, Tag, ArrowRight, AlertCircle, Loader2, X, CheckCircle } from 'lucide-react';
+import { ShoppingBag, Trash2, Minus, Plus, Tag, ArrowRight, AlertCircle, Loader2, X, CheckCircle, ShoppingCart } from 'lucide-react';
 
 // ===========================
 // Types & Interfaces
@@ -185,6 +185,36 @@ const UV_Cart: React.FC = () => {
   });
 
   // ===========================
+  // React Query: Clear Cart
+  // ===========================
+
+  const clearCartMutation = useMutation({
+    mutationFn: async () => {
+      const response = await axios.delete(
+        `${API_BASE_URL}/api/cart`,
+        {
+          headers: authToken ? { Authorization: `Bearer ${authToken}` } : {}
+        }
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
+      setNotification({
+        type: 'success',
+        message: 'Cart cleared successfully'
+      });
+    },
+    onError: (error: any) => {
+      console.error('Failed to clear cart:', error);
+      setNotification({
+        type: 'error',
+        message: error.response?.data?.message || 'Failed to clear cart. Please try again.'
+      });
+    }
+  });
+
+  // ===========================
   // React Query: Validate Discount Code
   // ===========================
 
@@ -266,6 +296,18 @@ const UV_Cart: React.FC = () => {
       message: `Remove ${item_name} from cart?`,
       onConfirm: () => {
         removeItemMutation.mutate(cart_item_id);
+        setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+      }
+    });
+  };
+
+  const handleClearCart = () => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Clear Cart',
+      message: `Are you sure you want to remove all items from your cart?`,
+      onConfirm: () => {
+        clearCartMutation.mutate();
         setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: () => {} });
       }
     });
@@ -721,8 +763,8 @@ const UV_Cart: React.FC = () => {
                 );
               })}
 
-              {/* Continue Shopping Link */}
-              <div className="pt-4">
+              {/* Continue Shopping and Empty Cart Actions */}
+              <div className="pt-4 flex items-center justify-between">
                 <Link
                   to="/menu"
                   className="inline-flex items-center text-orange-600 hover:text-orange-700 font-medium transition-colors duration-200"
@@ -730,6 +772,24 @@ const UV_Cart: React.FC = () => {
                   <ArrowRight className="mr-2 h-5 w-5 rotate-180" />
                   Continue Shopping
                 </Link>
+                <button
+                  onClick={handleClearCart}
+                  disabled={clearCartMutation.isPending}
+                  className="inline-flex items-center px-4 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 font-medium rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="Empty cart"
+                >
+                  {clearCartMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Clearing...
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCart className="mr-2 h-5 w-5" />
+                      Empty Cart
+                    </>
+                  )}
+                </button>
               </div>
             </div>
 

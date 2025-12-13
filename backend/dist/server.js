@@ -536,7 +536,7 @@ const checkout_create_order_input_schema = z.object({
     customer_email: z.string().email().max(255),
     customer_phone: z.string().min(10).max(20),
     payment_method_id: z.string().nullable().optional(),
-    cvv: z.string().regex(/^\d{3,4}$/),
+    cvv: z.string().regex(/^\d{3,4}$/).optional(),
     idempotency_key: z.string().min(6).optional(),
 });
 const admin_delivery_settings_update_schema = z.object({
@@ -2181,16 +2181,23 @@ const handleCheckoutCreateOrder = async (req, res) => {
         if (errors.length > 0) {
             return res.status(400).json(createErrorResponse('Order cannot be placed', null, 'VALIDATION_FAILED', req.request_id, { errors }));
         }
-        // Load payment method token (never return it to client).
+        // Determine payment method type
         const pm_id = body.payment_method_id;
-        if (!pm_id) {
-            return res.status(400).json(createErrorResponse('Payment method is required', null, 'PAYMENT_METHOD_REQUIRED', req.request_id));
+        const is_cash_payment = pm_id === 'cash_at_pickup' || pm_id === null;
+        let pm = null;
+        let payment_method_type = 'cash';
+        if (!is_cash_payment) {
+            // Load payment method token (never return it to client).
+            if (!pm_id) {
+                return res.status(400).json(createErrorResponse('Payment method is required', null, 'PAYMENT_METHOD_REQUIRED', req.request_id));
+            }
+            const pm_res = await pool.query('SELECT payment_method_id, sumup_token, card_type, last_four_digits FROM payment_methods WHERE payment_method_id = $1 AND user_id = $2', [pm_id, req.user.user_id]);
+            if (pm_res.rows.length === 0) {
+                return res.status(400).json(createErrorResponse('Payment method not found', null, 'PAYMENT_METHOD_NOT_FOUND', req.request_id));
+            }
+            pm = pm_res.rows[0];
+            payment_method_type = 'card';
         }
-        const pm_res = await pool.query('SELECT payment_method_id, sumup_token, card_type, last_four_digits FROM payment_methods WHERE payment_method_id = $1 AND user_id = $2', [pm_id, req.user.user_id]);
-        if (pm_res.rows.length === 0) {
-            return res.status(400).json(createErrorResponse('Payment method not found', null, 'PAYMENT_METHOD_NOT_FOUND', req.request_id));
-        }
-        const pm = pm_res.rows[0];
         // Transactional order creation.
         await with_client(async (client) => {
             await client.query('BEGIN');
@@ -2252,8 +2259,8 @@ const handleCheckoutCreateOrder = async (req, res) => {
                 totals.tax_amount,
                 totals.total,
                 'pending',
-                pm_id,
-                'card',
+                is_cash_payment ? null : pm_id,
+                payment_method_type,
                 null,
                 null,
                 0,
@@ -2283,25 +2290,29 @@ const handleCheckoutCreateOrder = async (req, res) => {
             // Status history: received.
             await client.query(`INSERT INTO order_status_history (history_id, order_id, status, changed_by_user_id, changed_at, notes)
          VALUES ($1,$2,$3,$4,$5,$6)`, [gen_id('osh'), order_id, 'received', req.user.user_id, created_at, 'Order placed']);
-            // Process payment (mock) BEFORE committing.
-            const payment = await sumup_charge_mock({
-                amount: totals.total,
-                currency: 'EUR',
-                description: `Order ${order_number}`,
-                token: pm.sumup_token,
-                cvv: body.cvv,
-            });
-            if (!payment.success) {
-                await client.query('ROLLBACK');
-                return res.status(400).json(createErrorResponse('Payment was declined. Please try another payment method.', null, 'PAYMENT_FAILED', req.request_id, { sumup_error_code: payment.error_code }));
+            // Process payment (mock) BEFORE committing - skip for cash payments.
+            let payment = null;
+            if (!is_cash_payment) {
+                payment = await sumup_charge_mock({
+                    amount: totals.total,
+                    currency: 'EUR',
+                    description: `Order ${order_number}`,
+                    token: pm.sumup_token,
+                    cvv: body.cvv,
+                });
+                if (!payment.success) {
+                    await client.query('ROLLBACK');
+                    return res.status(400).json(createErrorResponse('Payment was declined. Please try another payment method.', null, 'PAYMENT_FAILED', req.request_id, { sumup_error_code: payment.error_code }));
+                }
+                // Update order payment status to paid for card payments.
+                await client.query('UPDATE orders SET payment_status = $1, sumup_transaction_id = $2, updated_at = $3 WHERE order_id = $4', [
+                    'paid',
+                    payment.transaction_id,
+                    now_iso(),
+                    order_id,
+                ]);
             }
-            // Update order payment status.
-            await client.query('UPDATE orders SET payment_status = $1, sumup_transaction_id = $2, updated_at = $3 WHERE order_id = $4', [
-                'paid',
-                payment.transaction_id,
-                now_iso(),
-                order_id,
-            ]);
+            // For cash payments, payment_status remains 'pending' until payment is received
             // Discount usage.
             if (totals.discount_code) {
                 const dc_res = await client.query('SELECT code_id, total_used_count FROM discount_codes WHERE code = $1', [ensure_upper(totals.discount_code)]);
@@ -2416,12 +2427,12 @@ const handleCheckoutCreateOrder = async (req, res) => {
                 body.order_type === 'delivery' ? totals.delivery_fee : null,
                 totals.tax_amount,
                 totals.total,
-                'paid',
-                'credit_card',
-                payment.transaction_id,
+                is_cash_payment ? 'pending' : 'paid',
+                is_cash_payment ? 'cash' : 'credit_card',
+                is_cash_payment ? null : payment.transaction_id,
                 now_iso(),
                 null,
-                now_iso(),
+                is_cash_payment ? null : now_iso(),
                 null,
                 null,
                 now_iso(),

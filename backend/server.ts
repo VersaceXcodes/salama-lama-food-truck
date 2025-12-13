@@ -3516,6 +3516,229 @@ app.delete('/api/profile', authenticate_token, async (req, res) => {
 });
 
 /**
+ * PAYMENT METHODS
+ */
+
+// GET all payment methods for the authenticated user
+app.get('/api/payment-methods', authenticate_token, async (req, res) => {
+  try {
+    const rows = await pool.query(
+      `SELECT payment_method_id, user_id, card_type, last_four_digits, expiry_month, expiry_year, cardholder_name, is_default, created_at
+       FROM payment_methods
+       WHERE user_id = $1
+       ORDER BY is_default DESC, created_at DESC`,
+      [req.user.user_id]
+    );
+
+    const payment_methods = rows.rows.map((r) => ({
+      payment_method_id: r.payment_method_id,
+      user_id: r.user_id,
+      card_type: r.card_type,
+      last_four_digits: r.last_four_digits,
+      expiry_month: r.expiry_month,
+      expiry_year: r.expiry_year,
+      cardholder_name: r.cardholder_name,
+      is_default: r.is_default,
+      created_at: r.created_at,
+    }));
+
+    return ok(res, 200, { payment_methods });
+  } catch (error) {
+    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+  }
+});
+
+// POST create a new payment method
+app.post('/api/payment-methods', authenticate_token, async (req, res) => {
+  try {
+    const payment_method_schema = z.object({
+      sumup_token: z.string().min(1),
+      card_type: z.enum(['Visa', 'Mastercard', 'Amex', 'Discover']),
+      last_four_digits: z.string().length(4),
+      expiry_month: z.string().length(2),
+      expiry_year: z.string().length(4),
+      cardholder_name: z.string().min(1).max(100),
+      is_default: z.boolean().default(false),
+    });
+
+    const input = payment_method_schema.parse(req.body);
+
+    await with_client(async (client) => {
+      await client.query('BEGIN');
+
+      // If this is set as default, unset all other defaults for this user
+      if (input.is_default) {
+        await client.query(
+          'UPDATE payment_methods SET is_default = false WHERE user_id = $1',
+          [req.user.user_id]
+        );
+      } else {
+        // If this is the first payment method, make it default
+        const existing = await client.query(
+          'SELECT COUNT(*)::int as count FROM payment_methods WHERE user_id = $1',
+          [req.user.user_id]
+        );
+        if (existing.rows[0].count === 0) {
+          input.is_default = true;
+        }
+      }
+
+      const payment_method_id = gen_id('pm');
+      const created_at = now_iso();
+
+      await client.query(
+        `INSERT INTO payment_methods (
+          payment_method_id, user_id, sumup_token, card_type, last_four_digits,
+          expiry_month, expiry_year, cardholder_name, is_default, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+        [
+          payment_method_id,
+          req.user.user_id,
+          input.sumup_token,
+          input.card_type,
+          input.last_four_digits,
+          input.expiry_month,
+          input.expiry_year,
+          input.cardholder_name,
+          input.is_default,
+          created_at,
+        ]
+      );
+
+      await client.query('COMMIT');
+
+      return ok(res, 201, {
+        payment_method_id,
+        user_id: req.user.user_id,
+        card_type: input.card_type,
+        last_four_digits: input.last_four_digits,
+        expiry_month: input.expiry_month,
+        expiry_year: input.expiry_year,
+        cardholder_name: input.cardholder_name,
+        is_default: input.is_default,
+        created_at,
+      });
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+    }
+    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+  }
+});
+
+// DELETE a payment method
+app.delete('/api/payment-methods/:id', authenticate_token, async (req, res) => {
+  try {
+    const payment_method_id = req.params.id;
+
+    await with_client(async (client) => {
+      await client.query('BEGIN');
+
+      // Check if payment method exists and belongs to user
+      const pm_res = await client.query(
+        'SELECT payment_method_id, is_default FROM payment_methods WHERE payment_method_id = $1 AND user_id = $2',
+        [payment_method_id, req.user.user_id]
+      );
+
+      if (pm_res.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json(createErrorResponse('Payment method not found', null, 'NOT_FOUND', req.request_id));
+      }
+
+      const was_default = pm_res.rows[0].is_default;
+
+      // Delete the payment method
+      await client.query(
+        'DELETE FROM payment_methods WHERE payment_method_id = $1 AND user_id = $2',
+        [payment_method_id, req.user.user_id]
+      );
+
+      // If deleted payment method was default, set another one as default
+      if (was_default) {
+        await client.query(
+          `UPDATE payment_methods
+           SET is_default = true
+           WHERE user_id = $1
+             AND payment_method_id = (
+               SELECT payment_method_id FROM payment_methods
+               WHERE user_id = $1
+               ORDER BY created_at DESC
+               LIMIT 1
+             )`,
+          [req.user.user_id]
+        );
+      }
+
+      await client.query('COMMIT');
+
+      return ok(res, 200, { message: 'Payment method deleted successfully' });
+    });
+  } catch (error) {
+    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+  }
+});
+
+// PUT set payment method as default
+app.put('/api/payment-methods/:id/default', authenticate_token, async (req, res) => {
+  try {
+    const payment_method_id = req.params.id;
+
+    await with_client(async (client) => {
+      await client.query('BEGIN');
+
+      // Check if payment method exists and belongs to user
+      const pm_res = await client.query(
+        'SELECT payment_method_id FROM payment_methods WHERE payment_method_id = $1 AND user_id = $2',
+        [payment_method_id, req.user.user_id]
+      );
+
+      if (pm_res.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json(createErrorResponse('Payment method not found', null, 'NOT_FOUND', req.request_id));
+      }
+
+      // Unset all defaults for this user
+      await client.query(
+        'UPDATE payment_methods SET is_default = false WHERE user_id = $1',
+        [req.user.user_id]
+      );
+
+      // Set this payment method as default
+      await client.query(
+        'UPDATE payment_methods SET is_default = true WHERE payment_method_id = $1 AND user_id = $2',
+        [payment_method_id, req.user.user_id]
+      );
+
+      await client.query('COMMIT');
+
+      // Return the updated payment method
+      const updated_res = await pool.query(
+        `SELECT payment_method_id, user_id, card_type, last_four_digits, expiry_month, expiry_year, cardholder_name, is_default, created_at
+         FROM payment_methods
+         WHERE payment_method_id = $1 AND user_id = $2`,
+        [payment_method_id, req.user.user_id]
+      );
+
+      const pm = updated_res.rows[0];
+      return ok(res, 200, {
+        payment_method_id: pm.payment_method_id,
+        user_id: pm.user_id,
+        card_type: pm.card_type,
+        last_four_digits: pm.last_four_digits,
+        expiry_month: pm.expiry_month,
+        expiry_year: pm.expiry_year,
+        cardholder_name: pm.cardholder_name,
+        is_default: pm.is_default,
+        created_at: pm.created_at,
+      });
+    });
+  } catch (error) {
+    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+  }
+});
+
+/**
  * NEWSLETTER
  */
 

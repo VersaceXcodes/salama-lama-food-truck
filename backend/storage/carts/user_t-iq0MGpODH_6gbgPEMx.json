@@ -111,8 +111,15 @@
       "quantity": 1,
       "selected_customizations": {},
       "added_at": "2025-12-13T01:19:31.986Z"
+    },
+    {
+      "cart_item_id": "cart_HCZlEWDD8HjZJ3AkC_zd",
+      "item_id": "item_krSsB_0CBiVwMgnbTUod",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-13T02:44:27.525Z"
     }
   ],
   "discount_code": null,
-  "updated_at": "2025-12-13T01:19:31.986Z"
+  "updated_at": "2025-12-13T02:44:27.525Z"
 }

@@ -166,6 +166,25 @@ const UV_CheckoutPayment: React.FC = () => {
   // For this demo, we'll check if there's a delivery fee to determine order type
   const orderType = cartDeliveryFee > 0 ? 'delivery' : 'collection';
 
+  // Validate order type and contact info on mount
+  useEffect(() => {
+    const order_type = sessionStorage.getItem('checkout_order_type');
+    const customer_name = sessionStorage.getItem('checkout_customer_name');
+    const customer_email = sessionStorage.getItem('checkout_customer_email');
+    
+    if (!order_type) {
+      // Missing order type, redirect to start
+      navigate('/checkout/order-type', { replace: true });
+      return;
+    }
+    
+    if (!customer_name || !customer_email) {
+      // Missing contact info, redirect to contact step
+      navigate('/checkout/contact', { replace: true });
+      return;
+    }
+  }, [navigate]);
+
   // Auto-select default payment method on load
   useEffect(() => {
     if (savedPaymentMethods.length > 0 && !selectedPaymentMethodId) {

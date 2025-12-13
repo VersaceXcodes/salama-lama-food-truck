@@ -6312,6 +6312,51 @@ app.delete('/api/admin/delivery/zones/:zoneId', authenticate_token, require_role
   }
 });
 
+// Validate delivery address (accessible to customers during checkout)
+app.post('/api/admin/delivery/validate-address', authenticate_token, async (req, res) => {
+  try {
+    const schema = z.object({
+      address: z.string().min(1),
+      postal_code: z.string().min(1),
+    });
+    const { address, postal_code } = schema.parse(req.body);
+
+    // Use geocode function to get coordinates
+    const coords = await geocode_address_mock({
+      address_line1: address,
+      city: 'Dublin',
+      postal_code: postal_code,
+    });
+
+    // Find delivery zone for coordinates
+    const zone = await find_delivery_zone(coords.latitude, coords.longitude);
+
+    if (!zone) {
+      return ok(res, 200, {
+        valid: false,
+        message: "Delivery not available to this address",
+        delivery_fee: 0,
+        estimated_delivery_time: null,
+        zone_id: null,
+      });
+    }
+
+    return ok(res, 200, {
+      valid: true,
+      message: "Delivery available",
+      delivery_fee: zone.delivery_fee,
+      estimated_delivery_time: zone.estimated_delivery_time,
+      zone_id: zone.zone_id,
+      zone_name: zone.zone_name,
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+    }
+    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+  }
+});
+
 // Admin discounts
 app.get('/api/admin/discounts', authenticate_token, require_role(['admin']), async (req, res) => {
   try {

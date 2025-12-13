@@ -145,6 +145,18 @@ const UV_CheckoutContact: React.FC = () => {
   }, [isAuthenticated, currentUser]);
 
   // ===========================
+  // Validate Order Type on Mount
+  // ===========================
+  useEffect(() => {
+    // Check if order type was set in previous step
+    const order_type = sessionStorage.getItem('checkout_order_type');
+    if (!order_type) {
+      // Redirect back to order type selection if missing
+      navigate('/checkout/order-type', { replace: true });
+    }
+  }, [navigate]);
+
+  // ===========================
   // Field Update Handler
   // ===========================
   const handleFieldChange = (field: keyof ContactForm, value: string) => {

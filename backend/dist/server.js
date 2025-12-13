@@ -754,13 +754,30 @@ async function fetch_customizations_for_items(item_ids) {
 async function validate_discount_code({ code, user_id, order_type, order_value }) {
     const code_upper = ensure_upper(code);
     const now = now_iso();
+    // First check if code exists at all
+    const check_res = await pool.query(`SELECT * FROM discount_codes WHERE code = $1`, [code_upper]);
+    if (check_res.rows.length === 0) {
+        return { valid: false, error: 'INVALID_CODE', message: 'Invalid discount code' };
+    }
+    const check_row = check_res.rows[0];
+    // Check if expired or inactive
+    if (check_row.status !== 'active') {
+        return { valid: false, error: 'EXPIRED_CODE', message: 'This discount code has expired' };
+    }
+    if (check_row.valid_until && new Date(check_row.valid_until) < new Date(now)) {
+        return { valid: false, error: 'EXPIRED_CODE', message: 'This discount code has expired' };
+    }
+    if (new Date(check_row.valid_from) > new Date(now)) {
+        return { valid: false, error: 'NOT_YET_VALID', message: 'This discount code is not yet valid' };
+    }
+    // Now get the valid code
     const res = await pool.query(`SELECT * FROM discount_codes
      WHERE code = $1
        AND status = 'active'
        AND valid_from <= $2
        AND (valid_until IS NULL OR valid_until >= $2)`, [code_upper, now]);
     if (res.rows.length === 0) {
-        return { valid: false, error: 'INVALID_CODE', message: 'Invalid or expired code' };
+        return { valid: false, error: 'INVALID_CODE', message: 'Invalid discount code' };
     }
     const row = coerce_numbers(res.rows[0], ['discount_value', 'minimum_order_value']);
     // Order type restriction.
@@ -2125,6 +2142,7 @@ app.post('/api/discount/validate', authenticate_token, async (req, res) => {
     try {
         const payload = validateDiscountCodeInputSchema.parse({
             ...req.body,
+            user_id: req.user.user_id, // Get user_id from authenticated token
             order_value: Number(req.body?.order_value),
         });
         const result = await validate_discount_code({

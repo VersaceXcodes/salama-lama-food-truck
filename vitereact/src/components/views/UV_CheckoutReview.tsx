@@ -143,9 +143,6 @@ const UV_CheckoutReview: React.FC = () => {
   
   const auth_token = useAppStore(state => state.authentication_state.auth_token);
   // const current_user = useAppStore(state => state.authentication_state.current_user);
-  const cart_items = useAppStore(state => state.cart_state.items);
-  const cart_discount_code = useAppStore(state => state.cart_state.discount_code);
-  // const cart_discount_amount = useAppStore(state => state.cart_state.discount_amount);
   const clear_cart = useAppStore(state => state.clear_cart);
 
   // ===========================
@@ -185,6 +182,32 @@ const UV_CheckoutReview: React.FC = () => {
   const [idempotency_key] = useState<string>(generate_uuid());
 
   // ===========================
+  // Fetch Cart Data from API
+  // ===========================
+
+  const { data: cart_data, isLoading: is_loading_cart } = useQuery({
+    queryKey: ['cart'],
+    queryFn: async () => {
+      const response = await axios.get(
+        `${API_BASE_URL}/api/cart`,
+        {
+          headers: {
+            Authorization: `Bearer ${auth_token}`,
+          },
+        }
+      );
+      return response.data;
+    },
+    enabled: !!auth_token,
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
+    retry: 1,
+  });
+
+  const cart_items = cart_data?.items || [];
+  const cart_discount_code = cart_data?.discount_code || null;
+
+  // ===========================
   // Load Order Review Data (on mount)
   // ===========================
 
@@ -219,7 +242,7 @@ const UV_CheckoutReview: React.FC = () => {
       }
     }
 
-    // Assemble complete order review
+    // Assemble complete order review (will be updated when cart_items loads)
     set_complete_order_review({
       order_type: order_type as 'collection' | 'delivery',
       collection_time_slot: collection_time_slot || null,
@@ -440,6 +463,43 @@ const UV_CheckoutReview: React.FC = () => {
   // ===========================
 
   const is_loading = place_order_mutation.isPending || validate_order_mutation.isPending;
+
+  // Show loading if cart is still loading
+  if (is_loading_cart) {
+    return (
+      <>
+        <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 py-8 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="h-12 w-12 text-orange-600 animate-spin mx-auto mb-4" />
+            <p className="text-gray-600 font-medium">Loading your order details...</p>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // Show error if cart is empty
+  if (!is_loading_cart && cart_items.length === 0) {
+    return (
+      <>
+        <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 py-8 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
+          <div className="text-center max-w-md">
+            <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Cart is Empty</h2>
+            <p className="text-gray-600 mb-6">
+              Your cart is empty. Please add items before proceeding to checkout.
+            </p>
+            <button
+              onClick={() => navigate('/menu')}
+              className="px-6 py-3 bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-700 transition-colors duration-200"
+            >
+              Browse Menu
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   // ===========================
   // Render

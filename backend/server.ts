@@ -2516,6 +2516,38 @@ app.post('/api/checkout/validate', authenticate_token, async (req, res) => {
   }
 });
 
+app.post('/api/checkout/calculate', authenticate_token, async (req, res) => {
+  try {
+    const body = checkout_validate_input_schema.parse(req.body);
+    const cart = read_cart_sync(req.user.user_id);
+
+    const totals = await compute_cart_totals({
+      user_id: req.user.user_id,
+      cart,
+      order_type: body.order_type,
+      delivery_address_id: body.delivery_address_id ?? null,
+      discount_code: body.discount_code ?? cart.discount_code,
+    });
+
+    return ok(res, 200, {
+      items: totals.items,
+      subtotal: totals.subtotal,
+      discount_code: totals.discount_code,
+      discount_amount: totals.discount_amount,
+      delivery_fee: totals.delivery_fee,
+      tax_amount: totals.tax_amount,
+      total: totals.total,
+      total_amount: totals.total, // Frontend expects total_amount
+      validation_errors: totals.validation_errors,
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+    }
+    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+  }
+});
+
 // Shared handler for order creation (used by both /api/checkout/create-order and /api/checkout/order)
 const handleCheckoutCreateOrder = async (req, res) => {
   try {
@@ -2603,7 +2635,9 @@ const handleCheckoutCreateOrder = async (req, res) => {
           payment_status, payment_method_id, payment_method_type,
           sumup_transaction_id, invoice_url, loyalty_points_awarded,
           special_instructions, customer_name, customer_email, customer_phone,
-          created_at, updated_at
+          created_at, updated_at,
+          completed_at, cancelled_at, cancellation_reason, refund_amount, refund_reason,
+          refunded_at, internal_notes
         ) VALUES (
           $1,$2,$3,$4,$5,
           $6,$7,$8::jsonb,
@@ -2612,7 +2646,9 @@ const handleCheckoutCreateOrder = async (req, res) => {
           $16,$17,$18,
           $19,$20,$21,
           $22,$23,$24,$25,
-          $26,$27
+          $26,$27,
+          $28,$29,$30,$31,$32,
+          $33,$34
         )`,
         [
           order_id,
@@ -2642,6 +2678,13 @@ const handleCheckoutCreateOrder = async (req, res) => {
           body.customer_phone,
           created_at,
           created_at,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
         ]
       );
 

@@ -1,34 +1,5 @@
 {
-  "items": [
-    {
-      "cart_item_id": "cart_Ab_l3fjWjJ5RH74xznw-",
-      "item_id": "item_x9IKeDcJ1QCZqquElmvp",
-      "quantity": 1,
-      "selected_customizations": {},
-      "added_at": "2025-12-13T22:11:04.502Z"
-    },
-    {
-      "cart_item_id": "cart_SgwNwDxbYldZ6QA1SyYC",
-      "item_id": "item_8-1WsOpjwL4DmYnLvWHW",
-      "quantity": 1,
-      "selected_customizations": {},
-      "added_at": "2025-12-13T22:11:04.765Z"
-    },
-    {
-      "cart_item_id": "cart_HSvTFkvb5HETdAW2pMEO",
-      "item_id": "item_x9IKeDcJ1QCZqquElmvp",
-      "quantity": 1,
-      "selected_customizations": {},
-      "added_at": "2025-12-13T22:18:47.428Z"
-    },
-    {
-      "cart_item_id": "cart_PKpDGf77kQD2wOAU-WMr",
-      "item_id": "item_x9IKeDcJ1QCZqquElmvp",
-      "quantity": 1,
-      "selected_customizations": {},
-      "added_at": "2025-12-13T22:27:47.319Z"
-    }
-  ],
-  "discount_code": "FIRST10",
-  "updated_at": "2025-12-13T22:27:47.319Z"
+  "items": [],
+  "discount_code": null,
+  "updated_at": "2025-12-13T22:48:49.779Z"
 }

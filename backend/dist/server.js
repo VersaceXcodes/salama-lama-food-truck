@@ -2154,6 +2154,10 @@ app.post('/api/discount/validate', authenticate_token, async (req, res) => {
         if (!result.valid) {
             return ok(res, 200, { valid: false, discount_amount: 0, message: result.message });
         }
+        // Apply the discount to the cart
+        const cart = read_cart_sync(req.user.user_id);
+        cart.discount_code = result.code_row.code;
+        write_cart_sync(req.user.user_id, cart);
         return ok(res, 200, {
             valid: true,
             discount_amount: result.discount_amount,
@@ -2165,6 +2169,26 @@ app.post('/api/discount/validate', authenticate_token, async (req, res) => {
         if (error instanceof z.ZodError) {
             return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
         }
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+/**
+ * REMOVE DISCOUNT FROM CART
+ */
+app.delete('/api/discount/remove', authenticate_token, async (req, res) => {
+    try {
+        console.log(`[DISCOUNT REMOVE] User ${req.user.user_id} removing discount from cart`);
+        const cart = read_cart_sync(req.user.user_id);
+        cart.discount_code = null;
+        write_cart_sync(req.user.user_id, cart);
+        console.log(`[DISCOUNT REMOVE] Discount removed from cart for user ${req.user.user_id}`);
+        return ok(res, 200, {
+            success: true,
+            message: 'Discount removed from cart'
+        });
+    }
+    catch (error) {
+        console.error(`[DISCOUNT REMOVE ERROR] User ${req.user?.user_id}:`, error);
         return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
     }
 });

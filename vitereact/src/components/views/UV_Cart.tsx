@@ -328,12 +328,25 @@ const UV_Cart: React.FC = () => {
     });
   };
 
-  const handleRemoveDiscount = () => {
-    // Remove discount by clearing it from cart
-    // This would typically call an API endpoint to remove the discount
-    setDiscountCode('');
-    setDiscountError(null);
-    queryClient.invalidateQueries({ queryKey: ['cart'] });
+  const handleRemoveDiscount = async () => {
+    try {
+      await axios.delete(`${API_BASE_URL}/api/discount/remove`, {
+        headers: authToken ? { Authorization: `Bearer ${authToken}` } : {}
+      });
+      setDiscountCode('');
+      setDiscountError(null);
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
+      setNotification({
+        type: 'success',
+        message: 'Discount removed successfully'
+      });
+    } catch (error: any) {
+      console.error('Failed to remove discount:', error);
+      setNotification({
+        type: 'error',
+        message: error.response?.data?.message || 'Failed to remove discount'
+      });
+    }
   };
 
   const handleProceedToCheckout = () => {

@@ -44,6 +44,10 @@ import {
   verifyPasswordResetInputSchema,
   verifyEmailInputSchema,
   createNewsletterSubscriberInputSchema,
+  addressSchema,
+  createAddressInputSchema,
+  updateAddressInputSchema,
+  searchAddressInputSchema,
   categorySchema,
   createCategoryInputSchema,
   updateCategoryInputSchema,
@@ -2475,6 +2479,270 @@ app.delete('/api/discount/remove', authenticate_token, async (req, res) => {
     });
   } catch (error) {
     console.error(`[DISCOUNT REMOVE ERROR] User ${req.user?.user_id}:`, error);
+    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+  }
+});
+
+/**
+ * ADDRESSES ROUTES
+ */
+
+// Get all addresses for authenticated user
+app.get('/api/addresses', authenticate_token, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM addresses WHERE user_id = $1 ORDER BY is_default DESC, created_at DESC',
+      [req.user.user_id]
+    );
+    
+    const addresses = result.rows.map(row => addressSchema.parse({
+      ...row,
+      latitude: row.latitude !== null ? Number(row.latitude) : null,
+      longitude: row.longitude !== null ? Number(row.longitude) : null,
+    }));
+    
+    return ok(res, 200, { addresses });
+  } catch (error) {
+    console.error('Get addresses error:', error);
+    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+  }
+});
+
+// Get single address by ID
+app.get('/api/addresses/:address_id', authenticate_token, async (req, res) => {
+  try {
+    const { address_id } = req.params;
+    
+    const result = await pool.query(
+      'SELECT * FROM addresses WHERE address_id = $1 AND user_id = $2',
+      [address_id, req.user.user_id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json(createErrorResponse('Address not found', null, 'NOT_FOUND', req.request_id));
+    }
+    
+    const address = addressSchema.parse({
+      ...result.rows[0],
+      latitude: result.rows[0].latitude !== null ? Number(result.rows[0].latitude) : null,
+      longitude: result.rows[0].longitude !== null ? Number(result.rows[0].longitude) : null,
+    });
+    
+    return ok(res, 200, { address });
+  } catch (error) {
+    console.error('Get address error:', error);
+    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+  }
+});
+
+// Create new address
+app.post('/api/addresses', authenticate_token, async (req, res) => {
+  try {
+    const input = createAddressInputSchema.parse({
+      ...req.body,
+      user_id: req.user.user_id,
+    });
+    
+    await with_client(async (client) => {
+      await client.query('BEGIN');
+      
+      // If this is set as default, unset other defaults for this user
+      if (input.is_default) {
+        await client.query(
+          'UPDATE addresses SET is_default = false WHERE user_id = $1',
+          [req.user.user_id]
+        );
+      }
+      
+      // Geocode the address if coordinates not provided
+      let latitude = input.latitude ?? null;
+      let longitude = input.longitude ?? null;
+      
+      if (latitude === null || longitude === null) {
+        const geocoded = await geocode_address_mock({
+          address_line1: input.address_line1,
+          city: input.city,
+          postal_code: input.postal_code,
+        });
+        latitude = geocoded.latitude;
+        longitude = geocoded.longitude;
+      }
+      
+      const address_id = gen_id('addr');
+      const created_at = now_iso();
+      
+      await client.query(
+        `INSERT INTO addresses (
+          address_id, user_id, label, address_line1, address_line2,
+          city, postal_code, delivery_instructions, is_default,
+          latitude, longitude, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+        [
+          address_id,
+          input.user_id,
+          input.label,
+          input.address_line1,
+          input.address_line2 ?? null,
+          input.city,
+          input.postal_code,
+          input.delivery_instructions ?? null,
+          input.is_default,
+          latitude,
+          longitude,
+          created_at,
+        ]
+      );
+      
+      await client.query('COMMIT');
+      
+      const address = addressSchema.parse({
+        address_id,
+        user_id: input.user_id,
+        label: input.label,
+        address_line1: input.address_line1,
+        address_line2: input.address_line2 ?? null,
+        city: input.city,
+        postal_code: input.postal_code,
+        delivery_instructions: input.delivery_instructions ?? null,
+        is_default: input.is_default,
+        latitude,
+        longitude,
+        created_at,
+      });
+      
+      return ok(res, 201, { address });
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+    }
+    console.error('Create address error:', error);
+    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+  }
+});
+
+// Update address
+app.put('/api/addresses/:address_id', authenticate_token, async (req, res) => {
+  try {
+    const { address_id } = req.params;
+    const input = updateAddressInputSchema.parse({
+      ...req.body,
+      address_id,
+    });
+    
+    await with_client(async (client) => {
+      await client.query('BEGIN');
+      
+      // Verify ownership
+      const check = await client.query(
+        'SELECT address_id FROM addresses WHERE address_id = $1 AND user_id = $2',
+        [address_id, req.user.user_id]
+      );
+      
+      if (check.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json(createErrorResponse('Address not found', null, 'NOT_FOUND', req.request_id));
+      }
+      
+      // If setting as default, unset other defaults
+      if (input.is_default === true) {
+        await client.query(
+          'UPDATE addresses SET is_default = false WHERE user_id = $1 AND address_id != $2',
+          [req.user.user_id, address_id]
+        );
+      }
+      
+      const updates = [];
+      const params = [];
+      let paramIndex = 1;
+      
+      if (input.label !== undefined) {
+        updates.push(`label = $${paramIndex++}`);
+        params.push(input.label);
+      }
+      if (input.address_line1 !== undefined) {
+        updates.push(`address_line1 = $${paramIndex++}`);
+        params.push(input.address_line1);
+      }
+      if (input.address_line2 !== undefined) {
+        updates.push(`address_line2 = $${paramIndex++}`);
+        params.push(input.address_line2);
+      }
+      if (input.city !== undefined) {
+        updates.push(`city = $${paramIndex++}`);
+        params.push(input.city);
+      }
+      if (input.postal_code !== undefined) {
+        updates.push(`postal_code = $${paramIndex++}`);
+        params.push(input.postal_code);
+      }
+      if (input.delivery_instructions !== undefined) {
+        updates.push(`delivery_instructions = $${paramIndex++}`);
+        params.push(input.delivery_instructions);
+      }
+      if (input.is_default !== undefined) {
+        updates.push(`is_default = $${paramIndex++}`);
+        params.push(input.is_default);
+      }
+      if (input.latitude !== undefined) {
+        updates.push(`latitude = $${paramIndex++}`);
+        params.push(input.latitude);
+      }
+      if (input.longitude !== undefined) {
+        updates.push(`longitude = $${paramIndex++}`);
+        params.push(input.longitude);
+      }
+      
+      if (updates.length > 0) {
+        params.push(address_id);
+        params.push(req.user.user_id);
+        await client.query(
+          `UPDATE addresses SET ${updates.join(', ')} WHERE address_id = $${paramIndex} AND user_id = $${paramIndex + 1}`,
+          params
+        );
+      }
+      
+      await client.query('COMMIT');
+      
+      const result = await pool.query(
+        'SELECT * FROM addresses WHERE address_id = $1',
+        [address_id]
+      );
+      
+      const address = addressSchema.parse({
+        ...result.rows[0],
+        latitude: result.rows[0].latitude !== null ? Number(result.rows[0].latitude) : null,
+        longitude: result.rows[0].longitude !== null ? Number(result.rows[0].longitude) : null,
+      });
+      
+      return ok(res, 200, { address });
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+    }
+    console.error('Update address error:', error);
+    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+  }
+});
+
+// Delete address
+app.delete('/api/addresses/:address_id', authenticate_token, async (req, res) => {
+  try {
+    const { address_id } = req.params;
+    
+    const result = await pool.query(
+      'DELETE FROM addresses WHERE address_id = $1 AND user_id = $2 RETURNING address_id',
+      [address_id, req.user.user_id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json(createErrorResponse('Address not found', null, 'NOT_FOUND', req.request_id));
+    }
+    
+    return ok(res, 200, { message: 'Address deleted successfully' });
+  } catch (error) {
+    console.error('Delete address error:', error);
     return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
   }
 });

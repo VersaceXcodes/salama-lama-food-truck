@@ -46,16 +46,15 @@ const UV_AdminLogin: React.FC = () => {
   // Effects
   // ===========================
 
-  // Redirect if already authenticated as admin
+  // Redirect if already authenticated as admin (only)
+  // Don't redirect staff or customers - they may want to switch to admin login
   useEffect(() => {
     if (is_authenticated && current_user) {
       if (current_user.role === 'admin') {
         navigate('/admin/dashboard', { replace: true });
-      } else if (current_user.role === 'staff' || current_user.role === 'manager') {
-        navigate('/staff/dashboard', { replace: true });
-      } else if (current_user.role === 'customer') {
-        navigate('/dashboard', { replace: true });
       }
+      // Don't redirect staff/customers - allow them to access admin login page
+      // This allows role switching and prevents redirect loops during logout/login transitions
     }
   }, [is_authenticated, current_user, navigate]);
 
@@ -265,6 +264,19 @@ const UV_AdminLogin: React.FC = () => {
           {/* Main Card */}
           <div className="bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden">
             <div className="px-8 py-10">
+              {/* Customer Account Notice */}
+              {is_authenticated && current_user && current_user.role === 'customer' && (
+                <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start">
+                  <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-blue-800">You are currently logged in as a customer</p>
+                    <p className="text-xs text-blue-600 mt-1">
+                      Please log out of your customer account before accessing the admin portal.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Error Message */}
               {authentication_error && (
                 <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-start">

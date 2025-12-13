@@ -2416,7 +2416,8 @@ app.post('/api/checkout/validate', authenticate_token, async (req, res) => {
   }
 });
 
-app.post('/api/checkout/create-order', authenticate_token, async (req, res) => {
+// Shared handler for order creation (used by both /api/checkout/create-order and /api/checkout/order)
+const handleCheckoutCreateOrder = async (req, res) => {
   try {
     const body = checkout_create_order_input_schema.parse(req.body);
     const cart = read_cart_sync(req.user.user_id);
@@ -2803,7 +2804,11 @@ app.post('/api/checkout/create-order', authenticate_token, async (req, res) => {
     console.error('create-order error', error);
     return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
   }
-});
+};
+
+app.post('/api/checkout/create-order', authenticate_token, handleCheckoutCreateOrder);
+// Alias for frontend compatibility
+app.post('/api/checkout/order', authenticate_token, handleCheckoutCreateOrder);
 
 /**
  * ORDERS

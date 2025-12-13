@@ -1025,6 +1025,22 @@ async function compute_cart_totals({ user_id, cart, order_type, delivery_address
     const menu_item = menu_map.get(cart_item.item_id);
     if (!menu_item || !menu_item.is_active) {
       validation_errors.push({ field: cart_item.item_id, error: 'ITEM_UNAVAILABLE', message: 'Item no longer available' });
+      // Still include the item in computed_items so frontend can display it
+      computed_items.push({
+        cart_item_id: cart_item.cart_item_id,
+        item_id: cart_item.item_id,
+        item_name: menu_item?.name || 'Unavailable Item',
+        image_url: menu_item?.image_url ?? null,
+        quantity: cart_item.quantity,
+        unit_price: 0,
+        selected_customizations: cart_item.selected_customizations || null,
+        line_total: 0,
+        stock_tracked: false,
+        current_stock: null,
+        low_stock_threshold: null,
+        category_id: menu_item?.category_id ?? null,
+        is_available: false,
+      });
       continue;
     }
     if (menu_item.stock_tracked && (menu_item.current_stock ?? 0) < cart_item.quantity) {
@@ -1071,6 +1087,7 @@ async function compute_cart_totals({ user_id, cart, order_type, delivery_address
       current_stock: menu_item.current_stock,
       low_stock_threshold: menu_item.low_stock_threshold,
       category_id: menu_item.category_id,
+      is_available: true,
     });
   }
 

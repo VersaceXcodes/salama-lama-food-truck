@@ -17,6 +17,7 @@ interface CartItem {
   unit_price: number;
   selected_customizations: Record<string, any> | null;
   line_total: number;
+  is_available?: boolean;
 }
 
 /* interface PricingSummary {
@@ -600,16 +601,30 @@ const UV_Cart: React.FC = () => {
                 const unitPrice = Number(item.unit_price || 0);
                 const lineTotal = Number(item.line_total || 0);
                 const isUpdating = itemLoadingStates[item.cart_item_id] || false;
+                const isAvailable = item.is_available !== false;
 
                 return (
                   <div
                     key={item.cart_item_id}
-                    className="bg-white rounded-xl shadow-md border border-gray-200 p-6 transition-all duration-200 hover:shadow-lg"
+                    className={`rounded-xl shadow-md border p-6 transition-all duration-200 hover:shadow-lg ${
+                      isAvailable 
+                        ? 'bg-white border-gray-200' 
+                        : 'bg-red-50 border-red-300 opacity-75'
+                    }`}
                   >
+                    {!isAvailable && (
+                      <div className="mb-3 flex items-start space-x-2 bg-red-100 border border-red-300 rounded-lg p-3">
+                        <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-red-900">Item No Longer Available</p>
+                          <p className="text-xs text-red-700 mt-1">Please remove this item to continue with checkout</p>
+                        </div>
+                      </div>
+                    )}
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         {/* Item Name */}
-                        <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                        <h3 className={`text-lg font-semibold mb-1 ${isAvailable ? 'text-gray-900' : 'text-gray-500 line-through'}`}>
                           {item.item_name}
                         </h3>
 
@@ -617,71 +632,89 @@ const UV_Cart: React.FC = () => {
                         {renderCustomizations(item.selected_customizations)}
 
                         {/* Unit Price */}
-                        <p className="mt-2 text-sm text-gray-500">
-                          €{unitPrice.toFixed(2)} each
-                        </p>
+                        {isAvailable && (
+                          <p className="mt-2 text-sm text-gray-500">
+                            €{unitPrice.toFixed(2)} each
+                          </p>
+                        )}
 
                         {/* Quantity Selector */}
-                        <div className="mt-4 flex items-center space-x-3">
-                          <button
-                            onClick={() => handleQuantityChange(item.cart_item_id, item.quantity - 1)}
-                            disabled={item.quantity <= 1 || isUpdating}
-                            className="w-10 h-10 rounded-lg border-2 border-gray-300 flex items-center justify-center text-gray-700 hover:bg-gray-50 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-                            aria-label="Decrease quantity"
-                          >
-                            {isUpdating ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Minus className="h-4 w-4" />
-                            )}
-                          </button>
+                        {isAvailable && (
+                          <div className="mt-4 flex items-center space-x-3">
+                            <button
+                              onClick={() => handleQuantityChange(item.cart_item_id, item.quantity - 1)}
+                              disabled={item.quantity <= 1 || isUpdating}
+                              className="w-10 h-10 rounded-lg border-2 border-gray-300 flex items-center justify-center text-gray-700 hover:bg-gray-50 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                              aria-label="Decrease quantity"
+                            >
+                              {isUpdating ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Minus className="h-4 w-4" />
+                              )}
+                            </button>
 
-                          <input
-                            type="number"
-                            min="1"
-                            value={item.quantity}
-                            onChange={(e) => {
-                              const newQuantity = parseInt(e.target.value, 10);
-                              if (!isNaN(newQuantity) && newQuantity > 0) {
-                                handleQuantityChange(item.cart_item_id, newQuantity);
-                              }
-                            }}
-                            disabled={isUpdating}
-                            className="w-16 h-10 text-center border-2 border-gray-300 rounded-lg font-medium text-gray-900 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 disabled:opacity-50"
-                            aria-label="Item quantity"
-                          />
+                            <input
+                              type="number"
+                              min="1"
+                              value={item.quantity}
+                              onChange={(e) => {
+                                const newQuantity = parseInt(e.target.value, 10);
+                                if (!isNaN(newQuantity) && newQuantity > 0) {
+                                  handleQuantityChange(item.cart_item_id, newQuantity);
+                                }
+                              }}
+                              disabled={isUpdating}
+                              className="w-16 h-10 text-center border-2 border-gray-300 rounded-lg font-medium text-gray-900 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 disabled:opacity-50"
+                              aria-label="Item quantity"
+                            />
 
-                          <button
-                            onClick={() => handleQuantityChange(item.cart_item_id, item.quantity + 1)}
-                            disabled={isUpdating}
-                            className="w-10 h-10 rounded-lg border-2 border-gray-300 flex items-center justify-center text-gray-700 hover:bg-gray-50 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-                            aria-label="Increase quantity"
-                          >
-                            {isUpdating ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Plus className="h-4 w-4" />
-                            )}
-                          </button>
-                        </div>
+                            <button
+                              onClick={() => handleQuantityChange(item.cart_item_id, item.quantity + 1)}
+                              disabled={isUpdating}
+                              className="w-10 h-10 rounded-lg border-2 border-gray-300 flex items-center justify-center text-gray-700 hover:bg-gray-50 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                              aria-label="Increase quantity"
+                            >
+                              {isUpdating ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Plus className="h-4 w-4" />
+                              )}
+                            </button>
+                          </div>
+                        )}
                       </div>
 
                       {/* Right Side: Line Total and Remove Button */}
                       <div className="ml-4 flex flex-col items-end space-y-3">
-                        <button
-                          onClick={() => handleRemoveItem(item.cart_item_id, item.item_name)}
-                          disabled={removeItemMutation.isPending}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-all duration-200 disabled:opacity-50"
-                          aria-label="Remove item"
-                        >
-                          <Trash2 className="h-5 w-5" />
-                        </button>
+                        {!isAvailable ? (
+                          <button
+                            onClick={() => handleRemoveItem(item.cart_item_id, item.item_name)}
+                            disabled={removeItemMutation.isPending}
+                            className="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-all duration-200 disabled:opacity-50 flex items-center space-x-2"
+                            aria-label="Remove unavailable item"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            <span>Remove</span>
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => handleRemoveItem(item.cart_item_id, item.item_name)}
+                              disabled={removeItemMutation.isPending}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-all duration-200 disabled:opacity-50"
+                              aria-label="Remove item"
+                            >
+                              <Trash2 className="h-5 w-5" />
+                            </button>
 
-                        <div className="text-right">
-                          <p className="text-xl font-bold text-gray-900">
-                            €{lineTotal.toFixed(2)}
-                          </p>
-                        </div>
+                            <div className="text-right">
+                              <p className="text-xl font-bold text-gray-900">
+                                €{lineTotal.toFixed(2)}
+                              </p>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>

@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '@/store/main';
 import axios from 'axios';
-import { ShoppingBag, Trash2, Minus, Plus, Tag, ArrowRight, AlertCircle, Loader2 } from 'lucide-react';
+import { ShoppingBag, Trash2, Minus, Plus, Tag, ArrowRight, AlertCircle, Loader2, X, CheckCircle } from 'lucide-react';
 
 // ===========================
 // Types & Interfaces
@@ -52,7 +52,19 @@ interface DiscountValidationResponse {
 
 interface CheckoutValidationResponse {
   valid: boolean;
-  errors?: Array<{ field: string; message: string }>;
+  errors?: Array<{ field: string; message: string; error?: string }>;
+}
+
+interface Notification {
+  type: 'success' | 'error' | 'info';
+  message: string;
+}
+
+interface ConfirmDialog {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  onConfirm: () => void;
 }
 
 // ===========================
@@ -70,8 +82,26 @@ const UV_Cart: React.FC = () => {
   const [discountCode, setDiscountCode] = useState('');
   const [discountError, setDiscountError] = useState<string | null>(null);
   const [itemLoadingStates, setItemLoadingStates] = useState<Record<string, boolean>>({});
+  const [notification, setNotification] = useState<Notification | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialog>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {}
+  });
+  const [validationErrors, setValidationErrors] = useState<Array<{ field: string; message: string; error?: string }>>([]);
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+
+  // Auto-dismiss notification after 5 seconds
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => {
+        setNotification(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
 
   // ===========================
   // React Query: Fetch Cart
@@ -117,7 +147,10 @@ const UV_Cart: React.FC = () => {
     },
     onError: (error: any) => {
       console.error('Failed to update item quantity:', error);
-      alert(error.response?.data?.message || 'Failed to update quantity. Please try again.');
+      setNotification({
+        type: 'error',
+        message: error.response?.data?.message || 'Failed to update quantity. Please try again.'
+      });
     },
     onSettled: (_data, _error, variables) => {
       setItemLoadingStates(prev => ({ ...prev, [variables.cart_item_id]: false }));
@@ -143,7 +176,10 @@ const UV_Cart: React.FC = () => {
     },
     onError: (error: any) => {
       console.error('Failed to remove item:', error);
-      alert(error.response?.data?.message || 'Failed to remove item. Please try again.');
+      setNotification({
+        type: 'error',
+        message: error.response?.data?.message || 'Failed to remove item. Please try again.'
+      });
     }
   });
 
@@ -195,12 +231,21 @@ const UV_Cart: React.FC = () => {
       if (data.valid) {
         navigate('/checkout/order-type');
       } else {
+        // Store validation errors to display them
+        setValidationErrors(data.errors || []);
+        // Also show a notification
         const errorMessage = data.errors?.map(e => e.message).join(', ') || 'Cart validation failed';
-        alert(errorMessage);
+        setNotification({
+          type: 'error',
+          message: 'Some items in your cart are no longer available. Please review and remove them.'
+        });
       }
     },
     onError: (error: any) => {
-      alert(error.response?.data?.message || 'Failed to validate cart. Please try again.');
+      setNotification({
+        type: 'error',
+        message: error.response?.data?.message || 'Failed to validate cart. Please try again.'
+      });
     }
   });
 
@@ -214,9 +259,15 @@ const UV_Cart: React.FC = () => {
   };
 
   const handleRemoveItem = (cart_item_id: string, item_name: string) => {
-    if (confirm(`Remove ${item_name} from cart?`)) {
-      removeItemMutation.mutate(cart_item_id);
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Remove Item',
+      message: `Remove ${item_name} from cart?`,
+      onConfirm: () => {
+        removeItemMutation.mutate(cart_item_id);
+        setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+      }
+    });
   };
 
   const handleApplyDiscount = () => {
@@ -281,6 +332,30 @@ const UV_Cart: React.FC = () => {
   if (isCartLoading) {
     return (
       <>
+        {/* Notification Toast */}
+        {notification && (
+          <div className="fixed top-4 right-4 z-50 max-w-md animate-slide-in-right">
+            <div className={`px-6 py-4 rounded-lg shadow-lg flex items-start space-x-3 ${
+              notification.type === 'success' 
+                ? 'bg-green-600 text-white' 
+                : notification.type === 'error'
+                ? 'bg-red-600 text-white'
+                : 'bg-blue-600 text-white'
+            }`}>
+              {notification.type === 'success' && <CheckCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />}
+              {notification.type === 'error' && <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />}
+              {notification.type === 'info' && <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />}
+              <p className="flex-1 font-medium">{notification.message}</p>
+              <button
+                onClick={() => setNotification(null)}
+                className="flex-shrink-0 hover:opacity-80 transition-opacity"
+                aria-label="Close notification"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        )}
         <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <Loader2 className="h-12 w-12 text-orange-600 animate-spin mx-auto mb-4" />
@@ -298,6 +373,30 @@ const UV_Cart: React.FC = () => {
   if (cartError) {
     return (
       <>
+        {/* Notification Toast */}
+        {notification && (
+          <div className="fixed top-4 right-4 z-50 max-w-md animate-slide-in-right">
+            <div className={`px-6 py-4 rounded-lg shadow-lg flex items-start space-x-3 ${
+              notification.type === 'success' 
+                ? 'bg-green-600 text-white' 
+                : notification.type === 'error'
+                ? 'bg-red-600 text-white'
+                : 'bg-blue-600 text-white'
+            }`}>
+              {notification.type === 'success' && <CheckCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />}
+              {notification.type === 'error' && <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />}
+              {notification.type === 'info' && <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />}
+              <p className="flex-1 font-medium">{notification.message}</p>
+              <button
+                onClick={() => setNotification(null)}
+                className="flex-shrink-0 hover:opacity-80 transition-opacity"
+                aria-label="Close notification"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        )}
         <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-md">
             <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
@@ -326,6 +425,30 @@ const UV_Cart: React.FC = () => {
   if (cartItems.length === 0) {
     return (
       <>
+        {/* Notification Toast */}
+        {notification && (
+          <div className="fixed top-4 right-4 z-50 max-w-md animate-slide-in-right">
+            <div className={`px-6 py-4 rounded-lg shadow-lg flex items-start space-x-3 ${
+              notification.type === 'success' 
+                ? 'bg-green-600 text-white' 
+                : notification.type === 'error'
+                ? 'bg-red-600 text-white'
+                : 'bg-blue-600 text-white'
+            }`}>
+              {notification.type === 'success' && <CheckCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />}
+              {notification.type === 'error' && <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />}
+              {notification.type === 'info' && <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />}
+              <p className="flex-1 font-medium">{notification.message}</p>
+              <button
+                onClick={() => setNotification(null)}
+                className="flex-shrink-0 hover:opacity-80 transition-opacity"
+                aria-label="Close notification"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        )}
         <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-md">
             <ShoppingBag className="h-24 w-24 text-gray-400 mx-auto mb-6" />
@@ -358,8 +481,108 @@ const UV_Cart: React.FC = () => {
   const total = Number(cartData?.total || 0);
   const hasDiscount = cartData?.discount_code && discountAmount > 0;
 
+  // Helper function to get item name from validation error field
+  const getItemNameFromField = (field: string) => {
+    const itemId = field.replace('item_', '');
+    const item = cartItems.find(item => item.item_id === itemId);
+    return item?.item_name || 'Unknown item';
+  };
+
   return (
     <>
+      {/* Notification Toast */}
+      {notification && (
+        <div className="fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg max-w-md animate-slide-in-right">
+          <div className={`flex items-start space-x-3 ${
+            notification.type === 'success' 
+              ? 'bg-green-600 text-white' 
+              : notification.type === 'error'
+              ? 'bg-red-600 text-white'
+              : 'bg-blue-600 text-white'
+          }`}>
+            {notification.type === 'success' && <CheckCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />}
+            {notification.type === 'error' && <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />}
+            {notification.type === 'info' && <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />}
+            <p className="flex-1 font-medium">{notification.message}</p>
+            <button
+              onClick={() => setNotification(null)}
+              className="flex-shrink-0 hover:opacity-80 transition-opacity"
+              aria-label="Close notification"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {confirmDialog.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-scale-in">
+            <h3 className="text-xl font-bold text-gray-900 mb-3">{confirmDialog.title}</h3>
+            <p className="text-gray-600 mb-6">{confirmDialog.message}</p>
+            <div className="flex space-x-3 justify-end">
+              <button
+                onClick={() => setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: () => {} })}
+                className="px-6 py-2.5 border-2 border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors duration-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDialog.onConfirm}
+                className="px-6 py-2.5 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors duration-200"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Validation Errors Banner */}
+      {validationErrors.length > 0 && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-40 max-w-2xl w-full mx-4">
+          <div className="bg-red-50 border-2 border-red-300 rounded-xl shadow-lg p-6">
+            <div className="flex items-start">
+              <AlertCircle className="h-6 w-6 text-red-600 flex-shrink-0 mt-0.5" />
+              <div className="ml-4 flex-1">
+                <h3 className="text-lg font-bold text-red-900 mb-2">Items Unavailable</h3>
+                <p className="text-sm text-red-800 mb-3">
+                  The following items in your cart are no longer available:
+                </p>
+                <ul className="space-y-2 mb-4">
+                  {validationErrors.map((error, index) => (
+                    <li key={index} className="flex items-start text-sm text-red-800">
+                      <span className="mr-2">•</span>
+                      <span>
+                        <strong>{getItemNameFromField(error.field)}</strong> - {error.message}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-sm text-red-800 mb-4">
+                  Please remove these items from your cart to continue with checkout.
+                </p>
+                <button
+                  onClick={() => setValidationErrors([])}
+                  className="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors duration-200"
+                >
+                  Got it
+                </button>
+              </div>
+              <button
+                onClick={() => setValidationErrors([])}
+                className="ml-4 text-red-600 hover:text-red-800 transition-colors"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    
       <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           {/* Page Header */}

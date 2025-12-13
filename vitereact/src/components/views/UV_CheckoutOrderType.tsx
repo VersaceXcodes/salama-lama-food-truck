@@ -146,9 +146,9 @@ const UV_CheckoutOrderType: React.FC = () => {
   // ===========================
 
   const validateAddressMutation = useMutation({
-    mutationFn: async (addressData: { address: string; postal_code: string }) => {
+    mutationFn: async (addressData: { address_id?: string; address?: string; postal_code?: string }) => {
       const response = await axios.post(
-        `${API_BASE_URL}/api/admin/delivery/validate-address`,
+        `${API_BASE_URL}/api/delivery/validate-address`,
         addressData,
         { headers: { Authorization: `Bearer ${authToken}` } }
       );
@@ -329,10 +329,9 @@ const UV_CheckoutOrderType: React.FC = () => {
     setDeliveryAddressId(address.address_id);
     setErrorMessage(null);
 
-    // Validate address
+    // Validate address using address_id for saved addresses
     validateAddressMutation.mutate({
-      address: address.address_line1,
-      postal_code: address.postal_code,
+      address_id: address.address_id,
     });
   };
 

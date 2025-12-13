@@ -2461,6 +2461,66 @@ app.post('/api/checkout/calculate', authenticate_token, async (req, res) => {
         return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
     }
 });
+// Validate delivery address (customer-facing endpoint for checkout)
+app.post('/api/delivery/validate-address', authenticate_token, async (req, res) => {
+    try {
+        const schema = z.object({
+            address_id: z.string().optional(),
+            address: z.string().min(1).optional(),
+            postal_code: z.string().min(1).optional(),
+        });
+        const { address_id, address, postal_code } = schema.parse(req.body);
+        let coords;
+        // If address_id is provided, use stored coordinates from database
+        if (address_id) {
+            const addr_res = await pool.query('SELECT latitude, longitude, address_line1, postal_code FROM addresses WHERE address_id = $1 AND user_id = $2', [address_id, req.user.user_id]);
+            if (addr_res.rows.length === 0) {
+                return res.status(404).json(createErrorResponse('Address not found', null, 'ADDRESS_NOT_FOUND', req.request_id));
+            }
+            const addr = addr_res.rows[0];
+            coords = {
+                latitude: Number(addr.latitude),
+                longitude: Number(addr.longitude),
+            };
+        }
+        else if (address && postal_code) {
+            // Geocode new address
+            coords = await geocode_address_mock({
+                address_line1: address,
+                city: 'Dublin',
+                postal_code: postal_code,
+            });
+        }
+        else {
+            return res.status(400).json(createErrorResponse('Either address_id or both address and postal_code must be provided', null, 'INVALID_INPUT', req.request_id));
+        }
+        // Find delivery zone for coordinates
+        const zone = await find_delivery_zone(coords.latitude, coords.longitude);
+        if (!zone) {
+            return ok(res, 200, {
+                valid: false,
+                message: "Delivery not available to this address",
+                delivery_fee: 0,
+                estimated_delivery_time: null,
+                zone_id: null,
+            });
+        }
+        return ok(res, 200, {
+            valid: true,
+            message: "Delivery available",
+            delivery_fee: zone.delivery_fee,
+            estimated_delivery_time: zone.estimated_delivery_time,
+            zone_id: zone.zone_id,
+            zone_name: zone.zone_name,
+        });
+    }
+    catch (error) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+        }
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
 // Shared handler for order creation (used by both /api/checkout/create-order and /api/checkout/order)
 const handleCheckoutCreateOrder = async (req, res) => {
     try {
@@ -5455,6 +5515,47 @@ app.delete('/api/admin/delivery/zones/:zoneId', authenticate_token, require_role
         return ok(res, 200, { message: 'Delivery zone deleted' });
     }
     catch (error) {
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+// Validate delivery address (accessible to customers during checkout)
+app.post('/api/admin/delivery/validate-address', authenticate_token, async (req, res) => {
+    try {
+        const schema = z.object({
+            address: z.string().min(1),
+            postal_code: z.string().min(1),
+        });
+        const { address, postal_code } = schema.parse(req.body);
+        // Use geocode function to get coordinates
+        const coords = await geocode_address_mock({
+            address_line1: address,
+            city: 'Dublin',
+            postal_code: postal_code,
+        });
+        // Find delivery zone for coordinates
+        const zone = await find_delivery_zone(coords.latitude, coords.longitude);
+        if (!zone) {
+            return ok(res, 200, {
+                valid: false,
+                message: "Delivery not available to this address",
+                delivery_fee: 0,
+                estimated_delivery_time: null,
+                zone_id: null,
+            });
+        }
+        return ok(res, 200, {
+            valid: true,
+            message: "Delivery available",
+            delivery_fee: zone.delivery_fee,
+            estimated_delivery_time: zone.estimated_delivery_time,
+            zone_id: zone.zone_id,
+            zone_name: zone.zone_name,
+        });
+    }
+    catch (error) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+        }
         return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
     }
 });

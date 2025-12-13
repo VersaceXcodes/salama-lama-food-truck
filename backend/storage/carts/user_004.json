@@ -1,0 +1,27 @@
+{
+  "items": [
+    {
+      "cart_item_id": "cart_VzpWW0vjHYYwXs3nqSSK",
+      "item_id": "item_8-1WsOpjwL4DmYnLvWHW",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-12T23:58:52.511Z"
+    },
+    {
+      "cart_item_id": "cart_uEStKSXV9k7oYMocxgWJ",
+      "item_id": "item_x9IKeDcJ1QCZqquElmvp",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-13T00:00:02.400Z"
+    },
+    {
+      "cart_item_id": "cart_YEL656QIG3aCGse7kljp",
+      "item_id": "item_8-1WsOpjwL4DmYnLvWHW",
+      "quantity": 1,
+      "selected_customizations": {},
+      "added_at": "2025-12-13T00:00:06.500Z"
+    }
+  ],
+  "discount_code": null,
+  "updated_at": "2025-12-13T00:00:06.500Z"
+}

@@ -240,6 +240,9 @@ const UV_CheckoutContact: React.FC = () => {
     // (In production, this might be stored in checkout state or backend)
     try {
       sessionStorage.setItem('checkout_contact_info', JSON.stringify(contactForm));
+      sessionStorage.setItem('checkout_customer_name', contactForm.customer_name);
+      sessionStorage.setItem('checkout_customer_email', contactForm.customer_email);
+      sessionStorage.setItem('checkout_customer_phone', contactForm.customer_phone);
       
       // Navigate to payment step
       navigate('/checkout/payment');

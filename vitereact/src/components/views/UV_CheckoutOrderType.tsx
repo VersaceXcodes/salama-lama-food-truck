@@ -398,8 +398,39 @@ const UV_CheckoutOrderType: React.FC = () => {
       updateCartFees(0, 0);
     }
 
-    // Navigate to contact info
-    navigate('/checkout/contact');
+    // Store order type data in sessionStorage for checkout flow
+    try {
+      sessionStorage.setItem('checkout_order_type', orderType);
+      
+      if (orderType === 'collection') {
+        sessionStorage.setItem('checkout_collection_time_slot', collectionTimeSlot || '');
+        sessionStorage.removeItem('checkout_delivery_address_id');
+        sessionStorage.removeItem('checkout_delivery_address_data');
+      } else if (orderType === 'delivery' && deliveryAddressId) {
+        sessionStorage.setItem('checkout_delivery_address_id', deliveryAddressId);
+        
+        // Find and store the full address data
+        const selectedAddress = savedAddresses.find(addr => addr.address_id === deliveryAddressId);
+        if (selectedAddress) {
+          sessionStorage.setItem('checkout_delivery_address_data', JSON.stringify({
+            label: selectedAddress.label,
+            address_line1: selectedAddress.address_line1,
+            address_line2: selectedAddress.address_line2 || '',
+            city: selectedAddress.city,
+            postal_code: selectedAddress.postal_code,
+            delivery_instructions: selectedAddress.delivery_instructions || '',
+          }));
+        }
+        
+        sessionStorage.removeItem('checkout_collection_time_slot');
+      }
+
+      // Navigate to contact info
+      navigate('/checkout/contact');
+    } catch (error) {
+      console.error('Error storing order type data:', error);
+      setErrorMessage('Failed to save order information. Please try again.');
+    }
   };
 
   // ===========================

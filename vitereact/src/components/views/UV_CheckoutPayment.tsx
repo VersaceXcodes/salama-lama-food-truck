@@ -303,10 +303,44 @@ const UV_CheckoutPayment: React.FC = () => {
       return;
     }
 
-    // In real app, payment method details would be stored in global checkout state
-    // For now, we'll just navigate to review page
-    // The actual payment processing happens on final order submission
-    navigate('/checkout/review');
+    // Store payment method details in sessionStorage for checkout flow
+    try {
+      if (paymentMethodType === 'cash') {
+        sessionStorage.setItem('checkout_payment_method_id', 'cash_at_pickup');
+        sessionStorage.setItem('checkout_payment_method_type', 'cash');
+        sessionStorage.setItem('checkout_last_four_digits', '');
+        sessionStorage.setItem('checkout_card_type', '');
+        sessionStorage.removeItem('checkout_cvv');
+      } else if (paymentMethodType === 'card') {
+        if (selectedPaymentMethodId && !showNewCardForm) {
+          // Using saved card
+          const selectedMethod = savedPaymentMethods.find(m => m.payment_method_id === selectedPaymentMethodId);
+          if (selectedMethod) {
+            sessionStorage.setItem('checkout_payment_method_id', selectedMethod.payment_method_id);
+            sessionStorage.setItem('checkout_payment_method_type', 'card');
+            sessionStorage.setItem('checkout_last_four_digits', selectedMethod.last_four_digits);
+            sessionStorage.setItem('checkout_card_type', selectedMethod.card_type);
+            sessionStorage.setItem('checkout_cvv', cvvInput);
+          }
+        } else if (showNewCardForm && newCardFormData.sumup_token) {
+          // Using new card
+          sessionStorage.setItem('checkout_payment_method_id', 'new_card_temp');
+          sessionStorage.setItem('checkout_payment_method_type', 'card');
+          sessionStorage.setItem('checkout_last_four_digits', newCardFormData.last_four_digits);
+          sessionStorage.setItem('checkout_card_type', newCardFormData.card_type);
+          sessionStorage.removeItem('checkout_cvv');
+        }
+      }
+
+      // Navigate to review page
+      navigate('/checkout/review');
+    } catch (error) {
+      console.error('Error storing payment method data:', error);
+      setPaymentValidationErrors([{
+        field: 'general',
+        message: 'Failed to save payment information. Please try again.'
+      }]);
+    }
   };
 
   const handleBackToContact = () => {

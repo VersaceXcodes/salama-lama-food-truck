@@ -154,7 +154,7 @@ const UV_Cart: React.FC = () => {
   const validateDiscountMutation = useMutation({
     mutationFn: async (payload: DiscountValidationRequest) => {
       const response = await axios.post<DiscountValidationResponse>(
-        `${API_BASE_URL}/api/discounts/validate`,
+        `${API_BASE_URL}/api/discount/validate`,
         payload,
         {
           headers: authToken ? { Authorization: `Bearer ${authToken}` } : {}

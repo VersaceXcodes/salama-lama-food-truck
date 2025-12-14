@@ -80,7 +80,8 @@ const fetchInvoiceDetail = async (invoice_id: string, auth_token: string): Promi
       },
     }
   );
-  return response.data;
+  // Backend returns { success: true, invoice: {...}, ... }
+  return response.data.invoice || response.data;
 };
 
 const updateInvoice = async (

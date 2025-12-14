@@ -3271,6 +3271,53 @@ app.post('/api/orders/:id/cancel', authenticate_token, async (req, res) => {
         return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
     }
 });
+// Customer download invoice for their order
+app.get('/api/orders/:id/invoice', authenticate_token, async (req, res) => {
+    try {
+        const identifier = req.params.id;
+        // Support both order_id (ord_xxx) and order_number (ORD-2024-0005)
+        const order_res = await pool.query('SELECT order_id, user_id, order_number, invoice_url FROM orders WHERE (order_id = $1 OR order_number = $1) AND user_id = $2', [identifier, req.user.user_id]);
+        if (order_res.rows.length === 0) {
+            return res.status(404).json(createErrorResponse('Order not found', null, 'NOT_FOUND', req.request_id));
+        }
+        const order = order_res.rows[0];
+        // Find the invoice for this order
+        const invoice_res = await pool.query('SELECT invoice_id, invoice_pdf_url FROM invoices WHERE order_id = $1', [order.order_id]);
+        if (invoice_res.rows.length === 0) {
+            return res.status(404).json(createErrorResponse('Invoice not found for this order', null, 'NOT_FOUND', req.request_id));
+        }
+        const invoice = invoice_res.rows[0];
+        let pdf_url = invoice.invoice_pdf_url;
+        // Generate PDF if not exists
+        if (!pdf_url) {
+            pdf_url = await generate_invoice_pdf({ invoice_id: invoice.invoice_id });
+        }
+        if (!pdf_url) {
+            return res.status(500).json(createErrorResponse('Unable to generate invoice', null, 'INVOICE_GENERATION_FAILED', req.request_id));
+        }
+        // If local storage, stream the file
+        if (pdf_url.startsWith('/storage/')) {
+            const file_path = path.join(storage_dir, pdf_url.replace('/storage/', ''));
+            if (!fs.existsSync(file_path)) {
+                // Attempt regeneration
+                const regenerated_url = await generate_invoice_pdf({ invoice_id: invoice.invoice_id });
+                if (regenerated_url && regenerated_url.startsWith('/storage/')) {
+                    const fp2 = path.join(storage_dir, regenerated_url.replace('/storage/', ''));
+                    if (fs.existsSync(fp2)) {
+                        return res.download(fp2);
+                    }
+                }
+                return res.status(404).json(createErrorResponse('Invoice file not found', null, 'NOT_FOUND', req.request_id));
+            }
+            return res.download(file_path);
+        }
+        // External URL - redirect
+        return res.redirect(pdf_url);
+    }
+    catch (error) {
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
 /**
  * PROFILE
  */
@@ -6313,6 +6360,90 @@ app.get('/api/admin/invoices/:id', authenticate_token, require_role(['admin']), 
         return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
     }
 });
+// Create custom invoice (alias for /generate)
+app.post('/api/admin/invoices', authenticate_token, require_role(['admin']), async (req, res) => {
+    try {
+        const extendedSchema = createInvoiceInputSchema.extend({
+            sumup_transaction_id: z.string().nullable().optional(),
+            paid_at: z.string().nullable().optional(),
+        });
+        const input = extendedSchema.parse({
+            ...req.body,
+            subtotal: Number(req.body?.subtotal),
+            discount_amount: req.body?.discount_amount === undefined ? 0 : Number(req.body.discount_amount),
+            delivery_fee: req.body?.delivery_fee === undefined || req.body?.delivery_fee === null ? null : Number(req.body.delivery_fee),
+            tax_amount: Number(req.body?.tax_amount),
+            grand_total: Number(req.body?.grand_total),
+            line_items: Array.isArray(req.body?.line_items) ? req.body.line_items.map((li) => ({
+                item: li.item,
+                quantity: Number(li.quantity),
+                unit_price: Number(li.unit_price),
+                total: Number(li.total),
+            })) : [],
+        });
+        const invoice_id = gen_id('inv');
+        const invoice_number = `INV-${String(Math.floor(Date.now() / 1000)).slice(-6)}-${nanoid(4).toUpperCase()}`;
+        const ts = now_iso();
+        // Default payment_status if not provided
+        const payment_status = input.payment_status || 'pending';
+        await pool.query(`INSERT INTO invoices (
+        invoice_id, invoice_number, order_id, catering_inquiry_id, user_id,
+        customer_name, customer_email, customer_phone, customer_address,
+        line_items, subtotal, discount_amount, delivery_fee, tax_amount, grand_total,
+        payment_status, payment_method, sumup_transaction_id, issue_date, due_date,
+        paid_at, invoice_pdf_url, notes, created_at, updated_at
+      ) VALUES (
+        $1,$2,$3,$4,$5,
+        $6,$7,$8,$9,
+        $10::jsonb,$11,$12,$13,$14,$15,
+        $16,$17,$18,$19,$20,
+        $21,NULL,$22,$23,$24
+      )`, [
+            invoice_id,
+            invoice_number,
+            input.order_id ?? null,
+            input.catering_inquiry_id ?? null,
+            input.user_id,
+            input.customer_name,
+            input.customer_email,
+            input.customer_phone,
+            input.customer_address ?? null,
+            JSON.stringify(input.line_items),
+            input.subtotal,
+            input.discount_amount,
+            input.delivery_fee ?? null,
+            input.tax_amount,
+            input.grand_total,
+            payment_status,
+            input.payment_method ?? null,
+            input.sumup_transaction_id ?? null,
+            input.issue_date,
+            input.due_date ?? null,
+            input.paid_at ?? null,
+            input.notes ?? null,
+            ts,
+            ts,
+        ]);
+        const pdf_url = await generate_invoice_pdf({ invoice_id });
+        // Log activity
+        await log_activity({
+            user_id: req.user.user_id,
+            action_type: 'create',
+            entity_type: 'invoice',
+            entity_id: invoice_id,
+            description: `Created custom invoice ${invoice_number}`,
+            changes: { invoice_id, invoice_number, customer_name: input.customer_name },
+            ip_address: req.ip,
+            user_agent: req.headers['user-agent'] || null,
+        });
+        return ok(res, 201, { invoice_id, invoice_number, invoice_pdf_url: pdf_url });
+    }
+    catch (error) {
+        if (error instanceof z.ZodError)
+            return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
 app.post('/api/admin/invoices/generate', authenticate_token, require_role(['admin']), async (req, res) => {
     try {
         const extendedSchema = createInvoiceInputSchema.extend({
@@ -6380,6 +6511,43 @@ app.post('/api/admin/invoices/generate', authenticate_token, require_role(['admi
     catch (error) {
         if (error instanceof z.ZodError)
             return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+// Send invoice via email
+app.post('/api/admin/invoices/:id/send', authenticate_token, require_role(['admin']), async (req, res) => {
+    try {
+        const invoice_id = req.params.id;
+        const invoice_res = await pool.query('SELECT * FROM invoices WHERE invoice_id = $1', [invoice_id]);
+        if (invoice_res.rows.length === 0) {
+            return res.status(404).json(createErrorResponse('Invoice not found', null, 'NOT_FOUND', req.request_id));
+        }
+        const invoice = invoice_res.rows[0];
+        // Generate PDF if not exists
+        let pdf_url = invoice.invoice_pdf_url;
+        if (!pdf_url) {
+            pdf_url = await generate_invoice_pdf({ invoice_id });
+        }
+        // Send email (mocked in dev environment)
+        await send_email_mock({
+            to: invoice.customer_email,
+            subject: `Invoice ${invoice.invoice_number} from Salama Lama Food Truck`,
+            body: `Dear ${invoice.customer_name},\n\nPlease find your invoice ${invoice.invoice_number} attached.\n\nAmount Due: €${Number(invoice.grand_total).toFixed(2)}\n\nThank you for your business!`,
+        });
+        // Log activity
+        await log_activity({
+            user_id: req.user.user_id,
+            action_type: 'send',
+            entity_type: 'invoice',
+            entity_id: invoice_id,
+            description: `Sent invoice ${invoice.invoice_number} to ${invoice.customer_email}`,
+            changes: { sent_at: now_iso() },
+            ip_address: req.ip,
+            user_agent: req.headers['user-agent'] || null,
+        });
+        return ok(res, 200, { message: 'Invoice sent successfully', invoice_pdf_url: pdf_url });
+    }
+    catch (error) {
         return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
     }
 });

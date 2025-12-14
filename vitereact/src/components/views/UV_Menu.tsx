@@ -531,15 +531,27 @@ const UV_Menu: React.FC = () => {
   // Lock body scroll when customization modal is open
   useEffect(() => {
     if (customizationModal.is_open) {
-      // Store original body overflow style
+      // Store original styles
       const originalOverflow = document.body.style.overflow;
       const originalPaddingRight = document.body.style.paddingRight;
+      const originalPosition = document.body.style.position;
+      const originalTop = document.body.style.top;
+      const originalWidth = document.body.style.width;
+      const originalTouchAction = document.body.style.touchAction;
+      
+      // Get current scroll position
+      const scrollY = window.scrollY;
       
       // Calculate scrollbar width to prevent layout shift
       const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
       
-      // Lock scroll
+      // Lock scroll with comprehensive approach
       document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.touchAction = 'none';
+      
       if (scrollbarWidth > 0) {
         document.body.style.paddingRight = `${scrollbarWidth}px`;
       }
@@ -548,6 +560,13 @@ const UV_Menu: React.FC = () => {
         // Restore original styles
         document.body.style.overflow = originalOverflow;
         document.body.style.paddingRight = originalPaddingRight;
+        document.body.style.position = originalPosition;
+        document.body.style.top = originalTop;
+        document.body.style.width = originalWidth;
+        document.body.style.touchAction = originalTouchAction;
+        
+        // Restore scroll position
+        window.scrollTo(0, scrollY);
       };
     }
   }, [customizationModal.is_open]);
@@ -1000,20 +1019,18 @@ const UV_Menu: React.FC = () => {
 
       {/* Customization Modal */}
       {customizationModal.is_open && customizationModal.item && (
-        <div 
-          className="fixed inset-0 z-50 overflow-y-auto"
-          onClick={handleCloseCustomizationModal}
-        >
-          {/* Backdrop */}
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          {/* Backdrop with explicit click handler */}
           <div 
-            className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+            className="fixed inset-0 bg-black bg-opacity-50 transition-opacity cursor-pointer"
+            onClick={handleCloseCustomizationModal}
             aria-hidden="true"
           />
           
           {/* Modal Container */}
-          <div className="flex min-h-full items-center justify-center p-4 relative z-10">
+          <div className="flex min-h-full items-center justify-center p-4">
             <div 
-              className="relative bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+              className="relative bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto z-10"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close Button */}

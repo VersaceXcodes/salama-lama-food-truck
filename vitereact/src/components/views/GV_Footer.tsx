@@ -11,18 +11,6 @@ const InstagramIcon: React.FC<{ className?: string }> = ({ className = "w-6 h-6"
   </svg>
 );
 
-const FacebookIcon: React.FC<{ className?: string }> = ({ className = "w-6 h-6" }) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-    <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clipRule="evenodd" />
-  </svg>
-);
-
-const TwitterIcon: React.FC<{ className?: string }> = ({ className = "w-6 h-6" }) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-    <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
-  </svg>
-);
-
 const TikTokIcon: React.FC<{ className?: string }> = ({ className = "w-6 h-6" }) => (
   <svg className={className} fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
     <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z" />
@@ -111,10 +99,8 @@ const GV_Footer: React.FC = () => {
 
   // Social media links (with fallback if not configured)
   const socialLinks = {
-    instagram: 'https://www.instagram.com/salamalama',
-    facebook: 'https://www.facebook.com/SalamaLamaFoodTruck',
-    twitter: 'https://twitter.com/SalamaLamaIE',
-    tiktok: 'https://www.tiktok.com/@salamalama',
+    instagram: 'https://www.instagram.com/salamalama369/#',
+    tiktok: 'https://www.tiktok.com/@salamalama369',
   };
 
   return (
@@ -184,24 +170,6 @@ const GV_Footer: React.FC = () => {
                   aria-label="Visit our Instagram"
                 >
                   <InstagramIcon className="w-6 h-6" />
-                </a>
-                <a
-                  href={socialLinks.facebook}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-white hover:opacity-75 transition-all duration-200"
-                  aria-label="Visit our Facebook"
-                >
-                  <FacebookIcon className="w-6 h-6" />
-                </a>
-                <a
-                  href={socialLinks.twitter}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-white hover:opacity-75 transition-all duration-200"
-                  aria-label="Visit our Twitter"
-                >
-                  <TwitterIcon className="w-6 h-6" />
                 </a>
                 <a
                   href={socialLinks.tiktok}

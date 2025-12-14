@@ -213,46 +213,79 @@ const UV_Landing: React.FC = () => {
   // ONE BIG RENDER BLOCK - CRITICAL REQUIREMENT
   return (
     <>
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-orange-50 via-white to-orange-50 overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=1920&q=80')] bg-cover bg-center opacity-10"></div>
-        
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
-          <div className="text-center">
-            {/* Service Availability Badge */}
-            {!business_loading && business_info && (
-              <div className="inline-flex items-center px-4 py-2 bg-white rounded-full shadow-lg mb-8">
-                <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-                <span className="text-sm font-medium text-gray-700">
-                  {business_info.delivery_enabled ? 'Collection & Delivery Available' : 'Collection Only'}
-                </span>
-              </div>
-            )}
+      {/* Hero Section - Super Modern Split Screen */}
+      <section className="relative bg-[#F2EFE9] overflow-hidden min-h-screen flex items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24 w-full">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            
+            {/* Left Side - Text Content on Cream Background */}
+            <div className="order-2 lg:order-1 bg-[#F2EFE9] py-12 lg:py-16">
+              {/* Service Availability Badge */}
+              {!business_loading && business_info && (
+                <div className="inline-flex items-center px-5 py-2 bg-[#2C1A16] rounded-full shadow-lg mb-8">
+                  <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
+                  <span className="text-sm font-medium text-[#F2EFE9]">
+                    {business_info.delivery_enabled ? 'Collection & Delivery Available' : 'Collection Only'}
+                  </span>
+                </div>
+              )}
 
-            {/* Main Heading */}
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-              Dublin's Favorite<br />
-              <span className="text-orange-600">Food Truck Experience</span>
-            </h1>
+              {/* Main Heading - Massive and Bold */}
+              <h1 className="text-6xl sm:text-7xl lg:text-[4.5rem] xl:text-[5rem] font-extrabold text-[#2C1A16] mb-6 leading-[1.1] tracking-tight" style={{ fontWeight: 800 }}>
+                Where Flavour<br />
+                Meets Passion
+              </h1>
 
-            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-              Fresh, delicious food made with love. Order now and taste the difference.
-            </p>
-
-            {/* Primary CTA */}
-            <Link
-              to="/menu"
-              className="inline-flex items-center px-8 py-4 bg-orange-600 text-white text-lg font-semibold rounded-lg shadow-lg hover:bg-orange-700 hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-            >
-              Order Now
-              <ChevronRight className="ml-2 w-5 h-5" />
-            </Link>
-
-            {currentUser && (
-              <p className="mt-4 text-sm text-gray-500">
-                Welcome back, {currentUser.first_name}! 👋
+              {/* Sub-headline */}
+              <p className="text-xl sm:text-2xl lg:text-3xl text-[#4A3B32] mb-10 leading-relaxed font-medium">
+                Authentic Subs. Custom Bowls. Made with Heart.
               </p>
-            )}
+
+              {/* Primary CTA - Pill Shape with Modern Hover */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link
+                  to="/menu"
+                  className="group inline-flex items-center justify-center px-10 py-5 bg-[#2C1A16] text-[#F2EFE9] text-lg font-bold rounded-[50px] shadow-xl hover:bg-[#F2EFE9] hover:text-[#2C1A16] border-4 border-[#2C1A16] transition-all duration-300 ease-in-out"
+                >
+                  Order Now
+                  <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+                </Link>
+                
+                <Link
+                  to="/about"
+                  className="group inline-flex items-center justify-center px-10 py-5 bg-transparent text-[#2C1A16] text-lg font-bold rounded-[50px] border-4 border-[#2C1A16] hover:bg-[#2C1A16] hover:text-[#F2EFE9] transition-all duration-300 ease-in-out"
+                >
+                  Our Story
+                  <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+                </Link>
+              </div>
+
+              {currentUser && (
+                <p className="mt-6 text-base text-[#4A3B32] font-medium">
+                  Welcome back, {currentUser.first_name}!
+                </p>
+              )}
+            </div>
+
+            {/* Right Side - Floating Food Image with Rounded Corners */}
+            <div className="order-1 lg:order-2 relative">
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl transform lg:translate-x-8 hover:scale-105 transition-transform duration-500">
+                <img
+                  src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&h=1000&fit=crop&q=90"
+                  alt="Delicious Food"
+                  className="w-full h-[500px] lg:h-[700px] object-cover"
+                />
+                {/* Subtle Overlay for Premium Look */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#2C1A16]/20 via-transparent to-transparent"></div>
+              </div>
+              
+              {/* Decorative Element - Optional floating badge */}
+              <div className="absolute -bottom-6 -left-6 bg-[#2C1A16] text-[#F2EFE9] px-8 py-4 rounded-2xl shadow-xl transform rotate-3 hover:rotate-0 transition-transform duration-300">
+                <p className="text-sm font-medium mb-1">Made Fresh Daily</p>
+                <p className="text-2xl font-extrabold">100% Quality</p>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>

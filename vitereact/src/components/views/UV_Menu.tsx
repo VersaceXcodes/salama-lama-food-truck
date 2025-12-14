@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppStore } from '@/store/main';
+import { useToast } from '@/hooks/use-toast';
 
 // ===========================
 // Type Definitions
@@ -114,6 +115,7 @@ const addItemToCart = async (data: {
 const UV_Menu: React.FC = () => {
   // URL Params
   const [searchParams, setSearchParams] = useSearchParams();
+  const { toast } = useToast();
 
   // Individual Zustand selectors (CRITICAL: No object destructuring)
   const authToken = useAppStore(state => state.authentication_state.auth_token);
@@ -147,7 +149,6 @@ const UV_Menu: React.FC = () => {
     total_price: 0,
     quantity: 1,
   });
-  const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
 
   // React Query: Fetch Categories
   const { data: categoriesData } = useQuery({
@@ -230,8 +231,10 @@ const UV_Menu: React.FC = () => {
       });
 
       // Show success notification
-      setNotification({ type: 'success', message: 'Item added to cart!' });
-      setTimeout(() => setNotification(null), 3000);
+      toast({
+        title: 'Success',
+        description: 'Item added to cart!'
+      });
     },
     onError: (error: any) => {
       // Clear loading state
@@ -239,14 +242,20 @@ const UV_Menu: React.FC = () => {
       
       // Check if it's an authentication error
       if (error.response?.status === 401) {
-        setNotification({ type: 'error', message: 'Please log in or register to add items to your cart.' });
+        toast({
+          variant: 'destructive',
+          title: 'Authentication Required',
+          description: 'Please log in or register to add items to your cart.'
+        });
         setTimeout(() => {
-          setNotification(null);
           window.location.href = '/login?redirect=/menu';
         }, 2000);
       } else {
-        setNotification({ type: 'error', message: error.response?.data?.message || 'Failed to add item to cart' });
-        setTimeout(() => setNotification(null), 3000);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: error.response?.data?.message || 'Failed to add item to cart'
+        });
       }
     },
   });
@@ -278,8 +287,10 @@ const UV_Menu: React.FC = () => {
               selected_customizations: pendingItem.selected_customizations,
             });
             // Show success notification
-            setNotification({ type: 'success', message: `${pendingItem.item_name} added to cart!` });
-            setTimeout(() => setNotification(null), 3000);
+            toast({
+              title: 'Success',
+              description: `${pendingItem.item_name} added to cart!`
+            });
           }
         } catch (error) {
           console.error('Failed to process pending cart item:', error);
@@ -429,8 +440,11 @@ const UV_Menu: React.FC = () => {
     
     for (const group of requiredGroups) {
       if (!selectedGroupIds.has(group.group_id)) {
-        setNotification({ type: 'error', message: `Please select an option for "${group.name}"` });
-        setTimeout(() => setNotification(null), 3000);
+        toast({
+          variant: 'destructive',
+          title: 'Validation Error',
+          description: `Please select an option for "${group.name}"`
+        });
         return;
       }
     }
@@ -438,8 +452,11 @@ const UV_Menu: React.FC = () => {
     // Check stock
     if (customizationModal.item.stock_tracked && customizationModal.item.current_stock !== null) {
       if (customizationModal.item.current_stock < customizationModal.quantity) {
-        setNotification({ type: 'error', message: 'Insufficient stock available' });
-        setTimeout(() => setNotification(null), 3000);
+        toast({
+          variant: 'destructive',
+          title: 'Stock Error',
+          description: 'Insufficient stock available'
+        });
         return;
       }
     }
@@ -494,8 +511,10 @@ const UV_Menu: React.FC = () => {
       });
 
       // Show success notification
-      setNotification({ type: 'success', message: 'Item added to cart!' });
-      setTimeout(() => setNotification(null), 3000);
+      toast({
+        title: 'Success',
+        description: 'Item added to cart!'
+      });
     }
   };
 
@@ -522,9 +541,11 @@ const UV_Menu: React.FC = () => {
         };
         addToCartAction(cartItem);
 
-        // Show success notification
-        setNotification({ type: 'success', message: 'Item added to cart!' });
-        setTimeout(() => setNotification(null), 3000);
+      // Show success notification
+      toast({
+        title: 'Success',
+        description: 'Item added to cart!'
+      });
       }
     } else {
       // Open customization modal (will handle auth check inside modal)
@@ -551,20 +572,6 @@ const UV_Menu: React.FC = () => {
 
   return (
     <>
-      {/* Notification Toast */}
-      {notification && (
-        <div className={`fixed top-20 right-4 z-[9999] px-6 py-4 rounded-lg shadow-2xl border-2 ${
-          notification.type === 'success' 
-            ? 'bg-green-600 text-white border-green-700' 
-            : 'bg-red-600 text-white border-red-700'
-        } animate-in slide-in-from-right duration-300`}>
-          <div className="flex items-center gap-3">
-            <span className="text-lg">{notification.type === 'success' ? '✓' : '✗'}</span>
-            <span className="font-medium">{notification.message}</span>
-          </div>
-        </div>
-      )}
-
       {/* Page Header */}
       <div className="bg-gradient-to-br from-orange-50 to-red-50 border-b border-orange-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

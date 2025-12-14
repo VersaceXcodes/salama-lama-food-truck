@@ -12,6 +12,7 @@ import GV_AdminSidebar from '@/components/views/GV_AdminSidebar';
 import GV_Footer from '@/components/views/GV_Footer';
 import GV_CookieConsent from '@/components/views/GV_CookieConsent';
 import GV_FloatingCart from '@/components/views/GV_FloatingCart';
+import { Toaster } from '@/components/ui/toaster';
 
 // Import Unique Views
 import UV_Landing from '@/components/views/UV_Landing';
@@ -587,6 +588,7 @@ const App: React.FC = () => {
     <QueryClientProvider client={queryClient}>
       <Router>
         <AppRoutes />
+        <Toaster />
       </Router>
     </QueryClientProvider>
   );

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '@/store/main';
+import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
 import { ShoppingBag, Trash2, Minus, Plus, Tag, ArrowRight, AlertCircle, Loader2, X, CheckCircle, ShoppingCart } from 'lucide-react';
 
@@ -56,11 +57,6 @@ interface CheckoutValidationResponse {
   errors?: Array<{ field: string; message: string; error?: string }>;
 }
 
-interface Notification {
-  type: 'success' | 'error' | 'info';
-  message: string;
-}
-
 interface ConfirmDialog {
   isOpen: boolean;
   title: string;
@@ -75,6 +71,7 @@ interface ConfirmDialog {
 const UV_Cart: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   
   // Global state (individual selectors to avoid infinite loops)
   const authToken = useAppStore(state => state.authentication_state.auth_token);
@@ -83,7 +80,6 @@ const UV_Cart: React.FC = () => {
   const [discountCode, setDiscountCode] = useState('');
   const [discountError, setDiscountError] = useState<string | null>(null);
   const [itemLoadingStates, setItemLoadingStates] = useState<Record<string, boolean>>({});
-  const [notification, setNotification] = useState<Notification | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<ConfirmDialog>({
     isOpen: false,
     title: '',
@@ -93,16 +89,6 @@ const UV_Cart: React.FC = () => {
   const [validationErrors, setValidationErrors] = useState<Array<{ field: string; message: string; error?: string }>>([]);
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
-
-  // Auto-dismiss notification after 5 seconds
-  useEffect(() => {
-    if (notification) {
-      const timer = setTimeout(() => {
-        setNotification(null);
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [notification]);
 
   // ===========================
   // React Query: Fetch Cart
@@ -148,9 +134,10 @@ const UV_Cart: React.FC = () => {
     },
     onError: (error: any) => {
       console.error('Failed to update item quantity:', error);
-      setNotification({
-        type: 'error',
-        message: error.response?.data?.message || 'Failed to update quantity. Please try again.'
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to update quantity. Please try again.'
       });
     },
     onSettled: (_data, _error, variables) => {
@@ -177,9 +164,10 @@ const UV_Cart: React.FC = () => {
     },
     onError: (error: any) => {
       console.error('Failed to remove item:', error);
-      setNotification({
-        type: 'error',
-        message: error.response?.data?.message || 'Failed to remove item. Please try again.'
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to remove item. Please try again.'
       });
     }
   });
@@ -200,16 +188,17 @@ const UV_Cart: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] });
-      setNotification({
-        type: 'success',
-        message: 'Cart cleared successfully'
+      toast({
+        title: 'Success',
+        description: 'Cart cleared successfully'
       });
     },
     onError: (error: any) => {
       console.error('Failed to clear cart:', error);
-      setNotification({
-        type: 'error',
-        message: error.response?.data?.message || 'Failed to clear cart. Please try again.'
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to clear cart. Please try again.'
       });
     }
   });
@@ -234,25 +223,27 @@ const UV_Cart: React.FC = () => {
         setDiscountError(null);
         setDiscountCode('');
         queryClient.invalidateQueries({ queryKey: ['cart'] });
-        setNotification({
-          type: 'success',
-          message: 'Discount code applied successfully!'
+        toast({
+          title: 'Success',
+          description: 'Discount code applied successfully!'
         });
       } else {
         const errorMessage = data.message || 'Invalid discount code';
         setDiscountError(errorMessage);
-        setNotification({
-          type: 'error',
-          message: errorMessage
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: errorMessage
         });
       }
     },
     onError: (error: any) => {
       const errorMessage = error.response?.data?.message || 'Failed to validate discount code';
       setDiscountError(errorMessage);
-      setNotification({
-        type: 'error',
-        message: errorMessage
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: errorMessage
       });
     }
   });
@@ -278,18 +269,19 @@ const UV_Cart: React.FC = () => {
       } else {
         // Store validation errors to display them
         setValidationErrors(data.errors || []);
-        // Also show a notification
-        const errorMessage = data.errors?.map(e => e.message).join(', ') || 'Cart validation failed';
-        setNotification({
-          type: 'error',
-          message: 'Some items in your cart are no longer available. Please review and remove them.'
+        // Also show a toast notification
+        toast({
+          variant: 'destructive',
+          title: 'Items Unavailable',
+          description: 'Some items in your cart are no longer available. Please review and remove them.'
         });
       }
     },
     onError: (error: any) => {
-      setNotification({
-        type: 'error',
-        message: error.response?.data?.message || 'Failed to validate cart. Please try again.'
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to validate cart. Please try again.'
       });
     }
   });
@@ -350,15 +342,16 @@ const UV_Cart: React.FC = () => {
       setDiscountCode('');
       setDiscountError(null);
       queryClient.invalidateQueries({ queryKey: ['cart'] });
-      setNotification({
-        type: 'success',
-        message: 'Discount removed successfully'
+      toast({
+        title: 'Success',
+        description: 'Discount removed successfully'
       });
     } catch (error: any) {
       console.error('Failed to remove discount:', error);
-      setNotification({
-        type: 'error',
-        message: error.response?.data?.message || 'Failed to remove discount'
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to remove discount'
       });
     }
   };
@@ -401,38 +394,12 @@ const UV_Cart: React.FC = () => {
 
   if (isCartLoading) {
     return (
-      <>
-        {/* Notification Toast */}
-        {notification && (
-          <div className="fixed top-4 right-4 z-50 max-w-md animate-slide-in-right">
-            <div className={`px-6 py-4 rounded-lg shadow-lg flex items-start space-x-3 ${
-              notification.type === 'success' 
-                ? 'bg-green-600 text-white' 
-                : notification.type === 'error'
-                ? 'bg-red-600 text-white'
-                : 'bg-blue-600 text-white'
-            }`}>
-              {notification.type === 'success' && <CheckCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />}
-              {notification.type === 'error' && <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />}
-              {notification.type === 'info' && <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />}
-              <p className="flex-1 font-medium">{notification.message}</p>
-              <button
-                onClick={() => setNotification(null)}
-                className="flex-shrink-0 hover:opacity-80 transition-opacity"
-                aria-label="Close notification"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
-        )}
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <Loader2 className="h-12 w-12 text-orange-600 animate-spin mx-auto mb-4" />
-            <p className="text-gray-600 font-medium">Loading your cart...</p>
-          </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 text-orange-600 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600 font-medium">Loading your cart...</p>
         </div>
-      </>
+      </div>
     );
   }
 
@@ -442,47 +409,21 @@ const UV_Cart: React.FC = () => {
 
   if (cartError) {
     return (
-      <>
-        {/* Notification Toast */}
-        {notification && (
-          <div className="fixed top-4 right-4 z-50 max-w-md animate-slide-in-right">
-            <div className={`px-6 py-4 rounded-lg shadow-lg flex items-start space-x-3 ${
-              notification.type === 'success' 
-                ? 'bg-green-600 text-white' 
-                : notification.type === 'error'
-                ? 'bg-red-600 text-white'
-                : 'bg-blue-600 text-white'
-            }`}>
-              {notification.type === 'success' && <CheckCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />}
-              {notification.type === 'error' && <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />}
-              {notification.type === 'info' && <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />}
-              <p className="flex-1 font-medium">{notification.message}</p>
-              <button
-                onClick={() => setNotification(null)}
-                className="flex-shrink-0 hover:opacity-80 transition-opacity"
-                aria-label="Close notification"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
-        )}
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-md">
-            <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Failed to Load Cart</h2>
-            <p className="text-gray-600 mb-6">
-              We couldn't load your cart. Please try again.
-            </p>
-            <button
-              onClick={() => refetchCart()}
-              className="px-6 py-3 bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-700 transition-colors duration-200"
-            >
-              Retry
-            </button>
-          </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="text-center max-w-md">
+          <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Failed to Load Cart</h2>
+          <p className="text-gray-600 mb-6">
+            We couldn't load your cart. Please try again.
+          </p>
+          <button
+            onClick={() => refetchCart()}
+            className="px-6 py-3 bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-700 transition-colors duration-200"
+          >
+            Retry
+          </button>
         </div>
-      </>
+      </div>
     );
   }
 
@@ -494,48 +435,22 @@ const UV_Cart: React.FC = () => {
 
   if (cartItems.length === 0) {
     return (
-      <>
-        {/* Notification Toast */}
-        {notification && (
-          <div className="fixed top-4 right-4 z-50 max-w-md animate-slide-in-right">
-            <div className={`px-6 py-4 rounded-lg shadow-lg flex items-start space-x-3 ${
-              notification.type === 'success' 
-                ? 'bg-green-600 text-white' 
-                : notification.type === 'error'
-                ? 'bg-red-600 text-white'
-                : 'bg-blue-600 text-white'
-            }`}>
-              {notification.type === 'success' && <CheckCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />}
-              {notification.type === 'error' && <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />}
-              {notification.type === 'info' && <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />}
-              <p className="flex-1 font-medium">{notification.message}</p>
-              <button
-                onClick={() => setNotification(null)}
-                className="flex-shrink-0 hover:opacity-80 transition-opacity"
-                aria-label="Close notification"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
-        )}
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-md">
-            <ShoppingBag className="h-24 w-24 text-gray-400 mx-auto mb-6" />
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Your Cart is Empty</h2>
-            <p className="text-gray-600 mb-8">
-              Add some delicious items from our menu to get started!
-            </p>
-            <Link
-              to="/menu"
-              className="inline-flex items-center px-6 py-3 bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-700 transition-colors duration-200 shadow-lg hover:shadow-xl"
-            >
-              Browse Menu
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Link>
-          </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="text-center max-w-md">
+          <ShoppingBag className="h-24 w-24 text-gray-400 mx-auto mb-6" />
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">Your Cart is Empty</h2>
+          <p className="text-gray-600 mb-8">
+            Add some delicious items from our menu to get started!
+          </p>
+          <Link
+            to="/menu"
+            className="inline-flex items-center px-6 py-3 bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-700 transition-colors duration-200 shadow-lg hover:shadow-xl"
+          >
+            Browse Menu
+            <ArrowRight className="ml-2 h-5 w-5" />
+          </Link>
         </div>
-      </>
+      </div>
     );
   }
 
@@ -560,31 +475,6 @@ const UV_Cart: React.FC = () => {
 
   return (
     <>
-      {/* Notification Toast */}
-      {notification && (
-        <div className="fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg max-w-md animate-slide-in-right">
-          <div className={`flex items-start space-x-3 ${
-            notification.type === 'success' 
-              ? 'bg-green-600 text-white' 
-              : notification.type === 'error'
-              ? 'bg-red-600 text-white'
-              : 'bg-blue-600 text-white'
-          }`}>
-            {notification.type === 'success' && <CheckCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />}
-            {notification.type === 'error' && <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />}
-            {notification.type === 'info' && <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />}
-            <p className="flex-1 font-medium">{notification.message}</p>
-            <button
-              onClick={() => setNotification(null)}
-              className="flex-shrink-0 hover:opacity-80 transition-opacity"
-              aria-label="Close notification"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Confirmation Modal */}
       {confirmDialog.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4">

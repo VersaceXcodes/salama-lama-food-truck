@@ -192,7 +192,7 @@ const GV_TopNav_Customer: React.FC = () => {
                 className="flex items-center group"
               >
                 <img 
-                  src="/logo-salama-lama.jpg" 
+                  src="/logo-salama-lama.png" 
                   alt="Salama Lama Logo" 
                   className="h-10 md:h-12 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
                   style={{ maxHeight: '40px' }}

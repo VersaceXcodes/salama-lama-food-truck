@@ -180,7 +180,7 @@ const GV_TopNav_Staff: React.FC = () => {
                 aria-label="Staff Dashboard Home"
               >
                 <img 
-                  src="./logo.png" 
+                  src="/logo-salama-lama.png" 
                   alt="Salama Lama Logo" 
                   height="50"
                   className="h-[45px] w-auto object-contain transition-transform duration-200 group-hover:scale-105"

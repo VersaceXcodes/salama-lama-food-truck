@@ -142,7 +142,7 @@ const GV_TopNav_Public: React.FC = () => {
                 aria-label="Salama Lama Home"
               >
                 <img 
-                  src="./logo.png" 
+                  src="/logo-salama-lama.png" 
                   alt="Salama Lama Logo" 
                   className="h-10 md:h-12 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
                   style={{ maxHeight: '40px', width: 'auto' }}

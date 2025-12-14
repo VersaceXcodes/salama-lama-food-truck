@@ -978,18 +978,18 @@ const UV_Menu: React.FC = () => {
       {customizationModal.is_open && customizationModal.item && (
         <div 
           className="fixed inset-0 z-50 overflow-y-auto"
-          onClick={handleCloseCustomizationModal}
         >
           {/* Backdrop */}
           <div 
             className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+            onClick={handleCloseCustomizationModal}
             aria-hidden="true"
           />
           
           {/* Modal Container */}
-          <div className="flex min-h-full items-center justify-center p-4">
+          <div className="flex min-h-full items-center justify-center p-4 relative z-10 pointer-events-none">
             <div 
-              className="relative bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto z-10"
+              className="relative bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto pointer-events-auto"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close Button */}

@@ -328,17 +328,20 @@ p {
    =================================== */
 
 @media (max-width: 768px) {
-	/* Force menu items to stack vertically (1 column) */
+	/* CRITICAL FIX #1: Force menu items to stack vertically - NO HORIZONTAL SCROLLING */
 	.grid[class*="grid-cols"],
 	.grid {
-		display: grid !important;
-		grid-template-columns: 1fr !important;
-		gap: 1rem !important; /* 16px gap between cards */
+		display: flex !important;
+		flex-direction: column !important;
+		gap: 1.5rem !important; /* 24px gap between cards */
 		width: 100% !important;
 		max-width: 100% !important;
+		overflow-x: hidden !important;
+		padding: 0 !important;
+		margin: 0 !important;
 	}
 
-	/* Product cards must be full width */
+	/* Product cards must be full width - NO SIDE SCROLLING */
 	.grid > div,
 	.grid > a,
 	.grid > *,
@@ -348,7 +351,11 @@ p {
 		width: 100% !important;
 		max-width: 100% !important;
 		min-width: 0 !important;
+		margin-right: 0 !important;
+		margin-left: 0 !important;
+		margin-bottom: 1.5rem !important; /* 24px */
 		box-sizing: border-box !important;
+		flex-shrink: 0 !important;
 	}
 }
 
@@ -437,7 +444,7 @@ p {
    =================================== */
 
 @media (max-width: 768px) {
-	/* Increase navbar height to 60px */
+	/* CRITICAL FIX #2: Navbar Container with Flexbox Layout */
 	nav[class*="fixed"],
 	header,
 	[role="navigation"] {
@@ -445,18 +452,25 @@ p {
 		min-height: 60px !important;
 	}
 
-	nav .flex,
-	nav > div > .flex {
+	/* Ensure navbar uses flex layout with proper alignment */
+	nav > div,
+	nav > div > div {
+		display: flex !important;
+		align-items: center !important;
+		justify-content: space-between !important;
 		height: 60px !important;
 	}
 
-	/* Logo - Center absolutely, 40px height */
+	/* CRITICAL FIX #2: Logo - Restrict Size to Prevent Overlay */
 	nav img,
 	nav [class*="logo"] img,
-	header img {
+	header img,
+	nav a img {
+		max-height: 40px !important;
 		height: 40px !important;
 		width: auto !important;
-		max-height: 40px !important;
+		object-fit: contain !important;
+		display: block !important;
 	}
 
 	/* Hamburger Menu & Cart Icons - 24px size, 16px from edges */
@@ -471,6 +485,7 @@ p {
 		min-width: 48px !important;
 		min-height: 48px !important;
 		padding: 12px !important;
+		flex-shrink: 0 !important;
 	}
 
 	nav button svg,
@@ -541,13 +556,15 @@ p {
 	div[style*="grid-template-columns"],
 	div.grid[style],
 	[class*="grid"][style] {
-		grid-template-columns: 1fr !important;
+		display: flex !important;
+		flex-direction: column !important;
 	}
 
 	/* Prevent auto-fill from creating multiple columns */
 	.grid[class*="lg:grid-cols"],
 	.grid[class*="xl:grid-cols"] {
-		grid-template-columns: 1fr !important;
+		display: flex !important;
+		flex-direction: column !important;
 	}
 
 	/* Prevent images from breaking layout */
@@ -593,5 +610,34 @@ p {
 	form a[class*="bg-"] {
 		width: 100% !important;
 		min-height: 48px !important;
+	}
+
+	/* CRITICAL FIX #3: Sticky Footer Safe Area - Prevent Overlap */
+	body,
+	#root,
+	main {
+		padding-bottom: 100px !important;
+	}
+
+	/* Ensure content area has breathing room from sticky cart */
+	.max-w-7xl,
+	main > div,
+	section {
+		padding-bottom: 100px !important;
+	}
+
+	/* CRITICAL FIX #4: Visual Polish - Side Padding */
+	.max-w-7xl,
+	main,
+	section {
+		padding-left: 16px !important;
+		padding-right: 16px !important;
+	}
+
+	/* Ensure all content respects the 16px safe zone */
+	.container,
+	[class*="max-w-"] {
+		padding-left: 16px !important;
+		padding-right: 16px !important;
 	}
 }

@@ -204,10 +204,12 @@ const GV_TopNav_Admin: React.FC = () => {
                 className="flex items-center space-x-3 group"
               >
                 <img 
-                  src="/logo-salama-lama.jpg" 
+                  src="./logo.png" 
                   alt="Salama Lama Logo" 
+                  height="50"
                   className="h-[45px] w-auto object-contain transition-transform duration-200 group-hover:scale-105"
-                  style={{ maxHeight: '45px' }}
+                  style={{ height: '50px', width: 'auto' }}
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                 />
                 <div className="flex flex-col">
                   <span className="text-xs text-gray-600 leading-none">Admin Panel</span>

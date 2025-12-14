@@ -180,10 +180,12 @@ const GV_TopNav_Staff: React.FC = () => {
                 aria-label="Staff Dashboard Home"
               >
                 <img 
-                  src="/logo-salama-lama.jpg" 
+                  src="./logo.png" 
                   alt="Salama Lama Logo" 
+                  height="50"
                   className="h-[45px] w-auto object-contain transition-transform duration-200 group-hover:scale-105"
-                  style={{ maxHeight: '45px', filter: 'brightness(0) invert(1)' }}
+                  style={{ height: '50px', width: 'auto', filter: 'brightness(0) invert(1)' }}
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                 />
                 <span className="hidden sm:inline text-white font-bold text-lg">Staff</span>
               </Link>

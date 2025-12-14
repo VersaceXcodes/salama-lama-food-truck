@@ -141,10 +141,12 @@ const GV_TopNav_Public: React.FC = () => {
                 aria-label="Salama Lama Home"
               >
                 <img 
-                  src="/logo-salama-lama.jpg" 
+                  src="./logo.png" 
                   alt="Salama Lama Logo" 
+                  height="50"
                   className="h-[45px] md:h-[45px] w-auto object-contain transition-transform duration-200 group-hover:scale-105"
-                  style={{ maxHeight: '45px' }}
+                  style={{ height: '50px', width: 'auto' }}
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                 />
               </Link>
             </div>
@@ -342,19 +344,21 @@ const GV_TopNav_Public: React.FC = () => {
         /* Mobile-specific logo styling */
         @media (max-width: 768px) {
           nav img[alt="Salama Lama Logo"] {
-            height: 35px !important;
-            max-height: 35px !important;
+            height: 50px !important;
           }
           
           /* Center logo on mobile */
-          nav .flex.items-center.justify-between {
-            position: relative;
-          }
-          
-          nav .flex-shrink-0 {
+          nav .flex.items-center.justify-between > div.flex-shrink-0:first-child {
             position: absolute;
             left: 50%;
             transform: translateX(-50%);
+            z-index: 10;
+          }
+          
+          /* Ensure hamburger menu stays on right */
+          nav .flex.items-center.justify-between > div:last-child {
+            margin-left: auto;
+            z-index: 20;
           }
         }
       `}</style>

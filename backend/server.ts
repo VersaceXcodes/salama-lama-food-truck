@@ -7799,6 +7799,259 @@ app.put('/api/admin/settings', authenticate_token, require_role(['admin']), asyn
   }
 });
 
+// Update business info settings
+app.put('/api/admin/settings/business', authenticate_token, require_role(['admin']), async (req, res) => {
+  try {
+    const schema = z.object({
+      name: z.string().min(1).optional(),
+      phone: z.string().min(1).optional(),
+      email: z.string().email().optional(),
+      address: z.union([z.string(), z.object({
+        line1: z.string(),
+        line2: z.string().nullable().optional(),
+        city: z.string(),
+        postal_code: z.string(),
+      })]).optional(),
+      logo_url: z.string().url().nullable().optional(),
+    });
+    const data = schema.parse(req.body);
+
+    await with_client(async (client) => {
+      await client.query('BEGIN');
+      
+      if (data.name !== undefined) {
+        await upsert_setting(client, {
+          setting_key: 'store_name',
+          setting_value: data.name,
+          setting_type: 'string',
+          updated_by_user_id: req.user.user_id,
+        });
+      }
+      
+      if (data.phone !== undefined) {
+        await upsert_setting(client, {
+          setting_key: 'store_phone',
+          setting_value: data.phone,
+          setting_type: 'string',
+          updated_by_user_id: req.user.user_id,
+        });
+      }
+      
+      if (data.email !== undefined) {
+        await upsert_setting(client, {
+          setting_key: 'store_email',
+          setting_value: data.email,
+          setting_type: 'string',
+          updated_by_user_id: req.user.user_id,
+        });
+      }
+      
+      if (data.address !== undefined) {
+        await upsert_setting(client, {
+          setting_key: 'store_address',
+          setting_value: data.address,
+          setting_type: 'json',
+          updated_by_user_id: req.user.user_id,
+        });
+      }
+      
+      if (data.logo_url !== undefined) {
+        await upsert_setting(client, {
+          setting_key: 'store_logo_url',
+          setting_value: data.logo_url,
+          setting_type: 'string',
+          updated_by_user_id: req.user.user_id,
+        });
+      }
+      
+      await client.query('COMMIT');
+      
+      await log_activity({
+        user_id: req.user.user_id,
+        action_type: 'update',
+        entity_type: 'settings',
+        entity_id: 'business_info',
+        description: 'Updated business information settings',
+        changes: data,
+        ip_address: req.ip,
+        user_agent: req.headers['user-agent'],
+      });
+    });
+
+    return ok(res, 200, { message: 'Business information updated successfully' });
+  } catch (error) {
+    if (error instanceof z.ZodError) return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+  }
+});
+
+// Update operating hours settings
+app.put('/api/admin/settings/operating-hours', authenticate_token, require_role(['admin']), async (req, res) => {
+  try {
+    const schema = z.object({
+      weekly_schedule: z.object({
+        monday: z.object({ open: z.string(), close: z.string(), closed: z.boolean() }),
+        tuesday: z.object({ open: z.string(), close: z.string(), closed: z.boolean() }),
+        wednesday: z.object({ open: z.string(), close: z.string(), closed: z.boolean() }),
+        thursday: z.object({ open: z.string(), close: z.string(), closed: z.boolean() }),
+        friday: z.object({ open: z.string(), close: z.string(), closed: z.boolean() }),
+        saturday: z.object({ open: z.string(), close: z.string(), closed: z.boolean() }),
+        sunday: z.object({ open: z.string(), close: z.string(), closed: z.boolean() }),
+      }).optional(),
+      special_hours: z.array(z.object({
+        date: z.string(),
+        status: z.enum(['closed', 'custom']),
+        custom_hours: z.object({
+          open: z.string(),
+          close: z.string(),
+        }).nullable(),
+      })).optional(),
+    });
+    const data = schema.parse(req.body);
+
+    await with_client(async (client) => {
+      await client.query('BEGIN');
+      
+      if (data.weekly_schedule !== undefined) {
+        await upsert_setting(client, {
+          setting_key: 'store_hours',
+          setting_value: data.weekly_schedule,
+          setting_type: 'json',
+          updated_by_user_id: req.user.user_id,
+        });
+      }
+      
+      if (data.special_hours !== undefined) {
+        await upsert_setting(client, {
+          setting_key: 'special_hours',
+          setting_value: data.special_hours,
+          setting_type: 'json',
+          updated_by_user_id: req.user.user_id,
+        });
+      }
+      
+      await client.query('COMMIT');
+      
+      await log_activity({
+        user_id: req.user.user_id,
+        action_type: 'update',
+        entity_type: 'settings',
+        entity_id: 'operating_hours',
+        description: 'Updated operating hours settings',
+        changes: data,
+        ip_address: req.ip,
+        user_agent: req.headers['user-agent'],
+      });
+    });
+
+    return ok(res, 200, { message: 'Operating hours updated successfully' });
+  } catch (error) {
+    if (error instanceof z.ZodError) return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+  }
+});
+
+// Update loyalty settings
+app.put('/api/admin/settings/loyalty', authenticate_token, require_role(['admin']), async (req, res) => {
+  try {
+    const schema = z.object({
+      earning_rate: z.number().nonnegative().optional(),
+      points_expiry_enabled: z.boolean().optional(),
+      points_expiry_months: z.number().int().positive().optional(),
+      referral_enabled: z.boolean().optional(),
+      referrer_reward_points: z.number().int().nonnegative().optional(),
+      referee_reward_points: z.number().int().nonnegative().optional(),
+      gamification_enabled: z.boolean().optional(),
+    });
+    const data = schema.parse(req.body);
+
+    await with_client(async (client) => {
+      await client.query('BEGIN');
+      
+      if (data.earning_rate !== undefined) {
+        await upsert_setting(client, {
+          setting_key: 'loyalty_earning_rate',
+          setting_value: data.earning_rate,
+          setting_type: 'number',
+          updated_by_user_id: req.user.user_id,
+        });
+      }
+      
+      if (data.points_expiry_enabled !== undefined) {
+        await upsert_setting(client, {
+          setting_key: 'loyalty_points_expiry_enabled',
+          setting_value: data.points_expiry_enabled,
+          setting_type: 'boolean',
+          updated_by_user_id: req.user.user_id,
+        });
+      }
+      
+      if (data.points_expiry_months !== undefined) {
+        await upsert_setting(client, {
+          setting_key: 'loyalty_points_expiry_months',
+          setting_value: data.points_expiry_months,
+          setting_type: 'number',
+          updated_by_user_id: req.user.user_id,
+        });
+      }
+      
+      if (data.referral_enabled !== undefined) {
+        await upsert_setting(client, {
+          setting_key: 'loyalty_referral_enabled',
+          setting_value: data.referral_enabled,
+          setting_type: 'boolean',
+          updated_by_user_id: req.user.user_id,
+        });
+      }
+      
+      if (data.referrer_reward_points !== undefined) {
+        await upsert_setting(client, {
+          setting_key: 'loyalty_referrer_reward_points',
+          setting_value: data.referrer_reward_points,
+          setting_type: 'number',
+          updated_by_user_id: req.user.user_id,
+        });
+      }
+      
+      if (data.referee_reward_points !== undefined) {
+        await upsert_setting(client, {
+          setting_key: 'loyalty_referee_reward_points',
+          setting_value: data.referee_reward_points,
+          setting_type: 'number',
+          updated_by_user_id: req.user.user_id,
+        });
+      }
+      
+      if (data.gamification_enabled !== undefined) {
+        await upsert_setting(client, {
+          setting_key: 'loyalty_gamification_enabled',
+          setting_value: data.gamification_enabled,
+          setting_type: 'boolean',
+          updated_by_user_id: req.user.user_id,
+        });
+      }
+      
+      await client.query('COMMIT');
+      
+      await log_activity({
+        user_id: req.user.user_id,
+        action_type: 'update',
+        entity_type: 'settings',
+        entity_id: 'loyalty_settings',
+        description: 'Updated loyalty program settings',
+        changes: data,
+        ip_address: req.ip,
+        user_agent: req.headers['user-agent'],
+      });
+    });
+
+    return ok(res, 200, { message: 'Loyalty settings updated successfully' });
+  } catch (error) {
+    if (error instanceof z.ZodError) return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+  }
+});
+
 // Get activity logs (admin only)
 app.get('/api/admin/activity-logs', authenticate_token, require_role(['admin']), async (req, res) => {
   try {

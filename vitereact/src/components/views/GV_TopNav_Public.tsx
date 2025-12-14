@@ -231,7 +231,7 @@ const GV_TopNav_Public: React.FC = () => {
           />
           
           {/* Mobile Menu Panel */}
-          <div className="fixed top-16 right-0 bottom-0 w-full max-w-sm bg-white z-50 md:hidden shadow-2xl overflow-y-auto animate-slide-in-right">
+          <div className="fixed top-16 right-0 bottom-0 w-full max-w-sm z-50 md:hidden shadow-2xl overflow-y-auto animate-slide-in-right" style={{ backgroundColor: 'var(--primary-bg)' }}>
             <div className="px-4 py-6 space-y-6">
               
               {/* Mobile Navigation Links */}
@@ -243,9 +243,13 @@ const GV_TopNav_Public: React.FC = () => {
                     onClick={closeMobileMenu}
                     className={`flex items-center justify-between px-4 py-3 rounded-lg text-base font-medium transition-all duration-200 ${
                       isActivePath(link.path)
-                        ? 'bg-orange-50 text-orange-600'
-                        : 'text-gray-700 hover:bg-gray-50 hover:text-orange-600'
+                        ? 'hover:bg-gray-50'
+                        : 'hover:bg-gray-50'
                     }`}
+                    style={isActivePath(link.path) 
+                      ? { backgroundColor: 'rgba(212, 197, 176, 0.3)', color: 'var(--primary-text)' }
+                      : { color: 'var(--primary-text)' }
+                    }
                   >
                     <span>{link.label}</span>
                     <ChevronRight className="h-5 w-5" />
@@ -261,7 +265,12 @@ const GV_TopNav_Public: React.FC = () => {
                 <Link
                   to="/login"
                   onClick={closeMobileMenu}
-                  className="flex items-center justify-center w-full px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 hover:border-orange-600 hover:text-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-200"
+                  className="flex items-center justify-center w-full px-6 py-3 border text-base font-medium rounded-lg bg-white focus:outline-none focus:ring-2 transition-all duration-200"
+                  style={{ 
+                    borderColor: 'var(--accent-color)',
+                    color: 'var(--primary-text)',
+                    minHeight: '48px'
+                  }}
                 >
                   Log In
                 </Link>
@@ -269,7 +278,12 @@ const GV_TopNav_Public: React.FC = () => {
                 <Link
                   to="/signup"
                   onClick={closeMobileMenu}
-                  className="flex items-center justify-center w-full px-6 py-3 border border-transparent text-base font-semibold rounded-lg text-white bg-orange-600 hover:bg-orange-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-200"
+                  className="flex items-center justify-center w-full px-6 py-3 border border-transparent text-base font-semibold rounded-lg hover:shadow-lg focus:outline-none focus:ring-2 transition-all duration-200"
+                  style={{ 
+                    backgroundColor: 'var(--btn-bg)',
+                    color: 'var(--btn-text)',
+                    minHeight: '48px'
+                  }}
                 >
                   Sign Up
                 </Link>

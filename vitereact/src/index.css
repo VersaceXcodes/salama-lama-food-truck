@@ -53,7 +53,14 @@
 	:root {
 		--radius: 0.5rem;
 		
-		/* Brand Colors */
+		/* Global Theme Variables - Dark Coffee & Cream */
+		--primary-bg: #F2EFE9;
+		--primary-text: #2C1A16;
+		--btn-bg: #2C1A16;
+		--btn-text: #F2EFE9;
+		--accent-color: #D4C5B0;
+		
+		/* Brand Colors (Legacy - kept for compatibility) */
 		--salamalama-com-color-1: #2C2018;
 		--salamalama-com-color-2: #DEBF93;
 		--salamalama-com-color-3: #80604A;
@@ -61,6 +68,82 @@
 		--salamalama-com-color-5: #CD3A1D;
 		--salamalama-com-color-6: #85878E;
 	}
+}
+
+/* ===================================
+   GLOBAL THEME OVERRIDES
+   Apply Dark Coffee & Cream theme to all pages
+   =================================== */
+
+/* Page backgrounds default to cream */
+body {
+	background-color: var(--primary-bg);
+}
+
+/* Mobile-First Button Styling */
+button[class*="bg-orange"],
+button[class*="bg-red"],
+a[class*="bg-orange"],
+a[class*="bg-red"] {
+	background-color: var(--btn-bg) !important;
+	color: var(--btn-text) !important;
+	border-color: var(--btn-bg) !important;
+}
+
+button[class*="bg-orange"]:hover,
+button[class*="bg-red"]:hover,
+a[class*="bg-orange"]:hover,
+a[class*="bg-red"]:hover {
+	background-color: var(--primary-text) !important;
+	opacity: 0.9;
+}
+
+/* Mobile: Full-width buttons with 48px min-height */
+@media (max-width: 768px) {
+	button[class*="bg-orange"],
+	button[class*="bg-red"],
+	a[class*="bg-orange"],
+	a[class*="bg-red"],
+	.add-to-cart-btn,
+	.order-btn,
+	.checkout-btn {
+		width: 100% !important;
+		min-height: 48px !important;
+		display: flex !important;
+		align-items: center !important;
+		justify-content: center !important;
+	}
+}
+
+/* Text colors */
+[class*="text-orange-600"],
+[class*="text-red-600"] {
+	color: var(--primary-text) !important;
+}
+
+/* Border colors */
+[class*="border-orange"],
+[class*="border-red"] {
+	border-color: var(--accent-color) !important;
+}
+
+/* Background colors for headers and sections */
+[class*="bg-orange-50"],
+[class*="bg-red-50"],
+.bg-gradient-to-br {
+	background: var(--primary-bg) !important;
+}
+
+/* Focus states */
+[class*="focus:ring-orange"],
+[class*="focus:ring-red"] {
+	--tw-ring-color: var(--accent-color) !important;
+}
+
+[class*="focus:border-orange"],
+[class*="focus:border-red"] {
+	--tw-ring-offset-color: var(--accent-color) !important;
+	border-color: var(--primary-text) !important;
 }
 
 /* Custom animations for notifications and modals */

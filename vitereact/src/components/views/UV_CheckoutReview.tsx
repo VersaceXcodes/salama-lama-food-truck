@@ -468,10 +468,10 @@ const UV_CheckoutReview: React.FC = () => {
   if (is_loading_cart) {
     return (
       <>
-        <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 py-8 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
+        <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8 flex items-center justify-center" style={{ backgroundColor: 'var(--primary-bg)' }}>
           <div className="text-center">
-            <Loader2 className="h-12 w-12 text-orange-600 animate-spin mx-auto mb-4" />
-            <p className="text-gray-600 font-medium">Loading your order details...</p>
+            <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4" style={{ color: 'var(--primary-text)' }} />
+            <p className="font-medium" style={{ color: '#4A3B32' }}>Loading your order details...</p>
           </div>
         </div>
       </>
@@ -482,16 +482,21 @@ const UV_CheckoutReview: React.FC = () => {
   if (!is_loading_cart && cart_items.length === 0) {
     return (
       <>
-        <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 py-8 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
+        <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8 flex items-center justify-center" style={{ backgroundColor: 'var(--primary-bg)' }}>
           <div className="text-center max-w-md">
             <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Cart is Empty</h2>
-            <p className="text-gray-600 mb-6">
+            <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--primary-text)' }}>Cart is Empty</h2>
+            <p className="mb-6" style={{ color: '#4A3B32' }}>
               Your cart is empty. Please add items before proceeding to checkout.
             </p>
             <button
               onClick={() => navigate('/menu')}
-              className="px-6 py-3 bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-700 transition-colors duration-200"
+              className="px-6 py-3 font-medium rounded-lg transition-colors duration-200"
+              style={{ 
+                backgroundColor: 'var(--btn-bg)', 
+                color: 'var(--btn-text)',
+                minHeight: '48px'
+              }}
             >
               Browse Menu
             </button>
@@ -507,23 +512,23 @@ const UV_CheckoutReview: React.FC = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8" style={{ backgroundColor: 'var(--primary-bg)' }}>
         <div className="max-w-4xl mx-auto">
           {/* Progress Indicator */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">Checkout Progress</span>
-              <span className="text-sm font-medium text-orange-600">Step 4 of 4</span>
+              <span className="text-sm font-medium" style={{ color: '#4A3B32' }}>Checkout Progress</span>
+              <span className="text-sm font-medium" style={{ color: 'var(--primary-text)' }}>Step 4 of 4</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div className="bg-orange-600 h-2 rounded-full transition-all duration-300" style={{ width: '100%' }}></div>
+            <div className="w-full rounded-full h-2" style={{ backgroundColor: 'var(--accent-color)' }}>
+              <div className="h-2 rounded-full transition-all duration-300" style={{ width: '100%', backgroundColor: 'var(--primary-text)' }}></div>
             </div>
           </div>
 
           {/* Page Header */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">Review Your Order</h1>
-            <p className="text-gray-600">Please review your order details before completing your purchase</p>
+            <h1 className="text-3xl lg:text-4xl font-bold mb-2" style={{ color: 'var(--primary-text)' }}>Review Your Order</h1>
+            <p style={{ color: '#4A3B32' }}>Please review your order details before completing your purchase</p>
           </div>
 
           {/* Error Alert */}
@@ -791,7 +796,12 @@ const UV_CheckoutReview: React.FC = () => {
                 <button
                   onClick={handle_place_order}
                   disabled={!terms_and_conditions_accepted || is_loading || is_calculating_totals}
-                  className="w-full mt-6 bg-orange-600 text-white px-6 py-4 rounded-lg font-semibold text-lg hover:bg-orange-700 focus:outline-none focus:ring-4 focus:ring-orange-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center"
+                  className="w-full mt-6 px-6 py-4 rounded-lg font-semibold text-lg focus:outline-none focus:ring-4 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center"
+                  style={{ 
+                    backgroundColor: 'var(--btn-bg)', 
+                    color: 'var(--btn-text)',
+                    minHeight: '48px'
+                  }}
                 >
                   {is_loading ? (
                     <>

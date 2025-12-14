@@ -574,19 +574,19 @@ const UV_Menu: React.FC = () => {
   return (
     <>
       {/* Page Header */}
-      <div className="bg-gradient-to-br from-orange-50 to-red-50 border-b border-orange-100">
+      <div style={{ backgroundColor: 'var(--primary-bg)' }} className="border-b" style={{ borderColor: 'var(--accent-color)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight">
+          <h1 className="text-3xl md:text-4xl font-bold leading-tight" style={{ color: 'var(--primary-text)' }}>
             Our Menu
           </h1>
-          <p className="mt-2 text-base md:text-lg text-gray-600 leading-relaxed">
+          <p className="mt-2 text-base md:text-lg leading-relaxed" style={{ color: '#4A3B32' }}>
             Discover our delicious selection of authentic dishes
           </p>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12" style={{ backgroundColor: 'var(--primary-bg)' }}>
         {/* Search & Filter Bar */}
         <div className="mb-8 space-y-4">
           {/* Search Bar */}
@@ -597,7 +597,11 @@ const UV_Menu: React.FC = () => {
                 placeholder="Search menu items..."
                 value={searchQuery}
                 onChange={handleSearchChange}
-                className="w-full px-4 py-3 pl-11 pr-10 border-2 border-gray-200 rounded-lg focus:border-orange-500 focus:ring-4 focus:ring-orange-100 transition-all duration-200 outline-none"
+                className="w-full px-4 py-3 pl-11 pr-10 border-2 rounded-lg focus:ring-4 transition-all duration-200 outline-none"
+                style={{
+                  borderColor: 'var(--accent-color)',
+                  focusBorderColor: 'var(--primary-text)'
+                }}
               />
               <svg
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
@@ -624,10 +628,14 @@ const UV_Menu: React.FC = () => {
             </div>
 
             {/* Mobile Filter Button */}
-            <button
-              onClick={() => setFilterPanelOpen(true)}
-              className="sm:hidden px-6 py-3 bg-white border-2 border-gray-200 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-all duration-200 flex items-center justify-center space-x-2"
-            >
+              <button
+                onClick={() => setFilterPanelOpen(true)}
+                className="sm:hidden px-6 py-3 bg-white border-2 rounded-lg font-medium hover:bg-gray-50 transition-all duration-200 flex items-center justify-center space-x-2"
+                style={{ 
+                  borderColor: 'var(--accent-color)',
+                  color: 'var(--primary-text)'
+                }}
+              >
               <svg className="w-5 h-5" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
                 <path d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
               </svg>
@@ -643,7 +651,11 @@ const UV_Menu: React.FC = () => {
             <select
               value={sortOption}
               onChange={handleSortChange}
-              className="px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-orange-500 focus:ring-4 focus:ring-orange-100 transition-all duration-200 outline-none font-medium text-gray-700 bg-white"
+              className="px-4 py-3 border-2 rounded-lg focus:ring-4 transition-all duration-200 outline-none font-medium bg-white"
+              style={{
+                borderColor: 'var(--accent-color)',
+                color: 'var(--primary-text)'
+              }}
             >
               <option value="default">Sort by: Default</option>
               <option value="name">Name (A-Z)</option>
@@ -795,12 +807,17 @@ const UV_Menu: React.FC = () => {
                 <p className="text-gray-600 mb-6">
                   Please try again later or contact support if the problem persists.
                 </p>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="px-6 py-3 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition-colors"
-                >
-                  Retry
-                </button>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="px-6 py-3 rounded-lg font-medium transition-colors"
+                    style={{ 
+                      backgroundColor: 'var(--btn-bg)', 
+                      color: 'var(--btn-text)',
+                      minHeight: '48px'
+                    }}
+                  >
+                    Retry
+                  </button>
               </div>
             ) : menuItems.length === 0 ? (
               // Empty State
@@ -816,16 +833,21 @@ const UV_Menu: React.FC = () => {
                 <p className="text-gray-600 mb-6">
                   Try adjusting your filters or search terms
                 </p>
-                <button
-                  onClick={handleClearFilters}
-                  className="px-6 py-3 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition-colors"
-                >
-                  Clear all filters
-                </button>
+                  <button
+                    onClick={handleClearFilters}
+                    className="px-6 py-3 rounded-lg font-medium transition-colors"
+                    style={{ 
+                      backgroundColor: 'var(--btn-bg)', 
+                      color: 'var(--btn-text)',
+                      minHeight: '48px'
+                    }}
+                  >
+                    Clear all filters
+                  </button>
               </div>
             ) : (
-              // Menu Items
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              // Menu Items - Mobile-First Grid (1 col mobile, 3 cols desktop)
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {menuItems.map(item => {
                   const stockStatus = getStockStatus(item);
                   const isOutOfStock = stockStatus === 'out_of_stock';
@@ -912,13 +934,22 @@ const UV_Menu: React.FC = () => {
                         <button
                           onClick={() => handleOpenCustomizationModal(item)}
                           disabled={isOutOfStock || loadingItemId === item.item_id}
-                          className={`w-full px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center ${
+                          className={`w-full px-6 rounded-lg font-medium transition-all duration-200 flex items-center justify-center add-to-cart-btn ${
                             isOutOfStock
                               ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                               : loadingItemId === item.item_id
-                              ? 'bg-orange-600 text-white opacity-75 cursor-wait'
-                              : 'bg-orange-600 text-white hover:bg-orange-700 hover:shadow-lg'
+                              ? 'opacity-75 cursor-wait'
+                              : 'hover:shadow-lg'
                           }`}
+                          style={!isOutOfStock ? { 
+                            backgroundColor: 'var(--btn-bg)', 
+                            color: 'var(--btn-text)',
+                            minHeight: '48px',
+                            padding: '12px 24px'
+                          } : {
+                            minHeight: '48px',
+                            padding: '12px 24px'
+                          }}
                         >
                           {loadingItemId === item.item_id ? (
                             <>
@@ -999,12 +1030,17 @@ const UV_Menu: React.FC = () => {
 
               {/* Footer */}
               <div className="p-6 border-t border-gray-200">
-                <button
-                  onClick={() => setFilterPanelOpen(false)}
-                  className="w-full px-6 py-3 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition-colors"
-                >
-                  Apply Filters
-                </button>
+                  <button
+                    onClick={() => setFilterPanelOpen(false)}
+                    className="w-full px-6 py-3 rounded-lg font-medium transition-colors"
+                    style={{ 
+                      backgroundColor: 'var(--btn-bg)', 
+                      color: 'var(--btn-text)',
+                      minHeight: '48px'
+                    }}
+                  >
+                    Apply Filters
+                  </button>
               </div>
             </div>
           </div>
@@ -1174,7 +1210,13 @@ const UV_Menu: React.FC = () => {
                   <button
                     onClick={handleAddToCart}
                     disabled={addToCartMutation.isPending}
-                    className="flex-1 px-6 py-3 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                    className="flex-1 px-6 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                    style={{ 
+                      backgroundColor: 'var(--btn-bg)', 
+                      color: 'var(--btn-text)',
+                      minHeight: '48px',
+                      padding: '12px 24px'
+                    }}
                   >
                     {addToCartMutation.isPending ? (
                       <>

@@ -101,28 +101,34 @@ const GV_FloatingCart: React.FC = () => {
           fixed bottom-0 left-0 right-0 
           bg-orange-600 text-white 
           shadow-2xl 
-          z-50 
+          z-40 
           lg:hidden
+          safe-area-inset-bottom
+          border-t-4 border-orange-500
           ${isAnimating ? 'animate-pulse' : ''}
         `}
+        style={{
+          paddingBottom: 'env(safe-area-inset-bottom)',
+          boxShadow: '0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06)'
+        }}
         aria-label={`View cart with ${itemCount} ${itemCount === 1 ? 'item' : 'items'}, total €${cartTotal.toFixed(2)}`}
       >
-        <div className="flex items-center justify-between px-4 py-4">
+        <div className="flex items-center justify-between px-4 py-3">
           {/* Left: Cart Icon + Item Info */}
           <div className="flex items-center space-x-3">
             <div className="relative">
-              <ShoppingCart className="h-7 w-7" aria-hidden="true" />
-              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-md">
+              <ShoppingCart className="h-6 w-6" aria-hidden="true" />
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center shadow-md">
                 {itemCount}
               </span>
             </div>
             
             <div className="flex flex-col items-start">
-              <span className="text-sm font-medium">
+              <span className="text-sm font-semibold">
                 {itemCount} {itemCount === 1 ? 'item' : 'items'}
               </span>
               <span className="text-xs opacity-90">
-                Subtotal: €{cartSubtotal.toFixed(2)}
+                View Cart
               </span>
             </div>
           </div>
@@ -130,7 +136,7 @@ const GV_FloatingCart: React.FC = () => {
           {/* Right: Total Display */}
           <div className="flex flex-col items-end">
             <span className="text-xs font-medium opacity-90">Total</span>
-            <span className="text-2xl font-bold">
+            <span className="text-xl font-bold">
               €{cartTotal.toFixed(2)}
             </span>
           </div>

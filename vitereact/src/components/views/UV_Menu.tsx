@@ -586,7 +586,7 @@ const UV_Menu: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12" style={{ backgroundColor: 'var(--primary-bg)' }}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 pb-28 lg:pb-12" style={{ backgroundColor: 'var(--primary-bg)' }}>
         {/* Search & Filter Bar */}
         <div className="mb-8 space-y-4">
           {/* Search Bar */}
@@ -979,7 +979,7 @@ const UV_Menu: React.FC = () => {
 
       {/* Mobile Filter Panel */}
       {filterPanelOpen && (
-        <div className="fixed inset-0 z-50 sm:hidden">
+        <div className="fixed inset-0 z-50 sm:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black bg-opacity-50"
@@ -1049,7 +1049,7 @@ const UV_Menu: React.FC = () => {
 
       {/* Customization Modal */}
       {customizationModal.is_open && customizationModal.item && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className="fixed inset-0 z-[60] overflow-y-auto">
           {/* Backdrop with explicit click handler */}
           <div 
             className="fixed inset-0 bg-black bg-opacity-50 transition-opacity cursor-pointer"

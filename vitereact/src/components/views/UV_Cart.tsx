@@ -590,10 +590,11 @@ const UV_Cart: React.FC = () => {
                         </div>
                       </div>
                     )}
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
+                    {/* COMMANDMENT #4: Mobile Cart Card Layout */}
+                    <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+                      <div className="flex-1 w-full">
                         {/* Item Name */}
-                        <h3 className={`text-lg font-semibold mb-1 ${isAvailable ? 'text-gray-900' : 'text-gray-500 line-through'}`}>
+                        <h3 className={`text-lg lg:text-xl font-bold mb-2 ${isAvailable ? 'text-gray-900' : 'text-gray-500 line-through'}`}>
                           {item.item_name}
                         </h3>
 
@@ -602,68 +603,80 @@ const UV_Cart: React.FC = () => {
 
                         {/* Unit Price */}
                         {isAvailable && (
-                          <p className="mt-2 text-sm text-gray-500">
+                          <p className="mt-2 text-base text-gray-600 font-medium">
                             €{unitPrice.toFixed(2)} each
                           </p>
                         )}
 
-                        {/* Quantity Selector */}
+                        {/* COMMANDMENT #1: Quantity Controls - 48px min-height */}
                         {isAvailable && (
-                          <div className="mt-4 flex items-center space-x-3">
-                            <button
-                              onClick={() => handleQuantityChange(item.cart_item_id, item.quantity - 1)}
-                              disabled={item.quantity <= 1 || isUpdating}
-                              className="w-10 h-10 rounded-lg border-2 border-gray-300 flex items-center justify-center text-gray-700 hover:bg-gray-50 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-                              aria-label="Decrease quantity"
-                            >
-                              {isUpdating ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Minus className="h-4 w-4" />
-                              )}
-                            </button>
+                          <div className="mt-4 flex items-center justify-between sm:justify-start gap-4">
+                            <div className="flex items-center space-x-3">
+                              <button
+                                onClick={() => handleQuantityChange(item.cart_item_id, item.quantity - 1)}
+                                disabled={item.quantity <= 1 || isUpdating}
+                                className="w-12 h-12 rounded-xl border-2 border-gray-300 flex items-center justify-center text-gray-700 hover:bg-gray-50 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                                style={{ minHeight: '48px', minWidth: '48px' }}
+                                aria-label="Decrease quantity"
+                              >
+                                {isUpdating ? (
+                                  <Loader2 className="h-5 w-5 animate-spin" />
+                                ) : (
+                                  <Minus className="h-5 w-5" />
+                                )}
+                              </button>
 
-                            <input
-                              type="number"
-                              min="1"
-                              value={item.quantity}
-                              onChange={(e) => {
-                                const newQuantity = parseInt(e.target.value, 10);
-                                if (!isNaN(newQuantity) && newQuantity > 0) {
-                                  handleQuantityChange(item.cart_item_id, newQuantity);
-                                }
-                              }}
-                              disabled={isUpdating}
-                              className="w-16 h-10 text-center border-2 border-gray-300 rounded-lg font-medium text-gray-900 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 disabled:opacity-50"
-                              aria-label="Item quantity"
-                            />
+                              <input
+                                type="number"
+                                min="1"
+                                value={item.quantity}
+                                onChange={(e) => {
+                                  const newQuantity = parseInt(e.target.value, 10);
+                                  if (!isNaN(newQuantity) && newQuantity > 0) {
+                                    handleQuantityChange(item.cart_item_id, newQuantity);
+                                  }
+                                }}
+                                disabled={isUpdating}
+                                className="w-20 h-12 text-center border-2 border-gray-300 rounded-xl font-bold text-lg text-gray-900 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 disabled:opacity-50"
+                                style={{ minHeight: '48px', fontSize: '16px' }}
+                                aria-label="Item quantity"
+                              />
 
-                            <button
-                              onClick={() => handleQuantityChange(item.cart_item_id, item.quantity + 1)}
-                              disabled={isUpdating}
-                              className="w-10 h-10 rounded-lg border-2 border-gray-300 flex items-center justify-center text-gray-700 hover:bg-gray-50 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-                              aria-label="Increase quantity"
-                            >
-                              {isUpdating ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Plus className="h-4 w-4" />
-                              )}
-                            </button>
+                              <button
+                                onClick={() => handleQuantityChange(item.cart_item_id, item.quantity + 1)}
+                                disabled={isUpdating}
+                                className="w-12 h-12 rounded-xl border-2 border-gray-300 flex items-center justify-center text-gray-700 hover:bg-gray-50 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                                style={{ minHeight: '48px', minWidth: '48px' }}
+                                aria-label="Increase quantity"
+                              >
+                                {isUpdating ? (
+                                  <Loader2 className="h-5 w-5 animate-spin" />
+                                ) : (
+                                  <Plus className="h-5 w-5" />
+                                )}
+                              </button>
+                            </div>
+                            
+                            <div className="text-right sm:hidden">
+                              <p className="text-xl font-bold text-gray-900">
+                                €{lineTotal.toFixed(2)}
+                              </p>
+                            </div>
                           </div>
                         )}
                       </div>
 
                       {/* Right Side: Line Total and Remove Button */}
-                      <div className="ml-4 flex flex-col items-end space-y-3">
+                      <div className="flex sm:flex-col items-center sm:items-end gap-3 w-full sm:w-auto">
                         {!isAvailable ? (
                           <button
                             onClick={() => handleRemoveItem(item.cart_item_id, item.item_name)}
                             disabled={removeItemMutation.isPending}
-                            className="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-all duration-200 disabled:opacity-50 flex items-center space-x-2"
+                            className="w-full sm:w-auto px-6 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-all duration-200 disabled:opacity-50 flex items-center justify-center space-x-2"
+                            style={{ minHeight: '48px' }}
                             aria-label="Remove unavailable item"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-5 w-5" />
                             <span>Remove</span>
                           </button>
                         ) : (
@@ -671,17 +684,29 @@ const UV_Cart: React.FC = () => {
                             <button
                               onClick={() => handleRemoveItem(item.cart_item_id, item.item_name)}
                               disabled={removeItemMutation.isPending}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-all duration-200 disabled:opacity-50"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 p-3 rounded-xl transition-all duration-200 disabled:opacity-50 sm:block hidden"
+                              style={{ minHeight: '48px', minWidth: '48px' }}
                               aria-label="Remove item"
                             >
-                              <Trash2 className="h-5 w-5" />
+                              <Trash2 className="h-6 w-6" />
                             </button>
 
-                            <div className="text-right">
-                              <p className="text-xl font-bold text-gray-900">
+                            <div className="text-right hidden sm:block">
+                              <p className="text-2xl font-bold text-gray-900">
                                 €{lineTotal.toFixed(2)}
                               </p>
                             </div>
+                            
+                            <button
+                              onClick={() => handleRemoveItem(item.cart_item_id, item.item_name)}
+                              disabled={removeItemMutation.isPending}
+                              className="sm:hidden flex items-center justify-center px-5 py-3 text-red-600 hover:text-red-700 hover:bg-red-50 font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 border-2 border-red-300"
+                              style={{ minHeight: '48px' }}
+                              aria-label="Remove item"
+                            >
+                              <Trash2 className="h-5 w-5 mr-2" />
+                              Remove
+                            </button>
                           </>
                         )}
                       </div>
@@ -846,6 +871,43 @@ const UV_Cart: React.FC = () => {
             </div>
           </div>
         </div>
+        
+        {/* COMMANDMENT #4: Sticky Footer Bar for Mobile - Total Price & Checkout Button */}
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t-4 border-gray-200 shadow-2xl z-40 lg:hidden" style={{ marginBottom: '16px' }}>
+          <div className="px-6 py-4 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm text-gray-600 font-medium">Total</p>
+              <p className="text-2xl font-bold text-orange-600">
+                €{total.toFixed(2)}
+              </p>
+            </div>
+            <button
+              onClick={handleProceedToCheckout}
+              disabled={validateCheckoutMutation.isPending}
+              className="flex-1 max-w-xs py-4 font-bold text-lg rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center"
+              style={{ 
+                backgroundColor: 'var(--btn-bg)', 
+                color: 'var(--btn-text)',
+                minHeight: '56px'
+              }}
+            >
+              {validateCheckoutMutation.isPending ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                  Validating...
+                </>
+              ) : (
+                <>
+                  Checkout
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+        
+        {/* Spacer for sticky footer on mobile */}
+        <div className="h-24 lg:hidden" aria-hidden="true" />
       </div>
     </>
   );

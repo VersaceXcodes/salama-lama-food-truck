@@ -483,6 +483,7 @@ const UV_Contact: React.FC = () => {
                     <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-2">
                       Full Name <span className="text-red-500">*</span>
                     </label>
+                    {/* COMMANDMENT #1: 16px font-size to prevent iOS auto-zoom */}
                     <input
                       type="text"
                       id="name"
@@ -490,11 +491,12 @@ const UV_Contact: React.FC = () => {
                       onChange={(e) => handle_input_change('name', e.target.value)}
                       onBlur={() => handle_input_blur('name')}
                       placeholder="John Smith"
-                      className={`w-full px-4 py-3 rounded-lg border-2 transition-all duration-200 focus:outline-none focus:ring-4 ${
+                      className={`w-full px-4 py-4 rounded-xl border-2 transition-all duration-200 focus:outline-none focus:ring-4 ${
                         form_errors.name
                           ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
                           : 'border-gray-200 focus:border-orange-500 focus:ring-orange-100'
                       }`}
+                      style={{ fontSize: '16px', minHeight: '56px' }}
                     />
                     {form_errors.name && (
                       <p className="mt-2 text-sm text-red-600 flex items-center">
@@ -516,11 +518,12 @@ const UV_Contact: React.FC = () => {
                       onChange={(e) => handle_input_change('email', e.target.value)}
                       onBlur={() => handle_input_blur('email')}
                       placeholder="john.smith@example.com"
-                      className={`w-full px-4 py-3 rounded-lg border-2 transition-all duration-200 focus:outline-none focus:ring-4 ${
+                      className={`w-full px-4 py-4 rounded-xl border-2 transition-all duration-200 focus:outline-none focus:ring-4 ${
                         form_errors.email
                           ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
                           : 'border-gray-200 focus:border-orange-500 focus:ring-orange-100'
                       }`}
+                      style={{ fontSize: '16px', minHeight: '56px' }}
                     />
                     {form_errors.email && (
                       <p className="mt-2 text-sm text-red-600 flex items-center">
@@ -545,11 +548,12 @@ const UV_Contact: React.FC = () => {
                       onChange={(e) => handle_input_change('phone', e.target.value)}
                       onBlur={() => handle_input_blur('phone')}
                       placeholder="0851234567 or +353851234567"
-                      className={`w-full px-4 py-3 rounded-lg border-2 transition-all duration-200 focus:outline-none focus:ring-4 ${
+                      className={`w-full px-4 py-4 rounded-xl border-2 transition-all duration-200 focus:outline-none focus:ring-4 ${
                         form_errors.phone
                           ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
                           : 'border-gray-200 focus:border-orange-500 focus:ring-orange-100'
                       }`}
+                      style={{ fontSize: '16px', minHeight: '56px' }}
                     />
                     {form_errors.phone && (
                       <p className="mt-2 text-sm text-red-600 flex items-center">
@@ -571,11 +575,12 @@ const UV_Contact: React.FC = () => {
                       onChange={(e) => handle_input_change('subject', e.target.value)}
                       onBlur={() => handle_input_blur('subject')}
                       placeholder="General Inquiry"
-                      className={`w-full px-4 py-3 rounded-lg border-2 transition-all duration-200 focus:outline-none focus:ring-4 ${
+                      className={`w-full px-4 py-4 rounded-xl border-2 transition-all duration-200 focus:outline-none focus:ring-4 ${
                         form_errors.subject
                           ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
                           : 'border-gray-200 focus:border-orange-500 focus:ring-orange-100'
                       }`}
+                      style={{ fontSize: '16px', minHeight: '56px' }}
                     />
                     {form_errors.subject && (
                       <p className="mt-2 text-sm text-red-600 flex items-center">
@@ -598,11 +603,12 @@ const UV_Contact: React.FC = () => {
                     onChange={(e) => handle_input_change('message', e.target.value)}
                     onBlur={() => handle_input_blur('message')}
                     placeholder="Tell us how we can help you..."
-                    className={`w-full px-4 py-3 rounded-lg border-2 transition-all duration-200 focus:outline-none focus:ring-4 resize-none ${
+                    className={`w-full px-4 py-4 rounded-xl border-2 transition-all duration-200 focus:outline-none focus:ring-4 resize-none ${
                       form_errors.message
                         ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
                         : 'border-gray-200 focus:border-orange-500 focus:ring-orange-100'
                     }`}
+                    style={{ fontSize: '16px', lineHeight: '1.5' }}
                   ></textarea>
                   {form_errors.message && (
                     <p className="mt-2 text-sm text-red-600 flex items-center">
@@ -614,10 +620,12 @@ const UV_Contact: React.FC = () => {
 
                 {/* Submit Button */}
                 <div className="pt-4">
+                  {/* COMMANDMENT #1: 48px min-height, full width on mobile */}
                   <button
                     type="submit"
                     disabled={submit_mutation.isPending}
-                    className="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-orange-600 to-yellow-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-orange-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                    className="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-orange-600 to-yellow-600 text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-orange-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                    style={{ minHeight: '56px' }}
                   >
                     {submit_mutation.isPending ? (
                       <>

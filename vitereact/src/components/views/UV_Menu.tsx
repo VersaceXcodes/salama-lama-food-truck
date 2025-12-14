@@ -846,8 +846,8 @@ const UV_Menu: React.FC = () => {
                   </button>
               </div>
             ) : (
-              // Menu Items - Mobile-First Grid (1 col mobile, 3 cols desktop)
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              // COMMANDMENT #3: Menu Items - 1 Column Mobile, 3-4 Columns Desktop
+              <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                 {menuItems.map(item => {
                   const stockStatus = getStockStatus(item);
                   const isOutOfStock = stockStatus === 'out_of_stock';
@@ -860,12 +860,13 @@ const UV_Menu: React.FC = () => {
                         isOutOfStock ? 'opacity-60' : ''
                       }`}
                     >
-                      {/* Item Image */}
-                      <div className="relative h-48 bg-gray-100">
+                      {/* COMMANDMENT #4: Item Image - Full width, auto height */}
+                      <div className="relative h-48 lg:h-56 bg-gray-100">
                         <img
                           src={item.image_url || ''}
                           alt={item.name}
                           className="w-full h-full object-cover"
+                          style={{ width: '100%', height: 'auto', minHeight: '12rem' }}
                           loading="lazy"
                         />
                         
@@ -931,10 +932,11 @@ const UV_Menu: React.FC = () => {
                           )}
                         </div>
 
+                        {/* COMMANDMENT #1: 48px min-height, full width on mobile */}
                         <button
                           onClick={() => handleOpenCustomizationModal(item)}
                           disabled={isOutOfStock || loadingItemId === item.item_id}
-                          className={`w-full px-6 rounded-lg font-medium transition-all duration-200 flex items-center justify-center add-to-cart-btn ${
+                          className={`w-full px-6 py-3 rounded-xl font-bold text-base transition-all duration-200 flex items-center justify-center add-to-cart-btn ${
                             isOutOfStock
                               ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                               : loadingItemId === item.item_id
@@ -944,11 +946,9 @@ const UV_Menu: React.FC = () => {
                           style={!isOutOfStock ? { 
                             backgroundColor: 'var(--btn-bg)', 
                             color: 'var(--btn-text)',
-                            minHeight: '48px',
-                            padding: '12px 24px'
+                            minHeight: '56px'
                           } : {
-                            minHeight: '48px',
-                            padding: '12px 24px'
+                            minHeight: '56px'
                           }}
                         >
                           {loadingItemId === item.item_id ? (

@@ -181,11 +181,12 @@ const GV_TopNav_Customer: React.FC = () => {
     <>
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#F2EFE9] shadow-md backdrop-blur-md transition-all duration-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          {/* COMMANDMENT #2: Mobile Logo Centered, Hamburger Right */}
+          <div className="flex items-center justify-between h-16 md:h-20">
             
             {/* Left Section: Logo & Desktop Nav Links */}
-            <div className="flex items-center space-x-8">
-              {/* Logo */}
+            <div className="flex items-center space-x-8 md:static absolute left-1/2 md:left-0 transform -translate-x-1/2 md:transform-none z-10">
+              {/* Logo - Centered on Mobile, Left on Desktop */}
               <Link 
                 to="/dashboard"
                 className="flex items-center group"
@@ -193,8 +194,8 @@ const GV_TopNav_Customer: React.FC = () => {
                 <img 
                   src="/logo-salama-lama.jpg" 
                   alt="Salama Lama Logo" 
-                  className="h-[45px] md:h-[45px] w-auto object-contain transition-transform duration-200 group-hover:scale-105"
-                  style={{ maxHeight: '45px' }}
+                  className="h-10 md:h-12 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+                  style={{ maxHeight: '40px' }}
                 />
               </Link>
               
@@ -228,22 +229,24 @@ const GV_TopNav_Customer: React.FC = () => {
             </div>
             
             {/* Right Section: Loyalty Badge, Cart, Profile, Mobile Menu Button */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 md:space-x-4 z-20">
               
-              {/* Loyalty Points Badge (Desktop) */}
+              {/* Loyalty Points Badge (Desktop) - COMMANDMENT #1: 48px min */}
               <Link
                 to="/rewards"
-                className="hidden md:flex items-center space-x-2 bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-full hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                className="hidden md:flex items-center space-x-2 bg-gradient-to-r from-orange-500 to-red-500 text-white px-5 py-3 rounded-full hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                style={{ minHeight: '48px' }}
               >
                 <Award className="h-5 w-5" />
-                <span className="font-semibold">{loyaltyPointsBalance}</span>
-                <span className="text-sm">pts</span>
+                <span className="font-bold">{loyaltyPointsBalance}</span>
+                <span className="text-sm font-medium">pts</span>
               </Link>
               
-              {/* Cart Icon with Badge */}
+              {/* Cart Icon with Badge - COMMANDMENT #1: 48px min */}
               <Link
                 to="/cart"
-                className="relative p-2 text-gray-700 hover:text-orange-600 transition-colors"
+                className="relative p-3 text-gray-700 hover:text-orange-600 transition-colors rounded-lg"
+                style={{ minHeight: '48px', minWidth: '48px' }}
                 aria-label="Shopping cart"
               >
                 <ShoppingCart className="h-6 w-6" />
@@ -333,17 +336,18 @@ const GV_TopNav_Customer: React.FC = () => {
                 )}
               </div>
               
-              {/* Mobile Menu Button */}
+              {/* COMMANDMENT #2: Hamburger Menu Button */}
               <button
                 onClick={toggleMobileMenu}
-                className="md:hidden p-2 text-gray-700 hover:text-orange-600 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-md"
+                className="md:hidden p-3 text-gray-700 hover:text-orange-600 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-lg"
+                style={{ minHeight: '48px', minWidth: '48px' }}
                 aria-label="Toggle mobile menu"
                 aria-expanded={isMobileMenuOpen}
               >
                 {isMobileMenuOpen ? (
-                  <X className="h-6 w-6" />
+                  <X className="h-7 w-7" />
                 ) : (
-                  <Menu className="h-6 w-6" />
+                  <Menu className="h-7 w-7" />
                 )}
               </button>
             </div>
@@ -359,130 +363,142 @@ const GV_TopNav_Customer: React.FC = () => {
               onClick={closeMobileMenu}
             ></div>
             
-            {/* Drawer */}
-            <div className="fixed top-0 right-0 bottom-0 w-80 max-w-full bg-white shadow-2xl z-50 md:hidden overflow-y-auto animate-slideInRight">
+            {/* COMMANDMENT #2: Full-Screen Mobile Drawer */}
+            <div className="fixed top-0 right-0 bottom-0 w-full max-w-full bg-white shadow-2xl z-50 md:hidden overflow-y-auto animate-slideInRight">
               <div className="p-6">
-                {/* Close Button */}
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-bold text-gray-900">Menu</h2>
+                {/* Close Button - COMMANDMENT #1: 48px min */}
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-2xl font-bold text-gray-900">Menu</h2>
                   <button
                     onClick={closeMobileMenu}
-                    className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
+                    className="p-3 text-gray-500 hover:text-gray-700 transition-colors rounded-lg"
+                    style={{ minHeight: '48px', minWidth: '48px' }}
                     aria-label="Close mobile menu"
                   >
-                    <X className="h-6 w-6" />
+                    <X className="h-7 w-7" />
                   </button>
                 </div>
                 
-                {/* User Info */}
-                <div className="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg">
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="h-12 w-12 bg-orange-500 rounded-full flex items-center justify-center">
-                      <User className="h-6 w-6 text-white" />
+                {/* User Info - COMMANDMENT #1: 16px spacing */}
+                <div className="mb-8 p-5 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl" style={{ marginBottom: '16px' }}>
+                  <div className="flex items-center space-x-4 mb-4">
+                    <div className="h-14 w-14 bg-orange-500 rounded-full flex items-center justify-center">
+                      <User className="h-7 w-7 text-white" />
                     </div>
                     <div>
-                      <p className="font-semibold text-gray-900">{userDisplayName}</p>
+                      <p className="font-bold text-lg text-gray-900">{userDisplayName}</p>
                       <p className="text-sm text-gray-600">{currentUser?.email}</p>
                     </div>
                   </div>
                   
-                  {/* Loyalty Points Badge (Mobile) */}
+                  {/* Loyalty Points Badge (Mobile) - COMMANDMENT #1: 48px min */}
                   <Link
                     to="/rewards"
                     onClick={closeMobileMenu}
-                    className="flex items-center justify-between p-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-lg"
+                    className="flex items-center justify-between p-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-lg"
+                    style={{ minHeight: '64px' }}
                   >
-                    <div className="flex items-center space-x-2">
-                      <Award className="h-5 w-5" />
-                      <span className="font-semibold">Loyalty Points</span>
+                    <div className="flex items-center space-x-3">
+                      <Award className="h-6 w-6" />
+                      <span className="font-bold text-base">Loyalty Points</span>
                     </div>
-                    <span className="text-lg font-bold">{loyaltyPointsBalance}</span>
+                    <span className="text-2xl font-bold">{loyaltyPointsBalance}</span>
                   </Link>
                 </div>
                 
-                {/* Navigation Links */}
-                <nav className="space-y-2 mb-6">
+                {/* Navigation Links - COMMANDMENT #1: Large Touch Targets */}
+                <nav className="space-y-2 mb-8">
                   <Link
                     to="/dashboard"
                     onClick={closeMobileMenu}
-                    className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-colors"
+                    className="flex items-center space-x-4 px-6 py-4 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
+                    style={{ minHeight: '64px' }}
                   >
-                    <Home className="h-5 w-5" />
-                    <span className="font-medium">Dashboard</span>
+                    <Home className="h-6 w-6" />
+                    <span className="font-semibold text-lg">Dashboard</span>
                   </Link>
                   
                   <Link
                     to="/menu"
                     onClick={closeMobileMenu}
-                    className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-colors"
+                    className="flex items-center space-x-4 px-6 py-4 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
+                    style={{ minHeight: '64px' }}
                   >
-                    <Utensils className="h-5 w-5" />
-                    <span className="font-medium">Menu</span>
+                    <Utensils className="h-6 w-6" />
+                    <span className="font-semibold text-lg">Menu</span>
                   </Link>
                   
                   <Link
                     to="/orders"
                     onClick={closeMobileMenu}
-                    className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-colors"
+                    className="flex items-center space-x-4 px-6 py-4 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
+                    style={{ minHeight: '64px' }}
                   >
-                    <Package className="h-5 w-5" />
-                    <span className="font-medium">My Orders</span>
+                    <Package className="h-6 w-6" />
+                    <span className="font-semibold text-lg">My Orders</span>
                   </Link>
                   
                   <Link
                     to="/rewards"
                     onClick={closeMobileMenu}
-                    className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-colors"
+                    className="flex items-center space-x-4 px-6 py-4 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
+                    style={{ minHeight: '64px' }}
                   >
-                    <Gift className="h-5 w-5" />
-                    <span className="font-medium">Rewards</span>
+                    <Gift className="h-6 w-6" />
+                    <span className="font-semibold text-lg">Rewards</span>
                   </Link>
                   
                   <Link
                     to="/catering"
                     onClick={closeMobileMenu}
-                    className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-colors"
+                    className="flex items-center space-x-4 px-6 py-4 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
+                    style={{ minHeight: '64px' }}
                   >
-                    <Utensils className="h-5 w-5" />
-                    <span className="font-medium">Catering</span>
+                    <Utensils className="h-6 w-6" />
+                    <span className="font-semibold text-lg">Catering</span>
                   </Link>
                 </nav>
                 
-                <div className="border-t border-gray-200 pt-6 space-y-2">
+                {/* COMMANDMENT #1: 16px spacing, large touch targets */}
+                <div className="border-t-2 border-gray-200 pt-6 space-y-2" style={{ paddingTop: '16px' }}>
                   <Link
                     to="/profile"
                     onClick={closeMobileMenu}
-                    className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                    className="flex items-center space-x-4 px-6 py-4 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors"
+                    style={{ minHeight: '64px' }}
                   >
-                    <User className="h-5 w-5" />
-                    <span className="font-medium">My Profile</span>
+                    <User className="h-6 w-6" />
+                    <span className="font-semibold text-lg">My Profile</span>
                   </Link>
                   
                   <Link
                     to="/addresses"
                     onClick={closeMobileMenu}
-                    className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                    className="flex items-center space-x-4 px-6 py-4 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors"
+                    style={{ minHeight: '64px' }}
                   >
-                    <MapPin className="h-5 w-5" />
-                    <span className="font-medium">Saved Addresses</span>
+                    <MapPin className="h-6 w-6" />
+                    <span className="font-semibold text-lg">Saved Addresses</span>
                   </Link>
                   
                   <Link
                     to="/payment-methods"
                     onClick={closeMobileMenu}
-                    className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                    className="flex items-center space-x-4 px-6 py-4 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors"
+                    style={{ minHeight: '64px' }}
                   >
-                    <CreditCard className="h-5 w-5" />
-                    <span className="font-medium">Payment Methods</span>
+                    <CreditCard className="h-6 w-6" />
+                    <span className="font-semibold text-lg">Payment Methods</span>
                   </Link>
                   
                   <button
                     onClick={handleLogout}
                     disabled={isLoggingOut}
-                    className="w-full flex items-center space-x-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex items-center space-x-4 px-6 py-4 text-red-600 hover:bg-red-50 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ minHeight: '64px' }}
                   >
-                    <LogOut className="h-5 w-5" />
-                    <span className="font-medium">
+                    <LogOut className="h-6 w-6" />
+                    <span className="font-bold text-lg">
                       {isLoggingOut ? 'Logging out...' : 'Logout'}
                     </span>
                   </button>
@@ -494,7 +510,7 @@ const GV_TopNav_Customer: React.FC = () => {
       </nav>
       
       {/* Spacer to prevent content from hiding under fixed nav */}
-      <div className="h-16"></div>
+      <div className="h-16 md:h-20"></div>
     </>
   );
 };

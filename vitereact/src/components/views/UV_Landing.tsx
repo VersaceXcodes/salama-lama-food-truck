@@ -230,33 +230,35 @@ const UV_Landing: React.FC = () => {
                 </div>
               )}
 
-              {/* Main Heading - Massive and Bold */}
-              <h1 className="text-6xl sm:text-7xl lg:text-[4.5rem] xl:text-[5rem] font-extrabold text-[#2C1A16] mb-6 leading-[1.1] tracking-tight" style={{ fontWeight: 800 }}>
+              {/* COMMANDMENT #5: Main Heading - Mobile-First Typography */}
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold text-[#2C1A16] mb-6 leading-tight tracking-tight" style={{ fontWeight: 800, fontSize: 'clamp(2.5rem, 8vw, 5rem)' }}>
                 Where Flavour<br />
                 Meets Passion
               </h1>
 
-              {/* Sub-headline */}
-              <p className="text-xl sm:text-2xl lg:text-3xl text-[#4A3B32] mb-10 leading-relaxed font-medium">
+              {/* Sub-headline - Mobile-First Sizing */}
+              <p className="text-lg sm:text-xl lg:text-2xl text-[#4A3B32] mb-8 leading-relaxed font-medium">
                 Authentic Subs. Custom Bowls. Made with Heart.
               </p>
 
-              {/* Primary CTA - Pill Shape with Modern Hover */}
-              <div className="flex flex-col sm:flex-row gap-4">
+              {/* COMMANDMENT #1: Primary CTA - 48px min-height, full width on mobile */}
+              <div className="flex flex-col sm:flex-row gap-4 w-full">
                 <Link
                   to="/menu"
-                  className="group inline-flex items-center justify-center px-10 py-5 bg-[#2C1A16] text-[#F2EFE9] text-lg font-bold rounded-[50px] shadow-xl hover:bg-[#F2EFE9] hover:text-[#2C1A16] border-4 border-[#2C1A16] transition-all duration-300 ease-in-out"
+                  className="group flex items-center justify-center px-8 py-4 bg-[#2C1A16] text-[#F2EFE9] text-lg font-bold rounded-full shadow-xl hover:bg-[#F2EFE9] hover:text-[#2C1A16] border-4 border-[#2C1A16] transition-all duration-300 ease-in-out w-full sm:w-auto"
+                  style={{ minHeight: '56px' }}
                 >
                   Order Now
-                  <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+                  <ChevronRight className="ml-2 w-6 h-6 group-hover:translate-x-1 transition-transform duration-300" />
                 </Link>
                 
                 <Link
                   to="/about"
-                  className="group inline-flex items-center justify-center px-10 py-5 bg-transparent text-[#2C1A16] text-lg font-bold rounded-[50px] border-4 border-[#2C1A16] hover:bg-[#2C1A16] hover:text-[#F2EFE9] transition-all duration-300 ease-in-out"
+                  className="group flex items-center justify-center px-8 py-4 bg-transparent text-[#2C1A16] text-lg font-bold rounded-full border-4 border-[#2C1A16] hover:bg-[#2C1A16] hover:text-[#F2EFE9] transition-all duration-300 ease-in-out w-full sm:w-auto"
+                  style={{ minHeight: '56px' }}
                 >
                   Our Story
-                  <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+                  <ChevronRight className="ml-2 w-6 h-6 group-hover:translate-x-1 transition-transform duration-300" />
                 </Link>
               </div>
 
@@ -290,20 +292,20 @@ const UV_Landing: React.FC = () => {
         </div>
       </section>
 
-      {/* Featured Items Section */}
-      <section className="py-16 lg:py-24 bg-white">
+      {/* COMMANDMENT #3: Featured Items Section - Mobile-First Grid */}
+      <section className="py-12 lg:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3" style={{ fontSize: 'clamp(2rem, 5vw, 2.5rem)' }}>
               Featured Items
             </h2>
-            <p className="text-lg text-gray-600">
+            <p className="text-base lg:text-lg text-gray-600">
               Try our most popular dishes
             </p>
           </div>
 
           {items_loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {[1, 2, 3, 4].map((i) => (
                 <div key={i} className="bg-gray-100 rounded-xl h-80 animate-pulse"></div>
               ))}
@@ -314,7 +316,7 @@ const UV_Landing: React.FC = () => {
               <p className="text-gray-500">Unable to load featured items. Please try again later.</p>
             </div>
           ) : featured_items.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {featured_items.map((item) => (
                 <div
                   key={item.item_id}
@@ -333,20 +335,22 @@ const UV_Landing: React.FC = () => {
                     )}
                   </div>
 
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  {/* COMMANDMENT #4: Full-width image on mobile */}
+                  <div className="p-5 lg:p-6">
+                    <h3 className="text-lg lg:text-xl font-bold text-gray-900 mb-2 leading-tight">
                       {item.name}
                     </h3>
-                    <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+                    <p className="text-sm text-gray-600 mb-4 line-clamp-2 leading-relaxed">
                       {item.description}
                     </p>
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                       <span className="text-2xl font-bold text-orange-600">
                         €{item.price.toFixed(2)}
                       </span>
                       <Link
                         to="/menu"
-                        className="px-4 py-2 bg-orange-600 text-white text-sm font-medium rounded-lg hover:bg-orange-700 transition-colors"
+                        className="flex items-center justify-center w-full sm:w-auto px-6 py-3 bg-orange-600 text-white text-base font-semibold rounded-lg hover:bg-orange-700 transition-colors"
+                        style={{ minHeight: '48px' }}
                       >
                         Add to Order
                       </Link>
@@ -361,13 +365,15 @@ const UV_Landing: React.FC = () => {
             </div>
           )}
 
+          {/* COMMANDMENT #1: Full-width button on mobile */}
           <div className="text-center mt-12">
             <Link
               to="/menu"
-              className="inline-flex items-center px-6 py-3 bg-gray-100 text-gray-900 font-medium rounded-lg hover:bg-gray-200 transition-colors"
+              className="inline-flex items-center justify-center px-8 py-4 bg-gray-100 text-gray-900 font-semibold rounded-xl hover:bg-gray-200 transition-colors w-full sm:w-auto"
+              style={{ minHeight: '56px' }}
             >
               View Full Menu
-              <ChevronRight className="ml-2 w-5 h-5" />
+              <ChevronRight className="ml-2 w-6 h-6" />
             </Link>
           </div>
         </div>

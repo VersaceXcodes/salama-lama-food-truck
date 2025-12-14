@@ -234,12 +234,26 @@ const UV_Cart: React.FC = () => {
         setDiscountError(null);
         setDiscountCode('');
         queryClient.invalidateQueries({ queryKey: ['cart'] });
+        setNotification({
+          type: 'success',
+          message: 'Discount code applied successfully!'
+        });
       } else {
-        setDiscountError(data.message || 'Invalid discount code');
+        const errorMessage = data.message || 'Invalid discount code';
+        setDiscountError(errorMessage);
+        setNotification({
+          type: 'error',
+          message: errorMessage
+        });
       }
     },
     onError: (error: any) => {
-      setDiscountError(error.response?.data?.message || 'Failed to validate discount code');
+      const errorMessage = error.response?.data?.message || 'Failed to validate discount code';
+      setDiscountError(errorMessage);
+      setNotification({
+        type: 'error',
+        message: errorMessage
+      });
     }
   });
 

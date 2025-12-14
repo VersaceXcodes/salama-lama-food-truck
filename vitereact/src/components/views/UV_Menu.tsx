@@ -910,13 +910,7 @@ const UV_Menu: React.FC = () => {
                         </div>
 
                         <button
-                          onClick={() => {
-                            if (item.customization_groups.length > 0) {
-                              handleOpenCustomizationModal(item);
-                            } else {
-                              handleQuickAddToCart(item);
-                            }
-                          }}
+                          onClick={() => handleOpenCustomizationModal(item)}
                           disabled={isOutOfStock || loadingItemId === item.item_id}
                           className={`w-full px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center ${
                             isOutOfStock
@@ -1067,9 +1061,7 @@ const UV_Menu: React.FC = () => {
 
               {/* Modal Body */}
               <div className="p-6 space-y-6">
-                {customizationModal.item.customization_groups.length === 0 ? (
-                  <p className="text-gray-600">No customization options available for this item.</p>
-                ) : (
+                {customizationModal.item.customization_groups.length > 0 ? (
                   customizationModal.item.customization_groups.map(group => (
                     <div key={group.group_id} className="space-y-3">
                       <h3 className="text-lg font-semibold text-gray-900">
@@ -1125,6 +1117,10 @@ const UV_Menu: React.FC = () => {
                       </div>
                     </div>
                   ))
+                ) : (
+                  <div className="py-4">
+                    <p className="text-gray-600 text-center">Select quantity and add to your cart.</p>
+                  </div>
                 )}
 
                 {/* Quantity Selector */}

@@ -969,6 +969,22 @@ async function compute_cart_totals({ user_id, cart, order_type, delivery_address
         }
         if (menu_item.stock_tracked && (menu_item.current_stock ?? 0) < cart_item.quantity) {
             validation_errors.push({ field: cart_item.item_id, error: 'INSUFFICIENT_STOCK', message: `Only ${menu_item.current_stock ?? 0} available` });
+            // Still include the item in computed_items so frontend can display it
+            computed_items.push({
+                cart_item_id: cart_item.cart_item_id,
+                item_id: cart_item.item_id,
+                item_name: menu_item.name,
+                image_url: menu_item.image_url ?? null,
+                quantity: cart_item.quantity,
+                unit_price: Number(menu_item.price),
+                selected_customizations: cart_item.selected_customizations || null,
+                line_total: 0,
+                stock_tracked: menu_item.stock_tracked,
+                current_stock: menu_item.current_stock,
+                low_stock_threshold: menu_item.low_stock_threshold,
+                category_id: menu_item.category_id,
+                is_available: false,
+            });
             continue;
         }
         // Customizations are stored as snapshot; to keep UX consistent we assume unit_price is base price.

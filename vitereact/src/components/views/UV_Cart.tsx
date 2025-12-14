@@ -478,8 +478,8 @@ const UV_Cart: React.FC = () => {
 
   // Helper function to get item name from validation error field
   const getItemNameFromField = (field: string) => {
-    const itemId = field.replace('item_', '');
-    const item = cartItems.find(item => item.item_id === itemId);
+    // Backend sends item_id directly as the field (not prefixed with 'item_')
+    const item = cartItems.find(item => item.item_id === field);
     return item?.item_name || 'Unknown item';
   };
 

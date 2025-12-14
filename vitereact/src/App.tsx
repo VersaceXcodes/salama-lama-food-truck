@@ -2,6 +2,8 @@ import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAppStore } from '@/store/main';
+// Configure axios to send cookies with requests (CRITICAL for cart persistence)
+import '@/config/axios';
 
 // Import Global Views
 import GV_TopNav_Public from '@/components/views/GV_TopNav_Public';

@@ -348,15 +348,15 @@ async function authenticate_token_optional(req, res, next) {
         // Use a session ID from cookie or create a new one
         const guest_session_id = req.cookies?.guest_session_id || `guest_${nanoid(20)}`;
         req.guest_session_id = guest_session_id;
-        // Set cookie for guest session (7 days expiry)
-        if (!req.cookies?.guest_session_id) {
-            res.cookie('guest_session_id', guest_session_id, {
-                maxAge: 7 * 24 * 60 * 60 * 1000,
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'lax'
-            });
-        }
+        // Always set/refresh the cookie for guest session (7 days expiry)
+        // This ensures the session stays alive and the cookie is properly set
+        res.cookie('guest_session_id', guest_session_id, {
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/' // Ensure cookie is sent for all paths
+        });
     }
     next();
 }

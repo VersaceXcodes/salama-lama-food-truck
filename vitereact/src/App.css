@@ -1,7 +1,21 @@
+/* ===================================
+   MOBILE-FIRST ROOT CONTAINER FIX
+   =================================== */
+
 #root {
-	max-width: 90vw;
-	margin: 0 auto;
-	padding: 2rem;
+	width: 100%;
+	max-width: 100vw;
+	margin: 0;
+	padding: 0;
+	overflow-x: hidden;
+}
+
+/* Desktop: Add max-width and center content */
+@media (min-width: 769px) {
+	/* Keep full width but let inner containers handle max-width */
+	#root {
+		width: 100%;
+	}
 }
 
 /* Shake animation for error banners */

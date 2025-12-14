@@ -1,35 +1,89 @@
-## BUILD FAILURE - Fix Required (Attempt 1/3)
+I am looking at the mobile view and it is broken. The product cards are overflowing horizontally (cut off on the right), images are too large, and the layout isn't responsive.
 
-The Vite build process failed. Analyze the error output below and fix the issue.
+Please REWRITE the CSS for the entire application with these strict Mobile-First rules. Do not patch the existing code; replace the grid logic for mobile screens (max-width: 768px).
 
-## Build Error Output:
-```
+1. Fix the 'Overflow' (Horizontal Scrolling Issue)
 
-> conductor@0.0.0 build
-> vite build
+Apply overflow-x: hidden; to the body and html tags.
 
-vite v5.4.21 building for production...
-transforming...
+Ensure the main container has width: 100% and padding: 0 16px; (16px safe zone on left/right) so text never touches the edge of the screen.
 
-```
+2. The Menu Grid (Vertical Stack Rule)
 
-## Build Directory: /app/vitereact
+Current Bug: The product cards are displaying side-by-side or in a horizontal slider.
 
-## Your Task:
-1. **Analyze the Error**: Read the error output carefully to understand what went wrong
-2. **Locate the Problem**: Find the file(s) mentioned in the error
-3. **Apply the Fix**: 
-   - Missing file/component? CREATE it with correct exports
-   - Wrong import path? FIX the import statement  
-   - Syntax error? FIX the syntax in the affected file
-   - Type error? FIX the TypeScript types
-   - Missing dependency? Check if it needs to be installed or if it's a local import issue
-4. **Verify**: After fixing, ensure all imports resolve correctly
+The Fix: On mobile, force the Product Grid to use display: grid; grid-template-columns: 1fr;.
 
-## IMPORTANT:
-- The build CANNOT succeed until this error is fixed
-- If creating a missing component, ensure exports match what's being imported (default vs named)
-- If the error mentions a specific line number, check that line in the source file
-- Run `npx tsc --noEmit` after fixing to verify no TypeScript errors remain
+Result: This must stack the items vertically (one on top of the other). One item per row.
 
-Fix this error so the build can succeed on retry.
+Card Width: Set product cards to width: 100% !important; so they fit the screen perfectly.
+
+3. Product Card Styling (Mobile Optimization)
+
+Image Aspect Ratio: Set product images to width: 100%; height: 200px; object-fit: cover;. This prevents them from being massive vertically.
+
+Text: Ensure the product title is font-size: 1.25rem and the description is truncated to 2 lines to save space.
+
+Buttons: Make the 'Add to Order' button Full Width and 48px height for easy tapping.
+
+4. The Header & Navigation
+
+Height: Increase the mobile navbar height to 60px.
+
+Logo: Center the logo absolutely. Set height: 40px; width: auto;.
+
+Icons: Make the Hamburger Menu (left) and Cart Icon (right) larger (font-size: 24px or 24px width) and ensure they are 16px away from the screen edges.
+
+5. Global Text Sizing
+
+Downscale all H1 headings on mobile to 2.2rem so they don't break onto three lines (like 'Where Flavour Meets Passion')."
+
+When the user mentions generic pages, map them to concrete files/components by scanning for headings and routes. Examples you MUST follow:
+- If the user says "login" or "sign in", search for components containing the literal heading "Sign in to your account" and edit that file.
+- If the user says "sign up" or "register", search for "Create your account" or equivalent.
+- Always return an explicit list of changed file paths. If your first attempt doesn't change the UI, re-search by heading text and update the correct file.
+
+⚠️ PRIORITY INSTRUCTIONS:
+- The user's request above is the PRIMARY task. Complete it first.
+- Ignore any existing errors, warnings, or issues you detect in the project unless they directly prevent you from completing the user's requested task.
+- Do NOT automatically fix unrelated errors or refactor code unless explicitly requested.
+- Focus solely on implementing the user's request: "I am looking at the mobile view and it is broken. The product cards are overflowing horizontally (cut off on the right), images are too large, and the layout isn't responsive.
+
+Please REWRITE the CSS for the entire application with these strict Mobile-First rules. Do not patch the existing code; replace the grid logic for mobile screens (max-width: 768px).
+
+1. Fix the 'Overflow' (Horizontal Scrolling Issue)
+
+Apply overflow-x: hidden; to the body and html tags.
+
+Ensure the main container has width: 100% and padding: 0 16px; (16px safe zone on left/right) so text never touches the edge of the screen.
+
+2. The Menu Grid (Vertical Stack Rule)
+
+Current Bug: The product cards are displaying side-by-side or in a horizontal slider.
+
+The Fix: On mobile, force the Product Grid to use display: grid; grid-template-columns: 1fr;.
+
+Result: This must stack the items vertically (one on top of the other). One item per row.
+
+Card Width: Set product cards to width: 100% !important; so they fit the screen perfectly.
+
+3. Product Card Styling (Mobile Optimization)
+
+Image Aspect Ratio: Set product images to width: 100%; height: 200px; object-fit: cover;. This prevents them from being massive vertically.
+
+Text: Ensure the product title is font-size: 1.25rem and the description is truncated to 2 lines to save space.
+
+Buttons: Make the 'Add to Order' button Full Width and 48px height for easy tapping.
+
+4. The Header & Navigation
+
+Height: Increase the mobile navbar height to 60px.
+
+Logo: Center the logo absolutely. Set height: 40px; width: auto;.
+
+Icons: Make the Hamburger Menu (left) and Cart Icon (right) larger (font-size: 24px or 24px width) and ensure they are 16px away from the screen edges.
+
+5. Global Text Sizing
+
+Downscale all H1 headings on mobile to 2.2rem so they don't break onto three lines (like 'Where Flavour Meets Passion').""
+- Only address errors if they block the specific functionality requested by the user.

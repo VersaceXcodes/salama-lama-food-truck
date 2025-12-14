@@ -16,11 +16,15 @@
 	-moz-osx-font-smoothing: grayscale;
 }
 
-/* Mobile-First: Prevent horizontal scrolling */
+/* ===================================
+   MOBILE-FIRST COMMANDMENT #1
+   FIX OVERFLOW - Prevent horizontal scrolling
+   =================================== */
 html, body {
-	overflow-x: hidden;
+	overflow-x: hidden !important;
 	width: 100%;
 	max-width: 100vw;
+	position: relative;
 }
 
 *::selection {
@@ -164,32 +168,32 @@ a[class*="bg-red"]:hover {
 
 /* ===================================
    MOBILE-FIRST COMMANDMENT #5
-   TYPOGRAPHY SCALING
+   TYPOGRAPHY SCALING (Mobile First)
    =================================== */
 
-/* Mobile-first heading sizes (using rem units) */
+/* Mobile-first heading sizes - DOWNSCALED for mobile */
 h1 {
-	font-size: 2.5rem; /* 40px on mobile, was 4rem */
+	font-size: 2.2rem; /* 35.2px on mobile - prevents 3-line wrap */
 	line-height: 1.2;
 	font-weight: 800;
 	margin-bottom: 1rem; /* 16px */
 }
 
 h2 {
-	font-size: 2rem; /* 32px */
+	font-size: 1.75rem; /* 28px */
 	line-height: 1.3;
 	font-weight: 700;
 	margin-bottom: 0.875rem; /* 14px */
 }
 
 h3 {
-	font-size: 1.5rem; /* 24px */
+	font-size: 1.25rem; /* 20px - Product card titles */
 	line-height: 1.4;
 	font-weight: 600;
-	margin-bottom: 0.75rem; /* 12px */
+	margin-bottom: 0.5rem; /* 8px */
 }
 
-/* Desktop scaling */
+/* Desktop scaling - larger screens get bigger text */
 @media (min-width: 769px) {
 	h1 {
 		font-size: 3.5rem; /* 56px on desktop */
@@ -284,4 +288,255 @@ p {
 .scrollbar-hide {
 	-ms-overflow-style: none;
 	scrollbar-width: none;
+}
+
+/* ===================================
+   MOBILE-FIRST COMMANDMENT #1
+   MAIN CONTAINER - 16px Safe Zone
+   =================================== */
+
+/* Apply to all page containers */
+.max-w-7xl {
+	width: 100% !important;
+	padding-left: 16px !important;
+	padding-right: 16px !important;
+}
+
+@media (max-width: 768px) {
+	/* Force containers to respect viewport width */
+	.container,
+	[class*="max-w-"],
+	main,
+	section {
+		width: 100% !important;
+		max-width: 100vw !important;
+		overflow-x: hidden !important;
+	}
+}
+
+/* ===================================
+   MOBILE-FIRST COMMANDMENT #2
+   MENU GRID - Vertical Stack on Mobile
+   =================================== */
+
+@media (max-width: 768px) {
+	/* Force menu items to stack vertically (1 column) */
+	.grid[class*="grid-cols"] {
+		grid-template-columns: 1fr !important;
+		gap: 1rem !important; /* 16px gap between cards */
+	}
+
+	/* Product cards must be full width */
+	.grid > div,
+	.grid > a,
+	[class*="rounded-xl"] {
+		width: 100% !important;
+		max-width: 100% !important;
+	}
+}
+
+/* ===================================
+   MOBILE-FIRST COMMANDMENT #3
+   PRODUCT CARD STYLING (Mobile Optimization)
+   =================================== */
+
+@media (max-width: 768px) {
+	/* Product card images - fixed aspect ratio */
+	.grid img,
+	[class*="rounded-xl"] img,
+	.group img {
+		width: 100% !important;
+		height: 200px !important;
+		object-fit: cover !important;
+		display: block !important;
+	}
+
+	/* Product card titles - 1.25rem (20px) */
+	.grid h3,
+	[class*="rounded-xl"] h3 {
+		font-size: 1.25rem !important; /* 20px */
+		line-height: 1.4 !important;
+		margin-bottom: 0.5rem !important;
+	}
+
+	/* Product card descriptions - truncate to 2 lines */
+	.grid p,
+	[class*="rounded-xl"] p {
+		display: -webkit-box !important;
+		-webkit-line-clamp: 2 !important;
+		-webkit-box-orient: vertical !important;
+		overflow: hidden !important;
+		text-overflow: ellipsis !important;
+		line-height: 1.5 !important;
+		max-height: 3rem !important; /* 2 lines * 1.5 line-height */
+	}
+
+	/* "Add to Order" buttons - Full Width + 48px height */
+	.grid button,
+	.grid a[class*="bg-"],
+	[class*="rounded-xl"] button,
+	.add-to-cart-btn,
+	.order-btn,
+	button[class*="Add"],
+	a[class*="Add"] {
+		width: 100% !important;
+		min-height: 48px !important;
+		height: 48px !important;
+		font-size: 1rem !important; /* 16px */
+		padding: 0.75rem 1.5rem !important; /* 12px 24px */
+		display: flex !important;
+		align-items: center !important;
+		justify-content: center !important;
+	}
+}
+
+/* ===================================
+   MOBILE-FIRST COMMANDMENT #4
+   HEADER & NAVIGATION (Mobile Optimization)
+   =================================== */
+
+@media (max-width: 768px) {
+	/* Increase navbar height to 60px */
+	nav[class*="fixed"],
+	header,
+	[role="navigation"] {
+		height: 60px !important;
+		min-height: 60px !important;
+	}
+
+	nav .flex,
+	nav > div > .flex {
+		height: 60px !important;
+	}
+
+	/* Logo - Center absolutely, 40px height */
+	nav img,
+	nav [class*="logo"] img,
+	header img {
+		height: 40px !important;
+		width: auto !important;
+		max-height: 40px !important;
+	}
+
+	/* Hamburger Menu & Cart Icons - 24px size, 16px from edges */
+	nav button,
+	nav a[class*="cart"],
+	nav [class*="hamburger"],
+	.menu-icon,
+	.cart-icon {
+		font-size: 24px !important;
+		width: 48px !important;
+		height: 48px !important;
+		min-width: 48px !important;
+		min-height: 48px !important;
+		padding: 12px !important;
+	}
+
+	nav button svg,
+	nav a svg {
+		width: 24px !important;
+		height: 24px !important;
+	}
+
+	/* Push icons 16px from screen edges */
+	nav > div > .flex {
+		padding-left: 16px !important;
+		padding-right: 16px !important;
+	}
+
+	/* Spacer for fixed navbar */
+	nav + div[aria-hidden="true"],
+	.h-16,
+	.h-20 {
+		height: 60px !important;
+	}
+}
+
+/* ===================================
+   MOBILE-FIRST COMMANDMENT #5
+   GLOBAL TEXT SIZING (Mobile Adjustments)
+   =================================== */
+
+@media (max-width: 768px) {
+	/* Downscale hero headings specifically */
+	section h1,
+	.hero h1,
+	[class*="hero"] h1 {
+		font-size: 2.2rem !important; /* 35.2px - prevents 3-line wrap */
+		line-height: 1.2 !important;
+	}
+
+	/* Section headings */
+	section h2 {
+		font-size: 1.75rem !important; /* 28px */
+	}
+
+	/* Card headings */
+	.grid h3,
+	[class*="card"] h3 {
+		font-size: 1.25rem !important; /* 20px */
+	}
+
+	/* Body text - ensure readability */
+	p {
+		font-size: 1rem !important; /* 16px */
+		line-height: 1.5 !important;
+	}
+
+	/* Small text */
+	small,
+	.text-sm {
+		font-size: 0.875rem !important; /* 14px */
+	}
+}
+
+/* ===================================
+   ADDITIONAL MOBILE FIXES
+   =================================== */
+
+@media (max-width: 768px) {
+	/* Prevent images from breaking layout */
+	img {
+		max-width: 100% !important;
+		height: auto !important;
+	}
+
+	/* Fix flex containers that might overflow */
+	.flex {
+		flex-wrap: wrap !important;
+	}
+
+	/* Ensure modals are mobile-friendly */
+	[role="dialog"],
+	.modal,
+	[class*="modal"] {
+		max-width: 100vw !important;
+		margin: 0 !important;
+		border-radius: 0 !important;
+	}
+
+	/* Full-width inputs on mobile */
+	input[type="text"],
+	input[type="email"],
+	input[type="tel"],
+	input[type="password"],
+	textarea,
+	select {
+		width: 100% !important;
+		max-width: 100% !important;
+	}
+
+	/* Stack form fields vertically */
+	form .flex,
+	.form-group .flex {
+		flex-direction: column !important;
+		gap: 1rem !important;
+	}
+
+	/* Full-width buttons in forms */
+	form button,
+	form a[class*="bg-"] {
+		width: 100% !important;
+		min-height: 48px !important;
+	}
 }

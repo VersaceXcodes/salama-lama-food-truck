@@ -512,6 +512,22 @@ const UV_Menu: React.FC = () => {
     return 'in_stock';
   };
 
+  // Handle ESC key to close customization modal
+  useEffect(() => {
+    const handleEscKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && customizationModal.is_open) {
+        handleCloseCustomizationModal();
+      }
+    };
+
+    if (customizationModal.is_open) {
+      document.addEventListener('keydown', handleEscKey);
+      return () => {
+        document.removeEventListener('keydown', handleEscKey);
+      };
+    }
+  }, [customizationModal.is_open]);
+
   return (
     <>
       {/* Page Header */}
@@ -969,7 +985,10 @@ const UV_Menu: React.FC = () => {
 
           {/* Modal */}
           <div className="flex min-h-full items-center justify-center p-4">
-            <div className="relative bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div 
+              className="relative bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
               {/* Close Button */}
               <button
                 onClick={handleCloseCustomizationModal}

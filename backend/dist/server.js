@@ -2610,9 +2610,10 @@ const handleCheckoutCreateOrder = async (req, res) => {
         // Determine payment method type
         const pm_id = body.payment_method_id;
         const is_cash_payment = pm_id === 'cash_at_pickup' || pm_id === null;
+        const is_new_card_demo = pm_id === 'new_card_temp';
         let pm = null;
         let payment_method_type = 'cash';
-        if (!is_cash_payment) {
+        if (!is_cash_payment && !is_new_card_demo) {
             // Load payment method token (never return it to client).
             if (!pm_id) {
                 return res.status(400).json(createErrorResponse('Payment method is required', null, 'PAYMENT_METHOD_REQUIRED', req.request_id));
@@ -2622,6 +2623,16 @@ const handleCheckoutCreateOrder = async (req, res) => {
                 return res.status(400).json(createErrorResponse('Payment method not found', null, 'PAYMENT_METHOD_NOT_FOUND', req.request_id));
             }
             pm = pm_res.rows[0];
+            payment_method_type = 'card';
+        }
+        else if (is_new_card_demo) {
+            // Handle new card demo mode - create a mock payment method for this transaction
+            pm = {
+                payment_method_id: 'new_card_temp',
+                sumup_token: `demo_token_${Date.now()}`,
+                card_type: 'Visa',
+                last_four_digits: '4242',
+            };
             payment_method_type = 'card';
         }
         // Transactional order creation.
@@ -2689,7 +2700,7 @@ const handleCheckoutCreateOrder = async (req, res) => {
                 totals.tax_amount,
                 totals.total,
                 'pending',
-                is_cash_payment ? null : pm_id,
+                (is_cash_payment || is_new_card_demo) ? null : pm_id,
                 payment_method_type,
                 null,
                 null,
@@ -2729,13 +2740,13 @@ const handleCheckoutCreateOrder = async (req, res) => {
          VALUES ($1,$2,$3,$4,$5,$6)`, [gen_id('osh'), order_id, 'received', req.user.user_id, created_at, 'Order placed']);
             // Process payment (mock) BEFORE committing - skip for cash payments.
             let payment = null;
-            if (!is_cash_payment) {
+            if (!is_cash_payment && payment_method_type === 'card') {
                 payment = await sumup_charge_mock({
                     amount: totals.total,
                     currency: 'EUR',
                     description: `Order ${order_number}`,
                     token: pm.sumup_token,
-                    cvv: body.cvv,
+                    cvv: body.cvv || '123', // Use default CVV for demo cards
                 });
                 if (!payment.success) {
                     await client.query('ROLLBACK');

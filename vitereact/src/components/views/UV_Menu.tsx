@@ -528,6 +528,30 @@ const UV_Menu: React.FC = () => {
     }
   }, [customizationModal.is_open]);
 
+  // Lock body scroll when customization modal is open
+  useEffect(() => {
+    if (customizationModal.is_open) {
+      // Store original body overflow style
+      const originalOverflow = document.body.style.overflow;
+      const originalPaddingRight = document.body.style.paddingRight;
+      
+      // Calculate scrollbar width to prevent layout shift
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      
+      // Lock scroll
+      document.body.style.overflow = 'hidden';
+      if (scrollbarWidth > 0) {
+        document.body.style.paddingRight = `${scrollbarWidth}px`;
+      }
+      
+      return () => {
+        // Restore original styles
+        document.body.style.overflow = originalOverflow;
+        document.body.style.paddingRight = originalPaddingRight;
+      };
+    }
+  }, [customizationModal.is_open]);
+
   return (
     <>
       {/* Page Header */}
@@ -978,18 +1002,19 @@ const UV_Menu: React.FC = () => {
       {customizationModal.is_open && customizationModal.item && (
         <div 
           className="fixed inset-0 z-50 overflow-y-auto"
+          onClick={handleCloseCustomizationModal}
         >
           {/* Backdrop */}
           <div 
             className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
             aria-hidden="true"
-            onClick={handleCloseCustomizationModal}
           />
           
           {/* Modal Container */}
           <div className="flex min-h-full items-center justify-center p-4 relative z-10">
             <div 
               className="relative bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
             >
               {/* Close Button */}
               <button

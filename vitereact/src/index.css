@@ -52,6 +52,14 @@
 @layer base {
 	:root {
 		--radius: 0.5rem;
+		
+		/* Brand Colors */
+		--salamalama-com-color-1: #2C2018;
+		--salamalama-com-color-2: #DEBF93;
+		--salamalama-com-color-3: #80604A;
+		--salamalama-com-color-4: #989F88;
+		--salamalama-com-color-5: #CD3A1D;
+		--salamalama-com-color-6: #85878E;
 	}
 }
 

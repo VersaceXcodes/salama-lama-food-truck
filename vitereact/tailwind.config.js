@@ -9,7 +9,16 @@ export default {
 				md: "calc(var(--radius) - 2px)",
 				sm: "calc(var(--radius) - 4px)",
 			},
-			colors: {},
+			colors: {
+				brand: {
+					1: "#2C2018", // Dark Brown - Primary dark color
+					2: "#DEBF93", // Beige - Light accent
+					3: "#80604A", // Medium Brown - Secondary
+					4: "#989F88", // Sage Green - Tertiary
+					5: "#CD3A1D", // Red Orange - Accent/CTA
+					6: "#85878E", // Gray - Neutral
+				},
+			},
 			keyframes: {
 				"accordion-down": {
 					from: {

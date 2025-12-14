@@ -457,26 +457,34 @@ const UV_Menu: React.FC = () => {
       });
     });
 
-    // Check if user is authenticated
-    if (!authToken) {
-      // Save pending cart item to localStorage
-      const pendingItem = {
+    // If user is authenticated, sync with backend
+    if (authToken) {
+      addToCartMutation.mutate({
         item_id: customizationModal.item.item_id,
         quantity: customizationModal.quantity,
         selected_customizations: customizationsObject,
-        item_name: customizationModal.item.name,
-        timestamp: Date.now(),
+      });
+    } else {
+      // For guest users, add directly to local Zustand cart
+      const item = customizationModal.item;
+      const cartItem = {
+        item_id: item.item_id,
+        item_name: item.name,
+        quantity: customizationModal.quantity,
+        unit_price: Number(item.price),
+        customizations: customizationModal.selected_customizations.map(c => ({
+          group_name: c.group_name,
+          option_name: c.option_name,
+          additional_price: Number(c.additional_price),
+        })),
+        line_total: Number(customizationModal.total_price) * customizationModal.quantity,
       };
-      localStorage.setItem('pendingCartItem', JSON.stringify(pendingItem));
-      
-      // Show notification and redirect to login
-      setNotification({ type: 'success', message: 'Redirecting to login. Item will be added after login.' });
-      setTimeout(() => {
-        setNotification(null);
-        window.location.href = '/login?redirect=/menu';
-      }, 1500);
-      
-      // Close modal
+      addToCartAction(cartItem);
+
+      // Clear loading state
+      setLoadingItemId(null);
+
+      // Close modal and reset
       setCustomizationModal({
         is_open: false,
         item: null,
@@ -484,46 +492,40 @@ const UV_Menu: React.FC = () => {
         total_price: 0,
         quantity: 1,
       });
-      return;
-    }
 
-    addToCartMutation.mutate({
-      item_id: customizationModal.item.item_id,
-      quantity: customizationModal.quantity,
-      selected_customizations: customizationsObject,
-    });
+      // Show success notification
+      setNotification({ type: 'success', message: 'Item added to cart!' });
+      setTimeout(() => setNotification(null), 3000);
+    }
   };
 
   const handleQuickAddToCart = (item: MenuItem) => {
     // For items without customizations or without required customizations
     if (item.customization_groups.length === 0 || !item.customization_groups.some(g => g.is_required)) {
-      // Check if user is authenticated
-      if (!authToken) {
-        // Save pending cart item to localStorage
-        const pendingItem = {
+      // If user is authenticated, sync with backend
+      if (authToken) {
+        // Make API call to add to cart
+        addToCartMutation.mutate({
           item_id: item.item_id,
           quantity: 1,
           selected_customizations: {},
+        });
+      } else {
+        // For guest users, add directly to local Zustand cart
+        const cartItem = {
+          item_id: item.item_id,
           item_name: item.name,
-          timestamp: Date.now(),
+          quantity: 1,
+          unit_price: Number(item.price),
+          customizations: [],
+          line_total: Number(item.price),
         };
-        localStorage.setItem('pendingCartItem', JSON.stringify(pendingItem));
-        
-        // Show notification and redirect to login
-        setNotification({ type: 'success', message: 'Redirecting to login. Item will be added after login.' });
-        setTimeout(() => {
-          setNotification(null);
-          window.location.href = '/login?redirect=/menu';
-        }, 1500);
-        return;
-      }
+        addToCartAction(cartItem);
 
-      // Make API call to add to cart
-      addToCartMutation.mutate({
-        item_id: item.item_id,
-        quantity: 1,
-        selected_customizations: {},
-      });
+        // Show success notification
+        setNotification({ type: 'success', message: 'Item added to cart!' });
+        setTimeout(() => setNotification(null), 3000);
+      }
     } else {
       // Open customization modal (will handle auth check inside modal)
       handleOpenCustomizationModal(item);

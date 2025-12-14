@@ -134,6 +134,7 @@ interface AppStore {
   update_cart_fees: (delivery_fee: number, tax_amount: number) => void;
   clear_cart: () => void;
   recalculate_totals: () => void;
+  sync_guest_cart_to_backend: () => Promise<void>;
 
   // Business Settings Actions
   fetch_business_settings: () => Promise<void>;
@@ -280,6 +281,9 @@ export const useAppStore = create<AppStore>()(
           // Initialize WebSocket connection for authenticated users
           get().connect_websocket();
 
+          // Sync guest cart items to backend if any exist
+          await get().sync_guest_cart_to_backend();
+
         } catch (error: any) {
           const errorMessage = error.response?.data?.message || error.message || 'Login failed';
           
@@ -334,6 +338,9 @@ export const useAppStore = create<AppStore>()(
 
           // Initialize WebSocket connection
           get().connect_websocket();
+
+          // Sync guest cart items to backend if any exist
+          await get().sync_guest_cart_to_backend();
 
           return { user, token, first_order_discount_code };
 
@@ -635,6 +642,54 @@ export const useAppStore = create<AppStore>()(
             },
           };
         });
+      },
+
+      sync_guest_cart_to_backend: async () => {
+        const state = get();
+        const { cart_state, authentication_state } = state;
+        
+        // Only sync if authenticated and there are items in the cart
+        if (!authentication_state.auth_token || cart_state.items.length === 0) {
+          return;
+        }
+
+        try {
+          // Sync each cart item to the backend
+          for (const item of cart_state.items) {
+            // Convert customizations array to the format expected by backend
+            const selected_customizations: Record<string, any> = {};
+            item.customizations.forEach((customization, index) => {
+              const groupKey = `group_${index}`;
+              if (!selected_customizations[groupKey]) {
+                selected_customizations[groupKey] = [];
+              }
+              selected_customizations[groupKey].push({
+                option_name: customization.option_name,
+                additional_price: customization.additional_price,
+              });
+            });
+
+            await axios.post(
+              `${API_BASE_URL}/api/cart/items`,
+              {
+                item_id: item.item_id,
+                quantity: item.quantity,
+                selected_customizations,
+              },
+              {
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${authentication_state.auth_token}`,
+                },
+              }
+            );
+          }
+          
+          console.log('Guest cart synced to backend successfully');
+        } catch (error) {
+          console.error('Failed to sync guest cart to backend:', error);
+          // Don't throw error - cart is already in local state
+        }
       },
 
       // ===========================

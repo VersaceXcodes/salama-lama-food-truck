@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import * as dotenv from 'dotenv';
 import morgan from 'morgan';
+import cookieParser from 'cookie-parser';
 import jwt from 'jsonwebtoken';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
@@ -125,6 +126,7 @@ for (const dir of [
 
 app.use(cors({ origin: FRONTEND_URL, credentials: true }));
 app.use(express.json({ limit: '10mb' }));
+app.use(cookieParser());
 
 /*
   Log requests with high-fidelity data for dev UX.
@@ -374,6 +376,59 @@ async function authenticate_token(req, res, next) {
 }
 
 /**
+ * Optional authentication middleware - attaches user if token is present, but doesn't require it.
+ * For guest carts, we'll use a session-based identifier.
+ */
+async function authenticate_token_optional(req, res, next) {
+  const auth_header = req.headers.authorization;
+  const token = auth_header && auth_header.startsWith('Bearer ') ? auth_header.slice('Bearer '.length) : null;
+  
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET) as jwt.JwtPayload;
+      const result = await pool.query('SELECT user_id, email, first_name, last_name, role, status, email_verified, last_login_at FROM users WHERE user_id = $1', [decoded.user_id]);
+      if (result.rows.length > 0) {
+        const user = result.rows[0];
+        if (user.status === 'active') {
+          // For staff/admin, check session validity
+          if ((user.role === 'staff' || user.role === 'admin') && decoded.login_at) {
+            if ((user.last_login_at || null) === decoded.login_at) {
+              req.user = user;
+              req.token_payload = decoded;
+            }
+          } else {
+            req.user = user;
+            req.token_payload = decoded;
+          }
+        }
+      }
+    } catch (error) {
+      // Token invalid or expired - continue as guest
+      console.log('[AUTH] Invalid token, continuing as guest:', error.message);
+    }
+  }
+  
+  // If no user authenticated, create/use guest session ID
+  if (!req.user) {
+    // Use a session ID from cookie or create a new one
+    const guest_session_id = req.cookies?.guest_session_id || `guest_${nanoid(20)}`;
+    req.guest_session_id = guest_session_id;
+    
+    // Set cookie for guest session (7 days expiry)
+    if (!req.cookies?.guest_session_id) {
+      res.cookie('guest_session_id', guest_session_id, {
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax'
+      });
+    }
+  }
+  
+  next();
+}
+
+/**
  * Authorization guard.
  */
 function require_role(allowed_roles) {
@@ -540,16 +595,22 @@ async function sumup_refund_mock({ transaction_id, amount, reason }) {
 }
 
 /**
- * Read user cart from local durable storage.
+ * Read user or guest cart from local durable storage.
+ * Supports both authenticated users and guest sessions.
  */
-function cart_file_path(user_id) {
-  return path.join(storage_carts_dir, `${user_id}.json`);
+function cart_file_path(identifier) {
+  return path.join(storage_carts_dir, `${identifier}.json`);
 }
 
-function read_cart_sync(user_id) {
+function get_cart_identifier(req) {
+  // Use user_id if authenticated, otherwise use guest session ID
+  return req.user?.user_id || req.guest_session_id || 'unknown';
+}
+
+function read_cart_sync(identifier) {
   try {
-    const fp = cart_file_path(user_id);
-    console.log(`[CART READ] Attempting to read cart for user ${user_id} from ${fp}`);
+    const fp = cart_file_path(identifier);
+    console.log(`[CART READ] Attempting to read cart for identifier ${identifier} from ${fp}`);
     
     if (!fs.existsSync(fp)) {
       console.log(`[CART READ] Cart file does not exist, returning empty cart`);
@@ -572,21 +633,21 @@ function read_cart_sync(user_id) {
     console.log(`[CART READ] Successfully read cart with ${parsed.items.length} items`);
     return { items: parsed.items, discount_code: parsed.discount_code ?? null, updated_at: parsed.updated_at ?? now_iso() };
   } catch (error) {
-    console.error(`[CART READ ERROR] Failed to read cart for user ${user_id}:`, error);
+    console.error(`[CART READ ERROR] Failed to read cart for identifier ${identifier}:`, error);
     return { items: [], discount_code: null, updated_at: now_iso() };
   }
 }
 
-function write_cart_sync(user_id, cart) {
+function write_cart_sync(identifier, cart) {
   try {
-    const fp = cart_file_path(user_id);
+    const fp = cart_file_path(identifier);
     const next = { ...cart, updated_at: now_iso() };
-    console.log(`[CART WRITE] Writing cart for user ${user_id} with ${next.items.length} items`);
+    console.log(`[CART WRITE] Writing cart for identifier ${identifier} with ${next.items.length} items`);
     fs.writeFileSync(fp, JSON.stringify(next, null, 2), 'utf8');
     console.log(`[CART WRITE] Successfully wrote cart to ${fp}`);
     return next;
   } catch (error) {
-    console.error(`[CART WRITE ERROR] Failed to write cart for user ${user_id}:`, error);
+    console.error(`[CART WRITE ERROR] Failed to write cart for identifier ${identifier}:`, error);
     throw error;
   }
 }
@@ -2166,14 +2227,15 @@ app.get('/api/menu/item/:id', async (req, res) => {
  * CART
  */
 
-app.get('/api/cart', authenticate_token, async (req, res) => {
+app.get('/api/cart', authenticate_token_optional, async (req, res) => {
   try {
-    console.log(`[CART GET] User ${req.user.user_id} requesting cart`);
-    const cart = read_cart_sync(req.user.user_id);
+    const cart_id = get_cart_identifier(req);
+    console.log(`[CART GET] Cart identifier ${cart_id} requesting cart (user: ${req.user?.user_id || 'guest'})`);
+    const cart = read_cart_sync(cart_id);
     console.log(`[CART GET] Cart loaded with ${cart.items.length} items`);
     
     const totals = await compute_cart_totals({
-      user_id: req.user.user_id,
+      user_id: req.user?.user_id || cart_id,
       cart,
       order_type: 'collection',
       delivery_address_id: null,
@@ -2193,12 +2255,12 @@ app.get('/api/cart', authenticate_token, async (req, res) => {
       validation_errors: totals.validation_errors,
     });
   } catch (error) {
-    console.error(`[CART GET ERROR] User ${req.user?.user_id}:`, error);
+    console.error(`[CART GET ERROR] Cart identifier ${get_cart_identifier(req)}:`, error);
     return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
   }
 });
 
-app.post('/api/cart/add', authenticate_token, async (req, res) => {
+app.post('/api/cart/add', authenticate_token_optional, async (req, res) => {
   try {
     const body = cart_add_input_schema.parse({
       ...req.body,
@@ -2215,7 +2277,8 @@ app.post('/api/cart/add', authenticate_token, async (req, res) => {
       return res.status(400).json(createErrorResponse('Item is out of stock', null, 'ITEM_OUT_OF_STOCK', req.request_id));
     }
 
-    const cart = read_cart_sync(req.user.user_id);
+    const cart_id = get_cart_identifier(req);
+    const cart = read_cart_sync(cart_id);
     const cart_item_id = gen_id('cart');
     cart.items.push({
       cart_item_id,
@@ -2224,10 +2287,10 @@ app.post('/api/cart/add', authenticate_token, async (req, res) => {
       selected_customizations: body.selected_customizations ?? null,
       added_at: now_iso(),
     });
-    write_cart_sync(req.user.user_id, cart);
+    write_cart_sync(cart_id, cart);
 
     const totals = await compute_cart_totals({
-      user_id: req.user.user_id,
+      user_id: req.user?.user_id || cart_id,
       cart,
       order_type: 'collection',
       delivery_address_id: null,
@@ -2253,7 +2316,7 @@ app.post('/api/cart/add', authenticate_token, async (req, res) => {
 });
 
 // Alias endpoint for /api/cart/add (used by frontend)
-app.post('/api/cart/items', authenticate_token, async (req, res) => {
+app.post('/api/cart/items', authenticate_token_optional, async (req, res) => {
   try {
     const body = cart_add_input_schema.parse({
       ...req.body,
@@ -2270,7 +2333,8 @@ app.post('/api/cart/items', authenticate_token, async (req, res) => {
       return res.status(400).json(createErrorResponse('Item is out of stock', null, 'ITEM_OUT_OF_STOCK', req.request_id));
     }
 
-    const cart = read_cart_sync(req.user.user_id);
+    const cart_id = get_cart_identifier(req);
+    const cart = read_cart_sync(cart_id);
     
     // Prevent cart from becoming too large (max 50 unique items)
     if (cart.items.length >= 50) {
@@ -2285,10 +2349,10 @@ app.post('/api/cart/items', authenticate_token, async (req, res) => {
       selected_customizations: body.selected_customizations ?? null,
       added_at: now_iso(),
     });
-    write_cart_sync(req.user.user_id, cart);
+    write_cart_sync(cart_id, cart);
 
     const totals = await compute_cart_totals({
-      user_id: req.user.user_id,
+      user_id: req.user?.user_id || cart_id,
       cart,
       order_type: 'collection',
       delivery_address_id: null,
@@ -2313,11 +2377,12 @@ app.post('/api/cart/items', authenticate_token, async (req, res) => {
   }
 });
 
-app.put('/api/cart/item/:id', authenticate_token, async (req, res) => {
+app.put('/api/cart/item/:id', authenticate_token_optional, async (req, res) => {
   try {
     const cart_item_id = req.params.id;
     const body = cart_update_input_schema.parse({ quantity: Number(req.body?.quantity) });
-    const cart = read_cart_sync(req.user.user_id);
+    const cart_id = get_cart_identifier(req);
+    const cart = read_cart_sync(cart_id);
     const idx = cart.items.findIndex((i) => i.cart_item_id === cart_item_id);
     if (idx === -1) {
       return res.status(404).json(createErrorResponse('Cart item not found', null, 'NOT_FOUND', req.request_id));
@@ -2335,10 +2400,10 @@ app.put('/api/cart/item/:id', authenticate_token, async (req, res) => {
     }
 
     cart.items[idx].quantity = body.quantity;
-    write_cart_sync(req.user.user_id, cart);
+    write_cart_sync(cart_id, cart);
 
     const totals = await compute_cart_totals({
-      user_id: req.user.user_id,
+      user_id: req.user?.user_id || cart_id,
       cart,
       order_type: 'collection',
       delivery_address_id: null,
@@ -2363,16 +2428,17 @@ app.put('/api/cart/item/:id', authenticate_token, async (req, res) => {
   }
 });
 
-app.delete('/api/cart/item/:id', authenticate_token, async (req, res) => {
+app.delete('/api/cart/item/:id', authenticate_token_optional, async (req, res) => {
   try {
     const cart_item_id = req.params.id;
-    const cart = read_cart_sync(req.user.user_id);
+    const cart_id = get_cart_identifier(req);
+    const cart = read_cart_sync(cart_id);
     const next_items = cart.items.filter((i) => i.cart_item_id !== cart_item_id);
     cart.items = next_items;
-    write_cart_sync(req.user.user_id, cart);
+    write_cart_sync(cart_id, cart);
 
     const totals = await compute_cart_totals({
-      user_id: req.user.user_id,
+      user_id: req.user?.user_id || cart_id,
       cart,
       order_type: 'collection',
       delivery_address_id: null,
@@ -2394,15 +2460,16 @@ app.delete('/api/cart/item/:id', authenticate_token, async (req, res) => {
   }
 });
 
-app.delete('/api/cart', authenticate_token, async (req, res) => {
+app.delete('/api/cart', authenticate_token_optional, async (req, res) => {
   try {
-    console.log(`[CART DELETE] User ${req.user.user_id} clearing cart`);
-    const cart = read_cart_sync(req.user.user_id);
+    const cart_id = get_cart_identifier(req);
+    console.log(`[CART DELETE] Cart ${cart_id} clearing cart (user: ${req.user?.user_id || 'guest'})`);
+    const cart = read_cart_sync(cart_id);
     cart.items = [];
     cart.discount_code = null;
-    write_cart_sync(req.user.user_id, cart);
+    write_cart_sync(cart_id, cart);
     
-    console.log(`[CART DELETE] Cart cleared for user ${req.user.user_id}`);
+    console.log(`[CART DELETE] Cart cleared for ${cart_id}`);
     
     return ok(res, 200, {
       items: [],

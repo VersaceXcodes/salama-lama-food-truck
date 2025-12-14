@@ -311,6 +311,14 @@ p {
 		width: 100% !important;
 		max-width: 100vw !important;
 		overflow-x: hidden !important;
+		box-sizing: border-box !important;
+	}
+
+	/* Ensure all divs respect container boundaries */
+	main > div,
+	section > div {
+		max-width: 100% !important;
+		box-sizing: border-box !important;
 	}
 }
 
@@ -321,17 +329,26 @@ p {
 
 @media (max-width: 768px) {
 	/* Force menu items to stack vertically (1 column) */
-	.grid[class*="grid-cols"] {
+	.grid[class*="grid-cols"],
+	.grid {
+		display: grid !important;
 		grid-template-columns: 1fr !important;
 		gap: 1rem !important; /* 16px gap between cards */
+		width: 100% !important;
+		max-width: 100% !important;
 	}
 
 	/* Product cards must be full width */
 	.grid > div,
 	.grid > a,
+	.grid > *,
+	.grid div[class*="bg-white"],
+	.grid div[class*="rounded-xl"],
 	[class*="rounded-xl"] {
 		width: 100% !important;
 		max-width: 100% !important;
+		min-width: 0 !important;
+		box-sizing: border-box !important;
 	}
 }
 
@@ -344,24 +361,44 @@ p {
 	/* Product card images - fixed aspect ratio */
 	.grid img,
 	[class*="rounded-xl"] img,
-	.group img {
+	.group img,
+	.grid div[class*="relative"] img,
+	.grid div[class*="h-"] img {
 		width: 100% !important;
 		height: 200px !important;
+		min-height: 200px !important;
+		max-height: 200px !important;
 		object-fit: cover !important;
 		display: block !important;
 	}
 
+	/* Image container should also be constrained */
+	.grid div[class*="relative"],
+	.grid div[class*="h-48"],
+	.grid div[class*="h-56"] {
+		height: 200px !important;
+		min-height: 200px !important;
+		max-height: 200px !important;
+	}
+
 	/* Product card titles - 1.25rem (20px) */
 	.grid h3,
-	[class*="rounded-xl"] h3 {
+	[class*="rounded-xl"] h3,
+	.grid h3[class*="text-"],
+	[class*="rounded-xl"] h3[class*="text-"] {
 		font-size: 1.25rem !important; /* 20px */
 		line-height: 1.4 !important;
 		margin-bottom: 0.5rem !important;
+		font-weight: 600 !important;
 	}
 
 	/* Product card descriptions - truncate to 2 lines */
 	.grid p,
-	[class*="rounded-xl"] p {
+	[class*="rounded-xl"] p,
+	.grid p[class*="text-gray"],
+	[class*="rounded-xl"] p[class*="text-gray"],
+	.grid p[class*="line-clamp"],
+	[class*="rounded-xl"] p[class*="line-clamp"] {
 		display: -webkit-box !important;
 		-webkit-line-clamp: 2 !important;
 		-webkit-box-orient: vertical !important;
@@ -369,24 +406,28 @@ p {
 		text-overflow: ellipsis !important;
 		line-height: 1.5 !important;
 		max-height: 3rem !important; /* 2 lines * 1.5 line-height */
+		font-size: 0.875rem !important; /* 14px for descriptions */
 	}
 
 	/* "Add to Order" buttons - Full Width + 48px height */
 	.grid button,
 	.grid a[class*="bg-"],
 	[class*="rounded-xl"] button,
+	.grid button[class*="w-full"],
+	[class*="rounded-xl"] button[class*="w-full"],
 	.add-to-cart-btn,
 	.order-btn,
 	button[class*="Add"],
 	a[class*="Add"] {
 		width: 100% !important;
 		min-height: 48px !important;
-		height: 48px !important;
+		height: auto !important;
+		padding: 0.75rem 1.5rem !important; /* 12px 24px - vertical padding ensures 48px */
 		font-size: 1rem !important; /* 16px */
-		padding: 0.75rem 1.5rem !important; /* 12px 24px */
 		display: flex !important;
 		align-items: center !important;
 		justify-content: center !important;
+		flex-shrink: 0 !important;
 	}
 }
 
@@ -495,6 +536,20 @@ p {
    =================================== */
 
 @media (max-width: 768px) {
+	/* OVERRIDE INLINE STYLES - Critical for menu grid */
+	.grid[style*="grid-template-columns"],
+	div[style*="grid-template-columns"],
+	div.grid[style],
+	[class*="grid"][style] {
+		grid-template-columns: 1fr !important;
+	}
+
+	/* Prevent auto-fill from creating multiple columns */
+	.grid[class*="lg:grid-cols"],
+	.grid[class*="xl:grid-cols"] {
+		grid-template-columns: 1fr !important;
+	}
+
 	/* Prevent images from breaking layout */
 	img {
 		max-width: 100% !important;

@@ -199,8 +199,8 @@ const UV_Menu: React.FC = () => {
       setLoadingItemId(data.item_id);
       return addItemToCart(data, authToken);
     },
-    onSuccess: () => {
-      // Update Zustand cart state
+    onSuccess: (response) => {
+      // Update Zustand cart state with the backend response
       if (customizationModal.item) {
         const item = customizationModal.item;
         const cartItem = {
@@ -240,23 +240,12 @@ const UV_Menu: React.FC = () => {
       // Clear loading state
       setLoadingItemId(null);
       
-      // Check if it's an authentication error
-      if (error.response?.status === 401) {
-        toast({
-          variant: 'destructive',
-          title: 'Authentication Required',
-          description: 'Please log in or register to add items to your cart.'
-        });
-        setTimeout(() => {
-          window.location.href = '/login?redirect=/menu';
-        }, 2000);
-      } else {
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: error.response?.data?.message || 'Failed to add item to cart'
-        });
-      }
+      // Show error notification
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to add item to cart'
+      });
     },
   });
 
@@ -474,81 +463,34 @@ const UV_Menu: React.FC = () => {
       });
     });
 
-    // If user is authenticated, sync with backend
-    if (authToken) {
-      addToCartMutation.mutate({
-        item_id: customizationModal.item.item_id,
-        quantity: customizationModal.quantity,
-        selected_customizations: customizationsObject,
-      });
-    } else {
-      // For guest users, add directly to local Zustand cart
-      const item = customizationModal.item;
-      const cartItem = {
-        item_id: item.item_id,
-        item_name: item.name,
-        quantity: customizationModal.quantity,
-        unit_price: Number(item.price),
-        customizations: customizationModal.selected_customizations.map(c => ({
-          group_name: c.group_name,
-          option_name: c.option_name,
-          additional_price: Number(c.additional_price),
-        })),
-        line_total: Number(customizationModal.total_price) * customizationModal.quantity,
-      };
-      addToCartAction(cartItem);
-
-      // Clear loading state
-      setLoadingItemId(null);
-
-      // Close modal and reset
-      setCustomizationModal({
-        is_open: false,
-        item: null,
-        selected_customizations: [],
-        total_price: 0,
-        quantity: 1,
-      });
-
-      // Show success notification
-      toast({
-        title: 'Success',
-        description: 'Item added to cart!'
-      });
-    }
+    // Call backend API to persist cart item (for both authenticated and guest users)
+    addToCartMutation.mutate({
+      item_id: customizationModal.item.item_id,
+      quantity: customizationModal.quantity,
+      selected_customizations: customizationsObject,
+    });
   };
 
   const handleQuickAddToCart = (item: MenuItem) => {
     // For items without customizations or without required customizations
     if (item.customization_groups.length === 0 || !item.customization_groups.some(g => g.is_required)) {
-      // If user is authenticated, sync with backend
-      if (authToken) {
-        // Make API call to add to cart
-        addToCartMutation.mutate({
-          item_id: item.item_id,
-          quantity: 1,
-          selected_customizations: {},
-        });
-      } else {
-        // For guest users, add directly to local Zustand cart
-        const cartItem = {
-          item_id: item.item_id,
-          item_name: item.name,
-          quantity: 1,
-          unit_price: Number(item.price),
-          customizations: [],
-          line_total: Number(item.price),
-        };
-        addToCartAction(cartItem);
-
-      // Show success notification
-      toast({
-        title: 'Success',
-        description: 'Item added to cart!'
+      // Prepare item data for modal state (needed for onSuccess callback)
+      setCustomizationModal({
+        is_open: false,
+        item: item,
+        selected_customizations: [],
+        total_price: Number(item.price),
+        quantity: 1,
       });
-      }
+
+      // Make API call to add to cart (for both authenticated and guest users)
+      addToCartMutation.mutate({
+        item_id: item.item_id,
+        quantity: 1,
+        selected_customizations: {},
+      });
     } else {
-      // Open customization modal (will handle auth check inside modal)
+      // Open customization modal
       handleOpenCustomizationModal(item);
     }
   };

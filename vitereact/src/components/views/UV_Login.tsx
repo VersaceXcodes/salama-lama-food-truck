@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAppStore } from '@/store/main';
-import { Eye, EyeOff, LogIn, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, LogIn, AlertCircle, ShoppingBag } from 'lucide-react';
 
 const UV_Login: React.FC = () => {
   // ===========================
@@ -121,6 +121,12 @@ const UV_Login: React.FC = () => {
 
   const togglePasswordVisibility = () => {
     setShowPassword(!show_password);
+  };
+
+  const handleGuestCheckout = () => {
+    // Redirect to checkout, preserving the cart
+    // The checkout flow already supports guest users
+    navigate(redirect_url);
   };
 
   // ===========================
@@ -293,6 +299,28 @@ const UV_Login: React.FC = () => {
                     </>
                   )}
                 </button>
+
+                {/* Divider */}
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-200"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-white text-gray-500">or</span>
+                  </div>
+                </div>
+
+                {/* Guest Checkout Button */}
+                <button
+                  type="button"
+                  onClick={handleGuestCheckout}
+                  disabled={isLoading}
+                  className="w-full flex items-center justify-center px-6 py-3 rounded-lg font-medium text-blue-600 bg-white border border-blue-600 hover:bg-blue-50 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="Continue as guest without signing in"
+                >
+                  <ShoppingBag className="h-5 w-5 mr-2" />
+                  <span>Continue as Guest</span>
+                </button>
               </form>
             </div>
 
@@ -306,6 +334,13 @@ const UV_Login: React.FC = () => {
                 >
                   Sign up
                 </Link>
+                {' '} — or{' '}
+                <button
+                  onClick={handleGuestCheckout}
+                  className="font-medium text-blue-600 hover:text-blue-700 hover:underline transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 rounded px-1"
+                >
+                  continue as a guest
+                </button>
               </p>
             </div>
           </div>

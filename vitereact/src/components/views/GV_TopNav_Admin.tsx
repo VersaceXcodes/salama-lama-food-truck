@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppStore } from '@/store/main';
-import { Search, Bell, User, LogOut, Settings, ChevronDown } from 'lucide-react';
+import { Search, Bell, User, LogOut, Settings, ChevronDown, Menu, X } from 'lucide-react';
 
 // ===========================
 // Type Definitions
@@ -51,6 +51,7 @@ const GV_TopNav_Admin: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // ===========================
   // Refs for Click Outside Detection
@@ -211,16 +212,16 @@ const GV_TopNav_Admin: React.FC = () => {
                   style={{ height: '50px', width: 'auto' }}
                   onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                 />
-                <div className="flex flex-col">
+                <div className="hidden md:flex flex-col">
                   <span className="text-xs text-gray-600 leading-none">Admin Panel</span>
                 </div>
               </Link>
             </div>
 
             {/* ===========================
-                Center Section - Global Search
+                Center Section - Global Search (Hidden on Mobile)
                 =========================== */}
-            <div className="flex-1 max-w-2xl mx-8 relative" ref={searchRef}>
+            <div className="hidden md:block flex-1 max-w-2xl mx-8 relative" ref={searchRef}>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Search className="h-5 w-5 text-gray-400" />
@@ -263,15 +264,16 @@ const GV_TopNav_Admin: React.FC = () => {
             </div>
 
             {/* ===========================
-                Right Section - Notifications & Profile
+                Right Section - Notifications, Profile & Mobile Menu
                 =========================== */}
-            <div className="flex items-center space-x-4">
-              {/* Notifications */}
-              <div className="relative" ref={notificationsRef}>
+            <div className="flex items-center space-x-2 md:space-x-4">
+              {/* Notifications - Hidden on Mobile */}
+              <div className="hidden md:block relative" ref={notificationsRef}>
                 <button
                   onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
                   className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500"
                   aria-label="Notifications"
+                  style={{ minHeight: '48px', minWidth: '48px' }}
                 >
                   <Bell className="h-6 w-6" />
                   {notificationsData && notificationsData.notification_count > 0 && (
@@ -362,11 +364,12 @@ const GV_TopNav_Admin: React.FC = () => {
                 )}
               </div>
 
-              {/* Admin Profile Dropdown */}
-              <div className="relative" ref={profileRef}>
+              {/* Admin Profile Dropdown - Hidden on Mobile */}
+              <div className="hidden md:block relative" ref={profileRef}>
                 <button
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
                   className="flex items-center space-x-2 p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  style={{ minHeight: '48px' }}
                 >
                   <div className="flex items-center justify-center w-8 h-8 bg-orange-100 rounded-full">
                     <User className="h-5 w-5 text-orange-600" />
@@ -414,9 +417,161 @@ const GV_TopNav_Admin: React.FC = () => {
                   </div>
                 )}
               </div>
+
+              {/* Mobile Menu Button - Only on Mobile */}
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="md:hidden p-3 text-gray-700 hover:text-orange-600 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-lg"
+                style={{ minHeight: '48px', minWidth: '48px' }}
+                aria-label="Toggle mobile menu"
+                aria-expanded={isMobileMenuOpen}
+              >
+                {isMobileMenuOpen ? (
+                  <X className="h-7 w-7" />
+                ) : (
+                  <Menu className="h-7 w-7" />
+                )}
+              </button>
             </div>
           </div>
         </div>
+
+        {/* Mobile Menu Drawer */}
+        {isMobileMenuOpen && (
+          <>
+            {/* Backdrop */}
+            <div 
+              className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+              onClick={() => setIsMobileMenuOpen(false)}
+            ></div>
+            
+            {/* Mobile Drawer */}
+            <div className="fixed top-0 right-0 bottom-0 w-full max-w-full bg-white shadow-2xl z-50 md:hidden overflow-y-auto animate-slideInRight">
+              <div className="p-6">
+                {/* Close Button */}
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-2xl font-bold text-gray-900">Admin Menu</h2>
+                  <button
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="p-3 text-gray-500 hover:text-gray-700 transition-colors rounded-lg"
+                    style={{ minHeight: '48px', minWidth: '48px' }}
+                    aria-label="Close mobile menu"
+                  >
+                    <X className="h-7 w-7" />
+                  </button>
+                </div>
+                
+                {/* User Info */}
+                <div className="mb-8 p-5 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl">
+                  <div className="flex items-center space-x-4">
+                    <div className="h-14 w-14 bg-orange-500 rounded-full flex items-center justify-center">
+                      <User className="h-7 w-7 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-lg text-gray-900">{adminFirstName}</p>
+                      <p className="text-sm text-gray-600">{currentUser?.email}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Notifications Section */}
+                {notificationsData && notificationsData.notification_count > 0 && (
+                  <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-2">
+                        <Bell className="h-5 w-5 text-red-600" />
+                        <span className="font-semibold text-gray-900">Notifications</span>
+                      </div>
+                      <span className="bg-red-600 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
+                        {notificationsData.notification_count}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600">You have {notificationsData.notification_count} unread notification{notificationsData.notification_count > 1 ? 's' : ''}</p>
+                  </div>
+                )}
+
+                {/* Navigation Links */}
+                <nav className="space-y-2 mb-8">
+                  <Link
+                    to="/admin/dashboard"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center space-x-4 px-6 py-4 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
+                    style={{ minHeight: '64px' }}
+                  >
+                    <span className="font-semibold text-lg">Dashboard</span>
+                  </Link>
+                  
+                  <Link
+                    to="/admin/orders"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center space-x-4 px-6 py-4 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
+                    style={{ minHeight: '64px' }}
+                  >
+                    <span className="font-semibold text-lg">Orders</span>
+                  </Link>
+                  
+                  <Link
+                    to="/admin/menu"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center space-x-4 px-6 py-4 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
+                    style={{ minHeight: '64px' }}
+                  >
+                    <span className="font-semibold text-lg">Menu</span>
+                  </Link>
+                  
+                  <Link
+                    to="/admin/stock"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center space-x-4 px-6 py-4 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
+                    style={{ minHeight: '64px' }}
+                  >
+                    <span className="font-semibold text-lg">Stock</span>
+                  </Link>
+                  
+                  <Link
+                    to="/admin/customers"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center space-x-4 px-6 py-4 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
+                    style={{ minHeight: '64px' }}
+                  >
+                    <span className="font-semibold text-lg">Customers</span>
+                  </Link>
+                  
+                  <Link
+                    to="/admin/analytics"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center space-x-4 px-6 py-4 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
+                    style={{ minHeight: '64px' }}
+                  >
+                    <span className="font-semibold text-lg">Analytics</span>
+                  </Link>
+                </nav>
+                
+                {/* Settings & Logout */}
+                <div className="border-t-2 border-gray-200 pt-6 space-y-2">
+                  <Link
+                    to="/admin/settings"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center space-x-4 px-6 py-4 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors"
+                    style={{ minHeight: '64px' }}
+                  >
+                    <Settings className="h-6 w-6" />
+                    <span className="font-semibold text-lg">Settings</span>
+                  </Link>
+                  
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center space-x-4 px-6 py-4 text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                    style={{ minHeight: '64px' }}
+                  >
+                    <LogOut className="h-6 w-6" />
+                    <span className="font-bold text-lg">Logout</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </nav>
 
       {/* Spacer to prevent content from being hidden under fixed navbar */}

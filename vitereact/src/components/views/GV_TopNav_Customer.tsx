@@ -179,7 +179,7 @@ const GV_TopNav_Customer: React.FC = () => {
   
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white shadow-md">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#F2EFE9] shadow-md backdrop-blur-md transition-all duration-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             
@@ -188,10 +188,14 @@ const GV_TopNav_Customer: React.FC = () => {
               {/* Logo */}
               <Link 
                 to="/dashboard"
-                className="flex items-center space-x-2 text-orange-600 hover:text-orange-700 transition-colors"
+                className="flex items-center group"
               >
-                <Utensils className="h-8 w-8" />
-                <span className="text-xl font-bold hidden sm:block">Salama Lama</span>
+                <img 
+                  src="/logo-salama-lama.jpg" 
+                  alt="Salama Lama Logo" 
+                  className="h-[45px] md:h-[45px] w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+                  style={{ maxHeight: '45px' }}
+                />
               </Link>
               
               {/* Desktop Navigation Links */}

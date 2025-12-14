@@ -366,9 +366,19 @@ const GV_Footer: React.FC = () => {
           {/* Copyright Notice & Logo Integration */}
           <div className="mt-12 pt-8 border-t border-[#2C1A16]">
             <div className="text-center">
-              <h2 className="text-2xl font-extrabold text-[#F2EFE9] mb-2" style={{ fontWeight: 800 }}>
-                Salama Lama
-              </h2>
+              {/* Monochrome Logo - The Brand Anchor */}
+              <div className="flex justify-center mb-4">
+                <img 
+                  src="/logo-salama-lama.jpg" 
+                  alt="Salama Lama Logo" 
+                  className="h-[120px] w-auto object-contain"
+                  style={{ 
+                    height: '120px',
+                    maxHeight: '120px',
+                    filter: 'brightness(0) invert(1) sepia(0.2) saturate(0.2) hue-rotate(30deg)'
+                  }}
+                />
+              </div>
               <p className="text-sm text-[#F2EFE9]/70">
                 © {new Date().getFullYear()} {businessInfo.name || 'Salama Lama Food Truck'}. All rights reserved.
               </p>

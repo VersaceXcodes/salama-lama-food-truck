@@ -121,11 +121,14 @@ const GV_TopNav_Public: React.FC = () => {
   
   return (
     <>
-      {/* Main Navigation Bar - Fixed at top */}
+      {/* Main Navigation Bar - Fixed at top with Glassmorphism */}
       <nav 
-        className={`fixed top-0 left-0 right-0 z-50 bg-white transition-shadow duration-200 ${
-          has_shadow ? 'shadow-md' : 'shadow-sm'
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-200 ${
+          has_shadow 
+            ? 'bg-[#F2EFE9]/95 backdrop-blur-md shadow-md' 
+            : 'bg-[#F2EFE9] shadow-sm'
         }`}
+        style={{ backgroundColor: has_shadow ? 'rgba(242, 239, 233, 0.95)' : '#F2EFE9' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -134,12 +137,15 @@ const GV_TopNav_Public: React.FC = () => {
             <div className="flex-shrink-0">
               <Link 
                 to="/"
-                className="flex items-center space-x-2 group"
+                className="flex items-center group"
                 aria-label="Salama Lama Home"
               >
-                <div className="text-2xl font-bold text-orange-600 group-hover:text-orange-700 transition-colors duration-200">
-                  Salama Lama
-                </div>
+                <img 
+                  src="/logo-salama-lama.jpg" 
+                  alt="Salama Lama Logo" 
+                  className="h-[45px] md:h-[45px] w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+                  style={{ maxHeight: '45px' }}
+                />
               </Link>
             </div>
             
@@ -331,6 +337,25 @@ const GV_TopNav_Public: React.FC = () => {
         
         .animate-bounce-subtle {
           animation: bounce-subtle 0.5s ease-in-out;
+        }
+        
+        /* Mobile-specific logo styling */
+        @media (max-width: 768px) {
+          nav img[alt="Salama Lama Logo"] {
+            height: 35px !important;
+            max-height: 35px !important;
+          }
+          
+          /* Center logo on mobile */
+          nav .flex.items-center.justify-between {
+            position: relative;
+          }
+          
+          nav .flex-shrink-0 {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+          }
         }
       `}</style>
     </>

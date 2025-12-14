@@ -192,7 +192,7 @@ const GV_TopNav_Admin: React.FC = () => {
   // ===========================
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#F2EFE9] border-b border-gray-200 shadow-sm backdrop-blur-md transition-all duration-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* ===========================
@@ -201,14 +201,16 @@ const GV_TopNav_Admin: React.FC = () => {
             <div className="flex items-center flex-shrink-0">
               <Link
                 to="/admin/dashboard"
-                className="flex items-center space-x-2 text-gray-900 hover:text-orange-600 transition-colors"
+                className="flex items-center space-x-3 group"
               >
-                <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">SL</span>
-                </div>
+                <img 
+                  src="/logo-salama-lama.jpg" 
+                  alt="Salama Lama Logo" 
+                  className="h-[45px] w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+                  style={{ maxHeight: '45px' }}
+                />
                 <div className="flex flex-col">
-                  <span className="font-bold text-sm leading-none">Salama Lama</span>
-                  <span className="text-xs text-gray-500 leading-none">Admin Panel</span>
+                  <span className="text-xs text-gray-600 leading-none">Admin Panel</span>
                 </div>
               </Link>
             </div>

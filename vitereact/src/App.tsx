@@ -93,13 +93,37 @@ const queryClient = new QueryClient({
 });
 
 // ===========================
-// Loading Spinner Component
+// Loading Spinner Component with Logo Pulse Animation
 // ===========================
 const LoadingSpinner: React.FC = () => (
-  <div className="min-h-screen flex items-center justify-center bg-gray-50">
+  <div className="min-h-screen flex items-center justify-center bg-[#F2EFE9]">
     <div className="text-center">
-      <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-orange-600 mx-auto"></div>
-      <p className="mt-4 text-gray-600 font-medium">Loading Salama Lama...</p>
+      <div className="animate-pulse-slow">
+        <img 
+          src="/logo-salama-lama.jpg" 
+          alt="Salama Lama Logo" 
+          className="h-32 w-auto object-contain mx-auto"
+          style={{ 
+            filter: 'sepia(0.3) saturate(1.2) hue-rotate(-5deg) drop-shadow(0 4px 6px rgba(44, 26, 22, 0.1))'
+          }}
+        />
+      </div>
+      <p className="mt-6 text-[#2C1A16] font-medium text-lg">Loading Salama Lama...</p>
+      <style>{`
+        @keyframes pulse-slow {
+          0%, 100% {
+            opacity: 1;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 0.7;
+            transform: scale(0.95);
+          }
+        }
+        .animate-pulse-slow {
+          animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+      `}</style>
     </div>
   </div>
 );

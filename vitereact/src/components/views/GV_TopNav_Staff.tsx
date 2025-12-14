@@ -168,7 +168,7 @@ const GV_TopNav_Staff: React.FC = () => {
   return (
     <>
       {/* Fixed Navigation Bar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-orange-600 to-orange-700 shadow-lg">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-orange-600 to-orange-700 shadow-lg backdrop-blur-md transition-all duration-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Left Section: Logo + Main Navigation */}
@@ -176,11 +176,16 @@ const GV_TopNav_Staff: React.FC = () => {
               {/* Logo */}
               <Link
                 to="/staff/dashboard"
-                className="flex items-center space-x-2 text-white font-bold text-xl hover:opacity-90 transition-opacity"
+                className="flex items-center space-x-2 group"
                 aria-label="Staff Dashboard Home"
               >
-                <ShoppingCart className="h-7 w-7" />
-                <span className="hidden sm:inline">Salama Lama Staff</span>
+                <img 
+                  src="/logo-salama-lama.jpg" 
+                  alt="Salama Lama Logo" 
+                  className="h-[45px] w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+                  style={{ maxHeight: '45px', filter: 'brightness(0) invert(1)' }}
+                />
+                <span className="hidden sm:inline text-white font-bold text-lg">Staff</span>
               </Link>
 
               {/* Main Navigation Links */}

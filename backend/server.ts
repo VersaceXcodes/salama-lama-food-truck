@@ -345,6 +345,7 @@ function sign_token({ user_id, role, email, remember_me = false, login_at = null
 /**
  * Authenticate bearer token and attach req.user.
  * Also enforces: user must exist and be active, and staff/admin single-session.
+ * Now supports guest users (role='guest').
  */
 async function authenticate_token(req, res, next) {
   const auth_header = req.headers.authorization;
@@ -367,7 +368,11 @@ async function authenticate_token(req, res, next) {
         return res.status(401).json(createErrorResponse('Session has been superseded by a newer login', null, 'AUTH_SESSION_SUPERSEDED', req.request_id));
       }
     }
-    req.user = user;
+    // Add isGuest flag for convenience
+    req.user = {
+      ...user,
+      isGuest: user.role === 'guest',
+    };
     req.token_payload = decoded;
     next();
   } catch (error) {
@@ -378,6 +383,7 @@ async function authenticate_token(req, res, next) {
 /**
  * Optional authentication middleware - attaches user if token is present, but doesn't require it.
  * For guest carts, we'll use a session-based identifier.
+ * Now supports guest users (role='guest').
  */
 async function authenticate_token_optional(req, res, next) {
   const auth_header = req.headers.authorization;
@@ -393,11 +399,17 @@ async function authenticate_token_optional(req, res, next) {
           // For staff/admin, check session validity
           if ((user.role === 'staff' || user.role === 'admin') && decoded.login_at) {
             if ((user.last_login_at || null) === decoded.login_at) {
-              req.user = user;
+              req.user = {
+                ...user,
+                isGuest: user.role === 'guest',
+              };
               req.token_payload = decoded;
             }
           } else {
-            req.user = user;
+            req.user = {
+              ...user,
+              isGuest: user.role === 'guest',
+            };
             req.token_payload = decoded;
           }
         }
@@ -1900,6 +1912,117 @@ app.post('/api/admin/login', async (req, res) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
     }
+    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+  }
+});
+
+/*
+  Guest checkout endpoint.
+  Creates a temporary guest user session without full registration.
+  - Creates a minimal guest user record with isGuest flag
+  - Returns JWT token same as normal login
+  - Guest sessions expire after 7 days
+  - Optional email can be provided
+*/
+app.post('/api/auth/guest', async (req, res) => {
+  try {
+    const schema = z.object({
+      email: z.string().email().optional(),
+    });
+    const { email } = schema.parse(req.body);
+
+    const user_id = gen_id('guest');
+    const created_at = now_iso();
+    const guest_email = email ? email.toLowerCase().trim() : `guest_${user_id}@temp.local`;
+
+    // Create guest user record
+    await pool.query(
+      `INSERT INTO users (
+        user_id, email, phone, password_hash, first_name, last_name,
+        role, profile_photo_url, email_verified, status, created_at,
+        last_login_at, marketing_opt_in, order_notifications_email,
+        order_notifications_sms, marketing_emails, marketing_sms,
+        newsletter_subscribed, dietary_preferences, first_order_discount_code,
+        first_order_discount_used, referral_code, referred_by_user_id, staff_permissions
+      ) VALUES (
+        $1,$2,$3,$4,$5,$6,
+        $7,$8,$9,$10,$11,
+        $12,$13,$14,
+        $15,$16,$17,
+        $18,$19,$20,
+        $21,$22,$23,$24
+      )`,
+      [
+        user_id,
+        guest_email,
+        `guest_${user_id}`, // Unique phone placeholder
+        '', // No password for guests
+        'Guest',
+        'User',
+        'guest', // Special guest role
+        null,
+        false,
+        'active',
+        created_at,
+        created_at,
+        false,
+        email ? true : false, // Only send notifications if email provided
+        false,
+        false,
+        false,
+        false,
+        null,
+        null,
+        false,
+        null,
+        null,
+        null,
+      ]
+    );
+
+    // Create JWT token with 7-day expiration for guest
+    const token = sign_token({ 
+      user_id, 
+      role: 'guest', 
+      email: guest_email, 
+      remember_me: false 
+    });
+
+    // Log guest session creation
+    await pool.query(
+      'INSERT INTO activity_logs (log_id, user_id, action_type, entity_type, entity_id, description, changes, ip_address, user_agent, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9,$10)',
+      [
+        gen_id('log'),
+        user_id,
+        'guest_session_created',
+        'user',
+        user_id,
+        'Guest checkout session created',
+        JSON.stringify({ email: email || null }),
+        req.ip,
+        req.headers['user-agent'] || null,
+        created_at,
+      ]
+    );
+
+    return ok(res, 200, {
+      user: {
+        user_id,
+        email: guest_email,
+        first_name: 'Guest',
+        last_name: 'User',
+        role: 'guest',
+        email_verified: false,
+        isGuest: true,
+      },
+      token,
+      redirectTo: '/checkout/order-type',
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+    }
+    console.error('guest auth error', error);
     return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
   }
 });

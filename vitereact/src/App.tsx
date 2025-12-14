@@ -132,7 +132,7 @@ const LoadingSpinner: React.FC = () => (
 // Route Protection Components
 // ===========================
 
-// Customer Protected Route
+// Customer Protected Route (also allows guest users for checkout)
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const isAuthenticated = useAppStore(state => state.authentication_state.authentication_status.is_authenticated);
   const isLoading = useAppStore(state => state.authentication_state.authentication_status.is_loading);
@@ -146,8 +146,8 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
     return <Navigate to="/login" replace />;
   }
 
-  // Allow customer role to access protected routes
-  if (userRole !== 'customer') {
+  // Allow customer and guest roles to access protected routes
+  if (userRole !== 'customer' && userRole !== 'guest') {
     // Redirect to appropriate dashboard based on role
     if (userRole === 'staff' || userRole === 'manager') {
       return <Navigate to="/staff/dashboard" replace />;
@@ -246,6 +246,9 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     TopNavComponent = GV_TopNav_Staff;
   } else if (isAuthenticated && userRole === 'customer' && !isAdminRoute && !isStaffRoute) {
     TopNavComponent = GV_TopNav_Customer;
+  } else if (isAuthenticated && userRole === 'guest' && !isAdminRoute && !isStaffRoute) {
+    // Guest users see public nav
+    TopNavComponent = GV_TopNav_Public;
   } else if (!isAuthenticated && !isAdminRoute && !isStaffRoute) {
     TopNavComponent = GV_TopNav_Public;
   }
@@ -363,6 +366,7 @@ const AppRoutes: React.FC = () => {
         } />
 
         {/* Checkout Flow */}
+        <Route path="/checkout" element={<Navigate to="/checkout/order-type" replace />} />
         <Route path="/checkout/order-type" element={
           <ProtectedRoute>
             <UV_CheckoutOrderType />

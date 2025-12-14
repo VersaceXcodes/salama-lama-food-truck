@@ -120,6 +120,7 @@ interface AppStore {
     marketing_opt_in?: boolean;
     referred_by_user_id?: string;
   }) => Promise<{ user: User; token: string; first_order_discount_code: string }>;
+  start_guest_checkout: (email?: string) => Promise<{ redirectTo: string }>;
   logout_user: () => Promise<void>;
   initialize_auth: () => Promise<void>;
   update_auth_user: (user: Partial<User>) => void;
@@ -346,6 +347,66 @@ export const useAppStore = create<AppStore>()(
 
         } catch (error: any) {
           const errorMessage = error.response?.data?.message || error.message || 'Registration failed';
+          
+          set(() => ({
+            authentication_state: {
+              current_user: null,
+              auth_token: null,
+              authentication_status: {
+                is_authenticated: false,
+                is_loading: false,
+              },
+              error_message: errorMessage,
+            },
+          }));
+          
+          throw new Error(errorMessage);
+        }
+      },
+
+      start_guest_checkout: async (email?: string) => {
+        set((state) => ({
+          authentication_state: {
+            ...state.authentication_state,
+            authentication_status: {
+              ...state.authentication_state.authentication_status,
+              is_loading: true,
+            },
+            error_message: null,
+          },
+        }));
+
+        try {
+          const response = await axios.post(
+            `${API_BASE_URL}/api/auth/guest`,
+            { email },
+            { headers: { 'Content-Type': 'application/json' } }
+          );
+
+          const { user, token, redirectTo } = response.data;
+
+          set(() => ({
+            authentication_state: {
+              current_user: user,
+              auth_token: token,
+              authentication_status: {
+                is_authenticated: true,
+                is_loading: false,
+              },
+              error_message: null,
+            },
+          }));
+
+          // Initialize WebSocket connection for guest user
+          get().connect_websocket();
+
+          // Cart is already in localStorage, no need to sync
+          // Guest cart will be linked to guest user on checkout
+
+          return { redirectTo };
+
+        } catch (error: any) {
+          const errorMessage = error.response?.data?.message || error.message || 'Guest checkout failed';
           
           set(() => ({
             authentication_state: {

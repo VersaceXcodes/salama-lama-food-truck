@@ -387,6 +387,13 @@ const UV_CheckoutReview: React.FC = () => {
       });
     },
     onError: (error: any) => {
+      // Handle authentication errors specifically
+      if (error.response?.status === 401) {
+        set_place_order_error('Authentication required. Please sign in again.');
+        navigate('/login?redirect=/checkout/review');
+        return;
+      }
+      
       const error_message = error.response?.data?.message || error.message || 'Failed to place order. Please try again.';
       set_place_order_error(error_message);
     },
@@ -437,6 +444,13 @@ const UV_CheckoutReview: React.FC = () => {
       await place_order_mutation.mutateAsync(order_request);
 
     } catch (error: any) {
+      // Handle authentication errors in validation
+      if (error.response?.status === 401) {
+        set_place_order_error('Authentication required. Please sign in again.');
+        navigate('/login?redirect=/checkout/review');
+        return;
+      }
+      
       // Error is handled in mutation onError
       console.error('Order placement error:', error);
     }

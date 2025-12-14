@@ -978,11 +978,11 @@ const UV_Menu: React.FC = () => {
       {customizationModal.is_open && customizationModal.item && (
         <div 
           className="fixed inset-0 z-50 overflow-y-auto"
+          onClick={handleCloseCustomizationModal}
         >
           {/* Backdrop */}
           <div 
             className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
-            onClick={handleCloseCustomizationModal}
             aria-hidden="true"
           />
           

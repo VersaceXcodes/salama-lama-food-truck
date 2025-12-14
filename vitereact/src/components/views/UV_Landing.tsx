@@ -186,7 +186,7 @@ const UV_Landing: React.FC = () => {
     newsletter_mutation.mutate(newsletter_email);
   };
 
-  // Helper function to render star rating
+  // Helper function to render star rating (Solid Dark Brown)
   const renderStars = (rating: number) => {
     const stars: JSX.Element[] = [];
     const fullStars = Math.floor(rating);
@@ -195,11 +195,11 @@ const UV_Landing: React.FC = () => {
     for (let i = 0; i < 5; i++) {
       if (i < fullStars) {
         stars.push(
-          <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+          <Star key={i} className="w-5 h-5 fill-[#2C1A16] text-[#2C1A16]" />
         );
       } else if (i === fullStars && hasHalfStar) {
         stars.push(
-          <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" style={{ clipPath: 'inset(0 50% 0 0)' }} />
+          <Star key={i} className="w-5 h-5 fill-[#2C1A16] text-[#2C1A16]" style={{ clipPath: 'inset(0 50% 0 0)' }} />
         );
       } else {
         stars.push(
@@ -375,11 +375,11 @@ const UV_Landing: React.FC = () => {
 
       {/* Google Reviews Section */}
       {!reviews_loading && google_reviews && google_reviews.reviews.length > 0 && (
-        <section className="py-16 lg:py-24 bg-gray-50">
+        <section className="py-16 lg:py-24 bg-[#F2EFE9]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
-              <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-                What Our Customers Say
+              <h2 className="text-4xl lg:text-5xl font-extrabold text-[#2C1A16] mb-6" style={{ fontWeight: 800 }}>
+                Locals Love Salama Lama
               </h2>
               
               {google_reviews.aggregate_rating > 0 && (
@@ -387,51 +387,54 @@ const UV_Landing: React.FC = () => {
                   <div className="flex">
                     {renderStars(google_reviews.aggregate_rating)}
                   </div>
-                  <span className="text-xl font-semibold text-gray-900">
+                  <span className="text-xl font-semibold text-[#2C1A16]">
                     {google_reviews.aggregate_rating.toFixed(1)}
                   </span>
                 </div>
               )}
               
-              <p className="text-gray-600">
+              <p className="text-[#4A3B32]">
                 Based on {google_reviews.total_count} reviews
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {google_reviews.reviews.slice(0, 3).map((review, index) => (
-                <div
-                  key={index}
-                  className="bg-white rounded-xl shadow-lg border border-gray-100 p-6"
-                >
-                  <div className="flex items-center mb-4">
-                    {review.profile_photo_url ? (
-                      <img
-                        src={review.profile_photo_url}
-                        alt={review.author_name}
-                        className="w-12 h-12 rounded-full mr-4"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center mr-4">
-                        <span className="text-orange-600 font-semibold text-lg">
-                          {review.author_name.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                    )}
-                    <div>
-                      <h4 className="font-semibold text-gray-900">
-                        {review.author_name}
-                      </h4>
-                      <div className="flex mt-1">
-                        {renderStars(review.rating)}
+            {/* Horizontal Scrolling Row */}
+            <div className="relative">
+              <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                {google_reviews.reviews.slice(0, 5).map((review, index) => (
+                  <div
+                    key={index}
+                    className="flex-shrink-0 w-[350px] bg-white rounded-2xl shadow-xl border-2 border-[#2C1A16] p-6 snap-start"
+                  >
+                    <div className="flex items-center mb-4">
+                      {review.profile_photo_url ? (
+                        <img
+                          src={review.profile_photo_url}
+                          alt={review.author_name}
+                          className="w-12 h-12 rounded-full mr-4"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-[#F2EFE9] flex items-center justify-center mr-4 border-2 border-[#2C1A16]">
+                          <span className="text-[#2C1A16] font-bold text-lg">
+                            {review.author_name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                      <div>
+                        <h4 className="font-bold text-[#2C1A16]">
+                          {review.author_name}
+                        </h4>
+                        <div className="flex mt-1">
+                          {renderStars(review.rating)}
+                        </div>
                       </div>
                     </div>
+                    <p className="text-[#4A3B32] leading-relaxed">
+                      "{review.text}"
+                    </p>
                   </div>
-                  <p className="text-gray-600 leading-relaxed">
-                    "{review.text}"
-                  </p>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
 
             <div className="text-center mt-8">
@@ -439,7 +442,7 @@ const UV_Landing: React.FC = () => {
                 href={`https://www.google.com/maps/search/${encodeURIComponent(business_info?.name || 'Salama Lama Food Truck')}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center text-orange-600 font-medium hover:text-orange-700 transition-colors"
+                className="inline-flex items-center text-[#2C1A16] font-bold hover:underline transition-all"
               >
                 See All Reviews
                 <ChevronRight className="ml-1 w-5 h-5" />
@@ -558,14 +561,14 @@ const UV_Landing: React.FC = () => {
         </section>
       )}
 
-      {/* Catering CTA Section */}
-      <section className="py-16 lg:py-24 bg-gradient-to-br from-orange-600 to-orange-700 text-white">
+      {/* Catering CTA Section - High Contrast */}
+      <section className="py-16 lg:py-24 bg-[#2C1A16]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto">
-            <h2 className="text-3xl lg:text-4xl font-bold mb-6">
+            <h2 className="text-4xl lg:text-5xl font-extrabold mb-6 text-[#F2EFE9]" style={{ fontWeight: 800 }}>
               Let Us Cater Your Event
             </h2>
-            <p className="text-xl mb-8 text-orange-100">
+            <p className="text-xl mb-8 text-[#F2EFE9]">
               From corporate events to weddings, we bring the flavor to your special occasion
             </p>
 
@@ -573,16 +576,16 @@ const UV_Landing: React.FC = () => {
               {['Corporate Events', 'Weddings', 'Private Parties', 'Festivals'].map((type) => (
                 <div
                   key={type}
-                  className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center"
+                  className="bg-[#F2EFE9]/10 backdrop-blur-sm rounded-lg p-4 text-center border border-[#F2EFE9]/20"
                 >
-                  <p className="font-medium">{type}</p>
+                  <p className="font-medium text-[#F2EFE9]">{type}</p>
                 </div>
               ))}
             </div>
 
             <Link
               to="/catering/inquiry"
-              className="inline-flex items-center px-8 py-4 bg-white text-orange-600 text-lg font-semibold rounded-lg shadow-lg hover:bg-gray-50 hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+              className="inline-flex items-center px-8 py-4 bg-transparent text-[#F2EFE9] text-lg font-bold rounded-lg border-4 border-[#F2EFE9] hover:bg-[#F2EFE9] hover:text-[#2C1A16] transition-all duration-300"
             >
               Request Catering Quote
               <ChevronRight className="ml-2 w-5 h-5" />

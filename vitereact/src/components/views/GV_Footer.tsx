@@ -105,7 +105,7 @@ const GV_Footer: React.FC = () => {
 
   return (
     <>
-      <footer className="bg-gray-900 border-t border-gray-800" aria-labelledby="footer-heading">
+      <footer className="bg-[#23120E] border-t border-[#2C1A16]" aria-labelledby="footer-heading">
         <h2 id="footer-heading" className="sr-only">
           Footer
         </h2>
@@ -114,15 +114,15 @@ const GV_Footer: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
             {/* Business Information Column */}
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-white">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-[#F2EFE9]">
                 {businessInfo.name || 'Salama Lama Food Truck'}
               </h3>
-              <ul className="space-y-3 text-sm text-gray-300">
+              <ul className="space-y-3 text-sm text-[#F2EFE9]">
                 {businessInfo.phone && (
                   <li>
                     <a
                       href={`tel:${businessInfo.phone}`}
-                      className="hover:text-white transition-colors duration-200 flex items-center"
+                      className="hover:opacity-80 transition-opacity duration-200 flex items-center"
                     >
                       <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
@@ -135,7 +135,7 @@ const GV_Footer: React.FC = () => {
                   <li>
                     <a
                       href={`mailto:${businessInfo.email}`}
-                      className="hover:text-white transition-colors duration-200 flex items-center"
+                      className="hover:opacity-80 transition-opacity duration-200 flex items-center"
                     >
                       <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -166,7 +166,7 @@ const GV_Footer: React.FC = () => {
                   href={socialLinks.instagram}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-white hover:opacity-75 transition-all duration-200"
+                  className="text-[#F2EFE9] hover:opacity-75 transition-opacity duration-200"
                   aria-label="Visit our Instagram"
                 >
                   <InstagramIcon className="w-6 h-6" />
@@ -175,7 +175,7 @@ const GV_Footer: React.FC = () => {
                   href={socialLinks.tiktok}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-white hover:opacity-75 transition-all duration-200"
+                  className="text-[#F2EFE9] hover:opacity-75 transition-opacity duration-200"
                   aria-label="Visit our TikTok"
                 >
                   <TikTokIcon className="w-6 h-6" />
@@ -185,15 +185,15 @@ const GV_Footer: React.FC = () => {
 
             {/* Quick Links Column */}
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-white">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-[#F2EFE9]">
                 Quick Links
               </h3>
               <nav aria-label="Quick links navigation">
-                <ul className="space-y-3 text-sm text-gray-300">
+                <ul className="space-y-3 text-sm text-[#F2EFE9]">
                   <li>
                     <Link
                       to="/menu"
-                      className="hover:text-white transition-colors duration-200"
+                      className="hover:opacity-80 transition-opacity duration-200"
                     >
                       Menu
                     </Link>
@@ -201,7 +201,7 @@ const GV_Footer: React.FC = () => {
                   <li>
                     <Link
                       to="/catering"
-                      className="hover:text-white transition-colors duration-200"
+                      className="hover:opacity-80 transition-opacity duration-200"
                     >
                       Catering
                     </Link>
@@ -209,7 +209,7 @@ const GV_Footer: React.FC = () => {
                   <li>
                     <Link
                       to="/about"
-                      className="hover:text-white transition-colors duration-200"
+                      className="hover:opacity-80 transition-opacity duration-200"
                     >
                       About Us
                     </Link>
@@ -217,7 +217,7 @@ const GV_Footer: React.FC = () => {
                   <li>
                     <Link
                       to="/contact"
-                      className="hover:text-white transition-colors duration-200"
+                      className="hover:opacity-80 transition-opacity duration-200"
                     >
                       Contact
                     </Link>
@@ -225,7 +225,7 @@ const GV_Footer: React.FC = () => {
                   <li>
                     <Link
                       to="/faqs"
-                      className="hover:text-white transition-colors duration-200"
+                      className="hover:opacity-80 transition-opacity duration-200"
                     >
                       FAQs
                     </Link>
@@ -236,15 +236,15 @@ const GV_Footer: React.FC = () => {
 
             {/* Legal & Account Column */}
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-white">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-[#F2EFE9]">
                 Legal & Account
               </h3>
               <nav aria-label="Legal and account navigation">
-                <ul className="space-y-3 text-sm text-gray-300">
+                <ul className="space-y-3 text-sm text-[#F2EFE9]">
                   <li>
                     <Link
                       to="/terms"
-                      className="hover:text-white transition-colors duration-200"
+                      className="hover:opacity-80 transition-opacity duration-200"
                     >
                       Terms & Conditions
                     </Link>
@@ -252,16 +252,16 @@ const GV_Footer: React.FC = () => {
                   <li>
                     <Link
                       to="/privacy"
-                      className="hover:text-white transition-colors duration-200"
+                      className="hover:opacity-80 transition-opacity duration-200"
                     >
                       Privacy Policy
                     </Link>
                   </li>
                   {isAuthenticated && (
-                    <li className="pt-2 border-t border-gray-700">
+                    <li className="pt-2 border-t border-[#2C1A16]">
                       <Link
                         to="/dashboard"
-                        className="hover:text-white transition-colors duration-200 flex items-center"
+                        className="hover:opacity-80 transition-opacity duration-200 flex items-center"
                       >
                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -276,10 +276,10 @@ const GV_Footer: React.FC = () => {
 
             {/* Newsletter Signup Column */}
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-white">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-[#F2EFE9]">
                 Stay Updated
               </h3>
-              <p className="text-sm text-gray-300">
+              <p className="text-sm text-[#F2EFE9]">
                 Get exclusive offers, new menu items, and location updates.
               </p>
               
@@ -298,18 +298,18 @@ const GV_Footer: React.FC = () => {
                     onChange={(e) => setNewsletterEmail(e.target.value)}
                     placeholder="Enter your email"
                     disabled={subscribeMutation.isPending}
-                    className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-2 bg-[#2C1A16] border-2 border-[#F2EFE9] rounded-lg text-[#F2EFE9] placeholder-[#F2EFE9]/60 focus:outline-none focus:border-[#F2EFE9] focus:ring-2 focus:ring-[#F2EFE9]/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
                 
                 <button
                   type="submit"
                   disabled={subscribeMutation.isPending || !newsletterEmail}
-                  className="w-full px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  className="w-full px-4 py-2 bg-[#F2EFE9] text-[#2C1A16] text-sm font-bold rounded-lg hover:bg-[#F2EFE9]/90 focus:outline-none focus:ring-2 focus:ring-[#F2EFE9] focus:ring-offset-2 focus:ring-offset-[#23120E] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 >
                   {subscribeMutation.isPending ? (
                     <>
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-[#2C1A16]" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
@@ -350,11 +350,11 @@ const GV_Footer: React.FC = () => {
                 )}
               </form>
 
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-[#F2EFE9]/70">
                 We respect your privacy. See our{' '}
                 <Link
                   to="/privacy"
-                  className="text-blue-400 hover:text-blue-300 underline transition-colors duration-200"
+                  className="text-[#F2EFE9] hover:opacity-80 underline transition-opacity duration-200"
                 >
                   Privacy Policy
                 </Link>
@@ -363,11 +363,16 @@ const GV_Footer: React.FC = () => {
             </div>
           </div>
 
-          {/* Copyright Notice */}
-          <div className="mt-12 pt-8 border-t border-gray-800">
-            <p className="text-sm text-gray-400 text-center">
-              © {new Date().getFullYear()} {businessInfo.name || 'Salama Lama Food Truck'}. All rights reserved.
-            </p>
+          {/* Copyright Notice & Logo Integration */}
+          <div className="mt-12 pt-8 border-t border-[#2C1A16]">
+            <div className="text-center">
+              <h2 className="text-2xl font-extrabold text-[#F2EFE9] mb-2" style={{ fontWeight: 800 }}>
+                Salama Lama
+              </h2>
+              <p className="text-sm text-[#F2EFE9]/70">
+                © {new Date().getFullYear()} {businessInfo.name || 'Salama Lama Food Truck'}. All rights reserved.
+              </p>
+            </div>
           </div>
         </div>
       </footer>

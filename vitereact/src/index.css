@@ -93,3 +93,13 @@
 .animate-scale-in {
 	animation: scale-in 0.2s ease-out;
 }
+
+/* Hide scrollbar utility class */
+.scrollbar-hide::-webkit-scrollbar {
+	display: none;
+}
+
+.scrollbar-hide {
+	-ms-overflow-style: none;
+	scrollbar-width: none;
+}

@@ -13,8 +13,6 @@ const UV_Login: React.FC = () => {
   const [remember_me, setRememberMe] = useState(false);
   const [show_password, setShowPassword] = useState(false);
   const [local_error, setLocalError] = useState<string | null>(null);
-  const [guest_loading, setGuestLoading] = useState(false);
-  const [guest_error, setGuestError] = useState<string | null>(null);
 
   // ===========================
   // Zustand Global State (CRITICAL: Individual selectors only!)
@@ -22,7 +20,6 @@ const UV_Login: React.FC = () => {
   const isLoading = useAppStore(state => state.authentication_state.authentication_status.is_loading);
   const storeError = useAppStore(state => state.authentication_state.error_message);
   const loginUser = useAppStore(state => state.login_user);
-  const startGuestCheckout = useAppStore(state => state.start_guest_checkout);
   const clearAuthError = useAppStore(state => state.clear_auth_error);
   const isAuthenticated = useAppStore(state => state.authentication_state.authentication_status.is_authenticated);
 
@@ -131,31 +128,17 @@ const UV_Login: React.FC = () => {
     setShowPassword(!show_password);
   };
 
-  const handleGuestCheckout = async () => {
-    // Clear previous errors
-    setGuestError(null);
-    setGuestLoading(true);
-
-    try {
-      // Create guest session with optional email
-      const emailToSend = email && validateEmail(email) ? email : undefined;
-      const { redirectTo } = await startGuestCheckout(emailToSend);
-      
-      // Determine the final redirect URL in priority order:
-      // 1. returnTo query param
-      // 2. Backend redirectTo
-      // 3. Fallback to CHECKOUT_PATH
-      const destination = returnTo || redirectTo || CHECKOUT_PATH;
-      
-      // Navigate to checkout flow using replace to avoid login in history
-      navigate(destination, { replace: true });
-      
-    } catch (error: any) {
-      console.error('Guest checkout error:', error);
-      setGuestError('Failed to start guest checkout. Please try again.');
-    } finally {
-      setGuestLoading(false);
-    }
+  const handleGuestCheckout = () => {
+    // Set lightweight flag in sessionStorage to indicate guest checkout mode
+    sessionStorage.setItem('checkout_mode', 'guest');
+    
+    // Determine the final redirect URL in priority order:
+    // 1. returnTo query param (from ?returnTo= or ?redirect=)
+    // 2. Fallback to CHECKOUT_PATH (/checkout/order-type)
+    const destination = returnTo || CHECKOUT_PATH;
+    
+    // Navigate to checkout flow using replace to avoid login in history
+    navigate(destination, { replace: true });
   };
 
   // ===========================
@@ -343,55 +326,13 @@ const UV_Login: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleGuestCheckout}
-                  disabled={isLoading || guest_loading}
+                  disabled={isLoading}
                   className="w-full flex items-center justify-center px-6 py-3 rounded-lg font-medium text-blue-600 bg-white border border-blue-600 hover:bg-blue-50 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label="Continue as guest without signing in"
                 >
-                  {guest_loading ? (
-                    <>
-                      <svg 
-                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" 
-                        xmlns="http://www.w3.org/2000/svg" 
-                        fill="none" 
-                        viewBox="0 0 24 24"
-                      >
-                        <circle 
-                          className="opacity-25" 
-                          cx="12" 
-                          cy="12" 
-                          r="10" 
-                          stroke="currentColor" 
-                          strokeWidth="4"
-                        />
-                        <path 
-                          className="opacity-75" 
-                          fill="currentColor" 
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        />
-                      </svg>
-                      <span>Starting...</span>
-                    </>
-                  ) : (
-                    <>
-                      <ShoppingBag className="h-5 w-5 mr-2" />
-                      <span>Continue as Guest</span>
-                    </>
-                  )}
+                  <ShoppingBag className="h-5 w-5 mr-2" />
+                  <span>Continue as Guest</span>
                 </button>
-
-                {/* Guest Error Message */}
-                {guest_error && (
-                  <div 
-                    className="mt-3 bg-red-50 border border-red-200 rounded-lg p-3 flex items-start"
-                    role="alert"
-                    aria-live="polite"
-                  >
-                    <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 mr-2 flex-shrink-0" />
-                    <p className="text-xs text-red-700">
-                      {guest_error}
-                    </p>
-                  </div>
-                )}
               </form>
             </div>
 

@@ -364,28 +364,12 @@ const AppRoutes: React.FC = () => {
           </ProtectedRoute>
         } />
 
-        {/* Checkout Flow */}
+        {/* Checkout Flow - Accessible without authentication for guest checkout */}
         <Route path="/checkout" element={<Navigate to="/checkout/order-type" replace />} />
-        <Route path="/checkout/order-type" element={
-          <ProtectedRoute>
-            <UV_CheckoutOrderType />
-          </ProtectedRoute>
-        } />
-        <Route path="/checkout/contact" element={
-          <ProtectedRoute>
-            <UV_CheckoutContact />
-          </ProtectedRoute>
-        } />
-        <Route path="/checkout/payment" element={
-          <ProtectedRoute>
-            <UV_CheckoutPayment />
-          </ProtectedRoute>
-        } />
-        <Route path="/checkout/review" element={
-          <ProtectedRoute>
-            <UV_CheckoutReview />
-          </ProtectedRoute>
-        } />
+        <Route path="/checkout/order-type" element={<UV_CheckoutOrderType />} />
+        <Route path="/checkout/contact" element={<UV_CheckoutContact />} />
+        <Route path="/checkout/payment" element={<UV_CheckoutPayment />} />
+        <Route path="/checkout/review" element={<UV_CheckoutReview />} />
 
         {/* Loyalty */}
         <Route path="/rewards" element={

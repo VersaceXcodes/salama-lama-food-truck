@@ -762,7 +762,7 @@ export const useAppStore = create<AppStore>()(
         try {
           const response = await axios.get(`${API_BASE_URL}/api/business/info`);
           
-          const { name, phone, email, address, operating_hours, delivery_enabled } = response.data;
+          const { name, phone, email, address, operating_hours, delivery_enabled, logo_url } = response.data;
 
           set((state) => ({
             business_settings: {
@@ -774,6 +774,7 @@ export const useAppStore = create<AppStore>()(
                 phone: phone || '',
                 email: email || '',
                 address: address || '',
+                logo_url: logo_url || null,
               },
             },
           }));

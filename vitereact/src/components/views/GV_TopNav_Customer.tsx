@@ -63,6 +63,8 @@ const GV_TopNav_Customer: React.FC = () => {
   const authToken = useAppStore(state => state.authentication_state.auth_token);
   const cartItems = useAppStore(state => state.cart_state.items);
   const logoutUser = useAppStore(state => state.logout_user);
+  const businessSettings = useAppStore(state => state.business_settings);
+  const logoUrl = businessSettings.business_info.logo_url || '/assets/salama-lama-logo.png';
   
   // ===========================
   // Derived State
@@ -193,18 +195,23 @@ const GV_TopNav_Customer: React.FC = () => {
                 aria-label="Salama Lama Home"
               >
                 <img 
-                  src="/assets/salama-lama-logo.png" 
+                  src={logoUrl} 
                   alt="Salama Lama" 
                   className="w-auto object-contain transition-transform duration-200 group-hover:scale-105"
                   style={{ height: '26px', maxWidth: '150px' }}
                   onError={(e) => { 
-                    // Fallback to screen-reader-only text if image fails to load
+                    // Fallback to default logo if custom logo fails to load
                     const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                    const textSpan = document.createElement('span');
-                    textSpan.className = 'sr-only';
-                    textSpan.textContent = 'Salama Lama';
-                    target.parentElement?.appendChild(textSpan);
+                    if (target.src !== '/assets/salama-lama-logo.png') {
+                      target.src = '/assets/salama-lama-logo.png';
+                    } else {
+                      // Fallback to screen-reader-only text if even default logo fails
+                      target.style.display = 'none';
+                      const textSpan = document.createElement('span');
+                      textSpan.className = 'sr-only';
+                      textSpan.textContent = 'Salama Lama';
+                      target.parentElement?.appendChild(textSpan);
+                    }
                   }}
                 />
               </Link>

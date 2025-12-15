@@ -31,6 +31,8 @@ const GV_AdminSidebar: React.FC = () => {
   // CRITICAL: Individual selectors for auth state - no object destructuring
   const currentUser = useAppStore(state => state.authentication_state.current_user);
   const isAuthenticated = useAppStore(state => state.authentication_state.authentication_status.is_authenticated);
+  const businessSettings = useAppStore(state => state.business_settings);
+  const logoUrl = businessSettings.business_info.logo_url || '/assets/salama-lama-logo.png';
 
   // Verify admin role - return null if not admin
   if (!isAuthenticated || currentUser?.role !== 'admin') {
@@ -139,10 +141,17 @@ const GV_AdminSidebar: React.FC = () => {
           {!is_collapsed && (
             <Link to="/admin/dashboard" className="flex items-center">
               <img 
-                src="/assets/salama-lama-logo.png" 
+                src={logoUrl} 
                 alt="Salama Lama" 
                 className="w-auto object-contain"
                 style={{ height: '32px', maxWidth: '180px' }}
+                onError={(e) => { 
+                  // Fallback to default logo if custom logo fails to load
+                  const target = e.target as HTMLImageElement;
+                  if (target.src !== '/assets/salama-lama-logo.png') {
+                    target.src = '/assets/salama-lama-logo.png';
+                  }
+                }}
               />
             </Link>
           )}

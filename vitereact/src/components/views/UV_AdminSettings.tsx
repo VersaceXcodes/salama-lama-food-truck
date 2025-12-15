@@ -158,6 +158,7 @@ const UV_AdminSettings: React.FC = () => {
   // Zustand state - individual selectors
   const authToken = useAppStore(state => state.authentication_state.auth_token);
   const updateBusinessSettings = useAppStore(state => state.update_business_settings);
+  const fetch_business_settings = useAppStore(state => state.fetch_business_settings);
 
   // Local state
   const [activeSection, setActiveSection] = useState<SettingsSection>(
@@ -297,6 +298,8 @@ const UV_AdminSettings: React.FC = () => {
           logo_url: businessInfoSettings.logo_url,
         }
       });
+      // Also refetch business settings from API to ensure store is in sync
+      await fetch_business_settings();
     },
     onError: (error: any) => {
       setToastMessage({ 

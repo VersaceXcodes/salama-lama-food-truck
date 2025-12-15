@@ -2236,6 +2236,7 @@ app.get('/api/business/info', async (req, res) => {
     const store_address = await get_setting('store_address', null);
     const store_hours = await get_setting('store_hours', null);
     const delivery_enabled = await get_setting('delivery_enabled', true);
+    const logo_url = await get_setting('store_logo_url', null);
 
     // Very lightweight computed "open".
     const is_currently_open = true;
@@ -2249,6 +2250,7 @@ app.get('/api/business/info', async (req, res) => {
       social_links: await get_setting('social_links', {}),
       delivery_enabled: delivery_enabled !== false,
       is_currently_open,
+      logo_url,
     });
   } catch (error) {
     return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));

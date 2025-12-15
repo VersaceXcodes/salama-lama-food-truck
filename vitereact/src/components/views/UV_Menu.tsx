@@ -4,6 +4,9 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppStore } from '@/store/main';
 import { useToast } from '@/hooks/use-toast';
+import { ResponsiveContainer } from '@/components/ui/responsive-container';
+import { BottomSheet } from '@/components/ui/bottom-sheet';
+import { QuantityStepper } from '@/components/ui/quantity-stepper';
 
 // ===========================
 // Type Definitions
@@ -587,60 +590,56 @@ const UV_Menu: React.FC = () => {
 
       {/* Main Content */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8 lg:py-12 pb-24 sm:pb-28 lg:pb-12" style={{ backgroundColor: 'var(--primary-bg)' }}>
-        {/* Modern Search & Filter Bar */}
-        <div className="mb-6 sm:mb-8 space-y-4">
-          {/* Search Bar */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1 relative">
-              <input
-                type="search"
-                placeholder="Search menu items..."
-                value={searchQuery}
-                onChange={handleSearchChange}
-                className="w-full px-4 py-3 pl-11 pr-10 border-2 rounded-xl focus:ring-4 transition-all duration-200 outline-none bg-white shadow-sm"
-                style={{
-                  borderColor: 'var(--border-light)',
-                }}
-              />
-              <svg
-                className="absolute left-3.5 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
+        {/* Compact Search & Filter Controls */}
+        <div className="mb-6 space-y-3">
+          {/* Search Input - Full Width */}
+          <div className="relative">
+            <svg
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[var(--primary-text)] opacity-40"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            <input
+              type="search"
+              placeholder="Search menu..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+              className="w-full pl-10 pr-10 py-3 text-base bg-white border-2 border-[var(--border-light)] rounded-[var(--radius-btn)] text-[var(--primary-text)] placeholder:text-[var(--primary-text)]/40 focus:border-[var(--primary-text)] focus:ring-2 focus:ring-[var(--primary-text)]/10 focus:outline-none transition-colors"
+              style={{ minHeight: 'var(--tap-target-comfortable)' }}
+            />
+            {searchQuery && (
+              <button
+                onClick={handleClearSearch}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--primary-text)] opacity-40 hover:opacity-100 transition-opacity p-1"
+                aria-label="Clear search"
               >
-                <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-              </svg>
-              {searchQuery && (
-                <button
-                  onClick={handleClearSearch}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-700 transition-colors p-1 rounded-full hover:bg-gray-100"
-                  aria-label="Clear search"
-                >
-                  <svg className="w-4 h-4" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" viewBox="0 0 24 24" stroke="currentColor">
-                    <path d="M6 18L18 6M6 6l12 12"></path>
-                  </svg>
-                </button>
-              )}
-            </div>
+                <svg className="w-5 h-5" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" viewBox="0 0 24 24" stroke="currentColor">
+                  <path d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            )}
+          </div>
 
+          {/* Filter and Sort Row - 2 Column Grid */}
+          <div className="grid grid-cols-2 gap-3">
             {/* Mobile Filter Button */}
             <button
               onClick={() => setFilterPanelOpen(true)}
-              className="sm:hidden px-5 py-3 bg-white border-2 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-200 flex items-center justify-center gap-2 shadow-sm"
-              style={{ 
-                borderColor: 'var(--border-light)',
-                color: 'var(--primary-text)'
-              }}
+              className="relative flex items-center justify-center gap-2 px-4 py-3 bg-white border-2 border-[var(--border-light)] rounded-[var(--radius-btn)] text-[var(--primary-text)] font-medium hover:border-[var(--primary-text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-text)]/10 transition-colors sm:hidden"
+              style={{ minHeight: 'var(--tap-target-comfortable)' }}
             >
               <svg className="w-5 h-5" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
                 <path d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
               </svg>
               <span>Filters</span>
               {dietaryFilters.length > 0 && (
-                <span className="px-2 py-0.5 bg-[#2C1A16] text-[#F2EFE9] text-xs font-bold rounded-full">
+                <span className="absolute -top-1 -right-1 bg-[var(--btn-bg)] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                   {dietaryFilters.length}
                 </span>
               )}
@@ -650,16 +649,16 @@ const UV_Menu: React.FC = () => {
             <select
               value={sortOption}
               onChange={handleSortChange}
-              className="px-4 py-3 border-2 rounded-xl focus:ring-4 transition-all duration-200 outline-none font-semibold bg-white shadow-sm"
-              style={{
-                borderColor: 'var(--border-light)',
-                color: 'var(--primary-text)'
+              className="px-4 py-3 bg-white border-2 border-[var(--border-light)] rounded-[var(--radius-btn)] text-[var(--primary-text)] font-medium focus:border-[var(--primary-text)] focus:ring-2 focus:ring-[var(--primary-text)]/10 focus:outline-none transition-colors appearance-none bg-[length:1.25rem] bg-[position:right_0.75rem_center] bg-no-repeat pr-10"
+              style={{ 
+                minHeight: 'var(--tap-target-comfortable)',
+                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%232C1A16' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`
               }}
             >
-              <option value="default">Default</option>
+              <option value="default">Sort by</option>
               <option value="name">Name (A-Z)</option>
-              <option value="price_low_high">Price: Low to High</option>
-              <option value="price_high_low">Price: High to Low</option>
+              <option value="price_low_high">Price: Low-High</option>
+              <option value="price_high_low">Price: High-Low</option>
             </select>
           </div>
 
@@ -711,16 +710,20 @@ const UV_Menu: React.FC = () => {
           )}
         </div>
 
-        {/* Category Tabs */}
-        <div className="mb-8 border-b border-gray-200 overflow-x-auto">
-          <nav className="flex space-x-8 min-w-max" aria-label="Categories">
+        {/* Category Tabs - Horizontally Scrollable Chips */}
+        <div className="mb-6 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="flex gap-2 min-w-max" aria-label="Categories">
             <button
               onClick={() => handleCategoryChange(null)}
-              className={`pb-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
-                activeCategory === null
-                  ? 'border-orange-600 text-orange-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+              className={`
+                px-4 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap
+                transition-all duration-200 flex-shrink-0
+                ${activeCategory === null
+                  ? 'bg-[var(--btn-bg)] text-white shadow-soft-md'
+                  : 'bg-white text-[var(--primary-text)] border-2 border-[var(--border-light)] hover:border-[var(--primary-text)]'
+                }
+              `}
+              style={{ minHeight: 'var(--tap-target-min)' }}
             >
               All Items
             </button>
@@ -729,16 +732,20 @@ const UV_Menu: React.FC = () => {
               <button
                 key={category.category_id}
                 onClick={() => handleCategoryChange(category.category_id)}
-                className={`pb-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
-                  activeCategory === category.category_id
-                    ? 'border-orange-600 text-orange-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
+                className={`
+                  px-4 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap
+                  transition-all duration-200 flex-shrink-0
+                  ${activeCategory === category.category_id
+                    ? 'bg-[var(--btn-bg)] text-white shadow-soft-md'
+                    : 'bg-white text-[var(--primary-text)] border-2 border-[var(--border-light)] hover:border-[var(--primary-text)]'
+                  }
+                `}
+                style={{ minHeight: 'var(--tap-target-min)' }}
               >
                 {category.name}
               </button>
             ))}
-          </nav>
+          </div>
         </div>
 
         {/* Desktop Filter Sidebar */}
@@ -845,8 +852,8 @@ const UV_Menu: React.FC = () => {
                   </button>
               </div>
             ) : (
-              // COMMANDMENT #3: Menu Items - 1 Column Mobile, 2-3 Columns Desktop
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              // Mobile-First Product Grid: 1 col mobile, 2 cols tablet, 3 cols desktop
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {menuItems.map(item => {
                   const stockStatus = getStockStatus(item);
                   const isOutOfStock = stockStatus === 'out_of_stock';
@@ -855,12 +862,13 @@ const UV_Menu: React.FC = () => {
                   return (
                     <div
                       key={item.item_id}
-                      className={`menu-item-card bg-white rounded-2xl overflow-hidden transition-all duration-250 ${
+                      className={`bg-white overflow-hidden transition-all duration-200 border border-[var(--border-light)] hover:shadow-soft-lg hover:-translate-y-1 ${
                         isOutOfStock ? 'opacity-60' : ''
                       }`}
+                      style={{ borderRadius: 'var(--radius-card)' }}
                     >
-                      {/* Item Image - Full width, consistent aspect ratio */}
-                      <div className="relative aspect-square bg-gray-50">
+                      {/* Item Image - 16:9 aspect ratio for consistency */}
+                      <div className="relative w-full bg-gray-50" style={{ aspectRatio: '16/9' }}>
                         <img
                           src={item.image_url || ''}
                           alt={item.name}
@@ -975,8 +983,56 @@ const UV_Menu: React.FC = () => {
         </div>
       </div>
 
-      {/* Mobile Filter Panel */}
-      {filterPanelOpen && (
+      {/* Mobile Filter Panel - BottomSheet */}
+      <BottomSheet
+        isOpen={filterPanelOpen}
+        onClose={() => setFilterPanelOpen(false)}
+        title="Dietary Filters"
+        maxHeight="80vh"
+        footer={
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                setDietaryFilters([]);
+                setFilterPanelOpen(false);
+              }}
+              className="flex-1 px-6 py-3 border-2 border-[var(--primary-text)] rounded-[var(--radius-btn)] text-[var(--primary-text)] font-semibold hover:bg-[var(--primary-bg)] transition-colors"
+              style={{ minHeight: 'var(--tap-target-comfortable)' }}
+            >
+              Clear
+            </button>
+            <button
+              onClick={() => setFilterPanelOpen(false)}
+              className="flex-1 px-6 py-3 rounded-[var(--radius-btn)] bg-[var(--btn-bg)] text-white font-bold hover:bg-[#1A0F0D] transition-colors"
+              style={{ minHeight: 'var(--tap-target-comfortable)' }}
+            >
+              Apply
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          {dietaryOptions.map(option => (
+            <label
+              key={option.value}
+              className="flex items-center gap-3 p-3 rounded-[var(--radius-card)] hover:bg-[var(--primary-bg)] transition-colors cursor-pointer"
+              style={{ minHeight: '52px' }}
+            >
+              <input
+                type="checkbox"
+                checked={dietaryFilters.includes(option.value)}
+                onChange={() => handleDietaryFilterToggle(option.value)}
+                className="w-6 h-6 text-[var(--btn-bg)] border-2 border-[var(--border-light)] rounded focus:ring-2 focus:ring-[var(--primary-text)]/20 transition-all"
+              />
+              <span className="text-2xl flex-shrink-0">{option.icon}</span>
+              <span className="text-base font-medium text-[var(--primary-text)] flex-1">{option.label}</span>
+            </label>
+          ))}
+        </div>
+      </BottomSheet>
+
+      {/* Original Mobile Filter Panel - Keep for debugging */}
+      {false && filterPanelOpen && (
         <div className="fixed inset-0 z-50 sm:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
           {/* Backdrop */}
           <div
@@ -1045,197 +1101,160 @@ const UV_Menu: React.FC = () => {
         </div>
       )}
 
-      {/* Customization Modal */}
+      {/* Product Customization Modal - Using BottomSheet */}
       {customizationModal.is_open && customizationModal.item && (
-        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center">
-          {/* Backdrop with explicit click handler */}
-          <div 
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity cursor-pointer"
-            onClick={handleCloseCustomizationModal}
-            aria-hidden="true"
-          />
-          
-          {/* Modal Container - Bottom Sheet on Mobile, Centered on Desktop */}
-          <div 
-            className="relative bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl w-full sm:max-w-2xl max-h-[85vh] sm:max-h-[90vh] overflow-y-auto z-10 animate-slide-up sm:animate-scale-in"
-            onClick={(e) => e.stopPropagation()}
-            style={{ 
-              marginBottom: 'env(safe-area-inset-bottom, 0px)'
-            }}
-          >
-              {/* Close Button */}
-              <button
-                onClick={handleCloseCustomizationModal}
-                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10"
-                aria-label="Close modal"
-              >
-                <svg className="w-6 h-6" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-                  <path d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-              </button>
-
-              {/* Modal Header */}
-              <div className="p-6 border-b border-gray-200">
-                <div className="flex items-start space-x-4">
-                  <img
-                    src={customizationModal.item.image_url || ''}
-                    alt={customizationModal.item.name}
-                    className="w-24 h-24 object-cover rounded-lg"
-                  />
-                  <div className="flex-1">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                      {customizationModal.item.name}
-                    </h2>
-                    {customizationModal.item.description && (
-                      <p className="text-gray-600 text-sm leading-relaxed">
-                        {customizationModal.item.description}
-                      </p>
-                    )}
-                  </div>
-                </div>
+        <BottomSheet
+          isOpen={customizationModal.is_open}
+          onClose={handleCloseCustomizationModal}
+          title={customizationModal.item.name}
+          maxHeight="85vh"
+          footer={
+            <div className="space-y-3">
+              {/* Total Price Display */}
+              <div className="flex items-center justify-between px-1">
+                <span className="text-lg font-semibold text-[var(--primary-text)]">Total:</span>
+                <span className="text-3xl font-bold text-[var(--primary-text)]" style={{ letterSpacing: '-0.02em' }}>
+                  €{(Number(customizationModal.total_price) * customizationModal.quantity).toFixed(2)}
+                </span>
               </div>
 
-              {/* Modal Body */}
-              <div className="p-6 space-y-6">
-                {customizationModal.item.customization_groups.length > 0 ? (
-                  customizationModal.item.customization_groups.map(group => (
-                    <div key={group.group_id} className="space-y-3">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {group.name}
-                        {group.is_required && (
-                          <span className="ml-2 text-red-600 text-sm">*</span>
-                        )}
-                      </h3>
-
-                      <div className="space-y-2">
-                        {group.options.map(option => {
-                          const isSelected = customizationModal.selected_customizations.some(
-                            c => c.group_id === group.group_id && c.option_id === option.option_id
-                          );
-
-                          return (
-                            <label
-                              key={option.option_id}
-                              className={`flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                                isSelected
-                                  ? 'border-orange-600 bg-orange-50'
-                                  : 'border-gray-200 hover:border-gray-300'
-                              }`}
-                            >
-                              <div className="flex items-center space-x-3">
-                                <input
-                                  type={group.type === 'single' ? 'radio' : 'checkbox'}
-                                  name={group.group_id}
-                                  checked={isSelected}
-                                  onChange={() => handleCustomizationChange(
-                                    group.group_id,
-                                    group.name,
-                                    group.type,
-                                    option
-                                  )}
-                                  className={`w-5 h-5 text-orange-600 border-gray-300 focus:ring-orange-500 focus:ring-2 transition-all ${
-                                    group.type === 'single' ? '' : 'rounded'
-                                  }`}
-                                />
-                                <span className="text-gray-900 font-medium">
-                                  {option.name}
-                                </span>
-                              </div>
-
-                              {Number(option.additional_price) > 0 && (
-                                <span className="text-gray-600 font-medium">
-                                  +€{Number(option.additional_price).toFixed(2)}
-                                </span>
-                              )}
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="py-4">
-                    <p className="text-gray-600 text-center">Select quantity and add to your cart.</p>
-                  </div>
-                )}
-
-                {/* Quantity Selector - Clean Mobile Stepper */}
-                <div className="space-y-3">
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">Quantity</h3>
-                  <div className="flex items-center justify-center space-x-4 bg-gray-50 rounded-lg p-2">
-                    <button
-                      onClick={() => handleQuantityChange(-1)}
-                      disabled={customizationModal.quantity <= 1}
-                      className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center text-gray-700 hover:bg-gray-100 hover:border-[#2C1A16] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-                      style={{ minWidth: '44px', minHeight: '44px' }}
-                      aria-label="Decrease quantity"
-                    >
-                      <svg className="w-5 h-5" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" viewBox="0 0 24 24" stroke="currentColor">
-                        <path d="M20 12H4"></path>
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={handleCloseCustomizationModal}
+                  className="flex-1 px-6 py-3 border-2 border-[var(--primary-text)] rounded-[var(--radius-btn)] text-[var(--primary-text)] font-semibold hover:bg-[var(--primary-bg)] transition-colors"
+                  style={{ minHeight: 'var(--tap-target-comfortable)' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAddToCart}
+                  disabled={addToCartMutation.isPending}
+                  className="flex-1 px-6 py-3 rounded-[var(--radius-btn)] bg-[var(--btn-bg)] text-white font-bold hover:bg-[#1A0F0D] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  style={{ minHeight: 'var(--tap-target-comfortable)' }}
+                >
+                  {addToCartMutation.isPending ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                    </button>
-
-                    <span className="text-2xl sm:text-3xl font-bold text-gray-900 min-w-[60px] text-center">
-                      {customizationModal.quantity}
-                    </span>
-
-                    <button
-                      onClick={() => handleQuantityChange(1)}
-                      className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center text-gray-700 hover:bg-gray-100 hover:border-[#2C1A16] transition-all shadow-sm"
-                      style={{ minWidth: '44px', minHeight: '44px' }}
-                      aria-label="Increase quantity"
-                    >
-                      <svg className="w-5 h-5" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" viewBox="0 0 24 24" stroke="currentColor">
-                        <path d="M12 4v16m8-8H4"></path>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Modal Footer - Sticky on Mobile */}
-              <div className="sticky bottom-0 p-4 sm:p-6 border-t border-gray-200 bg-gray-50" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 0px))' }}>
-                <div className="flex items-center justify-between mb-3 sm:mb-4">
-                  <span className="text-base sm:text-lg font-semibold text-gray-900">Total:</span>
-                  <span className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--primary-text)' }}>
-                    €{(Number(customizationModal.total_price) * customizationModal.quantity).toFixed(2)}
-                  </span>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <button
-                    onClick={handleCloseCustomizationModal}
-                    className="w-full sm:flex-1 px-4 sm:px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition-colors"
-                    style={{ minHeight: '48px' }}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleAddToCart}
-                    disabled={addToCartMutation.isPending}
-                    className="w-full sm:flex-1 px-4 sm:px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                    style={{ 
-                      backgroundColor: 'var(--btn-bg)', 
-                      color: 'var(--btn-text)',
-                      minHeight: '48px'
-                    }}
-                  >
-                    {addToCartMutation.isPending ? (
-                      <>
-                        <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Adding...
-                      </>
-                    ) : (
-                      'Add to Cart'
-                    )}
-                  </button>
-                </div>
+                      Adding...
+                    </>
+                  ) : (
+                    'Add to Cart'
+                  )}
+                </button>
               </div>
             </div>
+          }
+        >
+          {/* Item Header with Image */}
+          <div className="flex gap-4 mb-6 p-4 bg-[var(--primary-bg)] rounded-[var(--radius-card)]">
+            <img
+              src={customizationModal.item.image_url || ''}
+              alt={customizationModal.item.name}
+              className="w-20 h-20 object-cover flex-shrink-0"
+              style={{ borderRadius: 'var(--radius-card)' }}
+            />
+            <div className="flex-1 min-w-0">
+              <h3 className="text-lg font-bold text-[var(--primary-text)] mb-1 leading-tight">
+                {customizationModal.item.name}
+              </h3>
+              {customizationModal.item.description && (
+                <p className="text-sm text-[var(--primary-text)]/70 line-clamp-2 leading-relaxed">
+                  {customizationModal.item.description}
+                </p>
+              )}
+            </div>
           </div>
+
+          {/* Customization Groups */}
+          {customizationModal.item.customization_groups.length > 0 ? (
+            <div className="space-y-6">
+              {customizationModal.item.customization_groups.map(group => (
+                <div key={group.group_id} className="space-y-3">
+                  <h4 className="text-base font-semibold text-[var(--primary-text)]">
+                    {group.name}
+                    {group.is_required && (
+                      <span className="ml-2 text-red-600 text-sm">*</span>
+                    )}
+                  </h4>
+
+                  <div className="space-y-2">
+                    {group.options.map(option => {
+                      const isSelected = customizationModal.selected_customizations.some(
+                        c => c.group_id === group.group_id && c.option_id === option.option_id
+                      );
+
+                      return (
+                        <label
+                          key={option.option_id}
+                          className={`flex items-center justify-between p-3 border-2 cursor-pointer transition-all ${
+                            isSelected
+                              ? 'border-[var(--btn-bg)] bg-[var(--primary-bg)]'
+                              : 'border-[var(--border-light)] hover:border-[var(--primary-text)]'
+                          }`}
+                          style={{ 
+                            borderRadius: 'var(--radius-card)',
+                            minHeight: '52px'
+                          }}
+                        >
+                          <div className="flex items-center gap-3">
+                            <input
+                              type={group.type === 'single' ? 'radio' : 'checkbox'}
+                              name={group.group_id}
+                              checked={isSelected}
+                              onChange={() => handleCustomizationChange(
+                                group.group_id,
+                                group.name,
+                                group.type,
+                                option
+                              )}
+                              className={`w-5 h-5 text-[var(--btn-bg)] border-2 border-[var(--border-light)] focus:ring-2 focus:ring-[var(--primary-text)]/20 transition-all ${
+                                group.type === 'single' ? '' : 'rounded'
+                              }`}
+                            />
+                            <span className="text-[var(--primary-text)] font-medium">
+                              {option.name}
+                            </span>
+                          </div>
+
+                          {Number(option.additional_price) > 0 && (
+                            <span className="text-[var(--primary-text)]/70 font-semibold">
+                              +€{Number(option.additional_price).toFixed(2)}
+                            </span>
+                          )}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="py-8 text-center">
+              <p className="text-[var(--primary-text)]/70">Select quantity and add to your cart.</p>
+            </div>
+          )}
+
+          {/* Quantity Selector - Using QuantityStepper */}
+          <div className="mt-6 space-y-3">
+            <h4 className="text-base font-semibold text-[var(--primary-text)]">Quantity</h4>
+            <div className="flex justify-center">
+              <QuantityStepper
+                value={customizationModal.quantity}
+                onChange={(newQuantity) => setCustomizationModal(prev => ({
+                  ...prev,
+                  quantity: newQuantity
+                }))}
+                min={1}
+                max={99}
+                size="lg"
+              />
+            </div>
+          </div>
+        </BottomSheet>
       )}
     </>
   );

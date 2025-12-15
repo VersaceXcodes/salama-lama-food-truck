@@ -63,29 +63,50 @@ html, body {
 
 @layer base {
 	:root {
-		/* Modern Border Radius System (16-20px for premium feel) */
-		--radius: 1rem; /* 16px */
-		--radius-lg: 1.25rem; /* 20px */
-		--radius-xl: 1.5rem; /* 24px */
+		/* ========================================
+		   MOBILE-FIRST DESIGN SYSTEM TOKENS
+		   ======================================== */
 		
-		/* Global Theme Variables - Dark Coffee & Cream */
-		--primary-bg: #F2EFE9;
-		--primary-text: #2C1A16;
-		--btn-bg: #2C1A16;
-		--btn-text: #F2EFE9;
-		--accent-color: #D4C5B0;
-		--border-light: #E8E1D6;
+		/* Border Radius System - Consistent rounded corners */
+		--radius: 1rem; /* 16px - buttons, inputs */
+		--radius-btn: 1rem; /* 16px - buttons */
+		--radius-card: 1.125rem; /* 18px - cards */
+		--radius-lg: 1.25rem; /* 20px - larger cards */
+		--radius-xl: 1.5rem; /* 24px - modals */
 		
-		/* Shadows - Soft and Subtle */
+		/* Color Palette - Warm beige & dark brown theme */
+		--primary-bg: #F2EFE9; /* Warm beige background */
+		--primary-text: #2C1A16; /* Dark brown text */
+		--btn-bg: #2C1A16; /* Dark brown buttons */
+		--btn-text: #F2EFE9; /* Light text on buttons */
+		--accent-color: #D4C5B0; /* Warm light grey accents */
+		--border-light: #E8E1D6; /* Subtle borders */
+		
+		/* Shadows - Soft and consistent */
+		--shadow-soft: 0 1px 2px 0 rgb(44 26 22 / 0.05);
 		--shadow-sm: 0 1px 2px 0 rgb(44 26 22 / 0.05);
 		--shadow: 0 2px 8px 0 rgb(44 26 22 / 0.08);
 		--shadow-md: 0 4px 12px 0 rgb(44 26 22 / 0.1);
 		--shadow-lg: 0 8px 24px 0 rgb(44 26 22 / 0.12);
 		--shadow-xl: 0 12px 32px 0 rgb(44 26 22 / 0.15);
 		
-		/* Bottom Bar Heights for Safe Area Calculations */
-		--bottom-bar-height: 88px;
-		--bottom-bar-height-mobile: 88px;
+		/* Layout System - Spacing consistency */
+		--container-padding-mobile: 1rem; /* 16px */
+		--container-padding-sm: 1.5rem; /* 24px */
+		--container-padding-lg: 2.5rem; /* 40px */
+		
+		/* Mobile Vertical Rhythm */
+		--section-spacing: 1.5rem; /* 24px - py-6 */
+		--stack-spacing-sm: 0.75rem; /* 12px - gap-3 */
+		--stack-spacing: 1rem; /* 16px - gap-4 */
+		
+		/* Bottom Cart Bar Heights (Mobile-safe) */
+		--bottom-bar-height: 84px;
+		--bottom-bar-height-mobile: 84px;
+		
+		/* Tap Targets - Minimum 44px for mobile */
+		--tap-target-min: 44px;
+		--tap-target-comfortable: 48px;
 		
 		/* Brand Colors (Legacy - kept for compatibility) */
 		--salamalama-com-color-1: #2C2018;

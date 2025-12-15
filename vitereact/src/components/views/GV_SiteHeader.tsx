@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppStore } from '@/store/main';
+import { MobileDrawer } from '@/components/ui/mobile-drawer';
 import { 
   Menu, 
   X, 
@@ -426,172 +427,153 @@ const GV_SiteHeader: React.FC = () => {
       </nav>
       
       {/* Mobile Menu Drawer */}
-      {isMobileMenuOpen && (
-        <>
-          {/* Backdrop */}
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden transition-opacity duration-300"
-            onClick={closeMobileMenu}
-            aria-hidden="true"
-          />
-          
-          {/* Mobile Drawer - Full Screen, Slides from Right */}
-          <div className="fixed top-0 right-0 bottom-0 w-full max-w-full z-50 md:hidden bg-white shadow-2xl overflow-y-auto animate-slideInRight">
-            <div className="px-6 py-8 space-y-8">
-              
-              {/* Close Button */}
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-[#2C1A16]">Menu</h2>
-                <button
-                  onClick={closeMobileMenu}
-                  className="p-3 text-[#2C1A16] hover:text-[#D97706] rounded-lg"
-                  style={{ minHeight: '48px', minWidth: '48px' }}
-                  aria-label="Close navigation menu"
-                >
-                  <X className="h-7 w-7" />
-                </button>
-              </div>
-              
-              {/* User Info Section (if authenticated) */}
-              {isAuthenticated && (
-                <div className="p-5 bg-gradient-to-br from-[#F2EFE9] to-[#D4C5B0] rounded-xl border-2 border-[#2C1A16]/10">
-                  <div className="flex items-center space-x-4">
-                    <div className="h-14 w-14 bg-[#D97706] rounded-full flex items-center justify-center">
-                      <User className="h-7 w-7 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-lg text-[#2C1A16]">{userDisplayName}</p>
-                      <p className="text-sm text-[#2C1A16]/70">{currentUser?.email}</p>
-                    </div>
-                  </div>
+      <MobileDrawer
+        isOpen={isMobileMenuOpen}
+        onClose={closeMobileMenu}
+        title="Menu"
+        className="md:hidden"
+      >
+        <div className="space-y-6">
+          {/* User Info Card */}
+          {isAuthenticated && (
+            <div className="p-4 bg-gradient-to-br from-[var(--primary-bg)] to-[var(--accent-color)] rounded-[var(--radius-card)] border border-[var(--border-light)]">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 bg-[var(--btn-bg)] rounded-full flex items-center justify-center flex-shrink-0">
+                  <User className="h-6 w-6 text-white" />
                 </div>
-              )}
-              
-              {/* Mobile Navigation Links */}
-              <div className="space-y-2">
-                {navigationLinks.map((link) => (
-                  <Link
-                    key={link.path}
-                    to={link.path}
-                    onClick={closeMobileMenu}
-                    className={`flex items-center justify-between px-6 py-4 rounded-xl text-lg font-semibold transition-all duration-200 ${
-                      isActivePath(link.path)
-                        ? 'bg-[#F2EFE9] text-[#D97706]'
-                        : 'text-[#2C1A16] hover:bg-[#F2EFE9]'
-                    }`}
-                    style={{ minHeight: '64px' }}
-                  >
-                    <span>{link.label}</span>
-                    <ChevronRight className="h-6 w-6" />
-                  </Link>
-                ))}
+                <div className="min-w-0 flex-1">
+                  <p className="font-bold text-base text-[var(--primary-text)] truncate">
+                    {userDisplayName}
+                  </p>
+                  {/* Only show email for non-guest users */}
+                  {!isGuest && currentUser?.email && (
+                    <p className="text-sm text-[var(--primary-text)]/70 truncate">
+                      {currentUser.email}
+                    </p>
+                  )}
+                  {isGuest && (
+                    <p className="text-sm text-[var(--primary-text)]/70">
+                      Guest checkout
+                    </p>
+                  )}
+                </div>
               </div>
-              
-              {/* Divider */}
-              <div className="border-t-2 border-[#D4C5B0]" />
-              
-              {/* Mobile Action Buttons */}
-              <div className="space-y-4">
-                {isAuthenticated ? (
-                  <>
-                    {isCustomer && (
-                      <>
-                        <Link
-                          to="/dashboard"
-                          onClick={closeMobileMenu}
-                          className="flex items-center justify-center w-full px-8 py-4 border-2 border-[#2C1A16] text-lg font-semibold rounded-xl text-[#2C1A16] bg-white hover:bg-[#F2EFE9] focus:outline-none focus:ring-2 transition-all duration-200"
-                          style={{ minHeight: '56px' }}
-                        >
-                          My Account
-                        </Link>
-                        
-                        <Link
-                          to="/orders"
-                          onClick={closeMobileMenu}
-                          className="flex items-center justify-center w-full px-8 py-4 border-2 border-[#2C1A16] text-lg font-semibold rounded-xl text-[#2C1A16] bg-white hover:bg-[#F2EFE9] focus:outline-none focus:ring-2 transition-all duration-200"
-                          style={{ minHeight: '56px' }}
-                        >
-                          My Orders
-                        </Link>
-                      </>
-                    )}
-                    
-                    {isGuest && (
-                      <Link
-                        to="/checkout/order-type"
-                        onClick={closeMobileMenu}
-                        className="flex items-center justify-center w-full px-8 py-4 border-2 border-[#2C1A16] text-lg font-semibold rounded-xl text-[#2C1A16] bg-white hover:bg-[#F2EFE9] focus:outline-none focus:ring-2 transition-all duration-200"
-                        style={{ minHeight: '56px' }}
-                      >
-                        Continue Ordering
-                      </Link>
-                    )}
-                    
-                    <button
-                      onClick={handleLogout}
-                      disabled={isLoggingOut}
-                      className="flex items-center justify-center w-full px-8 py-4 border-2 border-[#DC2626] text-lg font-bold rounded-xl text-[#DC2626] bg-white hover:bg-red-50 focus:outline-none focus:ring-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                      style={{ minHeight: '56px' }}
-                    >
-                      {isLoggingOut ? 'Signing Out...' : 'Sign Out'}
-                    </button>
-                  </>
-                ) : (
+            </div>
+          )}
+          
+          {/* Navigation Links - Clean List */}
+          <div className="border border-[var(--border-light)] rounded-[var(--radius-card)] divide-y divide-[var(--border-light)] overflow-hidden">
+            {navigationLinks.map((link) => (
+              <Link
+                key={link.path}
+                to={link.path}
+                onClick={closeMobileMenu}
+                className={`
+                  flex items-center justify-between px-4 py-3.5
+                  text-base font-medium
+                  transition-colors
+                  ${isActivePath(link.path)
+                    ? 'bg-[var(--primary-bg)] text-[var(--btn-bg)]'
+                    : 'text-[var(--primary-text)] hover:bg-[var(--primary-bg)]'
+                  }
+                `}
+                style={{ minHeight: '52px' }}
+              >
+                <span>{link.label}</span>
+                <ChevronRight className="h-5 w-5 opacity-40" />
+              </Link>
+            ))}
+            
+            {/* View Cart Row (only if cart has items) */}
+            {cartItemCount > 0 && (
+              <Link
+                to="/cart"
+                onClick={closeMobileMenu}
+                className="flex items-center justify-between px-4 py-3.5 text-base font-medium text-[var(--primary-text)] hover:bg-[var(--primary-bg)] transition-colors"
+                style={{ minHeight: '52px' }}
+              >
+                <div className="flex items-center gap-2">
+                  <ShoppingCart className="h-5 w-5" />
+                  <span>View Cart</span>
+                  <span className="bg-[var(--btn-bg)] text-white text-xs font-bold rounded-full h-5 min-w-[20px] px-1.5 flex items-center justify-center">
+                    {cartItemCount}
+                  </span>
+                </div>
+                <ChevronRight className="h-5 w-5 opacity-40" />
+              </Link>
+            )}
+          </div>
+          
+          {/* Action Buttons */}
+          <div className="space-y-3 pt-2">
+            {isAuthenticated ? (
+              <>
+                {isCustomer && (
                   <>
                     <Link
-                      to="/login"
+                      to="/dashboard"
                       onClick={closeMobileMenu}
-                      className="flex items-center justify-center w-full px-8 py-4 border-2 border-[#2C1A16] text-lg font-semibold rounded-xl text-[#2C1A16] bg-white hover:bg-[#F2EFE9] focus:outline-none focus:ring-2 transition-all duration-200"
-                      style={{ minHeight: '56px' }}
+                      className="flex items-center justify-center w-full px-6 py-3.5 border-2 border-[var(--primary-text)] text-base font-semibold rounded-[var(--radius-btn)] text-[var(--primary-text)] bg-white hover:bg-[var(--primary-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-text)]/20 transition-all duration-200"
+                      style={{ minHeight: 'var(--tap-target-comfortable)' }}
                     >
-                      Log In
+                      My Account
                     </Link>
                     
                     <Link
-                      to="/signup"
+                      to="/orders"
                       onClick={closeMobileMenu}
-                      className="flex items-center justify-center w-full px-8 py-4 border border-transparent text-lg font-bold rounded-xl text-white bg-[#D97706] hover:bg-[#B45309] hover:shadow-lg focus:outline-none focus:ring-2 transition-all duration-200"
-                      style={{ minHeight: '56px' }}
+                      className="flex items-center justify-center w-full px-6 py-3.5 border-2 border-[var(--primary-text)] text-base font-semibold rounded-[var(--radius-btn)] text-[var(--primary-text)] bg-white hover:bg-[var(--primary-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-text)]/20 transition-all duration-200"
+                      style={{ minHeight: 'var(--tap-target-comfortable)' }}
                     >
-                      Sign Up
+                      My Orders
                     </Link>
                   </>
                 )}
-              </div>
-              
-              {/* Mobile Cart Summary (if items exist) */}
-              {cartItemCount > 0 && (
-                <>
-                  <div className="border-t-2 border-[#D4C5B0]" />
-                  
+                
+                {isGuest && (
                   <Link
-                    to="/cart"
+                    to="/checkout/order-type"
                     onClick={closeMobileMenu}
-                    className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-[#F2EFE9] to-[#D4C5B0] rounded-xl hover:shadow-lg transition-all duration-200 border-2 border-[#2C1A16]/10"
-                    style={{ minHeight: '72px' }}
+                    className="flex items-center justify-center w-full px-6 py-3.5 border-2 border-[var(--primary-text)] text-base font-semibold rounded-[var(--radius-btn)] text-[var(--primary-text)] bg-white hover:bg-[var(--primary-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-text)]/20 transition-all duration-200"
+                    style={{ minHeight: 'var(--tap-target-comfortable)' }}
                   >
-                    <div className="flex items-center space-x-4">
-                      <div className="bg-[#D97706] text-white rounded-full p-3">
-                        <ShoppingCart className="h-6 w-6" />
-                      </div>
-                      <div>
-                        <p className="text-base font-bold text-[#2C1A16]">
-                          Your Cart
-                        </p>
-                        <p className="text-sm text-[#2C1A16]/70">
-                          {cartItemCount} {cartItemCount === 1 ? 'item' : 'items'}
-                        </p>
-                      </div>
-                    </div>
-                    <ChevronRight className="h-6 w-6 text-[#D97706]" />
+                    Continue Ordering
                   </Link>
-                </>
-              )}
-              
-            </div>
+                )}
+                
+                <button
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="flex items-center justify-center w-full px-6 py-3.5 border-2 border-transparent text-base font-bold rounded-[var(--radius-btn)] text-white bg-[var(--btn-bg)] hover:bg-[#1A0F0D] focus:outline-none focus:ring-2 focus:ring-[var(--primary-text)]/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ minHeight: 'var(--tap-target-comfortable)' }}
+                >
+                  {isLoggingOut ? 'Signing Out...' : 'Sign Out'}
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  onClick={closeMobileMenu}
+                  className="flex items-center justify-center w-full px-6 py-3.5 border-2 border-[var(--primary-text)] text-base font-semibold rounded-[var(--radius-btn)] text-[var(--primary-text)] bg-white hover:bg-[var(--primary-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-text)]/20 transition-all duration-200"
+                  style={{ minHeight: 'var(--tap-target-comfortable)' }}
+                >
+                  Log In
+                </Link>
+                
+                <Link
+                  to="/signup"
+                  onClick={closeMobileMenu}
+                  className="flex items-center justify-center w-full px-6 py-3.5 text-base font-bold rounded-[var(--radius-btn)] text-white bg-[var(--btn-bg)] hover:bg-[#1A0F0D] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary-text)]/20 transition-all duration-200"
+                  style={{ minHeight: 'var(--tap-target-comfortable)' }}
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
-        </>
-      )}
+        </div>
+      </MobileDrawer>
       
       {/* Spacer to prevent content from going under fixed navbar */}
       <div className="h-16 md:h-20" aria-hidden="true" />

@@ -575,12 +575,12 @@ const UV_Cart: React.FC = () => {
       )}
 
     
-      <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8" style={{ backgroundColor: 'var(--primary-bg)' }}>
-        <div className="max-w-7xl mx-auto">
+      <div className="min-h-screen py-4 sm:py-6 lg:py-8 px-4 sm:px-6 lg:px-10" style={{ backgroundColor: 'var(--primary-bg)' }}>
+        <div className="max-w-6xl mx-auto">
           {/* Page Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold" style={{ color: 'var(--primary-text)' }}>Shopping Cart</h1>
-            <p className="mt-2" style={{ color: '#4A3B32' }}>
+          <div className="mb-4 sm:mb-6 lg:mb-8">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold" style={{ color: 'var(--primary-text)' }}>Shopping Cart</h1>
+            <p className="mt-1 sm:mt-2 text-sm sm:text-base" style={{ color: '#4A3B32' }}>
               Review your items before checkout
             </p>
           </div>
@@ -630,51 +630,39 @@ const UV_Cart: React.FC = () => {
                           </p>
                         )}
 
-                        {/* COMMANDMENT #1: Quantity Controls - 48px min-height */}
+                        {/* COMMANDMENT #1: Quantity Controls - Clean Mobile Stepper */}
                         {isAvailable && (
-                          <div className="mt-4 flex items-center justify-between sm:justify-start gap-4">
-                            <div className="flex items-center space-x-3">
+                          <div className="mt-3 sm:mt-4 flex items-center justify-between sm:justify-start gap-3">
+                            <div className="flex items-center bg-gray-50 rounded-lg p-1">
                               <button
                                 onClick={() => handleQuantityChange(item.cart_item_id, item.quantity - 1)}
                                 disabled={item.quantity <= 1 || isUpdating}
-                                className="w-12 h-12 rounded-xl border-2 border-gray-300 flex items-center justify-center text-gray-700 hover:bg-gray-50 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-                                style={{ minHeight: '48px', minWidth: '48px' }}
+                                className="w-11 h-11 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center text-gray-700 hover:bg-gray-100 hover:border-[#2C1A16] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                                style={{ minHeight: '44px', minWidth: '44px' }}
                                 aria-label="Decrease quantity"
                               >
                                 {isUpdating ? (
-                                  <Loader2 className="h-5 w-5 animate-spin" />
+                                  <Loader2 className="h-4 w-4 animate-spin" />
                                 ) : (
-                                  <Minus className="h-5 w-5" />
+                                  <Minus className="h-4 w-4 stroke-[3]" />
                                 )}
                               </button>
 
-                              <input
-                                type="number"
-                                min="1"
-                                value={item.quantity}
-                                onChange={(e) => {
-                                  const newQuantity = parseInt(e.target.value, 10);
-                                  if (!isNaN(newQuantity) && newQuantity > 0) {
-                                    handleQuantityChange(item.cart_item_id, newQuantity);
-                                  }
-                                }}
-                                disabled={isUpdating}
-                                className="w-20 h-12 text-center border-2 border-gray-300 rounded-xl font-bold text-lg text-gray-900 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 disabled:opacity-50"
-                                style={{ minHeight: '48px', fontSize: '16px' }}
-                                aria-label="Item quantity"
-                              />
+                              <span className="w-16 sm:w-20 text-center font-bold text-lg sm:text-xl text-gray-900">
+                                {item.quantity}
+                              </span>
 
                               <button
                                 onClick={() => handleQuantityChange(item.cart_item_id, item.quantity + 1)}
                                 disabled={isUpdating}
-                                className="w-12 h-12 rounded-xl border-2 border-gray-300 flex items-center justify-center text-gray-700 hover:bg-gray-50 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-                                style={{ minHeight: '48px', minWidth: '48px' }}
+                                className="w-11 h-11 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center text-gray-700 hover:bg-gray-100 hover:border-[#2C1A16] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                                style={{ minHeight: '44px', minWidth: '44px' }}
                                 aria-label="Increase quantity"
                               >
                                 {isUpdating ? (
-                                  <Loader2 className="h-5 w-5 animate-spin" />
+                                  <Loader2 className="h-4 w-4 animate-spin" />
                                 ) : (
-                                  <Plus className="h-5 w-5" />
+                                  <Plus className="h-4 w-4 stroke-[3]" />
                                 )}
                               </button>
                             </div>
@@ -895,8 +883,12 @@ const UV_Cart: React.FC = () => {
         </div>
         
         {/* COMMANDMENT #4: Sticky Footer Bar for Mobile - Total Price & Checkout Button */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t-4 border-gray-200 shadow-2xl z-40 lg:hidden" style={{ marginBottom: '16px' }}>
-          <div className="px-6 py-4 flex items-center justify-between gap-4">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t-4 shadow-2xl z-40 lg:hidden" style={{ 
+          borderColor: 'var(--accent-color)',
+          paddingBottom: 'env(safe-area-inset-bottom, 16px)',
+          height: 'var(--bottom-bar-height-mobile)'
+        }}>
+          <div className="px-4 sm:px-6 py-4 flex items-center justify-between gap-3 sm:gap-4">
             <div>
               <p className="text-sm text-gray-600 font-medium">Total</p>
               <p className="text-2xl font-bold text-orange-600">

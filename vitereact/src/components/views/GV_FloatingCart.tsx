@@ -97,23 +97,26 @@ const GV_FloatingCart: React.FC = () => {
           ================================================== */}
       <Link
         to="/cart"
+        data-floating-cart
         className={`
           fixed bottom-0 left-0 right-0 
-          bg-orange-600 text-white 
+          text-white 
           shadow-2xl 
           z-40 
           lg:hidden
-          safe-area-inset-bottom
-          border-t-4 border-orange-500
+          border-t-4
           ${isAnimating ? 'animate-pulse' : ''}
         `}
         style={{
-          paddingBottom: 'env(safe-area-inset-bottom)',
-          boxShadow: '0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06)'
+          backgroundColor: 'var(--btn-bg)',
+          borderColor: 'var(--primary-text)',
+          paddingBottom: 'env(safe-area-inset-bottom, 16px)',
+          boxShadow: '0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06)',
+          height: 'var(--bottom-bar-height-mobile)'
         }}
         aria-label={`View cart with ${itemCount} ${itemCount === 1 ? 'item' : 'items'}, total €${cartTotal.toFixed(2)}`}
       >
-        <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center justify-between px-4 py-4">
           {/* Left: Cart Icon + Item Info */}
           <div className="flex items-center space-x-3">
             <div className="relative">

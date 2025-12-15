@@ -162,21 +162,21 @@ const UV_Login: React.FC = () => {
   // ===========================
   return (
     <>
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
+      <div className="min-h-screen flex items-center justify-center py-6 sm:py-12 px-4 sm:px-6 lg:px-10" style={{ backgroundColor: 'var(--primary-bg)' }}>
+        <div className="max-w-md w-full space-y-6 sm:space-y-8">
           {/* Header */}
           <div className="text-center">
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight">
-              Welcome Back
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight" style={{ color: 'var(--primary-text)' }}>
+              Sign in to your account
             </h1>
-            <p className="mt-2 text-xl text-gray-600 font-semibold">
-              Sign in to continue
+            <p className="mt-2 text-base sm:text-lg" style={{ color: '#4A3B32' }}>
+              Welcome back to Salama Lama
             </p>
           </div>
 
           {/* Login Form Card */}
-          <div className="bg-white shadow-xl rounded-xl overflow-hidden">
-            <div className="p-6 lg:p-8">
+          <div className="bg-white shadow-xl rounded-2xl overflow-hidden border-2" style={{ borderColor: 'var(--accent-color)' }}>
+            <div className="p-6 sm:p-8">
               {/* Error Message Display */}
               {displayError && (
                 <div 

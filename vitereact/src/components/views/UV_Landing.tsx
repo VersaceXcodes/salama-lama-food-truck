@@ -215,11 +215,11 @@ const UV_Landing: React.FC = () => {
     <>
       {/* Hero Section - Super Modern Split Screen */}
       <section className="relative bg-[#F2EFE9] overflow-hidden min-h-screen flex items-center">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24 w-full">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 py-12 sm:py-16 lg:py-24 w-full">
+          <div className="flex flex-col lg:grid lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center">
             
             {/* Left Side - Text Content on Cream Background */}
-            <div className="order-2 lg:order-1 bg-[#F2EFE9] py-12 lg:py-16">
+            <div className="order-2 lg:order-1 bg-[#F2EFE9] w-full">
               {/* Service Availability Badge */}
               {!business_loading && business_info && (
                 <div className="inline-flex items-center px-5 py-2 bg-[#2C1A16] rounded-full shadow-lg mb-8">
@@ -231,18 +231,18 @@ const UV_Landing: React.FC = () => {
               )}
 
               {/* COMMANDMENT #5: Main Heading - Mobile-First Typography */}
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold text-[#2C1A16] mb-6 leading-tight tracking-tight" style={{ fontWeight: 800, fontSize: 'clamp(2.5rem, 8vw, 5rem)' }}>
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-extrabold text-[#2C1A16] mb-4 sm:mb-6 leading-tight tracking-tight">
                 Where Flavour<br />
                 Meets Passion
               </h1>
 
               {/* Sub-headline - Mobile-First Sizing */}
-              <p className="text-lg sm:text-xl lg:text-2xl text-[#4A3B32] mb-8 leading-relaxed font-medium">
+              <p className="text-base sm:text-lg lg:text-xl text-[#4A3B32] mb-6 sm:mb-8 leading-relaxed font-medium">
                 Authentic Subs. Custom Bowls. Made with Heart.
               </p>
 
               {/* COMMANDMENT #1: Primary CTA - 48px min-height, full width on mobile */}
-              <div className="flex flex-col sm:flex-row gap-4 w-full">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full">
                 <Link
                   to="/menu"
                   className="group flex items-center justify-center px-8 py-4 bg-[#2C1A16] text-[#F2EFE9] text-lg font-bold rounded-full shadow-xl hover:bg-[#F2EFE9] hover:text-[#2C1A16] border-4 border-[#2C1A16] transition-all duration-300 ease-in-out w-full sm:w-auto"
@@ -270,21 +270,21 @@ const UV_Landing: React.FC = () => {
             </div>
 
             {/* Right Side - Floating Food Image with Rounded Corners */}
-            <div className="order-1 lg:order-2 relative">
-              <div className="relative rounded-3xl overflow-hidden shadow-2xl transform lg:translate-x-8 hover:scale-105 transition-transform duration-500">
+            <div className="order-1 lg:order-2 relative w-full">
+              <div className="relative rounded-2xl lg:rounded-3xl overflow-hidden shadow-xl lg:shadow-2xl lg:transform lg:translate-x-8 hover:scale-105 transition-transform duration-500">
                 <img
                   src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&h=1000&fit=crop&q=90"
                   alt="Delicious Food"
-                  className="w-full h-[500px] lg:h-[700px] object-cover"
+                  className="w-full aspect-[4/3] sm:aspect-[3/2] lg:aspect-[4/5] object-cover"
                 />
                 {/* Subtle Overlay for Premium Look */}
                 <div className="absolute inset-0 bg-gradient-to-t from-[#2C1A16]/20 via-transparent to-transparent"></div>
               </div>
               
-              {/* Decorative Element - Optional floating badge */}
-              <div className="absolute -bottom-6 -left-6 bg-[#2C1A16] text-[#F2EFE9] px-8 py-4 rounded-2xl shadow-xl transform rotate-3 hover:rotate-0 transition-transform duration-300">
-                <p className="text-sm font-medium mb-1">Made Fresh Daily</p>
-                <p className="text-2xl font-extrabold">100% Quality</p>
+              {/* Decorative Element - Optional floating badge - hidden on small mobile */}
+              <div className="hidden sm:block absolute -bottom-4 sm:-bottom-6 -left-4 sm:-left-6 bg-[#2C1A16] text-[#F2EFE9] px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl shadow-xl transform rotate-2 hover:rotate-0 transition-transform duration-300">
+                <p className="text-xs sm:text-sm font-medium mb-1">Made Fresh Daily</p>
+                <p className="text-lg sm:text-2xl font-extrabold">100% Quality</p>
               </div>
             </div>
 
@@ -293,19 +293,19 @@ const UV_Landing: React.FC = () => {
       </section>
 
       {/* COMMANDMENT #3: Featured Items Section - Mobile-First Grid */}
-      <section className="py-12 lg:py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3" style={{ fontSize: 'clamp(2rem, 5vw, 2.5rem)' }}>
+      <section className="py-8 sm:py-12 lg:py-20 bg-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-10">
+          <div className="text-center mb-8 sm:mb-10">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2 sm:mb-3">
               Featured Items
             </h2>
-            <p className="text-base lg:text-lg text-gray-600">
+            <p className="text-sm sm:text-base lg:text-lg text-gray-600">
               Try our most popular dishes
             </p>
           </div>
 
           {items_loading ? (
-            <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {[1, 2, 3, 4].map((i) => (
                 <div key={i} className="bg-gray-100 rounded-xl h-80 animate-pulse"></div>
               ))}
@@ -316,7 +316,7 @@ const UV_Landing: React.FC = () => {
               <p className="text-gray-500">Unable to load featured items. Please try again later.</p>
             </div>
           ) : featured_items.length > 0 ? (
-            <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {featured_items.map((item) => (
                 <div
                   key={item.item_id}

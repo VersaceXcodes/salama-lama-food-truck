@@ -72,6 +72,10 @@ html, body {
 		--btn-text: #F2EFE9;
 		--accent-color: #D4C5B0;
 		
+		/* Bottom Bar Heights for Safe Area Calculations */
+		--bottom-bar-height: 84px;
+		--bottom-bar-height-mobile: 80px;
+		
 		/* Brand Colors (Legacy - kept for compatibility) */
 		--salamalama-com-color-1: #2C2018;
 		--salamalama-com-color-2: #DEBF93;
@@ -272,12 +276,27 @@ p {
 	}
 }
 
+@keyframes slide-up {
+	from {
+		transform: translateY(100%);
+		opacity: 0;
+	}
+	to {
+		transform: translateY(0);
+		opacity: 1;
+	}
+}
+
 .animate-slide-in-right {
 	animation: slide-in-right 0.3s ease-out;
 }
 
 .animate-scale-in {
 	animation: scale-in 0.2s ease-out;
+}
+
+.animate-slide-up {
+	animation: slide-up 0.3s ease-out;
 }
 
 /* Hide scrollbar utility class */
@@ -295,11 +314,25 @@ p {
    MAIN CONTAINER - 16px Safe Zone
    =================================== */
 
-/* Apply to all page containers */
+/* Apply to all page containers with responsive breakpoints */
 .max-w-7xl {
 	width: 100% !important;
-	padding-left: 16px !important;
-	padding-right: 16px !important;
+	padding-left: 1rem !important; /* 16px on mobile */
+	padding-right: 1rem !important;
+}
+
+@media (min-width: 640px) {
+	.max-w-7xl {
+		padding-left: 1.5rem !important; /* 24px on sm */
+		padding-right: 1.5rem !important;
+	}
+}
+
+@media (min-width: 1024px) {
+	.max-w-7xl {
+		padding-left: 2.5rem !important; /* 40px on lg */
+		padding-right: 2.5rem !important;
+	}
 }
 
 @media (max-width: 768px) {
@@ -613,17 +646,15 @@ p {
 	}
 
 	/* CRITICAL FIX #3: Sticky Footer Safe Area - Prevent Overlap */
-	body,
-	#root,
-	main {
-		padding-bottom: 100px !important;
+	/* Only add bottom padding on pages with the floating cart */
+	body:has([data-floating-cart]),
+	#root:has([data-floating-cart]) {
+		padding-bottom: calc(var(--bottom-bar-height-mobile) + env(safe-area-inset-bottom, 16px)) !important;
 	}
 
-	/* Ensure content area has breathing room from sticky cart */
-	.max-w-7xl,
-	main > div,
-	section {
-		padding-bottom: 100px !important;
+	/* Add bottom padding to page content when floating cart is present */
+	main:has(~ [data-floating-cart]) {
+		padding-bottom: calc(var(--bottom-bar-height-mobile) + env(safe-area-inset-bottom, 16px)) !important;
 	}
 
 	/* CRITICAL FIX #4: Visual Polish - Side Padding */

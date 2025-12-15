@@ -574,19 +574,19 @@ const UV_Menu: React.FC = () => {
   return (
     <>
       {/* Page Header */}
-      <div style={{ backgroundColor: 'var(--primary-bg)' }} className="border-b" style={{ borderColor: 'var(--accent-color)' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h1 className="text-3xl md:text-4xl font-bold leading-tight" style={{ color: 'var(--primary-text)' }}>
+      <div style={{ backgroundColor: 'var(--primary-bg)' }} className="border-b border-[#D4C5B0]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 py-4 sm:py-6 lg:py-8">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight" style={{ color: 'var(--primary-text)' }}>
             Our Menu
           </h1>
-          <p className="mt-2 text-base md:text-lg leading-relaxed" style={{ color: '#4A3B32' }}>
+          <p className="mt-1 sm:mt-2 text-sm sm:text-base lg:text-lg leading-relaxed" style={{ color: '#4A3B32' }}>
             Discover our delicious selection of authentic dishes
           </p>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 pb-28 lg:pb-12" style={{ backgroundColor: 'var(--primary-bg)' }}>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8 lg:py-12 pb-24 sm:pb-28 lg:pb-12" style={{ backgroundColor: 'var(--primary-bg)' }}>
         {/* Search & Filter Bar */}
         <div className="mb-8 space-y-4">
           {/* Search Bar */}
@@ -846,8 +846,8 @@ const UV_Menu: React.FC = () => {
                   </button>
               </div>
             ) : (
-              // COMMANDMENT #3: Menu Items - 1 Column Mobile, 3-4 Columns Desktop
-              <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+              // COMMANDMENT #3: Menu Items - 1 Column Mobile, 2-3 Columns Desktop
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {menuItems.map(item => {
                   const stockStatus = getStockStatus(item);
                   const isOutOfStock = stockStatus === 'out_of_stock';
@@ -860,13 +860,12 @@ const UV_Menu: React.FC = () => {
                         isOutOfStock ? 'opacity-60' : ''
                       }`}
                     >
-                      {/* COMMANDMENT #4: Item Image - Full width, auto height */}
-                      <div className="relative h-48 lg:h-56 bg-gray-100">
+                      {/* COMMANDMENT #4: Item Image - Full width, consistent aspect ratio */}
+                      <div className="relative aspect-square bg-gray-100">
                         <img
                           src={item.image_url || ''}
                           alt={item.name}
                           className="w-full h-full object-cover"
-                          style={{ width: '100%', height: 'auto', minHeight: '12rem' }}
                           loading="lazy"
                         />
                         
@@ -909,13 +908,13 @@ const UV_Menu: React.FC = () => {
                       </div>
 
                       {/* Item Details */}
-                      <div className="p-6">
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2 leading-tight">
+                      <div className="p-4 sm:p-6">
+                        <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 leading-tight">
                           {item.name}
                         </h3>
                         
                         {item.description && (
-                          <p className="text-gray-600 text-sm mb-4 line-clamp-2 leading-relaxed">
+                          <p className="text-gray-600 text-sm mb-3 sm:mb-4 line-clamp-2 leading-relaxed">
                             {item.description}
                           </p>
                         )}
@@ -936,7 +935,7 @@ const UV_Menu: React.FC = () => {
                         <button
                           onClick={() => handleOpenCustomizationModal(item)}
                           disabled={isOutOfStock || loadingItemId === item.item_id}
-                          className={`w-full px-6 py-3 rounded-xl font-bold text-base transition-all duration-200 flex items-center justify-center add-to-cart-btn ${
+                          className={`w-full px-4 sm:px-6 py-3 rounded-lg sm:rounded-xl font-bold text-sm sm:text-base transition-all duration-200 flex items-center justify-center add-to-cart-btn ${
                             isOutOfStock
                               ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                               : loadingItemId === item.item_id
@@ -946,9 +945,9 @@ const UV_Menu: React.FC = () => {
                           style={!isOutOfStock ? { 
                             backgroundColor: 'var(--btn-bg)', 
                             color: 'var(--btn-text)',
-                            minHeight: '56px'
+                            minHeight: '48px'
                           } : {
-                            minHeight: '56px'
+                            minHeight: '48px'
                           }}
                         >
                           {loadingItemId === item.item_id ? (
@@ -1049,7 +1048,7 @@ const UV_Menu: React.FC = () => {
 
       {/* Customization Modal */}
       {customizationModal.is_open && customizationModal.item && (
-        <div className="fixed inset-0 z-[60] overflow-y-auto">
+        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center">
           {/* Backdrop with explicit click handler */}
           <div 
             className="fixed inset-0 bg-black bg-opacity-50 transition-opacity cursor-pointer"
@@ -1057,12 +1056,14 @@ const UV_Menu: React.FC = () => {
             aria-hidden="true"
           />
           
-          {/* Modal Container */}
-          <div className="flex min-h-full items-center justify-center p-4">
-            <div 
-              className="relative bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto z-10"
-              onClick={(e) => e.stopPropagation()}
-            >
+          {/* Modal Container - Bottom Sheet on Mobile, Centered on Desktop */}
+          <div 
+            className="relative bg-white rounded-t-2xl sm:rounded-xl shadow-2xl w-full sm:max-w-2xl max-h-[85vh] sm:max-h-[90vh] overflow-y-auto z-10 animate-slide-up sm:animate-scale-in"
+            onClick={(e) => e.stopPropagation()}
+            style={{ 
+              marginBottom: 'env(safe-area-inset-bottom, 0px)'
+            }}
+          >
               {/* Close Button */}
               <button
                 onClick={handleCloseCustomizationModal}
@@ -1159,31 +1160,33 @@ const UV_Menu: React.FC = () => {
                   </div>
                 )}
 
-                {/* Quantity Selector */}
+                {/* Quantity Selector - Clean Mobile Stepper */}
                 <div className="space-y-3">
-                  <h3 className="text-lg font-semibold text-gray-900">Quantity</h3>
-                  <div className="flex items-center space-x-4">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">Quantity</h3>
+                  <div className="flex items-center justify-center space-x-4 bg-gray-50 rounded-lg p-2">
                     <button
                       onClick={() => handleQuantityChange(-1)}
                       disabled={customizationModal.quantity <= 1}
-                      className="w-10 h-10 rounded-lg border-2 border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center text-gray-700 hover:bg-gray-100 hover:border-[#2C1A16] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                      style={{ minWidth: '44px', minHeight: '44px' }}
                       aria-label="Decrease quantity"
                     >
-                      <svg className="w-5 h-5" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-5 h-5" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" viewBox="0 0 24 24" stroke="currentColor">
                         <path d="M20 12H4"></path>
                       </svg>
                     </button>
 
-                    <span className="text-2xl font-bold text-gray-900 w-12 text-center">
+                    <span className="text-2xl sm:text-3xl font-bold text-gray-900 min-w-[60px] text-center">
                       {customizationModal.quantity}
                     </span>
 
                     <button
                       onClick={() => handleQuantityChange(1)}
-                      className="w-10 h-10 rounded-lg border-2 border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors"
+                      className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center text-gray-700 hover:bg-gray-100 hover:border-[#2C1A16] transition-all shadow-sm"
+                      style={{ minWidth: '44px', minHeight: '44px' }}
                       aria-label="Increase quantity"
                     >
-                      <svg className="w-5 h-5" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-5 h-5" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" viewBox="0 0 24 24" stroke="currentColor">
                         <path d="M12 4v16m8-8H4"></path>
                       </svg>
                     </button>
@@ -1191,31 +1194,31 @@ const UV_Menu: React.FC = () => {
                 </div>
               </div>
 
-              {/* Modal Footer */}
-              <div className="p-6 border-t border-gray-200 bg-gray-50">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-lg font-semibold text-gray-900">Total:</span>
-                  <span className="text-3xl font-bold text-orange-600">
+              {/* Modal Footer - Sticky on Mobile */}
+              <div className="sticky bottom-0 p-4 sm:p-6 border-t border-gray-200 bg-gray-50" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 0px))' }}>
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                  <span className="text-base sm:text-lg font-semibold text-gray-900">Total:</span>
+                  <span className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--primary-text)' }}>
                     €{(Number(customizationModal.total_price) * customizationModal.quantity).toFixed(2)}
                   </span>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <button
                     onClick={handleCloseCustomizationModal}
-                    className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition-colors"
+                    className="w-full sm:flex-1 px-4 sm:px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition-colors"
+                    style={{ minHeight: '48px' }}
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleAddToCart}
                     disabled={addToCartMutation.isPending}
-                    className="flex-1 px-6 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                    className="w-full sm:flex-1 px-4 sm:px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                     style={{ 
                       backgroundColor: 'var(--btn-bg)', 
                       color: 'var(--btn-text)',
-                      minHeight: '48px',
-                      padding: '12px 24px'
+                      minHeight: '48px'
                     }}
                   >
                     {addToCartMutation.isPending ? (

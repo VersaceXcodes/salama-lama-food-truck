@@ -177,15 +177,22 @@ const GV_TopNav_Staff: React.FC = () => {
               <Link
                 to="/staff/dashboard"
                 className="flex items-center space-x-2 group"
-                aria-label="Staff Dashboard Home"
+                aria-label="Salama Lama Staff Home"
               >
                 <img 
-                  src="/logo-salama-lama.png" 
-                  alt="Salama Lama Logo" 
-                  height="50"
-                  className="h-[45px] w-auto object-contain transition-transform duration-200 group-hover:scale-105"
-                  style={{ height: '50px', width: 'auto', filter: 'brightness(0) invert(1)' }}
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  src="/salama-lama-logo.png" 
+                  alt="Salama Lama" 
+                  className="w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+                  style={{ height: '36px', filter: 'brightness(0) invert(1)' }}
+                  onError={(e) => { 
+                    // Fallback to text if image fails to load
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const textSpan = document.createElement('span');
+                    textSpan.className = 'text-white font-bold text-lg';
+                    textSpan.textContent = 'Salama Lama';
+                    target.parentElement?.appendChild(textSpan);
+                  }}
                 />
                 <span className="hidden sm:inline text-white font-bold text-lg">Staff</span>
               </Link>
@@ -411,6 +418,15 @@ const GV_TopNav_Staff: React.FC = () => {
           aria-hidden="true"
         ></div>
       )}
+      
+      {/* Responsive logo sizing */}
+      <style>{`
+        @media (min-width: 768px) {
+          nav img[alt="Salama Lama"] {
+            height: 44px !important;
+          }
+        }
+      `}</style>
     </>
   );
 };

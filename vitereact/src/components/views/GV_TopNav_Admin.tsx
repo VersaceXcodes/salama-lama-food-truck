@@ -203,14 +203,22 @@ const GV_TopNav_Admin: React.FC = () => {
               <Link
                 to="/admin/dashboard"
                 className="flex items-center space-x-3 group"
+                aria-label="Salama Lama Admin Home"
               >
                 <img 
-                  src="/logo-salama-lama.png" 
-                  alt="Salama Lama Logo" 
-                  height="50"
-                  className="h-[45px] w-auto object-contain transition-transform duration-200 group-hover:scale-105"
-                  style={{ height: '50px', width: 'auto' }}
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  src="/salama-lama-logo.png" 
+                  alt="Salama Lama" 
+                  className="w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+                  style={{ height: '36px' }}
+                  onError={(e) => { 
+                    // Fallback to text if image fails to load
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const textSpan = document.createElement('span');
+                    textSpan.className = 'text-2xl font-bold text-[#2C1A16]';
+                    textSpan.textContent = 'Salama Lama';
+                    target.parentElement?.appendChild(textSpan);
+                  }}
                 />
                 <div className="hidden md:flex flex-col">
                   <span className="text-xs text-gray-600 leading-none">Admin Panel</span>
@@ -576,6 +584,15 @@ const GV_TopNav_Admin: React.FC = () => {
 
       {/* Spacer to prevent content from being hidden under fixed navbar */}
       <div className="h-16"></div>
+      
+      {/* Responsive logo sizing */}
+      <style>{`
+        @media (min-width: 768px) {
+          nav img[alt="Salama Lama"] {
+            height: 44px !important;
+          }
+        }
+      `}</style>
     </>
   );
 };

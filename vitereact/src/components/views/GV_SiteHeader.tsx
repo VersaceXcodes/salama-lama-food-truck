@@ -257,9 +257,21 @@ const GV_SiteHeader: React.FC = () => {
                 className="flex items-center group"
                 aria-label="Salama Lama Home"
               >
-                <span className="text-2xl md:text-3xl font-bold text-[#2C1A16] group-hover:text-[#D97706] transition-colors duration-200">
-                  Salama Lama
-                </span>
+                <img 
+                  src="/salama-lama-logo.png" 
+                  alt="Salama Lama" 
+                  className="w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+                  style={{ height: '28px' }}
+                  onError={(e) => { 
+                    // Fallback to text if image fails to load
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const textSpan = document.createElement('span');
+                    textSpan.className = 'text-2xl md:text-3xl font-bold text-[#2C1A16] group-hover:text-[#D97706] transition-colors duration-200';
+                    textSpan.textContent = 'Salama Lama';
+                    target.parentElement?.appendChild(textSpan);
+                  }}
+                />
               </Link>
             </div>
             
@@ -614,6 +626,13 @@ const GV_SiteHeader: React.FC = () => {
         
         .animate-fadeIn {
           animation: fadeIn 0.2s ease-out;
+        }
+        
+        /* Responsive logo sizing */
+        @media (min-width: 768px) {
+          nav img[alt="Salama Lama"] {
+            height: 40px !important;
+          }
         }
       `}</style>
     </>

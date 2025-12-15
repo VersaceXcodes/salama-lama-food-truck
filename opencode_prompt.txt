@@ -1,53 +1,159 @@
-## BUILD FAILURE - Fix Required (Attempt 1/3)
+I want to update the global top navigation/header across all pages so the left brand area shows my logo image (attached) instead of the text “Salama Lama”.
 
-The Vite build process failed. Analyze the error output below and fix the issue.
+Requirements
 
-## Build Error Output:
-```
-x Build failed in 1.77s
-error during build:
-[vite:esbuild] Transform failed with 1 error:
-/app/vitereact/src/components/views/UV_Menu.tsx:1240:14: ERROR: Unterminated regular expression
-file: /app/vitereact/src/components/views/UV_Menu.tsx:1240:14
+Site-wide header change
 
-Unterminated regular expression
-1238|              </div>
-1239|            </div>
-1240|          </div>
-   |                ^
-1241|        )}
-1242|      </>
+Update the shared header/nav component used across the site (Landing, Menu, Checkout, Login/Signup, Dashboard, etc.).
 
-    at failureErrorWithLog (/app/vitereact/node_modules/esbuild/lib/main.js:1472:15)
-    at /app/vitereact/node_modules/esbuild/lib/main.js:755:50
-    at responseCallbacks.<computed> (/app/vitereact/node_modules/esbuild/lib/main.js:622:9)
-    at handleIncomingPacket (/app/vitereact/node_modules/esbuild/lib/main.js:677:12)
-    at Socket.readFromStdout (/app/vitereact/node_modules/esbuild/lib/main.js:600:7)
-    at Socket.emit (node:events:517:28)
-    at addChunk (node:internal/streams/readable:368:12)
-    at readableAddChunk (node:internal/streams/readable:341:9)
-    at Readable.push (node:internal/streams/readable:278:10)
-    at Pipe.onStreamRead (node:internal/stream_base_commons:190:23)
+Replace the text brand with the provided logo image.
 
-```
+The logo must link to / (home) when clicked.
 
-## Build Directory: /app/vitereact
+Logo rendering rules
 
-## Your Task:
-1. **Analyze the Error**: Read the error output carefully to understand what went wrong
-2. **Locate the Problem**: Find the file(s) mentioned in the error
-3. **Apply the Fix**: 
-   - Missing file/component? CREATE it with correct exports
-   - Wrong import path? FIX the import statement  
-   - Syntax error? FIX the syntax in the affected file
-   - Type error? FIX the TypeScript types
-   - Missing dependency? Check if it needs to be installed or if it's a local import issue
-4. **Verify**: After fixing, ensure all imports resolve correctly
+Use the uploaded logo file as the source (store it in /public or your project assets and reference it properly).
 
-## IMPORTANT:
-- The build CANNOT succeed until this error is fixed
-- If creating a missing component, ensure exports match what's being imported (default vs named)
-- If the error mentions a specific line number, check that line in the source file
-- Run `npx tsc --noEmit` after fixing to verify no TypeScript errors remain
+Keep transparency (PNG).
 
-Fix this error so the build can succeed on retry.
+Add alt="Salama Lama" and ensure it’s accessible.
+
+Use responsive sizing:
+
+Mobile: height ~ 28–32px
+
+Desktop: height ~ 36–44px
+
+Width auto (maintain aspect ratio)
+
+Prevent layout shift: set explicit height/width or use an optimized image component if available.
+
+Mobile-friendly header behavior
+
+On mobile:
+
+Logo stays left
+
+Nav links collapse into a hamburger menu
+
+Cart icon + guest/user dropdown remain usable and do not overlap
+
+Ensure the logo never gets squashed or pushes icons off-screen.
+
+Spacing + alignment
+
+Vertically center the logo with the header items.
+
+Keep the same beige background and clean modern look.
+
+Add a small safe padding left/right (px-4 mobile, px-6 tablet+).
+
+Consistency
+
+Ensure this logo header appears the same on every route/page (no page-specific header differences).
+
+Remove any duplicate headers (avoid double nav bars).
+
+Acceptance criteria
+
+All pages show the logo in the header instead of “Salama Lama”.
+
+Clicking the logo goes home.
+
+On mobile, header remains clean: logo + icons visible, menu in hamburger, no wrapping/overlap.
+
+Now implement this by:
+
+Adding the logo asset to /public (or equivalent)
+
+Updating the shared SiteHeader/AppHeader component to render the logo image
+
+Confirming all page layouts use the same header component
+
+When the user mentions generic pages, map them to concrete files/components by scanning for headings and routes. Examples you MUST follow:
+- If the user says "login" or "sign in", search for components containing the literal heading "Sign in to your account" and edit that file.
+- If the user says "sign up" or "register", search for "Create your account" or equivalent.
+- Always return an explicit list of changed file paths. If your first attempt doesn't change the UI, re-search by heading text and update the correct file.
+
+⚠️ PRIORITY INSTRUCTIONS:
+- The user's request above is the PRIMARY task. Complete it first.
+- Ignore any existing errors, warnings, or issues you detect in the project unless they directly prevent you from completing the user's requested task.
+- Do NOT automatically fix unrelated errors or refactor code unless explicitly requested.
+- Focus solely on implementing the user's request: "I want to update the global top navigation/header across all pages so the left brand area shows my logo image (attached) instead of the text “Salama Lama”.
+
+Requirements
+
+Site-wide header change
+
+Update the shared header/nav component used across the site (Landing, Menu, Checkout, Login/Signup, Dashboard, etc.).
+
+Replace the text brand with the provided logo image.
+
+The logo must link to / (home) when clicked.
+
+Logo rendering rules
+
+Use the uploaded logo file as the source (store it in /public or your project assets and reference it properly).
+
+Keep transparency (PNG).
+
+Add alt="Salama Lama" and ensure it’s accessible.
+
+Use responsive sizing:
+
+Mobile: height ~ 28–32px
+
+Desktop: height ~ 36–44px
+
+Width auto (maintain aspect ratio)
+
+Prevent layout shift: set explicit height/width or use an optimized image component if available.
+
+Mobile-friendly header behavior
+
+On mobile:
+
+Logo stays left
+
+Nav links collapse into a hamburger menu
+
+Cart icon + guest/user dropdown remain usable and do not overlap
+
+Ensure the logo never gets squashed or pushes icons off-screen.
+
+Spacing + alignment
+
+Vertically center the logo with the header items.
+
+Keep the same beige background and clean modern look.
+
+Add a small safe padding left/right (px-4 mobile, px-6 tablet+).
+
+Consistency
+
+Ensure this logo header appears the same on every route/page (no page-specific header differences).
+
+Remove any duplicate headers (avoid double nav bars).
+
+Acceptance criteria
+
+All pages show the logo in the header instead of “Salama Lama”.
+
+Clicking the logo goes home.
+
+On mobile, header remains clean: logo + icons visible, menu in hamburger, no wrapping/overlap.
+
+Now implement this by:
+
+Adding the logo asset to /public (or equivalent)
+
+Updating the shared SiteHeader/AppHeader component to render the logo image
+
+Confirming all page layouts use the same header component"
+- Only address errors if they block the specific functionality requested by the user.
+
+Additional context:
+User uploaded the following images. Place them exactly where requested; if no explicit location is provided, position them where they best fit within the layout without breaking responsiveness.
+- Asset 1: https://tgvswctfhlubctiodmvo.supabase.co/storage/v1/object/public/project_uploads/14c908b9-356c-42da-b048-85c8422aeeac/salama-lama-food-truck/1765763516068_0_Untitled_design__24_.png (image/png)
+
+Use the given URLs directly or copy into the project under an appropriate assets/images folder and update imports/links.

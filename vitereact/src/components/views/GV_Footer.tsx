@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppStore } from '@/store/main';
+import BrandLogo from '@/components/BrandLogo';
 
 // Social media icon components
 const InstagramIcon: React.FC<{ className?: string }> = ({ className = "w-6 h-6" }) => (
@@ -368,16 +369,7 @@ const GV_Footer: React.FC = () => {
             <div className="text-center">
               {/* Monochrome Logo - The Brand Anchor */}
               <div className="flex justify-center mb-4">
-                <img 
-                  src="/assets/salama-lama-logo.png" 
-                  alt="Salama Lama Logo" 
-                  className="h-[120px] w-auto object-contain"
-                  style={{ 
-                    height: '120px',
-                    maxHeight: '120px',
-                    filter: 'brightness(0) invert(1) sepia(0.2) saturate(0.2) hue-rotate(30deg)'
-                  }}
-                />
+                <BrandLogo variant="footer" />
               </div>
               <p className="text-sm text-[#F2EFE9]/70">
                 © {new Date().getFullYear()} {businessInfo.name || 'Salama Lama Food Truck'}. All rights reserved.

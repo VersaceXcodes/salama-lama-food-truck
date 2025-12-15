@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppStore } from '@/store/main';
 import { MobileDrawer } from '@/components/ui/mobile-drawer';
+import BrandLogo from '@/components/BrandLogo';
 import { 
   Menu, 
   X, 
@@ -258,21 +259,7 @@ const GV_SiteHeader: React.FC = () => {
                 className="flex items-center group"
                 aria-label="Salama Lama Home"
               >
-                <img 
-                  src="/assets/salama-lama-logo.png" 
-                  alt="Salama Lama" 
-                  className="w-auto object-contain transition-transform duration-200 group-hover:scale-105"
-                  style={{ height: '26px', maxWidth: '150px' }}
-                  onError={(e) => { 
-                    // Fallback to screen-reader-only text if image fails to load
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                    const textSpan = document.createElement('span');
-                    textSpan.className = 'sr-only';
-                    textSpan.textContent = 'Salama Lama';
-                    target.parentElement?.appendChild(textSpan);
-                  }}
-                />
+                <BrandLogo variant="header" />
               </Link>
             </div>
             
@@ -610,11 +597,11 @@ const GV_SiteHeader: React.FC = () => {
           animation: fadeIn 0.2s ease-out;
         }
         
-        /* Responsive logo sizing */
+        /* Responsive logo sizing - handled by BrandLogo component */
         @media (min-width: 768px) {
           nav img[alt="Salama Lama"] {
             height: 34px !important;
-            max-width: 200px !important;
+            max-width: 180px !important;
           }
         }
       `}</style>

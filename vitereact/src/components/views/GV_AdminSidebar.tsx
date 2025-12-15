@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAppStore } from '@/store/main';
 import {
@@ -24,6 +24,7 @@ import {
 const GV_AdminSidebar: React.FC = () => {
   const location = useLocation();
   const [is_collapsed, setIsCollapsed] = useState(false);
+  const [is_mobile_open, setIsMobileOpen] = useState(false);
   const [expanded_sections, setExpandedSections] = useState<Record<string, boolean>>({
     menu: false,
   });
@@ -39,8 +40,33 @@ const GV_AdminSidebar: React.FC = () => {
     return null;
   }
 
+  // Body scroll lock when mobile drawer is open
+  useEffect(() => {
+    if (is_mobile_open) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [is_mobile_open]);
+
+  // Close mobile drawer on route change
+  useEffect(() => {
+    setIsMobileOpen(false);
+  }, [location.pathname]);
+
   const toggleSidebar = () => {
     setIsCollapsed(!is_collapsed);
+  };
+
+  const toggleMobileDrawer = () => {
+    setIsMobileOpen(!is_mobile_open);
+  };
+
+  const closeMobileDrawer = () => {
+    setIsMobileOpen(false);
   };
 
   const toggleSection = (section: string) => {
@@ -130,37 +156,79 @@ const GV_AdminSidebar: React.FC = () => {
 
   return (
     <>
-      {/* Fixed Sidebar */}
+      {/* Mobile Top Bar - Only visible on mobile (< md) */}
+      <div 
+        className="md:hidden fixed top-0 left-0 right-0 h-14 bg-gray-900 text-white z-50 flex items-center px-4 border-b border-gray-800"
+        style={{ paddingTop: 'env(safe-area-inset-top)' }}
+      >
+        <button
+          onClick={toggleMobileDrawer}
+          className="p-2 rounded-lg hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500"
+          aria-label="Open menu"
+        >
+          <Menu className="w-6 h-6" />
+        </button>
+        <Link to="/admin/dashboard" className="flex items-center ml-4">
+          <img 
+            src={logoUrl} 
+            alt="Salama Lama" 
+            className="w-auto object-contain"
+            style={{ height: '28px', maxWidth: '150px' }}
+            onError={(e) => { 
+              const target = e.target as HTMLImageElement;
+              if (target.src !== '/assets/salama-lama-logo.png') {
+                target.src = '/assets/salama-lama-logo.png';
+              }
+            }}
+          />
+        </Link>
+      </div>
+
+      {/* Overlay - Only visible when mobile drawer is open */}
+      {is_mobile_open && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black bg-opacity-40 z-[90]"
+          onClick={closeMobileDrawer}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Sidebar - Mobile drawer (< md) or Fixed sidebar (>= md) */}
       <aside
-        className={`fixed left-0 top-0 h-screen bg-gray-900 text-white z-30 transition-all duration-300 flex flex-col ${
-          is_collapsed ? 'w-16' : 'w-64'
-        }`}
+        className={`
+          fixed left-0 top-0 h-screen bg-gray-900 text-white flex flex-col
+          md:z-30 md:w-64 md:translate-x-0
+          z-[100] w-[80vw] max-w-[320px] transition-transform duration-200
+          ${is_mobile_open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+          ${is_mobile_open ? 'pointer-events-auto' : 'pointer-events-none md:pointer-events-auto'}
+        `}
+        style={{ 
+          height: '100dvh',
+          paddingTop: 'env(safe-area-inset-top)'
+        }}
       >
         {/* Sidebar Header */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-gray-800 flex-shrink-0">
-          {!is_collapsed && (
-            <Link to="/admin/dashboard" className="flex items-center">
-              <img 
-                src={logoUrl} 
-                alt="Salama Lama" 
-                className="w-auto object-contain"
-                style={{ height: '32px', maxWidth: '180px' }}
-                onError={(e) => { 
-                  // Fallback to default logo if custom logo fails to load
-                  const target = e.target as HTMLImageElement;
-                  if (target.src !== '/assets/salama-lama-logo.png') {
-                    target.src = '/assets/salama-lama-logo.png';
-                  }
-                }}
-              />
-            </Link>
-          )}
+          <Link to="/admin/dashboard" className="flex items-center">
+            <img 
+              src={logoUrl} 
+              alt="Salama Lama" 
+              className="w-auto object-contain"
+              style={{ height: '32px', maxWidth: '180px' }}
+              onError={(e) => { 
+                const target = e.target as HTMLImageElement;
+                if (target.src !== '/assets/salama-lama-logo.png') {
+                  target.src = '/assets/salama-lama-logo.png';
+                }
+              }}
+            />
+          </Link>
           <button
-            onClick={toggleSidebar}
-            className="p-2 rounded-lg hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500"
-            aria-label={is_collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            onClick={closeMobileDrawer}
+            className="md:hidden p-2 rounded-lg hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500"
+            aria-label="Close menu"
           >
-            {is_collapsed ? <Menu className="w-5 h-5" /> : <X className="w-5 h-5" />}
+            <X className="w-5 h-5" />
           </button>
         </div>
 

@@ -265,7 +265,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         )}
 
         {/* Main Content */}
-        <main className={`flex-1 ${isAdminRoute ? 'ml-0 lg:ml-64' : ''}`}>
+        <main className={`flex-1 w-full ${isAdminRoute ? 'pt-14 md:pt-0 md:ml-64' : ''}`}>
           {children}
         </main>
       </div>

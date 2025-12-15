@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppStore } from '@/store/main';
 import { 
@@ -153,6 +153,7 @@ const updateLoyaltySettings = async (token: string, data: LoyaltySettings): Prom
 
 const UV_AdminSettings: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const queryClient = useQueryClient();
   
   // Zustand state - individual selectors
   const authToken = useAppStore(state => state.authentication_state.auth_token);
@@ -249,66 +250,6 @@ const UV_AdminSettings: React.FC = () => {
     queryFn: () => fetchAllSettings(authToken!),
     enabled: !!authToken,
     staleTime: 5 * 60 * 1000,
-    select: (data) => {
-      // The backend returns a flat list of settings, so we need to provide default structured data
-      // TODO: Backend needs to be updated to return structured settings data
-      return {
-        business_info: {
-          name: '',
-          phone: '',
-          email: '',
-          address: '',
-          logo_url: null,
-        },
-        operating_hours: {
-          weekly_schedule: {
-            monday: { open: '11:00', close: '20:00', closed: false },
-            tuesday: { open: '11:00', close: '20:00', closed: false },
-            wednesday: { open: '11:00', close: '20:00', closed: false },
-            thursday: { open: '11:00', close: '20:00', closed: false },
-            friday: { open: '11:00', close: '20:00', closed: false },
-            saturday: { open: '12:00', close: '22:00', closed: false },
-            sunday: { open: '12:00', close: '20:00', closed: false },
-          },
-          special_hours: [],
-        },
-        tax_settings: {
-          vat_rate: 23,
-          tax_registration_number: null,
-          apply_tax_to_all: true,
-        },
-        notification_settings: {
-          order_notifications_enabled: true,
-          notification_emails: [],
-          catering_notifications_enabled: true,
-          customer_email_notifications: true,
-          customer_sms_notifications: false,
-        },
-        loyalty_settings: {
-          earning_rate: 1,
-          points_expiry_enabled: false,
-          points_expiry_months: 12,
-          referral_enabled: true,
-          referrer_reward_points: 100,
-          referee_reward_points: 50,
-          gamification_enabled: true,
-        },
-        payment_settings: {
-          sumup_api_key: null,
-          sumup_merchant_id: null,
-          test_mode_enabled: true,
-          saved_methods_enabled: true,
-        },
-        email_settings: {
-          email_provider: 'sendgrid' as const,
-          smtp_host: null,
-          smtp_port: null,
-          api_key: null,
-          sender_email: '',
-          sender_name: '',
-        },
-      };
-    },
   });
 
   // Update settings state when data is fetched
@@ -338,6 +279,7 @@ const UV_AdminSettings: React.FC = () => {
   const businessInfoMutation = useMutation({
     mutationFn: (data: BusinessInfoSettings) => updateBusinessInfo(authToken!, data),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminSettings'] });
       setUnsavedChanges(prev => ({ ...prev, business_info: false }));
       setToastMessage({ type: 'success', message: 'Business information updated successfully!' });
       updateBusinessSettings({ business_info: businessInfoSettings });
@@ -353,6 +295,7 @@ const UV_AdminSettings: React.FC = () => {
   const operatingHoursMutation = useMutation({
     mutationFn: (data: OperatingHoursSettings) => updateOperatingHours(authToken!, data),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminSettings'] });
       setUnsavedChanges(prev => ({ ...prev, operating_hours: false }));
       setToastMessage({ type: 'success', message: 'Operating hours updated successfully!' });
       updateBusinessSettings({ operating_hours: operatingHoursSettings.weekly_schedule });
@@ -368,6 +311,7 @@ const UV_AdminSettings: React.FC = () => {
   const loyaltySettingsMutation = useMutation({
     mutationFn: (data: LoyaltySettings) => updateLoyaltySettings(authToken!, data),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminSettings'] });
       setUnsavedChanges(prev => ({ ...prev, loyalty: false }));
       setToastMessage({ type: 'success', message: 'Loyalty settings updated successfully!' });
       updateBusinessSettings({ 

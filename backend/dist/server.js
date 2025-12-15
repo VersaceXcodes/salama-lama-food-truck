@@ -6881,12 +6881,73 @@ app.get('/api/admin/analytics/coupons', authenticate_token, require_role(['admin
 app.get('/api/admin/settings', authenticate_token, require_role(['admin']), async (req, res) => {
     try {
         const rows = await pool.query('SELECT * FROM system_settings ORDER BY setting_key ASC');
-        const settings = rows.rows.map((r) => systemSettingSchema.parse({
-            ...r,
-            setting_value: r.setting_value ?? null,
-            updated_by_user_id: r.updated_by_user_id ?? null,
-        }));
-        return ok(res, 200, { settings });
+        const settingsMap = new Map();
+        rows.rows.forEach((r) => {
+            const setting = systemSettingSchema.parse({
+                ...r,
+                setting_value: r.setting_value ?? null,
+                updated_by_user_id: r.updated_by_user_id ?? null,
+            });
+            settingsMap.set(setting.setting_key, setting.setting_value);
+        });
+        // Structure the settings for the frontend
+        const structuredSettings = {
+            business_info: {
+                name: settingsMap.get('store_name') || '',
+                phone: settingsMap.get('store_phone') || '',
+                email: settingsMap.get('store_email') || '',
+                address: settingsMap.get('store_address') || '',
+                logo_url: settingsMap.get('store_logo_url') || null,
+            },
+            operating_hours: {
+                weekly_schedule: settingsMap.get('store_hours') || {
+                    monday: { open: '11:00', close: '20:00', closed: false },
+                    tuesday: { open: '11:00', close: '20:00', closed: false },
+                    wednesday: { open: '11:00', close: '20:00', closed: false },
+                    thursday: { open: '11:00', close: '20:00', closed: false },
+                    friday: { open: '11:00', close: '20:00', closed: false },
+                    saturday: { open: '12:00', close: '22:00', closed: false },
+                    sunday: { open: '12:00', close: '20:00', closed: false },
+                },
+                special_hours: settingsMap.get('special_hours') || [],
+            },
+            tax_settings: {
+                vat_rate: settingsMap.get('vat_rate') || 23,
+                tax_registration_number: settingsMap.get('tax_registration_number') || null,
+                apply_tax_to_all: settingsMap.get('apply_tax_to_all') !== undefined ? settingsMap.get('apply_tax_to_all') : true,
+            },
+            notification_settings: {
+                order_notifications_enabled: settingsMap.get('order_notifications_enabled') !== undefined ? settingsMap.get('order_notifications_enabled') : true,
+                notification_emails: settingsMap.get('notification_emails') || [],
+                catering_notifications_enabled: settingsMap.get('catering_notifications_enabled') !== undefined ? settingsMap.get('catering_notifications_enabled') : true,
+                customer_email_notifications: settingsMap.get('customer_email_notifications') !== undefined ? settingsMap.get('customer_email_notifications') : true,
+                customer_sms_notifications: settingsMap.get('customer_sms_notifications') !== undefined ? settingsMap.get('customer_sms_notifications') : false,
+            },
+            loyalty_settings: {
+                earning_rate: settingsMap.get('loyalty_earning_rate') || 1,
+                points_expiry_enabled: settingsMap.get('loyalty_points_expiry_enabled') !== undefined ? settingsMap.get('loyalty_points_expiry_enabled') : false,
+                points_expiry_months: settingsMap.get('loyalty_points_expiry_months') || 12,
+                referral_enabled: settingsMap.get('loyalty_referral_enabled') !== undefined ? settingsMap.get('loyalty_referral_enabled') : true,
+                referrer_reward_points: settingsMap.get('loyalty_referrer_reward_points') || 100,
+                referee_reward_points: settingsMap.get('loyalty_referee_reward_points') || 50,
+                gamification_enabled: settingsMap.get('loyalty_gamification_enabled') !== undefined ? settingsMap.get('loyalty_gamification_enabled') : true,
+            },
+            payment_settings: {
+                sumup_api_key: settingsMap.get('sumup_api_key') || null,
+                sumup_merchant_id: settingsMap.get('sumup_merchant_id') || null,
+                test_mode_enabled: settingsMap.get('payment_test_mode_enabled') !== undefined ? settingsMap.get('payment_test_mode_enabled') : true,
+                saved_methods_enabled: settingsMap.get('payment_saved_methods_enabled') !== undefined ? settingsMap.get('payment_saved_methods_enabled') : true,
+            },
+            email_settings: {
+                email_provider: settingsMap.get('email_provider') || 'sendgrid',
+                smtp_host: settingsMap.get('email_smtp_host') || null,
+                smtp_port: settingsMap.get('email_smtp_port') || null,
+                api_key: settingsMap.get('email_api_key') || null,
+                sender_email: settingsMap.get('email_sender_email') || '',
+                sender_name: settingsMap.get('email_sender_name') || '',
+            },
+        };
+        return ok(res, 200, structuredSettings);
     }
     catch (error) {
         return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
@@ -6929,7 +6990,7 @@ app.put('/api/admin/settings/business', authenticate_token, require_role(['admin
                     city: z.string(),
                     postal_code: z.string(),
                 })]).optional(),
-            logo_url: z.string().url().nullable().optional(),
+            logo_url: z.preprocess((val) => (val === '' ? null : val), z.string().url().nullable().optional()),
         });
         const data = schema.parse(req.body);
         await with_client(async (client) => {

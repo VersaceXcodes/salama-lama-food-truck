@@ -145,8 +145,29 @@ const UV_CheckoutReview: React.FC = () => {
   // ===========================
   
   const auth_token = useAppStore(state => state.authentication_state.auth_token);
+  const is_authenticated = useAppStore(state => state.authentication_state.authentication_status.is_authenticated);
   // const current_user = useAppStore(state => state.authentication_state.current_user);
   const clear_cart = useAppStore(state => state.clear_cart);
+
+  // ===========================
+  // Authentication Check
+  // ===========================
+  
+  useEffect(() => {
+    // Redirect to login if not authenticated or token is missing/invalid
+    if (!auth_token || !is_authenticated) {
+      console.error('User not authenticated, redirecting to login');
+      navigate(`/login?${RETURN_TO_PARAM}=/checkout/review`);
+      return;
+    }
+    
+    // Validate token format (basic check)
+    if (typeof auth_token !== 'string' || auth_token.split('.').length !== 3) {
+      console.error('Invalid JWT token format, redirecting to login');
+      navigate(`/login?${RETURN_TO_PARAM}=/checkout/review`);
+      return;
+    }
+  }, [auth_token, is_authenticated, navigate]);
 
   // ===========================
   // Local State
@@ -188,24 +209,55 @@ const UV_CheckoutReview: React.FC = () => {
   // Fetch Cart Data from API
   // ===========================
 
-  const { data: cart_data, isLoading: is_loading_cart } = useQuery({
+  const { data: cart_data, isLoading: is_loading_cart, error: cart_error } = useQuery({
     queryKey: ['cart'],
     queryFn: async () => {
-      const response = await axios.get(
-        `${API_BASE_URL}/api/cart`,
-        {
-          headers: {
-            Authorization: `Bearer ${auth_token}`,
-          },
+      // Validate token before making request
+      if (!auth_token || typeof auth_token !== 'string') {
+        throw new Error('Invalid authentication token');
+      }
+      
+      try {
+        const response = await axios.get(
+          `${API_BASE_URL}/api/cart`,
+          {
+            headers: {
+              Authorization: `Bearer ${auth_token}`,
+            },
+          }
+        );
+        return response.data;
+      } catch (error: any) {
+        // Handle authentication errors
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          console.error('Authentication failed:', error.response?.data);
+          throw new Error('AUTH_ERROR');
         }
-      );
-      return response.data;
+        throw error;
+      }
     },
-    enabled: !!auth_token,
+    enabled: !!auth_token && is_authenticated,
     staleTime: 30000,
     refetchOnWindowFocus: false,
-    retry: 1,
+    retry: (failureCount, error: any) => {
+      // Don't retry on auth errors
+      if (error.message === 'AUTH_ERROR') {
+        return false;
+      }
+      return failureCount < 1;
+    },
   });
+  
+  // Handle cart loading errors (especially auth errors)
+  useEffect(() => {
+    if (cart_error) {
+      const error = cart_error as Error;
+      if (error.message === 'AUTH_ERROR') {
+        console.error('Cart authentication error, redirecting to login');
+        navigate(`/login?${RETURN_TO_PARAM}=/checkout/review`);
+      }
+    }
+  }, [cart_error, navigate]);
 
   const cart_items = cart_data?.items || [];
   const cart_discount_code = cart_data?.discount_code || null;
@@ -280,32 +332,63 @@ const UV_CheckoutReview: React.FC = () => {
   // Calculate Final Totals (API Call)
   // ===========================
 
-  const { data: calculated_pricing, isLoading: is_calculating_totals } = useQuery<CalculateTotalsResponse>({
+  const { data: calculated_pricing, isLoading: is_calculating_totals, error: pricing_error } = useQuery<CalculateTotalsResponse>({
     queryKey: ['calculate-checkout-totals', complete_order_review.order_type],
     queryFn: async () => {
+      // Validate token before making request
+      if (!auth_token || typeof auth_token !== 'string') {
+        throw new Error('Invalid authentication token');
+      }
+      
       const delivery_address_id = sessionStorage.getItem('checkout_delivery_address_id');
       
-      const response = await axios.post<CalculateTotalsResponse>(
-        `${API_BASE_URL}/api/checkout/calculate`,
-        {
-          order_type: complete_order_review.order_type,
-          delivery_address_id: delivery_address_id || null,
-          discount_code: cart_discount_code,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${auth_token}`,
-            'Content-Type': 'application/json',
+      try {
+        const response = await axios.post<CalculateTotalsResponse>(
+          `${API_BASE_URL}/api/checkout/calculate`,
+          {
+            order_type: complete_order_review.order_type,
+            delivery_address_id: delivery_address_id || null,
+            discount_code: cart_discount_code,
           },
-        }
-      );
+          {
+            headers: {
+              Authorization: `Bearer ${auth_token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
 
-      return response.data;
+        return response.data;
+      } catch (error: any) {
+        // Handle authentication errors
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          console.error('Authentication failed:', error.response?.data);
+          throw new Error('AUTH_ERROR');
+        }
+        throw error;
+      }
     },
-    enabled: !!complete_order_review.order_type && !!auth_token,
+    enabled: !!complete_order_review.order_type && !!auth_token && is_authenticated,
     staleTime: Infinity, // Don't refetch unless explicitly invalidated
-    retry: 1,
+    retry: (failureCount, error: any) => {
+      // Don't retry on auth errors
+      if (error.message === 'AUTH_ERROR') {
+        return false;
+      }
+      return failureCount < 1;
+    },
   });
+  
+  // Handle pricing calculation errors (especially auth errors)
+  useEffect(() => {
+    if (pricing_error) {
+      const error = pricing_error as Error;
+      if (error.message === 'AUTH_ERROR') {
+        console.error('Pricing calculation authentication error, redirecting to login');
+        navigate(`/login?${RETURN_TO_PARAM}=/checkout/review`);
+      }
+    }
+  }, [pricing_error, navigate]);
 
   // Update pricing state when API responds
   useEffect(() => {
@@ -339,25 +422,40 @@ const UV_CheckoutReview: React.FC = () => {
 
   const validate_order_mutation = useMutation<ValidateOrderResponse, Error, void>({
     mutationFn: async () => {
+      // Validate token before making request
+      if (!auth_token || typeof auth_token !== 'string') {
+        throw new Error('Invalid authentication token');
+      }
+      
       const delivery_address_id = sessionStorage.getItem('checkout_delivery_address_id');
       
-      const response = await axios.post<ValidateOrderResponse>(
-        `${API_BASE_URL}/api/checkout/validate`,
-        {
-          order_type: complete_order_review.order_type,
-          collection_time_slot: complete_order_review.collection_time_slot,
-          delivery_address_id: delivery_address_id || null,
-          discount_code: cart_discount_code,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${auth_token}`,
-            'Content-Type': 'application/json',
+      try {
+        const response = await axios.post<ValidateOrderResponse>(
+          `${API_BASE_URL}/api/checkout/validate`,
+          {
+            order_type: complete_order_review.order_type,
+            collection_time_slot: complete_order_review.collection_time_slot,
+            delivery_address_id: delivery_address_id || null,
+            discount_code: cart_discount_code,
           },
-        }
-      );
+          {
+            headers: {
+              Authorization: `Bearer ${auth_token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
 
-      return response.data;
+        return response.data;
+      } catch (error: any) {
+        // Handle authentication errors
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          const authError: any = new Error('Authentication required. Please sign in again.');
+          authError.response = error.response;
+          throw authError;
+        }
+        throw error;
+      }
     },
   });
 
@@ -367,18 +465,33 @@ const UV_CheckoutReview: React.FC = () => {
 
   const place_order_mutation = useMutation<PlaceOrderResponse, Error, PlaceOrderRequest>({
     mutationFn: async (order_data: PlaceOrderRequest) => {
-      const response = await axios.post<PlaceOrderResponse>(
-        `${API_BASE_URL}/api/checkout/order`,
-        order_data,
-        {
-          headers: {
-            Authorization: `Bearer ${auth_token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      // Validate token before making request
+      if (!auth_token || typeof auth_token !== 'string') {
+        throw new Error('Invalid authentication token. Please sign in again.');
+      }
+      
+      try {
+        const response = await axios.post<PlaceOrderResponse>(
+          `${API_BASE_URL}/api/checkout/order`,
+          order_data,
+          {
+            headers: {
+              Authorization: `Bearer ${auth_token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
 
-      return response.data;
+        return response.data;
+      } catch (error: any) {
+        // Handle authentication errors
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          const authError: any = new Error('Authentication required. Please sign in again.');
+          authError.response = error.response;
+          throw authError;
+        }
+        throw error;
+      }
     },
     onSuccess: (data: PlaceOrderResponse) => {
       // Clear cart from global state

@@ -254,15 +254,15 @@ const GV_SiteHeader: React.FC = () => {
           {/* ======================================
               MOBILE HEADER - flex md:hidden
               ====================================== */}
-          <div className="flex md:hidden items-center min-h-[56px] py-2">
-            <div className="grid grid-cols-[48px_1fr_48px] items-center w-full gap-2 px-3">
+          <div className="flex md:hidden items-center h-14 py-2">
+            <div className="grid grid-cols-[48px_1fr_48px] items-center w-full gap-2">
               {/* Left: Cart Icon */}
               <Link
                 to="/cart"
-                className="relative flex items-center justify-center w-11 h-11 text-[#2C1A16] hover:text-[#D97706] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 rounded-lg"
+                className="relative flex items-center justify-center w-10 h-10 text-[#2C1A16] hover:text-[#D97706] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 rounded-lg"
                 aria-label={`Shopping cart with ${cartItemCount} items`}
               >
-                <ShoppingCart className="h-5 w-5" />
+                <ShoppingCart className="h-6 w-6" />
                 {cartItemCount > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 bg-[#DC2626] text-white text-[10px] font-bold rounded-full h-4 min-w-[16px] flex items-center justify-center px-1">
                     {getCartBadgeDisplay()}
@@ -273,14 +273,14 @@ const GV_SiteHeader: React.FC = () => {
               {/* Center: Brand Logo - Real logo with fallback only on error */}
               <Link 
                 to="/"
-                className="flex items-center justify-center group overflow-hidden"
+                className="flex items-center justify-center group"
                 aria-label="Salama Lama Home"
               >
                 <img
                   src="/brand/salama-lama-logo.png"
                   alt="Salama Lama"
                   loading="eager"
-                  className="h-6 w-auto max-w-[120px] object-contain transition-transform duration-200 group-hover:scale-105"
+                  className="h-7 w-auto max-w-[140px] object-contain transition-transform duration-200 group-hover:scale-105"
                   onError={(e) => {
                     // Only show SL fallback if image fails to load
                     const target = e.target as HTMLImageElement;
@@ -300,7 +300,7 @@ const GV_SiteHeader: React.FC = () => {
               {/* Right: Hamburger Menu */}
               <button
                 onClick={toggleMobileMenu}
-                className="flex items-center justify-center w-11 h-11 text-[#2C1A16] hover:text-[#D97706] focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 rounded-lg transition-colors duration-200"
+                className="flex items-center justify-center w-10 h-10 text-[#2C1A16] hover:text-[#D97706] focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 rounded-lg transition-colors duration-200"
                 aria-label="Toggle navigation menu"
                 aria-expanded={isMobileMenuOpen}
               >
@@ -616,7 +616,7 @@ const GV_SiteHeader: React.FC = () => {
       )}
       
       {/* Spacer to prevent content from going under fixed navbar */}
-      <div className="min-h-[56px] md:h-20" aria-hidden="true" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }} />
+      <div className="h-14 md:h-20" aria-hidden="true" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }} />
       
       {/* Custom Animation Styles */}
       <style>{`
@@ -652,23 +652,30 @@ const GV_SiteHeader: React.FC = () => {
         
         /* Responsive logo sizing */
         nav img[alt="Salama Lama"] {
-          height: 24px;
+          height: 28px;
           width: auto;
-          max-width: 120px;
+          max-width: 140px;
           object-fit: contain;
         }
         
         @media (min-width: 640px) {
           nav img[alt="Salama Lama"] {
-            height: 28px;
-            max-width: 140px;
+            height: 30px;
+            max-width: 150px;
           }
         }
         
         @media (min-width: 768px) {
           nav img[alt="Salama Lama"] {
-            height: 34px;
+            height: 36px;
             max-width: 180px;
+          }
+        }
+        
+        /* Mobile header optimization */
+        @media (max-width: 767px) {
+          nav {
+            min-height: 56px;
           }
         }
       `}</style>

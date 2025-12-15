@@ -127,6 +127,22 @@ const updateOrderStatus = async (
   payload: UpdateStatusPayload,
   token: string
 ): Promise<OrderDetails> => {
+  // Use PATCH endpoint for status updates only
+  if (payload.status && !payload.internal_notes) {
+    const response = await axios.patch(
+      `${API_BASE_URL}/api/admin/orders/${order_id}/status`,
+      { status: payload.status },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    return response.data;
+  }
+  
+  // Use PUT endpoint for other updates (internal notes, etc.)
   const response = await axios.put(
     `${API_BASE_URL}/api/admin/orders/${order_id}`,
     payload,

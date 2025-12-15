@@ -1,133 +1,72 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import { useAppStore } from '@/store/main';
 import { 
   Clock, 
   CheckCircle, 
   Circle, 
   RefreshCw, 
-  Download, 
   Phone, 
   Mail, 
   MapPin,
   Package,
   AlertCircle,
   XCircle,
-  Wifi,
-  WifiOff
+  Home
 } from 'lucide-react';
 
 // ===========================
 // Type Definitions
 // ===========================
 
+interface OrderItem {
+  item_name: string;
+  quantity: number;
+  unit_price: number;
+  line_total: number;
+  selected_customizations: Record<string, string> | null;
+}
+
 interface OrderTrackingData {
-  order_id: string;
+  ticket_number: string;
   order_number: string;
   status: 'received' | 'preparing' | 'ready' | 'out_for_delivery' | 'completed' | 'cancelled';
   order_type: 'collection' | 'delivery';
   collection_time_slot: string | null;
-  delivery_address_snapshot: {
-    address_line1: string;
-    address_line2?: string;
-    city: string;
-    postal_code: string;
-  } | null;
-  estimated_time: string | null;
-  customer_name: string;
-  customer_phone: string;
+  estimated_delivery_time: string | null;
+  created_at: string;
+  updated_at: string;
+  completed_at: string | null;
+  items: OrderItem[];
+  subtotal: number;
+  discount_amount: number;
+  tax_amount: number;
+  delivery_fee: number;
+  total_amount: number;
   status_history: Array<{
     status: string;
     changed_at: string;
-    changed_by_user_id: string;
-    notes?: string;
+    notes?: string | null;
   }>;
 }
 
-interface TimelineStep {
-  step_name: string;
-  step_status: string;
-  timestamp: string | null;
-  is_current: boolean;
-  is_completed: boolean;
-}
-
-interface TimeUntilReady {
-  minutes_remaining: number | null;
-  ready_at_time: string | null;
-  is_overdue: boolean;
-}
-
-interface TrackingNotification {
-  message: string;
-  type: 'success' | 'info' | 'warning' | 'error';
-  timestamp: string;
-  dismissed: boolean;
-  id: string;
-}
-
 // ===========================
-// Helper Functions
+// API Functions
 // ===========================
 
-const calculateTimeRemaining = (estimatedTime: string | null): TimeUntilReady => {
-  if (!estimatedTime) {
-    return {
-      minutes_remaining: null,
-      ready_at_time: null,
-      is_overdue: false,
-    };
+const fetchOrderTracking = async (ticketNumber: string, trackingToken: string): Promise<OrderTrackingData> => {
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+  
+  const response = await axios.get<{ success: boolean; data?: OrderTrackingData }>(
+    `${API_BASE_URL}/api/orders/track?ticket=${encodeURIComponent(ticketNumber)}&token=${encodeURIComponent(trackingToken)}`
+  );
+  
+  if (!response.data.success || !response.data.data) {
+    throw new Error('Failed to fetch order tracking data');
   }
-
-  try {
-    const targetTime = new Date(estimatedTime);
-    const now = new Date();
-    const diffMs = targetTime.getTime() - now.getTime();
-    const minutes = Math.floor(diffMs / 60000);
-
-    return {
-      minutes_remaining: minutes > 0 ? minutes : 0,
-      ready_at_time: targetTime.toLocaleTimeString('en-IE', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: false 
-      }),
-      is_overdue: diffMs < 0,
-    };
-  } catch (error) {
-    console.error('Error calculating time remaining:', error);
-    return {
-      minutes_remaining: null,
-      ready_at_time: null,
-      is_overdue: false,
-    };
-  }
-};
-
-const getStatusColor = (status: string): string => {
-  switch (status) {
-    case 'received':
-      return 'text-blue-600 bg-blue-50 border-blue-200';
-    case 'preparing':
-      return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-    case 'ready':
-    case 'out_for_delivery':
-      return 'text-green-600 bg-green-50 border-green-200';
-    case 'completed':
-      return 'text-green-700 bg-green-100 border-green-300';
-    case 'cancelled':
-      return 'text-red-600 bg-red-50 border-red-200';
-    default:
-      return 'text-gray-600 bg-gray-50 border-gray-200';
-  }
-};
-
-const getProgressColor = (percentage: number): string => {
-  if (percentage <= 33) return 'bg-blue-600';
-  if (percentage <= 66) return 'bg-yellow-500';
-  return 'bg-green-600';
+  
+  return response.data.data;
 };
 
 // ===========================
@@ -135,595 +74,402 @@ const getProgressColor = (percentage: number): string => {
 // ===========================
 
 const UV_OrderTracking: React.FC = () => {
-  const { order_id } = useParams<{ order_id: string }>();
+  const { ticketNumber } = useParams<{ ticketNumber: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  // Global state access (CRITICAL: Individual selectors only)
-  const auth_token = useAppStore(state => state.authentication_state.auth_token);
-  const is_authenticated = useAppStore(state => state.authentication_state.authentication_status.is_authenticated);
-  const websocket_connected = useAppStore(state => state.websocket_state.connected);
-  const subscribe_to_order_updates = useAppStore(state => state.subscribe_to_order_updates);
-  const unsubscribe_from_order_updates = useAppStore(state => state.unsubscribe_from_order_updates);
-  const add_notification = useAppStore(state => state.add_notification);
-
-  // Local state
-  const [status_timeline, setStatusTimeline] = useState<TimelineStep[]>([]);
-  const [progress_percentage, setProgressPercentage] = useState<number>(0);
-  const [time_until_ready, setTimeUntilReady] = useState<TimeUntilReady>({
-    minutes_remaining: null,
-    ready_at_time: null,
-    is_overdue: false,
-  });
-  const [tracking_notifications, setTrackingNotifications] = useState<TrackingNotification[]>([]);
-  const [tracking_error, setTrackingError] = useState<string | null>(null);
-
-  // API Base URL
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
-
-  // ===========================
-  // Redirect if not authenticated
-  // ===========================
-  useEffect(() => {
-    if (!is_authenticated) {
-      navigate('/login?redirect=' + encodeURIComponent(window.location.pathname));
-    }
-  }, [is_authenticated, navigate]);
-
-  // ===========================
-  // React Query: Fetch Order Tracking Data
-  // ===========================
-  const {
-    data: order_tracking_data,
-    isLoading,
-    isError,
-    error,
-    refetch,
-    isFetching,
-  } = useQuery<OrderTrackingData>({
-    queryKey: ['orderTracking', order_id],
-    queryFn: async () => {
-      if (!order_id || !auth_token) {
-        throw new Error('Missing order ID or authentication token');
-      }
-
-      const response = await axios.get(
-        `${API_BASE_URL}/api/orders/${order_id}/track`,
-        {
-          headers: {
-            Authorization: `Bearer ${auth_token}`,
-          },
-        }
-      );
-
-      // API returns { success: true, ...tracking_data }
-      // Extract the tracking data (excluding success field)
-      const { success, ...trackingData } = response.data;
-      return trackingData as OrderTrackingData;
-    },
-    enabled: !!order_id && !!auth_token,
-    staleTime: websocket_connected ? 5 * 60 * 1000 : 30 * 1000, // 5 min if WebSocket, 30s if polling
-    refetchInterval: websocket_connected ? false : 30000, // Poll every 30s if no WebSocket
-    retry: 2,
-  });
-
-  // ===========================
-  // Compute Status Timeline
-  // ===========================
-  useEffect(() => {
-    if (!order_tracking_data) return;
-
-    const statusSteps: Array<{ name: string; status: string }> = [
-      { name: 'Order Received', status: 'received' },
-      { name: 'Preparing', status: 'preparing' },
-      {
-        name: order_tracking_data.order_type === 'collection' ? 'Ready for Collection' : 'Out for Delivery',
-        status: order_tracking_data.order_type === 'collection' ? 'ready' : 'out_for_delivery',
-      },
-      { name: 'Completed', status: 'completed' },
-    ];
-
-    const currentStatusIndex = statusSteps.findIndex(
-      (step) => step.status === order_tracking_data.status
-    );
-
-    const timeline: TimelineStep[] = statusSteps.map((step, index) => {
-      const historyEntry = order_tracking_data.status_history.find(
-        (h) => h.status === step.status
-      );
-
-      return {
-        step_name: step.name,
-        step_status: step.status,
-        timestamp: historyEntry?.changed_at || null,
-        is_current: index === currentStatusIndex,
-        is_completed:
-          index < currentStatusIndex ||
-          (index === currentStatusIndex && order_tracking_data.status !== 'cancelled'),
-      };
-    });
-
-    setStatusTimeline(timeline);
-
-    // Calculate progress percentage
-    const progressValue =
-      currentStatusIndex >= 0
-        ? Math.round(((currentStatusIndex + 1) / statusSteps.length) * 100)
-        : 0;
-    setProgressPercentage(progressValue);
-
-    // Calculate time until ready
-    const estimatedTime = order_tracking_data.estimated_time || order_tracking_data.collection_time_slot;
-    if (estimatedTime) {
-      setTimeUntilReady(calculateTimeRemaining(estimatedTime));
-    }
-
-    // Clear any previous errors
-    setTrackingError(null);
-  }, [order_tracking_data]);
-
-  // ===========================
-  // WebSocket Subscription
-  // ===========================
-  useEffect(() => {
-    if (!order_id || !auth_token) return;
-
-    // Subscribe to order updates
-    subscribe_to_order_updates(order_id);
-
-    // Cleanup on unmount
-    return () => {
-      unsubscribe_from_order_updates(order_id);
-    };
-  }, [order_id, auth_token, subscribe_to_order_updates, unsubscribe_from_order_updates]);
-
-  // ===========================
-  // Listen to Global Notifications (WebSocket)
-  // ===========================
-  const global_notifications = useAppStore(state => state.notification_state.notifications);
-
-  useEffect(() => {
-    // Filter notifications related to this order
-    const orderNotifications = global_notifications.filter(
-      (notif) => 
-        notif.type === 'order_status_update' && 
-        notif.message.includes(order_tracking_data?.order_number || '')
-    );
-
-    // Convert global notifications to tracking notifications
-    const newTrackingNotifications: TrackingNotification[] = orderNotifications.map((notif) => ({
-      message: notif.message,
-      type: 'info' as const,
-      timestamp: notif.created_at,
-      dismissed: notif.read,
-      id: notif.id,
-    }));
-
-    // Only add notifications that aren't already in the list
-    setTrackingNotifications((prev) => {
-      const existingIds = new Set(prev.map((n) => n.id));
-      const uniqueNew = newTrackingNotifications.filter((n) => !existingIds.has(n.id));
-      return [...uniqueNew, ...prev].slice(0, 5); // Keep last 5 notifications
-    });
-  }, [global_notifications, order_tracking_data?.order_number]);
-
-  // ===========================
-  // Countdown Timer Update
-  // ===========================
-  useEffect(() => {
-    if (!order_tracking_data) return;
-
-    const estimatedTime = order_tracking_data.estimated_time || order_tracking_data.collection_time_slot;
-    if (!estimatedTime) return;
-
-    const interval = setInterval(() => {
-      setTimeUntilReady(calculateTimeRemaining(estimatedTime));
-    }, 60000); // Update every minute
-
-    return () => clearInterval(interval);
-  }, [order_tracking_data]);
-
-  // ===========================
-  // Manual Refresh Handler
-  // ===========================
-  const handleRefresh = () => {
-    refetch();
-    add_notification({
-      type: 'info',
-      message: 'Refreshing order status...',
-    });
-  };
-
-  // ===========================
-  // Download Invoice Handler
-  // ===========================
-  const handleDownloadInvoice = async () => {
-    if (!order_id || !auth_token) return;
-
+  // Get tracking token from URL or localStorage
+  let trackingToken = searchParams.get('token');
+  
+  // If no token in URL, try to get from localStorage (for last order)
+  if (!trackingToken && ticketNumber) {
     try {
-      const response = await axios.get<{ invoice_url: string }>(
-        `${API_BASE_URL}/api/orders/${order_id}/invoice`,
-        {
-          headers: {
-            Authorization: `Bearer ${auth_token}`,
-          },
+      const lastOrderStr = localStorage.getItem('lastOrder');
+      if (lastOrderStr) {
+        const lastOrder = JSON.parse(lastOrderStr);
+        if (lastOrder.ticket_number === ticketNumber) {
+          trackingToken = lastOrder.tracking_token;
         }
-      );
-
-      if (response.data.invoice_url) {
-        window.open(response.data.invoice_url, '_blank');
-        add_notification({
-          type: 'success',
-          message: 'Invoice opened in new tab',
-        });
       }
     } catch (error) {
-      console.error('Error downloading invoice:', error);
-      add_notification({
-        type: 'error',
-        message: 'Failed to download invoice. Please try again.',
-      });
+      console.error('Error reading lastOrder from localStorage:', error);
     }
-  };
+  }
 
-  // ===========================
-  // Dismiss Notification Handler
-  // ===========================
-  const dismissNotification = (id: string) => {
-    setTrackingNotifications((prev) =>
-      prev.map((notif) => (notif.id === id ? { ...notif, dismissed: true } : notif))
+  const [isPolling, setIsPolling] = useState(true);
+  const [lastUpdateTime, setLastUpdateTime] = useState<Date>(new Date());
+
+  // Fetch order tracking data with polling
+  const {
+    data: trackingData,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ['order-tracking', ticketNumber, trackingToken],
+    queryFn: () => fetchOrderTracking(ticketNumber!, trackingToken!),
+    enabled: !!ticketNumber && !!trackingToken,
+    refetchInterval: (data) => {
+      // Poll every 10 seconds while order is not completed/cancelled
+      if (data && (data.status === 'completed' || data.status === 'cancelled')) {
+        setIsPolling(false);
+        return false;
+      }
+      return isPolling ? 10000 : false;
+    },
+    staleTime: 0,
+    onSuccess: () => {
+      setLastUpdateTime(new Date());
+    },
+  });
+
+  // Handle missing token
+  if (!trackingToken) {
+    return (
+      <div className="min-h-screen bg-[#F2EFE9] flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8 text-center">
+          <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-[#2C1A16] mb-4">
+            Tracking Link Invalid
+          </h2>
+          <p className="text-[#6B5B4F] mb-6">
+            We couldn't verify this order. Please use the tracking link from your confirmation screen or email.
+          </p>
+          <Link
+            to="/menu"
+            className="inline-flex items-center justify-center bg-[#D4831D] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#C07519] transition-colors"
+          >
+            <Home className="h-5 w-5 mr-2" />
+            Back to Menu
+          </Link>
+        </div>
+      </div>
     );
-  };
+  }
 
-  // ===========================
-  // Error Handling
-  // ===========================
-  useEffect(() => {
-    if (isError) {
-      const errorMessage = axios.isAxiosError(error)
-        ? error.response?.status === 404
-          ? 'Order not found or you do not have access to this order.'
-          : error.response?.status === 401
-          ? 'Please log in to view order tracking.'
-          : 'Unable to load tracking data. Please check your connection.'
-        : 'Something went wrong. Please try again later.';
-
-      setTrackingError(errorMessage);
-    }
-  }, [isError, error]);
-
-  // ===========================
-  // Loading State
-  // ===========================
+  // Loading state
   if (isLoading) {
     return (
-      <>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-orange-600 mx-auto mb-4"></div>
-            <p className="text-gray-600 font-medium">Loading order tracking...</p>
-          </div>
+      <div className="min-h-screen bg-[#F2EFE9] flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="h-12 w-12 text-[#D4831D] animate-spin mx-auto mb-4" />
+          <p className="text-[#2C1A16] font-medium">Loading order status...</p>
         </div>
-      </>
+      </div>
     );
   }
 
-  // ===========================
-  // Error State
-  // ===========================
-  if (tracking_error || !order_tracking_data) {
+  // Error state
+  if (error || !trackingData) {
     return (
-      <>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-          <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
-            <AlertCircle className="size-16 text-red-600 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Unable to Load Tracking</h2>
-            <p className="text-gray-600 mb-6">
-              {tracking_error || 'Order tracking data is not available.'}
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <button
-                onClick={handleRefresh}
-                className="px-6 py-3 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition-colors"
-              >
-                Try Again
-              </button>
-              <Link
-                to="/orders"
-                className="px-6 py-3 bg-gray-100 text-gray-900 rounded-lg font-medium hover:bg-gray-200 transition-colors"
-              >
-                Back to Orders
-              </Link>
-            </div>
-          </div>
+      <div className="min-h-screen bg-[#F2EFE9] flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8 text-center">
+          <XCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-[#2C1A16] mb-4">
+            Unable to Load Order
+          </h2>
+          <p className="text-[#6B5B4F] mb-6">
+            {error instanceof Error ? error.message : "We couldn't find this order. Please check your ticket number."}
+          </p>
+          <button
+            onClick={() => refetch()}
+            className="inline-flex items-center justify-center bg-[#D4831D] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#C07519] transition-colors mb-4 w-full"
+          >
+            <RefreshCw className="h-5 w-5 mr-2" />
+            Try Again
+          </button>
+          <Link
+            to="/menu"
+            className="block text-[#2C1A16] hover:text-[#D4831D] font-medium"
+          >
+            Back to Menu
+          </Link>
         </div>
-      </>
+      </div>
     );
   }
 
-  // ===========================
-  // Main Render
-  // ===========================
+  // Helper functions
+  const getStatusColor = (status: string): string => {
+    const colors: Record<string, string> = {
+      received: 'bg-blue-100 text-blue-800',
+      preparing: 'bg-yellow-100 text-yellow-800',
+      ready: 'bg-green-100 text-green-800',
+      out_for_delivery: 'bg-purple-100 text-purple-800',
+      completed: 'bg-gray-100 text-gray-800',
+      cancelled: 'bg-red-100 text-red-800',
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800';
+  };
+
+  const getStatusDisplay = (status: string): string => {
+    const displays: Record<string, string> = {
+      received: 'Received',
+      preparing: 'Preparing',
+      ready: 'Ready',
+      out_for_delivery: 'Out for Delivery',
+      completed: 'Completed',
+      cancelled: 'Cancelled',
+    };
+    return displays[status] || status;
+  };
+
+  const formatCurrency = (amount: number): string => {
+    return `€${amount.toFixed(2)}`;
+  };
+
+  const formatDate = (dateString: string): string => {
+    return new Date(dateString).toLocaleString('en-IE', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const formatCustomizations = (customizations: Record<string, string> | null): string => {
+    if (!customizations || Object.keys(customizations).length === 0) {
+      return '';
+    }
+    return Object.entries(customizations)
+      .map(([key, value]) => `${key}: ${value}`)
+      .join(', ');
+  };
+
+  // Progress steps
+  const progressSteps = trackingData.order_type === 'collection'
+    ? ['received', 'preparing', 'ready', 'completed']
+    : ['received', 'preparing', 'out_for_delivery', 'completed'];
+
+  const currentStepIndex = progressSteps.indexOf(trackingData.status);
+  const isCancelled = trackingData.status === 'cancelled';
+
   return (
-    <>
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-yellow-50 py-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
-          {/* Header */}
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                  Order {order_tracking_data.order_number}
-                </h1>
-                <p className="text-gray-600 mt-1">Real-time tracking</p>
-              </div>
-              <div className="flex items-center gap-3">
-                {/* WebSocket Status Indicator */}
-                <div className="flex items-center gap-2">
-                  {websocket_connected ? (
-                    <>
-                      <Wifi className="size-4 text-green-600" />
-                      <span className="text-xs text-green-600 font-medium hidden sm:inline">Live</span>
-                    </>
-                  ) : (
-                    <>
-                      <WifiOff className="size-4 text-gray-400" />
-                      <span className="text-xs text-gray-400 font-medium hidden sm:inline">Offline</span>
-                    </>
-                  )}
-                </div>
-
-                {/* Refresh Button */}
-                <button
-                  onClick={handleRefresh}
-                  disabled={isFetching}
-                  className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  aria-label="Refresh tracking data"
-                >
-                  <RefreshCw className={`size-4 ${isFetching ? 'animate-spin' : ''}`} />
-                  <span className="hidden sm:inline">Refresh</span>
-                </button>
-              </div>
+    <div className="min-h-screen bg-[#F2EFE9] pb-20">
+      {/* Header */}
+      <div className="bg-white border-b border-[#D4C5B9]">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-[#2C1A16]">
+                Track Order
+              </h1>
+              <p className="text-[#6B5B4F] mt-1">
+                Ticket: <span className="font-mono font-semibold text-[#D4831D]">{trackingData.ticket_number}</span>
+              </p>
             </div>
+            <button
+              onClick={() => {
+                setIsPolling(true);
+                refetch();
+              }}
+              disabled={!isPolling && (trackingData.status === 'completed' || trackingData.status === 'cancelled')}
+              className="flex items-center gap-2 px-4 py-2 bg-[#D4C5B9] text-[#2C1A16] rounded-lg hover:bg-[#C4B5A9] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <RefreshCw className={`h-5 w-5 ${isPolling ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Refresh</span>
+            </button>
+          </div>
+          {isPolling && (
+            <p className="text-xs text-[#6B5B4F] mt-2">
+              Last updated: {lastUpdateTime.toLocaleTimeString()} • Auto-refreshing every 10 seconds
+            </p>
+          )}
+        </div>
+      </div>
 
-            {/* Progress Bar */}
-            <div className="mb-2">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-700">Progress</span>
-                <span className="text-sm font-bold text-gray-900">{progress_percentage}%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                <div
-                  className={`h-full transition-all duration-500 ease-out rounded-full ${getProgressColor(progress_percentage)}`}
-                  style={{ width: `${progress_percentage}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Status Badge */}
-            <div className="flex items-center gap-2 mt-4">
-              <span
-                className={`px-4 py-2 rounded-full text-sm font-semibold border ${getStatusColor(order_tracking_data.status)}`}
-              >
-                {order_tracking_data.status ? 
-                  order_tracking_data.status.charAt(0).toUpperCase() + order_tracking_data.status.slice(1).replace('_', ' ')
-                  : 'Unknown'}
-              </span>
-            </div>
+      {/* Main Content */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Status Card */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-[#2C1A16]">Current Status</h2>
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(trackingData.status)}`}>
+              {getStatusDisplay(trackingData.status)}
+            </span>
           </div>
 
-          {/* Real-time Notifications */}
-          {tracking_notifications.filter((n) => !n.dismissed).length > 0 && (
-            <div className="mb-6 space-y-2">
-              {tracking_notifications
-                .filter((n) => !n.dismissed)
-                .slice(0, 3)
-                .map((notif) => (
-                  <div
-                    key={notif.id}
-                    className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start justify-between"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="size-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Clock className="size-4 text-blue-600" />
-                      </div>
-                      <div>
-                        <p className="text-blue-900 font-medium">{notif.message}</p>
-                        <p className="text-blue-600 text-xs mt-1">
-                          {new Date(notif.timestamp).toLocaleTimeString('en-IE', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
+          {/* Progress Timeline */}
+          {!isCancelled && (
+            <div className="relative">
+              <div className="flex items-center justify-between mb-8">
+                {progressSteps.map((step, index) => {
+                  const isCompleted = index <= currentStepIndex;
+                  const isCurrent = index === currentStepIndex;
+
+                  return (
+                    <div key={step} className="flex-1 relative">
+                      <div className="flex flex-col items-center">
+                        {/* Circle */}
+                        <div
+                          className={`h-10 w-10 rounded-full flex items-center justify-center border-2 transition-all ${
+                            isCompleted
+                              ? 'bg-[#D4831D] border-[#D4831D] text-white'
+                              : 'bg-white border-[#D4C5B9] text-[#6B5B4F]'
+                          } ${isCurrent ? 'ring-4 ring-[#D4831D]/30' : ''}`}
+                        >
+                          {isCompleted ? (
+                            <CheckCircle className="h-6 w-6" />
+                          ) : (
+                            <Circle className="h-6 w-6" />
+                          )}
+                        </div>
+                        {/* Label */}
+                        <p className={`mt-2 text-xs sm:text-sm text-center ${isCompleted ? 'text-[#2C1A16] font-medium' : 'text-[#6B5B4F]'}`}>
+                          {getStatusDisplay(step)}
                         </p>
                       </div>
+                      {/* Connecting Line */}
+                      {index < progressSteps.length - 1 && (
+                        <div
+                          className={`absolute top-5 left-1/2 w-full h-0.5 -z-10 ${
+                            index < currentStepIndex ? 'bg-[#D4831D]' : 'bg-[#D4C5B9]'
+                          }`}
+                        />
+                      )}
                     </div>
-                    <button
-                      onClick={() => dismissNotification(notif.id)}
-                      className="text-blue-400 hover:text-blue-600 transition-colors"
-                      aria-label="Dismiss notification"
-                    >
-                      <XCircle className="size-5" />
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
+              </div>
             </div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Status Timeline (Left Column) */}
-            <div className="lg:col-span-2 bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Order Status Timeline</h2>
-
-              <ol className="relative border-l-2 border-gray-200 ml-4 space-y-8">
-                {status_timeline.map((step, index) => (
-                  <li key={index} className="ml-6 relative">
-                    {/* Timeline Icon */}
-                    <span
-                      className={`absolute -left-9 flex items-center justify-center size-8 rounded-full ${
-                        step.is_completed
-                          ? 'bg-green-100 border-4 border-green-600'
-                          : step.is_current
-                          ? 'bg-yellow-100 border-4 border-yellow-500'
-                          : 'bg-gray-100 border-4 border-gray-300'
-                      }`}
-                    >
-                      {step.is_completed ? (
-                        <CheckCircle className="size-4 text-green-600" />
-                      ) : step.is_current ? (
-                        <div className="size-3 bg-yellow-500 rounded-full animate-pulse" />
-                      ) : (
-                        <Circle className="size-4 text-gray-400" />
-                      )}
-                    </span>
-
-                    {/* Step Content */}
-                    <div>
-                      <h3
-                        className={`text-lg font-semibold mb-1 ${
-                          step.is_current
-                            ? 'text-yellow-600'
-                            : step.is_completed
-                            ? 'text-green-700'
-                            : 'text-gray-500'
-                        }`}
-                      >
-                        {step.step_name}
-                      </h3>
-
-                      {step.timestamp && (
-                        <p className="text-sm text-gray-600">
-                          {new Date(step.timestamp).toLocaleString('en-IE', {
-                            weekday: 'short',
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </p>
-                      )}
-
-                      {step.is_current && !step.timestamp && (
-                        <p className="text-sm text-yellow-600 font-medium">In progress...</p>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ol>
+          {/* Cancelled Message */}
+          {isCancelled && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start">
+              <XCircle className="h-5 w-5 text-red-600 mr-3 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-red-800">
+                <p className="font-medium mb-1">Order Cancelled</p>
+                <p>This order has been cancelled. If you have questions, please contact us.</p>
+              </div>
             </div>
+          )}
 
-            {/* Order Info & Actions (Right Column) */}
-            <div className="space-y-6">
-              {/* Estimated Time Card */}
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="size-10 bg-orange-100 rounded-full flex items-center justify-center">
-                    <Clock className="size-5 text-orange-600" />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900">
-                    {order_tracking_data.order_type === 'collection' ? 'Pickup Time' : 'Delivery Time'}
-                  </h3>
-                </div>
+          {/* Order Type */}
+          <div className="mt-4 flex items-center text-[#6B5B4F]">
+            {trackingData.order_type === 'collection' ? (
+              <Package className="h-5 w-5 mr-2" />
+            ) : (
+              <MapPin className="h-5 w-5 mr-2" />
+            )}
+            <span>{trackingData.order_type === 'collection' ? 'Collection Order' : 'Delivery Order'}</span>
+          </div>
+        </div>
 
-                {time_until_ready.ready_at_time ? (
-                  <>
-                    <div className="text-center py-4 mb-4 bg-orange-50 rounded-lg">
-                      <p className="text-3xl font-bold text-orange-600">
-                        {time_until_ready.ready_at_time}
-                      </p>
-                      {time_until_ready.minutes_remaining !== null && time_until_ready.minutes_remaining > 0 && (
-                        <p className="text-gray-600 mt-1">
-                          {time_until_ready.minutes_remaining} minutes remaining
-                        </p>
-                      )}
-                      {time_until_ready.is_overdue && (
-                        <p className="text-red-600 font-medium mt-1">Ready now!</p>
-                      )}
-                    </div>
-                  </>
-                ) : (
-                  <p className="text-gray-600 text-sm">
-                    We'll notify you when your order is ready
-                  </p>
-                )}
-
-                {/* Order Type Badge */}
-                <div className="flex items-center gap-2 pt-4 border-t border-gray-200">
-                  <Package className="size-5 text-gray-600" />
-                  <span className="text-sm font-medium text-gray-900">
-                    {order_tracking_data.order_type === 'collection' ? 'Collection' : 'Delivery'}
-                  </span>
-                </div>
-
-                {/* Address or Pickup Info */}
-                {order_tracking_data.order_type === 'delivery' && order_tracking_data.delivery_address_snapshot && (
-                  <div className="flex items-start gap-2 mt-3">
-                    <MapPin className="size-5 text-gray-600 mt-0.5 flex-shrink-0" />
-                    <div className="text-sm text-gray-700">
-                      <p>{order_tracking_data.delivery_address_snapshot.address_line1}</p>
-                      {order_tracking_data.delivery_address_snapshot.address_line2 && (
-                        <p>{order_tracking_data.delivery_address_snapshot.address_line2}</p>
-                      )}
-                      <p>
-                        {order_tracking_data.delivery_address_snapshot.city}, {order_tracking_data.delivery_address_snapshot.postal_code}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Actions Card */}
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Actions</h3>
-
-                <div className="space-y-3">
-                  {/* Download Invoice */}
-                  {order_tracking_data.status === 'completed' && (
-                    <button
-                      onClick={handleDownloadInvoice}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition-colors"
-                    >
-                      <Download className="size-5" />
-                      Download Invoice
-                    </button>
+        {/* Order Items */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <h2 className="text-xl font-semibold text-[#2C1A16] mb-4">Order Items</h2>
+          <div className="space-y-4">
+            {trackingData.items.map((item, index) => (
+              <div key={index} className="flex justify-between items-start pb-4 border-b border-[#D4C5B9] last:border-0">
+                <div className="flex-1">
+                  <p className="font-medium text-[#2C1A16]">{item.item_name}</p>
+                  {item.selected_customizations && (
+                    <p className="text-sm text-[#6B5B4F] mt-1">
+                      {formatCustomizations(item.selected_customizations)}
+                    </p>
                   )}
-
-                  {/* Contact Support */}
-                  <a
-                    href={`tel:${order_tracking_data.customer_phone}`}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 text-gray-900 rounded-lg font-medium hover:bg-gray-200 transition-colors"
-                  >
-                    <Phone className="size-5" />
-                    Call Support
-                  </a>
-
-                  <a
-                    href="mailto:support@salamalama.ie"
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 text-gray-900 rounded-lg font-medium hover:bg-gray-200 transition-colors"
-                  >
-                    <Mail className="size-5" />
-                    Email Support
-                  </a>
-
-                  {/* Back to Orders */}
-                  <Link
-                    to="/orders"
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 text-gray-900 rounded-lg font-medium hover:bg-gray-200 transition-colors"
-                  >
-                    Back to Orders
-                  </Link>
+                  <p className="text-sm text-[#6B5B4F] mt-1">Qty: {item.quantity}</p>
                 </div>
+                <p className="font-medium text-[#2C1A16]">
+                  {formatCurrency(item.line_total)}
+                </p>
               </div>
+            ))}
+          </div>
 
-              {/* Customer Info */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-xs text-gray-600 mb-1">Order for</p>
-                <p className="font-semibold text-gray-900">{order_tracking_data.customer_name}</p>
-                <p className="text-sm text-gray-600">{order_tracking_data.customer_phone}</p>
+          {/* Totals */}
+          <div className="mt-4 pt-4 border-t border-[#D4C5B9] space-y-2">
+            <div className="flex justify-between text-[#6B5B4F]">
+              <span>Subtotal</span>
+              <span>{formatCurrency(trackingData.subtotal)}</span>
+            </div>
+            {trackingData.discount_amount > 0 && (
+              <div className="flex justify-between text-green-600">
+                <span>Discount</span>
+                <span>-{formatCurrency(trackingData.discount_amount)}</span>
               </div>
+            )}
+            {trackingData.delivery_fee > 0 && (
+              <div className="flex justify-between text-[#6B5B4F]">
+                <span>Delivery Fee</span>
+                <span>{formatCurrency(trackingData.delivery_fee)}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-[#6B5B4F]">
+              <span>Tax</span>
+              <span>{formatCurrency(trackingData.tax_amount)}</span>
+            </div>
+            <div className="flex justify-between text-lg font-bold text-[#2C1A16] pt-2 border-t border-[#D4C5B9]">
+              <span>Total</span>
+              <span>{formatCurrency(trackingData.total_amount)}</span>
             </div>
           </div>
         </div>
+
+        {/* Status History */}
+        {trackingData.status_history.length > 0 && (
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 className="text-xl font-semibold text-[#2C1A16] mb-4">Order History</h2>
+            <div className="space-y-3">
+              {trackingData.status_history.map((entry, index) => (
+                <div key={index} className="flex items-start">
+                  <div className="flex-shrink-0 h-8 w-8 rounded-full bg-[#D4831D]/10 flex items-center justify-center mr-3">
+                    <Clock className="h-4 w-4 text-[#D4831D]" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <p className="font-medium text-[#2C1A16]">
+                        {getStatusDisplay(entry.status)}
+                      </p>
+                      <p className="text-sm text-[#6B5B4F]">
+                        {formatDate(entry.changed_at)}
+                      </p>
+                    </div>
+                    {entry.notes && (
+                      <p className="text-sm text-[#6B5B4F] mt-1">{entry.notes}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Need Help */}
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-xl font-semibold text-[#2C1A16] mb-4">Need Help?</h2>
+          <div className="space-y-3">
+            <a
+              href="tel:+353871234567"
+              className="flex items-center text-[#2C1A16] hover:text-[#D4831D] transition-colors"
+            >
+              <Phone className="h-5 w-5 mr-3" />
+              <span>+353 87 123 4567</span>
+            </a>
+            <a
+              href="mailto:info@coffeeshop.ie"
+              className="flex items-center text-[#2C1A16] hover:text-[#D4831D] transition-colors"
+            >
+              <Mail className="h-5 w-5 mr-3" />
+              <span>info@coffeeshop.ie</span>
+            </a>
+          </div>
+        </div>
+
+        {/* Back to Menu */}
+        <div className="mt-6 text-center">
+          <Link
+            to="/menu"
+            className="inline-flex items-center text-[#2C1A16] hover:text-[#D4831D] font-medium transition-colors"
+          >
+            <Home className="h-5 w-5 mr-2" />
+            Back to Menu
+          </Link>
+        </div>
       </div>
-    </>
+    </div>
   );
 };
 

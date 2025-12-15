@@ -353,16 +353,12 @@ const AppRoutes: React.FC = () => {
             <UV_OrderDetail />
           </ProtectedRoute>
         } />
-        <Route path="/orders/:order_id/track" element={
-          <ProtectedRoute>
-            <UV_OrderTracking />
-          </ProtectedRoute>
-        } />
-        <Route path="/order/confirmation" element={
-          <ProtectedRoute>
-            <UV_OrderConfirmation />
-          </ProtectedRoute>
-        } />
+        
+        {/* Public Order Tracking - No Auth Required */}
+        <Route path="/track/:ticketNumber" element={<UV_OrderTracking />} />
+        
+        {/* Order Confirmation - Accessible after checkout */}
+        <Route path="/order-confirmation" element={<UV_OrderConfirmation />} />
 
         {/* Checkout Flow - Accessible without authentication for guest checkout */}
         <Route path="/checkout" element={<Navigate to="/checkout/order-type" replace />} />

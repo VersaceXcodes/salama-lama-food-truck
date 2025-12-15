@@ -91,6 +91,8 @@ interface PlaceOrderRequest {
 interface PlaceOrderResponse {
   order_id: string;
   order_number: string;
+  ticket_number: string;
+  tracking_token: string;
   status: string;
   total_amount: number;
   estimated_ready_time: string | null;
@@ -511,18 +513,17 @@ const UV_CheckoutReview: React.FC = () => {
       sessionStorage.removeItem('checkout_card_type');
       sessionStorage.removeItem('checkout_special_instructions');
 
-      // Navigate to order confirmation with order data
-      navigate(`/order/confirmation`, {
-        state: {
-          order_id: data.order_id,
-          order_number: data.order_number,
-          status: data.status,
-          total_amount: data.total_amount,
-          estimated_ready_time: data.estimated_ready_time,
-          loyalty_points_awarded: data.loyalty_points_awarded,
-          invoice_url: data.invoice_url,
-        },
+      // Navigate to order confirmation with ticket and tracking data via URL params
+      const params = new URLSearchParams({
+        ticket: data.ticket_number || '',
+        token: data.tracking_token || '',
+        order_number: data.order_number || '',
+        order_type: complete_order_review.order_type || '',
+        total: String(data.total_amount || 0),
+        points: String(data.loyalty_points_awarded || 0),
+        status: data.status || 'received',
       });
+      navigate(`/order-confirmation?${params.toString()}`);
     },
     onError: (error: any) => {
       // Handle authentication errors specifically

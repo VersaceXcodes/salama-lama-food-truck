@@ -417,10 +417,10 @@ const UV_Cart: React.FC = () => {
 
   if (isCartLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8" style={{ backgroundColor: 'var(--primary-bg)' }}>
+      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-[#F2EFE9]">
         <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4" style={{ color: 'var(--primary-text)' }} />
-          <p className="font-medium" style={{ color: '#4A3B32' }}>Loading your cart...</p>
+          <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-[#2C1A16]" />
+          <p className="font-medium text-[#4A3B32]">Loading your cart...</p>
         </div>
       </div>
     );
@@ -432,21 +432,17 @@ const UV_Cart: React.FC = () => {
 
   if (cartError) {
     return (
-      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8" style={{ backgroundColor: 'var(--primary-bg)' }}>
+      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-[#F2EFE9]">
         <div className="text-center max-w-md">
           <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--primary-text)' }}>Failed to Load Cart</h2>
-          <p className="mb-6" style={{ color: '#4A3B32' }}>
+          <h2 className="text-2xl font-bold mb-2 text-[#2C1A16]">Failed to Load Cart</h2>
+          <p className="mb-6 text-[#4A3B32]">
             We couldn't load your cart. Please try again.
           </p>
             <button
               onClick={() => refetchCart()}
-              className="px-6 py-3 font-medium rounded-lg transition-colors duration-200"
-              style={{ 
-                backgroundColor: 'var(--btn-bg)', 
-                color: 'var(--btn-text)',
-                minHeight: '48px'
-              }}
+              className="px-6 py-3 font-medium rounded-lg transition-colors duration-200 bg-[#2C1A16] text-[#F2EFE9]"
+              style={{ minHeight: '48px' }}
             >
               Retry
             </button>
@@ -483,21 +479,17 @@ const UV_Cart: React.FC = () => {
 
   if (cartItems.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8" style={{ backgroundColor: 'var(--primary-bg)' }}>
+      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-[#F2EFE9]">
         <div className="text-center max-w-md">
           <ShoppingBag className="h-24 w-24 text-gray-400 mx-auto mb-6" />
-          <h2 className="text-3xl font-bold mb-4" style={{ color: 'var(--primary-text)' }}>Your Cart is Empty</h2>
-          <p className="mb-8" style={{ color: '#4A3B32' }}>
+          <h2 className="text-3xl font-bold mb-4 text-[#2C1A16]">Your Cart is Empty</h2>
+          <p className="mb-8 text-[#4A3B32]">
             Add some delicious items from our menu to get started!
           </p>
             <Link
               to="/menu"
-              className="inline-flex items-center px-6 py-3 font-medium rounded-lg transition-colors duration-200 shadow-lg hover:shadow-xl"
-              style={{ 
-                backgroundColor: 'var(--btn-bg)', 
-                color: 'var(--btn-text)',
-                minHeight: '48px'
-              }}
+              className="inline-flex items-center px-6 py-3 font-medium rounded-lg transition-colors duration-200 shadow-lg hover:shadow-xl bg-[#2C1A16] text-[#F2EFE9]"
+              style={{ minHeight: '48px' }}
             >
               Browse Menu
               <ArrowRight className="ml-2 h-5 w-5" />
@@ -591,7 +583,7 @@ const UV_Cart: React.FC = () => {
       )}
 
     
-      <div className="min-h-screen py-4 sm:py-6 lg:py-8 px-4 sm:px-6 lg:px-10" style={{ backgroundColor: 'var(--primary-bg)' }}>
+      <div className="min-h-screen py-4 sm:py-6 lg:py-8 px-4 sm:px-6 lg:px-10 bg-[#F2EFE9]">
         <div className="max-w-6xl mx-auto">
           {/* Page Header */}
           <div className="mb-4 sm:mb-6 lg:mb-8">
@@ -844,12 +836,8 @@ const UV_Cart: React.FC = () => {
                   <button
                     onClick={handleProceedToCheckout}
                     disabled={validateCheckoutMutation.isPending}
-                    className="w-full py-4 font-bold text-lg rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center checkout-btn"
-                    style={{ 
-                      backgroundColor: 'var(--btn-bg)', 
-                      color: 'var(--btn-text)',
-                      minHeight: '48px'
-                    }}
+                    className="w-full py-4 font-bold text-lg rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center checkout-btn bg-[#2C1A16] text-[#F2EFE9]"
+                    style={{ minHeight: '48px' }}
                   >
                   {validateCheckoutMutation.isPending ? (
                     <>
@@ -889,12 +877,8 @@ const UV_Cart: React.FC = () => {
             <button
               onClick={handleProceedToCheckout}
               disabled={validateCheckoutMutation.isPending}
-              className="flex-1 max-w-xs py-4 font-bold text-lg rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 flex items-center justify-center"
-              style={{ 
-                backgroundColor: 'var(--btn-bg)', 
-                color: 'var(--btn-text)',
-                minHeight: '56px'
-              }}
+              className="flex-1 max-w-xs py-4 font-bold text-lg rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 flex items-center justify-center bg-[#2C1A16] text-[#F2EFE9]"
+              style={{ minHeight: '56px' }}
             >
               {validateCheckoutMutation.isPending ? (
                 <>

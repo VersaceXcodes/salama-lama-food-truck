@@ -590,7 +590,8 @@ const App: React.FC = () => {
     
     // Fetch business settings (operating hours, delivery status, etc.)
     fetch_business_settings();
-  }, [initialize_auth, fetch_business_settings]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Show loading spinner during initial auth check
   if (isLoading) {

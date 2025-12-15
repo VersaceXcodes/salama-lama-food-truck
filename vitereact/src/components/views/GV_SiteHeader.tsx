@@ -251,47 +251,53 @@ const GV_SiteHeader: React.FC = () => {
         style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Mobile Header: 3-column grid layout */}
-          <div className="md:hidden grid grid-cols-[44px_1fr_44px] items-center gap-2 h-14">
-            {/* Left: Cart Icon */}
-            <Link
-              to="/cart"
-              className="relative flex items-center justify-center w-11 h-11 text-[#2C1A16] hover:text-[#D97706] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 rounded-lg"
-              aria-label={`Shopping cart with ${cartItemCount} items`}
-            >
-              <ShoppingCart className="h-6 w-6" />
-              {cartItemCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 bg-[#DC2626] text-white text-xs font-bold rounded-full h-5 min-w-[20px] flex items-center justify-center px-1">
-                  {getCartBadgeDisplay()}
-                </span>
-              )}
-            </Link>
-            
-            {/* Center: Brand Logo */}
-            <Link 
-              to="/"
-              className="flex items-center justify-center group"
-              aria-label="Salama Lama Home"
-            >
-              <BrandLogo variant="header" />
-            </Link>
-            
-            {/* Right: Hamburger Menu */}
-            <button
-              onClick={toggleMobileMenu}
-              className="flex items-center justify-center w-11 h-11 text-[#2C1A16] hover:text-[#D97706] focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 rounded-lg transition-colors duration-200"
-              aria-label="Toggle navigation menu"
-              aria-expanded={isMobileMenuOpen}
-            >
-              {isMobileMenuOpen ? (
-                <X className="h-7 w-7" />
-              ) : (
-                <Menu className="h-7 w-7" />
-              )}
-            </button>
+          {/* ======================================
+              MOBILE HEADER - flex md:hidden
+              ====================================== */}
+          <div className="flex md:hidden items-center h-14" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+            <div className="grid grid-cols-[44px_1fr_44px] items-center gap-3 w-full">
+              {/* Left: Cart Icon */}
+              <Link
+                to="/cart"
+                className="relative flex items-center justify-center w-11 h-11 text-[#2C1A16] hover:text-[#D97706] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 rounded-lg"
+                aria-label={`Shopping cart with ${cartItemCount} items`}
+              >
+                <ShoppingCart className="h-6 w-6" />
+                {cartItemCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 bg-[#DC2626] text-white text-xs font-bold rounded-full h-5 min-w-[20px] flex items-center justify-center px-1">
+                    {getCartBadgeDisplay()}
+                  </span>
+                )}
+              </Link>
+              
+              {/* Center: Brand Logo */}
+              <Link 
+                to="/"
+                className="flex items-center justify-center group"
+                aria-label="Salama Lama Home"
+              >
+                <BrandLogo variant="header" />
+              </Link>
+              
+              {/* Right: Hamburger Menu */}
+              <button
+                onClick={toggleMobileMenu}
+                className="flex items-center justify-center w-11 h-11 text-[#2C1A16] hover:text-[#D97706] focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 rounded-lg transition-colors duration-200"
+                aria-label="Toggle navigation menu"
+                aria-expanded={isMobileMenuOpen}
+              >
+                {isMobileMenuOpen ? (
+                  <X className="h-7 w-7" />
+                ) : (
+                  <Menu className="h-7 w-7" />
+                )}
+              </button>
+            </div>
           </div>
           
-          {/* Desktop Header: Traditional flex layout */}
+          {/* ======================================
+              DESKTOP HEADER - hidden md:flex
+              ====================================== */}
           <div className="hidden md:flex items-center justify-between h-20">
             
             {/* Left Section: Logo */}
@@ -440,14 +446,15 @@ const GV_SiteHeader: React.FC = () => {
         </div>
       </nav>
       
-      {/* Mobile Menu Drawer */}
-      <MobileDrawer
-        isOpen={isMobileMenuOpen}
-        onClose={closeMobileMenu}
-        title="Menu"
-        className="md:hidden"
-      >
-        <div className="space-y-6">
+      {/* Mobile Menu Drawer - Hidden on Desktop */}
+      {isMobileMenuOpen && (
+        <MobileDrawer
+          isOpen={isMobileMenuOpen}
+          onClose={closeMobileMenu}
+          title="Menu"
+          className="md:hidden"
+        >
+          <div className="space-y-6">
           {/* User Info Card */}
           {isAuthenticated && (
             <div className="p-4 bg-gradient-to-br from-[var(--primary-bg)] to-[var(--accent-color)] rounded-[var(--radius-card)] border border-[var(--border-light)]">
@@ -587,7 +594,8 @@ const GV_SiteHeader: React.FC = () => {
             )}
           </div>
         </div>
-      </MobileDrawer>
+        </MobileDrawer>
+      )}
       
       {/* Spacer to prevent content from going under fixed navbar */}
       <div className="h-14 md:h-20" aria-hidden="true" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }} />

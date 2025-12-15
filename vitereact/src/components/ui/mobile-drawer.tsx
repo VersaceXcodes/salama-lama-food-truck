@@ -69,7 +69,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
     <>
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] transition-opacity duration-300"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] transition-opacity duration-300 md:hidden"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -77,7 +77,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
       {/* Drawer */}
       <div 
         className={`
-          fixed bg-white shadow-2xl z-[101] overflow-y-auto
+          fixed bg-white shadow-2xl z-[61] overflow-y-auto
           ${positionClasses[position]}
           ${className}
         `}

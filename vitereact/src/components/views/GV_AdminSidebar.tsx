@@ -57,6 +57,23 @@ const GV_AdminSidebar: React.FC = () => {
     setIsMobileOpen(false);
   }, [location.pathname]);
 
+  // Close drawer on ESC key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && is_mobile_open) {
+        closeMobileDrawer();
+      }
+    };
+    
+    if (is_mobile_open) {
+      document.addEventListener('keydown', handleEscape);
+    }
+    
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [is_mobile_open]);
+
   const toggleSidebar = () => {
     setIsCollapsed(!is_collapsed);
   };
@@ -187,7 +204,7 @@ const GV_AdminSidebar: React.FC = () => {
       {/* Overlay - Only visible when mobile drawer is open */}
       {is_mobile_open && (
         <div 
-          className="md:hidden fixed inset-0 bg-black bg-opacity-40 z-[90]"
+          className="md:hidden fixed inset-0 bg-black/40 z-[90]"
           onClick={closeMobileDrawer}
           aria-hidden="true"
         />
@@ -196,7 +213,7 @@ const GV_AdminSidebar: React.FC = () => {
       {/* Sidebar - Mobile drawer (< md) or Fixed sidebar (>= md) */}
       <aside
         className={`
-          fixed left-0 top-0 h-screen bg-gray-900 text-white flex flex-col
+          fixed left-0 top-0 h-screen bg-gray-900 text-white flex flex-col overflow-y-auto
           md:z-30 md:w-64 md:translate-x-0
           z-[100] w-[80vw] max-w-[320px] transition-transform duration-200
           ${is_mobile_open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
@@ -207,8 +224,8 @@ const GV_AdminSidebar: React.FC = () => {
           paddingTop: 'env(safe-area-inset-top)'
         }}
       >
-        {/* Sidebar Header */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-gray-800 flex-shrink-0">
+        {/* Sidebar Header - Sticky to keep close button visible */}
+        <div className="sticky top-0 z-10 flex items-center justify-between h-16 px-4 border-b border-gray-800 flex-shrink-0 bg-gray-900">
           <Link to="/admin/dashboard" className="flex items-center">
             <img 
               src={logoUrl} 
@@ -225,10 +242,10 @@ const GV_AdminSidebar: React.FC = () => {
           </Link>
           <button
             onClick={closeMobileDrawer}
-            className="md:hidden p-2 rounded-lg hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className="md:hidden min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500"
             aria-label="Close menu"
           >
-            <X className="w-5 h-5" />
+            <X className="w-6 h-6" />
           </button>
         </div>
 

@@ -93,6 +93,16 @@ const UV_Cart: React.FC = () => {
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
+  // Get guest cart ID for tracking (initialize early for guest users)
+  const guestCartId = !authToken ? getGuestCartId() : null;
+  
+  // Initialize guest cart tracking on mount (only runs once)
+  useEffect(() => {
+    if (!authToken) {
+      getGuestCartId(); // Ensure guest cart ID is created early
+    }
+  }, [authToken]);
+
   // ===========================
   // React Query: Fetch Cart
   // ===========================
@@ -114,6 +124,15 @@ const UV_Cart: React.FC = () => {
     refetchOnWindowFocus: false,
     retry: 1
   });
+  
+  // Log cart totals in dev mode (only when cartData changes, not on every render)
+  useEffect(() => {
+    if (cartData) {
+      const totalsForLogging = calculateCartTotals(parseCartData(cartData));
+      logCartTotals('Shopping Cart Page', cartData, totalsForLogging, guestCartId || 'authenticated');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartData]);
 
   // ===========================
   // React Query: Update Item Quantity
@@ -459,25 +478,6 @@ const UV_Cart: React.FC = () => {
   
   // Calculate totals using shared utility
   const totals = calculateCartTotals(parseCartData(cartData));
-  
-  // Get guest cart ID for tracking (initialize early for guest users)
-  const guestCartId = !authToken ? getGuestCartId() : null;
-  
-  // Initialize guest cart tracking on mount (only runs once)
-  useEffect(() => {
-    if (!authToken) {
-      getGuestCartId(); // Ensure guest cart ID is created early
-    }
-  }, [authToken]);
-  
-  // Log cart totals in dev mode (only when cartData changes, not on every render)
-  useEffect(() => {
-    if (cartData) {
-      const totalsForLogging = calculateCartTotals(parseCartData(cartData));
-      logCartTotals('Shopping Cart Page', cartData, totalsForLogging, guestCartId || 'authenticated');
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cartData]);
 
   if (cartItems.length === 0) {
     return (

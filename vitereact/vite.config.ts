@@ -44,6 +44,7 @@ export default defineConfig({
 			"@schema": path.resolve(__dirname, "../backend/schema.ts"),
 		},
 	},
+	publicDir: "public_assets",
 	build: {
 		outDir: "public",
 		rollupOptions: {

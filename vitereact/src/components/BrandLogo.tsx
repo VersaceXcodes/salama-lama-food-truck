@@ -68,7 +68,7 @@ const BrandLogo: React.FC<BrandLogoProps> = ({ variant = 'header', className = '
   
   return (
     <img
-      src="/brand/salama-lama-logo.png"
+      src="/logo-salama-lama.jpg"
       alt="Salama Lama"
       loading={variant === 'header' ? 'eager' : 'lazy'}
       decoding="async"

@@ -125,10 +125,17 @@ const toggleItemStatus = async (
   );
 };
 
-const deleteMenuItem = async (token: string, itemId: string): Promise<void> => {
-  await axios.delete(`${API_BASE_URL}/api/admin/menu/items/${itemId}`, {
+const deleteMenuItem = async (token: string, itemId: string): Promise<{ success: boolean; deletedId: string }> => {
+  const response = await axios.delete(`${API_BASE_URL}/api/admin/menu/items/${itemId}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
+  
+  // Verify successful deletion (HTTP 200 or 204)
+  if (response.status === 200 || response.status === 204) {
+    return { success: true, deletedId: itemId };
+  }
+  
+  throw new Error('Failed to delete item');
 };
 
 const duplicateMenuItem = async (
@@ -194,7 +201,9 @@ const UV_AdminMenuList: React.FC = () => {
   const [dragReorderActive, setDragReorderActive] = useState(false);
   const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [deleteConfirmItemId, setDeleteConfirmItemId] = useState<string | null>(null);
+  const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
 
   // Debounce search input
   useEffect(() => {
@@ -281,11 +290,59 @@ const UV_AdminMenuList: React.FC = () => {
   // Delete item mutation
   const deleteItemMutation = useMutation({
     mutationFn: (itemId: string) => deleteMenuItem(authToken!, itemId),
-    onSuccess: () => {
+    onMutate: async (itemId: string) => {
+      // Set loading state for this specific item
+      setDeletingItemId(itemId);
+      
+      // Cancel any outgoing refetches to avoid overwriting optimistic update
+      await queryClient.cancelQueries({ queryKey: ['admin-menu-items'] });
+      
+      // Snapshot the previous value for rollback
+      const previousData = queryClient.getQueryData(['admin-menu-items', selectedCategoryFilter, selectedStatusFilter, debouncedSearch]);
+      
+      return { previousData };
+    },
+    onSuccess: (data, itemId) => {
+      // Optimistic update: remove item from cache immediately
+      queryClient.setQueryData(
+        ['admin-menu-items', selectedCategoryFilter, selectedStatusFilter, debouncedSearch],
+        (old: MenuItemsResponse | undefined) => {
+          if (!old) return old;
+          return {
+            ...old,
+            items: old.items.filter((item) => item.item_id !== itemId),
+            total: old.total - 1,
+          };
+        }
+      );
+      
+      // Also invalidate to ensure consistency with backend
       queryClient.invalidateQueries({ queryKey: ['admin-menu-items'] });
-      setSuccessMessage('Item deleted successfully');
+      
+      // Clear selection if deleted item was selected
+      setSelectedItems((prev) => prev.filter((id) => id !== itemId));
+      
+      // Close modal and show success
       setDeleteConfirmItemId(null);
+      setDeletingItemId(null);
+      setSuccessMessage('Item deleted successfully');
       setTimeout(() => setSuccessMessage(null), 3000);
+    },
+    onError: (error: any, itemId, context: any) => {
+      // Rollback optimistic update on error
+      if (context?.previousData) {
+        queryClient.setQueryData(
+          ['admin-menu-items', selectedCategoryFilter, selectedStatusFilter, debouncedSearch],
+          context.previousData
+        );
+      }
+      
+      // Show error message
+      setDeletingItemId(null);
+      setDeleteConfirmItemId(null);
+      const errorMsg = error?.response?.data?.message || error?.message || 'Failed to delete item';
+      setErrorMessage(errorMsg);
+      setTimeout(() => setErrorMessage(null), 5000);
     },
   });
 
@@ -377,12 +434,36 @@ const UV_AdminMenuList: React.FC = () => {
 
   const handleBulkDelete = async () => {
     if (window.confirm(`Delete ${selectedItems.length} items? This cannot be undone.`)) {
-      for (const itemId of selectedItems) {
-        await deleteItemMutation.mutateAsync(itemId);
+      const itemsToDelete = [...selectedItems];
+      let successCount = 0;
+      let failedCount = 0;
+      
+      for (const itemId of itemsToDelete) {
+        try {
+          await deleteItemMutation.mutateAsync(itemId);
+          successCount++;
+        } catch (error) {
+          failedCount++;
+          console.error(`Failed to delete item ${itemId}:`, error);
+        }
       }
+      
       setSelectedItems([]);
-      setSuccessMessage(`${selectedItems.length} items deleted successfully`);
-      setTimeout(() => setSuccessMessage(null), 3000);
+      
+      if (failedCount === 0) {
+        setSuccessMessage(`${successCount} items deleted successfully`);
+        setTimeout(() => setSuccessMessage(null), 3000);
+      } else if (successCount === 0) {
+        setErrorMessage(`Failed to delete ${failedCount} items`);
+        setTimeout(() => setErrorMessage(null), 5000);
+      } else {
+        setSuccessMessage(`${successCount} items deleted successfully`);
+        setErrorMessage(`Failed to delete ${failedCount} items`);
+        setTimeout(() => {
+          setSuccessMessage(null);
+          setErrorMessage(null);
+        }, 5000);
+      }
     }
   };
 
@@ -541,6 +622,14 @@ const UV_AdminMenuList: React.FC = () => {
           <div className="fixed top-4 right-4 z-50 bg-green-600 text-white px-6 py-4 rounded-lg shadow-xl flex items-center gap-3 animate-fade-in">
             <CheckCircle className="h-5 w-5" />
             <span className="font-medium">{successMessage}</span>
+          </div>
+        )}
+
+        {/* Error Message Toast */}
+        {errorMessage && (
+          <div className="fixed top-4 right-4 z-50 bg-red-600 text-white px-6 py-4 rounded-lg shadow-xl flex items-center gap-3 animate-fade-in">
+            <AlertCircle className="h-5 w-5" />
+            <span className="font-medium">{errorMessage}</span>
           </div>
         )}
 
@@ -862,11 +951,20 @@ const UV_AdminMenuList: React.FC = () => {
                           </button>
                           <button
                             onClick={() => handleDeleteItem(item.item_id)}
-                            disabled={deleteItemMutation.isPending}
-                            className="inline-flex items-center px-3 py-1.5 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
+                            disabled={deletingItemId === item.item_id || deleteItemMutation.isPending}
+                            className="inline-flex items-center px-3 py-1.5 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            <Trash2 className="h-4 w-4 mr-1" />
-                            Delete
+                            {deletingItemId === item.item_id ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                                Deleting...
+                              </>
+                            ) : (
+                              <>
+                                <Trash2 className="h-4 w-4 mr-1" />
+                                Delete
+                              </>
+                            )}
                           </button>
                         </div>
                       </div>
@@ -902,10 +1000,17 @@ const UV_AdminMenuList: React.FC = () => {
                 </button>
                 <button
                   onClick={confirmDelete}
-                  disabled={deleteItemMutation.isPending}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={deletingItemId !== null || deleteItemMutation.isPending}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
                 >
-                  {deleteItemMutation.isPending ? 'Deleting...' : 'Delete Item'}
+                  {deletingItemId !== null ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    'Delete Item'
+                  )}
                 </button>
               </div>
             </div>

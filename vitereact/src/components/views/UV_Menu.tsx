@@ -757,41 +757,72 @@ const UV_Menu: React.FC = () => {
           )}
         </div>
 
-        {/* Category Chips - Mobile-Friendly Horizontal Scroll */}
-        <div className="mb-6 overflow-x-auto scrollbar-hide -mx-4 sm:mx-0">
-          <div className="flex gap-2 pb-2 px-4 sm:px-0" style={{ minWidth: '100%', width: 'max-content' }} aria-label="Categories">
-            <button
-              onClick={() => handleCategoryChange(null)}
-              className={`
-                inline-flex items-center justify-center px-4 rounded-full text-sm font-semibold whitespace-nowrap
-                transition-all duration-200 flex-shrink-0
-                ${activeCategory === null
-                  ? 'bg-[#2C1A16] text-white shadow-md'
-                  : 'bg-white text-[#2C1A16] border-2 border-[#D4C5B0] hover:border-[#2C1A16]'
-                }
-              `}
-              style={{ height: '44px', minHeight: '44px' }}
+        {/* Category Selection - Responsive */}
+        <div className="mb-6">
+          {/* Mobile Dropdown (< 768px) */}
+          <div className="block md:hidden">
+            <label htmlFor="categorySelect" className="block text-sm font-medium text-[var(--primary-text)] mb-2">
+              Category
+            </label>
+            <select
+              id="categorySelect"
+              value={activeCategory || ''}
+              onChange={(e) => {
+                handleCategoryChange(e.target.value || null);
+                setFilterPanelOpen(false);
+              }}
+              className="w-full px-4 py-3 bg-white border-2 border-[#D4C5B0] text-[var(--primary-text)] font-medium focus:border-[var(--primary-text)] focus:ring-2 focus:ring-[var(--primary-text)]/10 focus:outline-none transition-colors appearance-none bg-[length:1.25rem] bg-[position:right_0.75rem_center] bg-no-repeat pr-10"
+              style={{ 
+                height: '44px',
+                borderRadius: '12px',
+                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%232C1A16' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`
+              }}
             >
-              All Items
-            </button>
-            
-            {categories.map(category => (
+              <option value="">All Items</option>
+              {categories.map(category => (
+                <option key={category.category_id} value={category.category_id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Desktop/Tablet Chips (≥ 768px) */}
+          <div className="hidden md:block overflow-x-auto scrollbar-hide -mx-4 sm:mx-0">
+            <div className="flex gap-2 pb-2 px-4 sm:px-0" style={{ minWidth: '100%', width: 'max-content' }} aria-label="Categories">
               <button
-                key={category.category_id}
-                onClick={() => handleCategoryChange(category.category_id)}
+                onClick={() => handleCategoryChange(null)}
                 className={`
                   inline-flex items-center justify-center px-4 rounded-full text-sm font-semibold whitespace-nowrap
                   transition-all duration-200 flex-shrink-0
-                  ${activeCategory === category.category_id
+                  ${activeCategory === null
                     ? 'bg-[#2C1A16] text-white shadow-md'
                     : 'bg-white text-[#2C1A16] border-2 border-[#D4C5B0] hover:border-[#2C1A16]'
                   }
                 `}
                 style={{ height: '44px', minHeight: '44px' }}
               >
-                {category.name}
+                All Items
               </button>
-            ))}
+              
+              {categories.map(category => (
+                <button
+                  key={category.category_id}
+                  onClick={() => handleCategoryChange(category.category_id)}
+                  className={`
+                    inline-flex items-center justify-center px-4 rounded-full text-sm font-semibold whitespace-nowrap
+                    transition-all duration-200 flex-shrink-0
+                    ${activeCategory === category.category_id
+                      ? 'bg-[#2C1A16] text-white shadow-md'
+                      : 'bg-white text-[#2C1A16] border-2 border-[#D4C5B0] hover:border-[#2C1A16]'
+                    }
+                  `}
+                  style={{ height: '44px', minHeight: '44px' }}
+                >
+                  {category.name}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

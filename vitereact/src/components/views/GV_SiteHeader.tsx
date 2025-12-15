@@ -254,12 +254,12 @@ const GV_SiteHeader: React.FC = () => {
           {/* ======================================
               MOBILE HEADER - flex md:hidden
               ====================================== */}
-          <div className="flex md:hidden items-center h-14" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-            <div className="grid grid-cols-[44px_1fr_44px] items-center gap-3 w-full">
+          <div className="flex md:hidden items-center h-14">
+            <div className="grid grid-cols-[48px_1fr_48px] items-center w-full" style={{ height: '56px', padding: '0 12px', whiteSpace: 'nowrap', overflow: 'hidden' }}>
               {/* Left: Cart Icon */}
               <Link
                 to="/cart"
-                className="relative flex items-center justify-center w-11 h-11 text-[#2C1A16] hover:text-[#D97706] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 rounded-lg"
+                className="relative flex items-center justify-center w-12 h-12 text-[#2C1A16] hover:text-[#D97706] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 rounded-lg"
                 aria-label={`Shopping cart with ${cartItemCount} items`}
               >
                 <ShoppingCart className="h-6 w-6" />
@@ -270,19 +270,39 @@ const GV_SiteHeader: React.FC = () => {
                 )}
               </Link>
               
-              {/* Center: Brand Logo */}
+              {/* Center: Brand Logo - Real logo with fallback only on error */}
               <Link 
                 to="/"
                 className="flex items-center justify-center group"
                 aria-label="Salama Lama Home"
               >
-                <BrandLogo variant="header" />
+                <img
+                  src="/brand/salama-lama-logo.png"
+                  alt="Salama Lama"
+                  loading="eager"
+                  style={{ height: '28px', width: 'auto', objectFit: 'contain', maxWidth: '140px' }}
+                  className="transition-transform duration-200 group-hover:scale-105"
+                  onError={(e) => {
+                    // Only show SL fallback if image fails to load
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const fallback = target.nextElementSibling as HTMLElement;
+                    if (fallback) fallback.style.display = 'flex';
+                  }}
+                />
+                <div 
+                  className="hidden items-center justify-center bg-[#D97706] text-white font-bold rounded-full"
+                  style={{ width: '32px', height: '32px', fontSize: '12px' }}
+                  title="Salama Lama"
+                >
+                  SL
+                </div>
               </Link>
               
               {/* Right: Hamburger Menu */}
               <button
                 onClick={toggleMobileMenu}
-                className="flex items-center justify-center w-11 h-11 text-[#2C1A16] hover:text-[#D97706] focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 rounded-lg transition-colors duration-200"
+                className="flex items-center justify-center w-12 h-12 text-[#2C1A16] hover:text-[#D97706] focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 rounded-lg transition-colors duration-200"
                 aria-label="Toggle navigation menu"
                 aria-expanded={isMobileMenuOpen}
               >
@@ -298,7 +318,7 @@ const GV_SiteHeader: React.FC = () => {
           {/* ======================================
               DESKTOP HEADER - hidden md:flex
               ====================================== */}
-          <div className="hidden md:flex items-center justify-between h-20">
+          <div className="hidden md:flex items-center justify-between h-20" style={{ flexWrap: 'nowrap' }}>
             
             {/* Left Section: Logo */}
             <div className="flex-shrink-0">
@@ -312,12 +332,12 @@ const GV_SiteHeader: React.FC = () => {
             </div>
             
             {/* Center Section: Desktop Navigation Links */}
-            <div className="flex items-center space-x-8">
+            <div className="flex items-center space-x-8" style={{ flexWrap: 'nowrap', whiteSpace: 'nowrap' }}>
               {navigationLinks.map((link) => (
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`text-base font-medium transition-all duration-200 pb-1 ${
+                  className={`text-base font-medium transition-all duration-200 pb-1 whitespace-nowrap ${
                     isActivePath(link.path)
                       ? 'text-[#D97706] border-b-2 border-[#D97706]'
                       : 'text-[#2C1A16] hover:text-[#D97706]'
@@ -329,7 +349,7 @@ const GV_SiteHeader: React.FC = () => {
             </div>
             
             {/* Right Section: Cart, Profile/Auth */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4" style={{ flexWrap: 'nowrap' }}>
               
               {/* Cart Button with Badge */}
               <Link

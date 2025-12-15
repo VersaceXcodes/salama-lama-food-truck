@@ -70,6 +70,7 @@ export interface BusinessSettings {
       city: string;
       postal_code: string;
     };
+    logo_url?: string | null;
   };
   tax_settings: {
     vat_rate: number;

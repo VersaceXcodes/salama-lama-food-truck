@@ -249,7 +249,9 @@ const UV_AdminSettings: React.FC = () => {
     queryKey: ['adminSettings'],
     queryFn: () => fetchAllSettings(authToken!),
     enabled: !!authToken,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 1000, // 30 seconds - shorter to ensure fresh data
+    refetchOnMount: true, // Always refetch when component mounts
+    refetchOnWindowFocus: false,
   });
 
   // Update settings state when data is fetched
@@ -261,6 +263,7 @@ const UV_AdminSettings: React.FC = () => {
         businessInfo.address = `${businessInfo.address.line1}${businessInfo.address.line2 ? ', ' + businessInfo.address.line2 : ''}, ${businessInfo.address.city}, ${businessInfo.address.postal_code}`;
       }
       setBusinessInfoSettings(businessInfo);
+      setLogoPreview(businessInfo.logo_url || null);
       setOperatingHoursSettings(settingsData.operating_hours);
       setTaxSettings(settingsData.tax_settings);
       setNotificationSettings(settingsData.notification_settings);
@@ -278,11 +281,22 @@ const UV_AdminSettings: React.FC = () => {
   // Mutations
   const businessInfoMutation = useMutation({
     mutationFn: (data: BusinessInfoSettings) => updateBusinessInfo(authToken!, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['adminSettings'] });
+    onSuccess: async () => {
+      // Refetch the settings to get the latest data from backend
+      await queryClient.invalidateQueries({ queryKey: ['adminSettings'] });
+      await queryClient.refetchQueries({ queryKey: ['adminSettings'] });
       setUnsavedChanges(prev => ({ ...prev, business_info: false }));
       setToastMessage({ type: 'success', message: 'Business information updated successfully!' });
-      updateBusinessSettings({ business_info: businessInfoSettings });
+      // Update Zustand store with the saved settings including logo_url
+      updateBusinessSettings({ 
+        business_info: {
+          name: businessInfoSettings.name,
+          phone: businessInfoSettings.phone,
+          email: businessInfoSettings.email,
+          address: businessInfoSettings.address,
+          logo_url: businessInfoSettings.logo_url,
+        }
+      });
     },
     onError: (error: any) => {
       setToastMessage({ 
@@ -389,13 +403,6 @@ const UV_AdminSettings: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [toastMessage]);
-
-  // Set logo preview when settings are loaded
-  useEffect(() => {
-    if (businessInfoSettings.logo_url) {
-      setLogoPreview(businessInfoSettings.logo_url);
-    }
-  }, [businessInfoSettings.logo_url]);
 
   // Handle logo file upload
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {

@@ -254,17 +254,17 @@ const GV_SiteHeader: React.FC = () => {
           {/* ======================================
               MOBILE HEADER - flex md:hidden
               ====================================== */}
-          <div className="flex md:hidden items-center h-14">
-            <div className="grid grid-cols-[48px_1fr_48px] items-center w-full" style={{ height: '56px', padding: '0 12px', whiteSpace: 'nowrap', overflow: 'hidden' }}>
+          <div className="flex md:hidden items-center min-h-[56px] py-2">
+            <div className="grid grid-cols-[48px_1fr_48px] items-center w-full gap-2 px-3">
               {/* Left: Cart Icon */}
               <Link
                 to="/cart"
-                className="relative flex items-center justify-center w-12 h-12 text-[#2C1A16] hover:text-[#D97706] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 rounded-lg"
+                className="relative flex items-center justify-center w-11 h-11 text-[#2C1A16] hover:text-[#D97706] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 rounded-lg"
                 aria-label={`Shopping cart with ${cartItemCount} items`}
               >
-                <ShoppingCart className="h-6 w-6" />
+                <ShoppingCart className="h-5 w-5" />
                 {cartItemCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 bg-[#DC2626] text-white text-xs font-bold rounded-full h-5 min-w-[20px] flex items-center justify-center px-1">
+                  <span className="absolute -top-0.5 -right-0.5 bg-[#DC2626] text-white text-[10px] font-bold rounded-full h-4 min-w-[16px] flex items-center justify-center px-1">
                     {getCartBadgeDisplay()}
                   </span>
                 )}
@@ -273,15 +273,14 @@ const GV_SiteHeader: React.FC = () => {
               {/* Center: Brand Logo - Real logo with fallback only on error */}
               <Link 
                 to="/"
-                className="flex items-center justify-center group"
+                className="flex items-center justify-center group overflow-hidden"
                 aria-label="Salama Lama Home"
               >
                 <img
                   src="/brand/salama-lama-logo.png"
                   alt="Salama Lama"
                   loading="eager"
-                  style={{ height: '28px', width: 'auto', objectFit: 'contain', maxWidth: '140px' }}
-                  className="transition-transform duration-200 group-hover:scale-105"
+                  className="h-6 w-auto max-w-[120px] object-contain transition-transform duration-200 group-hover:scale-105"
                   onError={(e) => {
                     // Only show SL fallback if image fails to load
                     const target = e.target as HTMLImageElement;
@@ -291,8 +290,7 @@ const GV_SiteHeader: React.FC = () => {
                   }}
                 />
                 <div 
-                  className="hidden items-center justify-center bg-[#D97706] text-white font-bold rounded-full"
-                  style={{ width: '32px', height: '32px', fontSize: '12px' }}
+                  className="hidden items-center justify-center bg-[#D97706] text-white font-bold rounded-full w-8 h-8 text-xs"
                   title="Salama Lama"
                 >
                   SL
@@ -302,14 +300,14 @@ const GV_SiteHeader: React.FC = () => {
               {/* Right: Hamburger Menu */}
               <button
                 onClick={toggleMobileMenu}
-                className="flex items-center justify-center w-12 h-12 text-[#2C1A16] hover:text-[#D97706] focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 rounded-lg transition-colors duration-200"
+                className="flex items-center justify-center w-11 h-11 text-[#2C1A16] hover:text-[#D97706] focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 rounded-lg transition-colors duration-200"
                 aria-label="Toggle navigation menu"
                 aria-expanded={isMobileMenuOpen}
               >
                 {isMobileMenuOpen ? (
-                  <X className="h-7 w-7" />
+                  <X className="h-6 w-6" />
                 ) : (
-                  <Menu className="h-7 w-7" />
+                  <Menu className="h-6 w-6" />
                 )}
               </button>
             </div>
@@ -618,7 +616,7 @@ const GV_SiteHeader: React.FC = () => {
       )}
       
       {/* Spacer to prevent content from going under fixed navbar */}
-      <div className="h-14 md:h-20" aria-hidden="true" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }} />
+      <div className="min-h-[56px] md:h-20" aria-hidden="true" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }} />
       
       {/* Custom Animation Styles */}
       <style>{`
@@ -654,10 +652,17 @@ const GV_SiteHeader: React.FC = () => {
         
         /* Responsive logo sizing */
         nav img[alt="Salama Lama"] {
-          height: 30px;
+          height: 24px;
           width: auto;
-          max-width: 160px;
+          max-width: 120px;
           object-fit: contain;
+        }
+        
+        @media (min-width: 640px) {
+          nav img[alt="Salama Lama"] {
+            height: 28px;
+            max-width: 140px;
+          }
         }
         
         @media (min-width: 768px) {

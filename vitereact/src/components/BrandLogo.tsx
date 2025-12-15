@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface BrandLogoProps {
   variant?: 'header' | 'footer';
@@ -11,10 +11,12 @@ interface BrandLogoProps {
  * A reusable, production-safe logo component that uses absolute paths from /public.
  * 
  * Variants:
- * - header: Optimized for navbar display (26-30px mobile, 32-36px desktop)
+ * - header: Optimized for navbar display (28-32px mobile, 32-36px desktop)
  * - footer: Optimized for footer display (slightly larger, centered)
  */
 const BrandLogo: React.FC<BrandLogoProps> = ({ variant = 'header', className = '' }) => {
+  const [imageError, setImageError] = useState(false);
+  
   // Base styles for both variants
   const baseStyles = {
     width: 'auto',
@@ -24,7 +26,7 @@ const BrandLogo: React.FC<BrandLogoProps> = ({ variant = 'header', className = '
   // Variant-specific styles
   const variantStyles = variant === 'header' 
     ? {
-        height: '28px', // Mobile-first: 26-30px range
+        height: '30px', // Mobile-first: 28-32px range
         maxWidth: '160px',
       }
     : {
@@ -41,6 +43,29 @@ const BrandLogo: React.FC<BrandLogoProps> = ({ variant = 'header', className = '
     ? 'transition-transform duration-200 group-hover:scale-105'
     : '';
   
+  // Handle image load error
+  const handleError = () => {
+    setImageError(true);
+    console.error('Failed to load Salama Lama logo');
+  };
+  
+  // Fallback component when image fails to load
+  if (imageError) {
+    return (
+      <div 
+        className={`flex items-center justify-center bg-[#D97706] text-white font-bold rounded-full ${className}`.trim()}
+        style={{
+          width: variant === 'header' ? '32px' : '48px',
+          height: variant === 'header' ? '32px' : '48px',
+          fontSize: variant === 'header' ? '12px' : '18px',
+        }}
+        title="Salama Lama"
+      >
+        SL
+      </div>
+    );
+  }
+  
   return (
     <img
       src="/brand/salama-lama-logo.png"
@@ -49,12 +74,7 @@ const BrandLogo: React.FC<BrandLogoProps> = ({ variant = 'header', className = '
       decoding="async"
       style={combinedStyles}
       className={`${variantClasses} ${className}`.trim()}
-      onError={(e) => {
-        // Graceful fallback: hide broken image icon
-        const target = e.target as HTMLImageElement;
-        target.style.display = 'none';
-        console.error('Failed to load Salama Lama logo');
-      }}
+      onError={handleError}
     />
   );
 };

@@ -27,6 +27,11 @@ html, body {
 	position: relative;
 }
 
+/* Safe area insets for mobile browsers (WhatsApp, Safari, etc.) */
+html {
+	padding-top: env(safe-area-inset-top);
+}
+
 *::selection {
 	background-color: #444;
 	color: white;

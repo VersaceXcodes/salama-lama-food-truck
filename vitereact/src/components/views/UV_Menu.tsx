@@ -577,7 +577,7 @@ const UV_Menu: React.FC = () => {
   return (
     <>
       {/* Page Header */}
-      <div style={{ backgroundColor: 'var(--primary-bg)' }} className="border-b border-[#D4C5B0]">
+      <div style={{ backgroundColor: 'var(--primary-bg)', paddingTop: 'env(safe-area-inset-top)' }} className="border-b border-[#D4C5B0]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 py-4 sm:py-6 lg:py-8">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight" style={{ color: 'var(--primary-text)' }}>
             Our Menu
@@ -710,20 +710,20 @@ const UV_Menu: React.FC = () => {
           )}
         </div>
 
-        {/* Category Tabs - Horizontally Scrollable Chips */}
-        <div className="mb-6 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
-          <div className="flex gap-2 min-w-max" aria-label="Categories">
+        {/* Category Chips - Mobile-Friendly Horizontal Scroll */}
+        <div className="mt-3 mb-3 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 snap-x">
+          <div className="flex gap-2 min-w-max pb-1" aria-label="Categories">
             <button
               onClick={() => handleCategoryChange(null)}
               className={`
-                px-4 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap
-                transition-all duration-200 flex-shrink-0
+                px-4 rounded-full text-sm font-semibold whitespace-nowrap
+                transition-all duration-200 flex-shrink-0 snap-start
                 ${activeCategory === null
-                  ? 'bg-[var(--btn-bg)] text-white shadow-soft-md'
-                  : 'bg-white text-[var(--primary-text)] border-2 border-[var(--border-light)] hover:border-[var(--primary-text)]'
+                  ? 'bg-[#2C1A16] text-white shadow-md'
+                  : 'bg-white text-[#2C1A16] border-2 border-[#D4C5B0] hover:border-[#2C1A16]'
                 }
               `}
-              style={{ minHeight: 'var(--tap-target-min)' }}
+              style={{ height: '44px', minHeight: '44px' }}
             >
               All Items
             </button>
@@ -733,14 +733,14 @@ const UV_Menu: React.FC = () => {
                 key={category.category_id}
                 onClick={() => handleCategoryChange(category.category_id)}
                 className={`
-                  px-4 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap
-                  transition-all duration-200 flex-shrink-0
+                  px-4 rounded-full text-sm font-semibold whitespace-nowrap
+                  transition-all duration-200 flex-shrink-0 snap-start
                   ${activeCategory === category.category_id
-                    ? 'bg-[var(--btn-bg)] text-white shadow-soft-md'
-                    : 'bg-white text-[var(--primary-text)] border-2 border-[var(--border-light)] hover:border-[var(--primary-text)]'
+                    ? 'bg-[#2C1A16] text-white shadow-md'
+                    : 'bg-white text-[#2C1A16] border-2 border-[#D4C5B0] hover:border-[#2C1A16]'
                   }
                 `}
-                style={{ minHeight: 'var(--tap-target-min)' }}
+                style={{ height: '44px', minHeight: '44px' }}
               >
                 {category.name}
               </button>
@@ -853,7 +853,7 @@ const UV_Menu: React.FC = () => {
               </div>
             ) : (
               // Mobile-First Product Grid: 1 col mobile, 2 cols tablet, 3 cols desktop
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6">
                 {menuItems.map(item => {
                   const stockStatus = getStockStatus(item);
                   const isOutOfStock = stockStatus === 'out_of_stock';

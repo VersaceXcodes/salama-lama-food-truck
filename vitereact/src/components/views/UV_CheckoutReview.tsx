@@ -152,24 +152,11 @@ const UV_CheckoutReview: React.FC = () => {
   const clear_cart = useAppStore(state => state.clear_cart);
 
   // ===========================
-  // Authentication Check
+  // Authentication Check - REMOVED FOR GUEST CHECKOUT SUPPORT
   // ===========================
   
-  useEffect(() => {
-    // Redirect to login if not authenticated or token is missing/invalid
-    if (!auth_token || !is_authenticated) {
-      console.error('User not authenticated, redirecting to login');
-      navigate(`/login?${RETURN_TO_PARAM}=/checkout/review`);
-      return;
-    }
-    
-    // Validate token format (basic check)
-    if (typeof auth_token !== 'string' || auth_token.split('.').length !== 3) {
-      console.error('Invalid JWT token format, redirecting to login');
-      navigate(`/login?${RETURN_TO_PARAM}=/checkout/review`);
-      return;
-    }
-  }, [auth_token, is_authenticated, navigate]);
+  // NOTE: Guest checkout is now supported. Users can proceed without authentication.
+  // The backend will handle both authenticated and guest orders.
 
   // ===========================
   // Local State
@@ -214,52 +201,30 @@ const UV_CheckoutReview: React.FC = () => {
   const { data: cart_data, isLoading: is_loading_cart, error: cart_error } = useQuery({
     queryKey: ['cart'],
     queryFn: async () => {
-      // Validate token before making request
-      if (!auth_token || typeof auth_token !== 'string') {
-        throw new Error('Invalid authentication token');
-      }
-      
       try {
+        const headers: Record<string, string> = {};
+        
+        // Add authorization header only if user is authenticated
+        if (auth_token && typeof auth_token === 'string') {
+          headers['Authorization'] = `Bearer ${auth_token}`;
+        }
+        
         const response = await axios.get(
           `${API_BASE_URL}/api/cart`,
-          {
-            headers: {
-              Authorization: `Bearer ${auth_token}`,
-            },
-          }
+          { headers }
         );
         return response.data;
       } catch (error: any) {
-        // Handle authentication errors
-        if (error.response?.status === 401 || error.response?.status === 403) {
-          console.error('Authentication failed:', error.response?.data);
-          throw new Error('AUTH_ERROR');
-        }
+        console.error('Failed to fetch cart:', error);
         throw error;
       }
     },
-    enabled: !!auth_token && is_authenticated,
+    enabled: true, // Always enabled - works for both guest and authenticated users
     staleTime: 30000,
     refetchOnWindowFocus: false,
-    retry: (failureCount, error: any) => {
-      // Don't retry on auth errors
-      if (error.message === 'AUTH_ERROR') {
-        return false;
-      }
-      return failureCount < 1;
-    },
+    retry: 1,
   });
-  
-  // Handle cart loading errors (especially auth errors)
-  useEffect(() => {
-    if (cart_error) {
-      const error = cart_error as Error;
-      if (error.message === 'AUTH_ERROR') {
-        console.error('Cart authentication error, redirecting to login');
-        navigate(`/login?${RETURN_TO_PARAM}=/checkout/review`);
-      }
-    }
-  }, [cart_error, navigate]);
+
 
   const cart_items = cart_data?.items || [];
   const cart_discount_code = cart_data?.discount_code || null;
@@ -337,14 +302,18 @@ const UV_CheckoutReview: React.FC = () => {
   const { data: calculated_pricing, isLoading: is_calculating_totals, error: pricing_error } = useQuery<CalculateTotalsResponse>({
     queryKey: ['calculate-checkout-totals', complete_order_review.order_type],
     queryFn: async () => {
-      // Validate token before making request
-      if (!auth_token || typeof auth_token !== 'string') {
-        throw new Error('Invalid authentication token');
-      }
-      
       const delivery_address_id = sessionStorage.getItem('checkout_delivery_address_id');
       
       try {
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+        
+        // Add authorization header only if user is authenticated
+        if (auth_token && typeof auth_token === 'string') {
+          headers['Authorization'] = `Bearer ${auth_token}`;
+        }
+        
         const response = await axios.post<CalculateTotalsResponse>(
           `${API_BASE_URL}/api/checkout/calculate`,
           {
@@ -352,45 +321,20 @@ const UV_CheckoutReview: React.FC = () => {
             delivery_address_id: delivery_address_id || null,
             discount_code: cart_discount_code,
           },
-          {
-            headers: {
-              Authorization: `Bearer ${auth_token}`,
-              'Content-Type': 'application/json',
-            },
-          }
+          { headers }
         );
 
         return response.data;
       } catch (error: any) {
-        // Handle authentication errors
-        if (error.response?.status === 401 || error.response?.status === 403) {
-          console.error('Authentication failed:', error.response?.data);
-          throw new Error('AUTH_ERROR');
-        }
+        console.error('Failed to calculate totals:', error);
         throw error;
       }
     },
-    enabled: !!complete_order_review.order_type && !!auth_token && is_authenticated,
+    enabled: !!complete_order_review.order_type, // Enabled for both guest and authenticated users
     staleTime: Infinity, // Don't refetch unless explicitly invalidated
-    retry: (failureCount, error: any) => {
-      // Don't retry on auth errors
-      if (error.message === 'AUTH_ERROR') {
-        return false;
-      }
-      return failureCount < 1;
-    },
+    retry: 1,
   });
-  
-  // Handle pricing calculation errors (especially auth errors)
-  useEffect(() => {
-    if (pricing_error) {
-      const error = pricing_error as Error;
-      if (error.message === 'AUTH_ERROR') {
-        console.error('Pricing calculation authentication error, redirecting to login');
-        navigate(`/login?${RETURN_TO_PARAM}=/checkout/review`);
-      }
-    }
-  }, [pricing_error, navigate]);
+
 
   // Update pricing state when API responds
   useEffect(() => {
@@ -424,14 +368,18 @@ const UV_CheckoutReview: React.FC = () => {
 
   const validate_order_mutation = useMutation<ValidateOrderResponse, Error, void>({
     mutationFn: async () => {
-      // Validate token before making request
-      if (!auth_token || typeof auth_token !== 'string') {
-        throw new Error('Invalid authentication token');
-      }
-      
       const delivery_address_id = sessionStorage.getItem('checkout_delivery_address_id');
       
       try {
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+        
+        // Add authorization header only if user is authenticated
+        if (auth_token && typeof auth_token === 'string') {
+          headers['Authorization'] = `Bearer ${auth_token}`;
+        }
+        
         const response = await axios.post<ValidateOrderResponse>(
           `${API_BASE_URL}/api/checkout/validate`,
           {
@@ -440,22 +388,12 @@ const UV_CheckoutReview: React.FC = () => {
             delivery_address_id: delivery_address_id || null,
             discount_code: cart_discount_code,
           },
-          {
-            headers: {
-              Authorization: `Bearer ${auth_token}`,
-              'Content-Type': 'application/json',
-            },
-          }
+          { headers }
         );
 
         return response.data;
       } catch (error: any) {
-        // Handle authentication errors
-        if (error.response?.status === 401 || error.response?.status === 403) {
-          const authError: any = new Error('Authentication required. Please sign in again.');
-          authError.response = error.response;
-          throw authError;
-        }
+        console.error('Order validation failed:', error);
         throw error;
       }
     },
@@ -467,37 +405,40 @@ const UV_CheckoutReview: React.FC = () => {
 
   const place_order_mutation = useMutation<PlaceOrderResponse, Error, PlaceOrderRequest>({
     mutationFn: async (order_data: PlaceOrderRequest) => {
-      // Validate token before making request
-      if (!auth_token || typeof auth_token !== 'string') {
-        throw new Error('Invalid authentication token. Please sign in again.');
-      }
-      
       try {
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+        
+        // Add authorization header only if user is authenticated
+        if (auth_token && typeof auth_token === 'string') {
+          headers['Authorization'] = `Bearer ${auth_token}`;
+        }
+        
         const response = await axios.post<PlaceOrderResponse>(
           `${API_BASE_URL}/api/checkout/order`,
           order_data,
-          {
-            headers: {
-              Authorization: `Bearer ${auth_token}`,
-              'Content-Type': 'application/json',
-            },
-          }
+          { headers }
         );
 
         return response.data;
       } catch (error: any) {
-        // Handle authentication errors
-        if (error.response?.status === 401 || error.response?.status === 403) {
-          const authError: any = new Error('Authentication required. Please sign in again.');
-          authError.response = error.response;
-          throw authError;
-        }
+        console.error('Order placement failed:', error);
         throw error;
       }
     },
     onSuccess: (data: PlaceOrderResponse) => {
       // Clear cart from global state
       clear_cart();
+
+      // Save order to localStorage for guest tracking
+      localStorage.setItem('lastOrder', JSON.stringify({
+        ticket_number: data.ticket_number,
+        tracking_token: data.tracking_token,
+        order_id: data.order_id,
+        order_number: data.order_number,
+        created_at: new Date().toISOString(),
+      }));
 
       // Clear checkout session data
       sessionStorage.removeItem('checkout_order_type');
@@ -523,16 +464,9 @@ const UV_CheckoutReview: React.FC = () => {
         points: String(data.loyalty_points_awarded || 0),
         status: data.status || 'received',
       });
-      navigate(`/order-confirmation?${params.toString()}`);
+      navigate(`/order-confirmation?${params.toString()}`, { replace: true });
     },
     onError: (error: any) => {
-      // Handle authentication errors specifically
-      if (error.response?.status === 401) {
-        set_place_order_error('Authentication required. Please sign in again.');
-        navigate(`/login?${RETURN_TO_PARAM}=/checkout/review`);
-        return;
-      }
-      
       const error_message = error.response?.data?.message || error.message || 'Failed to place order. Please try again.';
       set_place_order_error(error_message);
     },
@@ -583,13 +517,6 @@ const UV_CheckoutReview: React.FC = () => {
       await place_order_mutation.mutateAsync(order_request);
 
     } catch (error: any) {
-      // Handle authentication errors in validation
-      if (error.response?.status === 401) {
-        set_place_order_error('Authentication required. Please sign in again.');
-        navigate(`/login?${RETURN_TO_PARAM}=/checkout/review`);
-        return;
-      }
-      
       // Error is handled in mutation onError
       console.error('Order placement error:', error);
     }

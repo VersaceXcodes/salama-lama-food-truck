@@ -21,26 +21,64 @@ const UV_OrderConfirmation: React.FC = () => {
 
   // Save tracking info to localStorage for easy access
   useEffect(() => {
-    if (ticketNumber && trackingToken) {
+    if (displayTicketNumber && displayTrackingToken) {
       localStorage.setItem('lastOrder', JSON.stringify({
-        ticket_number: ticketNumber,
-        tracking_token: trackingToken,
-        order_number: orderNumber,
+        ticket_number: displayTicketNumber,
+        tracking_token: displayTrackingToken,
+        order_number: displayOrderNumber,
         created_at: new Date().toISOString(),
       }));
     }
-  }, [ticketNumber, trackingToken, orderNumber]);
+  }, [displayTicketNumber, displayTrackingToken, displayOrderNumber]);
 
-  // Redirect if missing required params
-  useEffect(() => {
-    if (!ticketNumber || !trackingToken) {
-      navigate('/menu');
+  // Try to get data from localStorage if not in URL params
+  let finalTicketNumber = ticketNumber;
+  let finalTrackingToken = trackingToken;
+  let finalOrderNumber = orderNumber;
+
+  if (!finalTicketNumber || !finalTrackingToken) {
+    try {
+      const lastOrderStr = localStorage.getItem('lastOrder');
+      if (lastOrderStr) {
+        const lastOrder = JSON.parse(lastOrderStr);
+        finalTicketNumber = finalTicketNumber || lastOrder.ticket_number;
+        finalTrackingToken = finalTrackingToken || lastOrder.tracking_token;
+        finalOrderNumber = finalOrderNumber || lastOrder.order_number;
+      }
+    } catch (error) {
+      console.error('Error reading lastOrder from localStorage:', error);
     }
-  }, [ticketNumber, trackingToken, navigate]);
-
-  if (!ticketNumber || !trackingToken) {
-    return null;
   }
+
+  // Show friendly message if still missing required data
+  if (!finalTicketNumber || !finalTrackingToken) {
+    return (
+      <div className="min-h-screen bg-[#F2EFE9] pb-20">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-white rounded-lg shadow-md p-8 text-center">
+            <AlertCircle className="h-16 w-16 text-orange-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-[#2C1A16] mb-4">
+              Order Confirmation Not Found
+            </h2>
+            <p className="text-[#6B5B4F] mb-6">
+              We couldn't find your order confirmation. If you just placed an order, please try again or contact support.
+            </p>
+            <Link
+              to="/menu"
+              className="inline-block bg-[#D4831D] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#C07519] transition-colors"
+            >
+              Back to Menu
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Use final values
+  const displayTicketNumber = finalTicketNumber;
+  const displayTrackingToken = finalTrackingToken;
+  const displayOrderNumber = finalOrderNumber || orderNumber;
 
   // Format currency
   const formatCurrency = (amount: string | null): string => {
@@ -48,7 +86,7 @@ const UV_OrderConfirmation: React.FC = () => {
     return `€${parseFloat(amount).toFixed(2)}`;
   };
 
-  const trackingUrl = `/track/${ticketNumber}?token=${trackingToken}`;
+  const trackingUrl = `/track/${displayTicketNumber}?token=${displayTrackingToken}`;
 
   return (
     <div className="min-h-screen bg-[#F2EFE9] pb-20">
@@ -76,7 +114,7 @@ const UV_OrderConfirmation: React.FC = () => {
           <div className="text-center">
             <p className="text-sm text-[#6B5B4F] mb-2">Your Order Ticket</p>
             <div className="text-4xl font-bold text-[#D4831D] mb-4 font-mono tracking-wider">
-              {ticketNumber}
+              {displayTicketNumber}
             </div>
             <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
               <span className="inline-block w-2 h-2 rounded-full bg-blue-600 mr-2"></span>
@@ -85,9 +123,9 @@ const UV_OrderConfirmation: React.FC = () => {
           </div>
 
           {/* Order Reference */}
-          {orderNumber && (
+          {displayOrderNumber && (
             <div className="mt-4 pt-4 border-t border-[#D4C5B9] text-center">
-              <p className="text-xs text-[#6B5B4F]">Order Reference: {orderNumber}</p>
+              <p className="text-xs text-[#6B5B4F]">Order Reference: {displayOrderNumber}</p>
             </div>
           )}
         </div>
@@ -176,7 +214,7 @@ const UV_OrderConfirmation: React.FC = () => {
             <div className="text-sm text-blue-800">
               <p className="font-medium mb-1">Save Your Tracking Link</p>
               <p>
-                Use your ticket number <span className="font-mono font-bold">{ticketNumber}</span> to track your order anytime.
+                Use your ticket number <span className="font-mono font-bold">{displayTicketNumber}</span> to track your order anytime.
                 No login required!
               </p>
             </div>

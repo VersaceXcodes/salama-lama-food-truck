@@ -300,17 +300,6 @@ const UV_Cart: React.FC = () => {
       }
     },
     onError: (error: any) => {
-      // Handle authentication errors specifically
-      if (error.response?.status === 401) {
-        toast({
-          variant: 'destructive',
-          title: 'Authentication Required',
-          description: 'Please sign in to proceed with checkout'
-        });
-        navigate(`/login?${RETURN_TO_PARAM}=${encodeURIComponent(CHECKOUT_PATH)}`);
-        return;
-      }
-      
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -388,17 +377,7 @@ const UV_Cart: React.FC = () => {
   };
 
   const handleProceedToCheckout = () => {
-    // Check if user is authenticated before proceeding to checkout
-    if (!authToken) {
-      toast({
-        variant: 'destructive',
-        title: 'Authentication Required',
-        description: 'Please sign in or continue as guest to proceed with checkout'
-      });
-      // Redirect to login page with return URL to checkout
-      navigate(`/login?${RETURN_TO_PARAM}=${encodeURIComponent(CHECKOUT_PATH)}`);
-      return;
-    }
+    // Guest checkout is now supported - no authentication required
     validateCheckoutMutation.mutate();
   };
 

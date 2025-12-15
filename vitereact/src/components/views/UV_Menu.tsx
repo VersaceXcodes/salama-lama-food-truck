@@ -589,7 +589,13 @@ const UV_Menu: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8 lg:py-12 pb-24 sm:pb-28 lg:pb-12" style={{ backgroundColor: 'var(--primary-bg)' }}>
+      <div 
+        className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8 lg:py-12" 
+        style={{ 
+          backgroundColor: 'var(--primary-bg)',
+          paddingBottom: 'calc(96px + env(safe-area-inset-bottom) + 12px)'
+        }}
+      >
         {/* Compact Search & Filter Controls */}
         <div className="mb-6 space-y-3">
           {/* Search Input - Full Width */}
@@ -711,19 +717,19 @@ const UV_Menu: React.FC = () => {
         </div>
 
         {/* Category Chips - Mobile-Friendly Horizontal Scroll */}
-        <div className="mt-3 mb-3 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 snap-x">
-          <div className="flex gap-2 min-w-max pb-1" aria-label="Categories">
+        <div className="mb-6 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="flex gap-2 pb-1" style={{ width: 'max-content' }} aria-label="Categories">
             <button
               onClick={() => handleCategoryChange(null)}
               className={`
-                px-4 rounded-full text-sm font-semibold whitespace-nowrap
-                transition-all duration-200 flex-shrink-0 snap-start
+                inline-flex items-center justify-center px-4 rounded-full text-sm font-semibold whitespace-nowrap
+                transition-all duration-200
                 ${activeCategory === null
                   ? 'bg-[#2C1A16] text-white shadow-md'
                   : 'bg-white text-[#2C1A16] border-2 border-[#D4C5B0] hover:border-[#2C1A16]'
                 }
               `}
-              style={{ height: '44px', minHeight: '44px' }}
+              style={{ height: '44px', minHeight: '44px', flex: '0 0 auto' }}
             >
               All Items
             </button>
@@ -733,14 +739,14 @@ const UV_Menu: React.FC = () => {
                 key={category.category_id}
                 onClick={() => handleCategoryChange(category.category_id)}
                 className={`
-                  px-4 rounded-full text-sm font-semibold whitespace-nowrap
-                  transition-all duration-200 flex-shrink-0 snap-start
+                  inline-flex items-center justify-center px-4 rounded-full text-sm font-semibold whitespace-nowrap
+                  transition-all duration-200
                   ${activeCategory === category.category_id
                     ? 'bg-[#2C1A16] text-white shadow-md'
                     : 'bg-white text-[#2C1A16] border-2 border-[#D4C5B0] hover:border-[#2C1A16]'
                   }
                 `}
-                style={{ height: '44px', minHeight: '44px' }}
+                style={{ height: '44px', minHeight: '44px', flex: '0 0 auto' }}
               >
                 {category.name}
               </button>

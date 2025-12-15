@@ -1237,7 +1237,6 @@ const UV_Menu: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
       )}
     </>
   );

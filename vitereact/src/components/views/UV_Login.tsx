@@ -175,7 +175,7 @@ const UV_Login: React.FC = () => {
           </div>
 
           {/* Login Form Card */}
-          <div className="bg-white shadow-xl rounded-2xl overflow-hidden border-2" style={{ borderColor: 'var(--accent-color)' }}>
+          <div className="bg-white shadow-lg rounded-2xl overflow-hidden border-2" style={{ borderColor: 'var(--border-light)', boxShadow: 'var(--shadow-lg)' }}>
             <div className="p-6 sm:p-8">
               {/* Error Message Display */}
               {displayError && (

@@ -587,24 +587,23 @@ const UV_Menu: React.FC = () => {
 
       {/* Main Content */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8 lg:py-12 pb-24 sm:pb-28 lg:pb-12" style={{ backgroundColor: 'var(--primary-bg)' }}>
-        {/* Search & Filter Bar */}
-        <div className="mb-8 space-y-4">
+        {/* Modern Search & Filter Bar */}
+        <div className="mb-6 sm:mb-8 space-y-4">
           {/* Search Bar */}
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1 relative">
               <input
-                type="text"
+                type="search"
                 placeholder="Search menu items..."
                 value={searchQuery}
                 onChange={handleSearchChange}
-                className="w-full px-4 py-3 pl-11 pr-10 border-2 rounded-lg focus:ring-4 transition-all duration-200 outline-none"
+                className="w-full px-4 py-3 pl-11 pr-10 border-2 rounded-xl focus:ring-4 transition-all duration-200 outline-none bg-white shadow-sm"
                 style={{
-                  borderColor: 'var(--accent-color)',
-                  focusBorderColor: 'var(--primary-text)'
+                  borderColor: 'var(--border-light)',
                 }}
               />
               <svg
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
+                className="absolute left-3.5 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
                 fill="none"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -617,10 +616,10 @@ const UV_Menu: React.FC = () => {
               {searchQuery && (
                 <button
                   onClick={handleClearSearch}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-700 transition-colors p-1 rounded-full hover:bg-gray-100"
                   aria-label="Clear search"
                 >
-                  <svg className="w-5 h-5" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-4 h-4" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" viewBox="0 0 24 24" stroke="currentColor">
                     <path d="M6 18L18 6M6 6l12 12"></path>
                   </svg>
                 </button>
@@ -628,20 +627,20 @@ const UV_Menu: React.FC = () => {
             </div>
 
             {/* Mobile Filter Button */}
-              <button
-                onClick={() => setFilterPanelOpen(true)}
-                className="sm:hidden px-6 py-3 bg-white border-2 rounded-lg font-medium hover:bg-gray-50 transition-all duration-200 flex items-center justify-center space-x-2"
-                style={{ 
-                  borderColor: 'var(--accent-color)',
-                  color: 'var(--primary-text)'
-                }}
-              >
+            <button
+              onClick={() => setFilterPanelOpen(true)}
+              className="sm:hidden px-5 py-3 bg-white border-2 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-200 flex items-center justify-center gap-2 shadow-sm"
+              style={{ 
+                borderColor: 'var(--border-light)',
+                color: 'var(--primary-text)'
+              }}
+            >
               <svg className="w-5 h-5" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
                 <path d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
               </svg>
               <span>Filters</span>
               {dietaryFilters.length > 0 && (
-                <span className="ml-2 px-2 py-0.5 bg-orange-600 text-white text-xs font-medium rounded-full">
+                <span className="px-2 py-0.5 bg-[#2C1A16] text-[#F2EFE9] text-xs font-bold rounded-full">
                   {dietaryFilters.length}
                 </span>
               )}
@@ -651,16 +650,16 @@ const UV_Menu: React.FC = () => {
             <select
               value={sortOption}
               onChange={handleSortChange}
-              className="px-4 py-3 border-2 rounded-lg focus:ring-4 transition-all duration-200 outline-none font-medium bg-white"
+              className="px-4 py-3 border-2 rounded-xl focus:ring-4 transition-all duration-200 outline-none font-semibold bg-white shadow-sm"
               style={{
-                borderColor: 'var(--accent-color)',
+                borderColor: 'var(--border-light)',
                 color: 'var(--primary-text)'
               }}
             >
-              <option value="default">Sort by: Default</option>
+              <option value="default">Default</option>
               <option value="name">Name (A-Z)</option>
-              <option value="price_low_high">Price (Low to High)</option>
-              <option value="price_high_low">Price (High to Low)</option>
+              <option value="price_low_high">Price: Low to High</option>
+              <option value="price_high_low">Price: High to Low</option>
             </select>
           </div>
 
@@ -856,12 +855,12 @@ const UV_Menu: React.FC = () => {
                   return (
                     <div
                       key={item.item_id}
-                      className={`bg-white rounded-xl border border-gray-200 overflow-hidden transition-all duration-200 hover:shadow-lg ${
+                      className={`menu-item-card bg-white rounded-2xl overflow-hidden transition-all duration-250 ${
                         isOutOfStock ? 'opacity-60' : ''
                       }`}
                     >
-                      {/* COMMANDMENT #4: Item Image - Full width, consistent aspect ratio */}
-                      <div className="relative aspect-square bg-gray-100">
+                      {/* Item Image - Full width, consistent aspect ratio */}
+                      <div className="relative aspect-square bg-gray-50">
                         <img
                           src={item.image_url || ''}
                           alt={item.name}
@@ -872,17 +871,17 @@ const UV_Menu: React.FC = () => {
                         {/* Badges */}
                         <div className="absolute top-3 right-3 flex flex-col gap-2">
                           {item.is_limited_edition && (
-                            <span className="px-3 py-1 bg-purple-600 text-white text-xs font-bold rounded-full shadow-lg">
+                            <span className="px-3 py-1.5 bg-purple-600 text-white text-xs font-bold rounded-full shadow-md backdrop-blur-sm">
                               Limited Edition
                             </span>
                           )}
                           {isOutOfStock && (
-                            <span className="px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-full shadow-lg">
+                            <span className="px-3 py-1.5 bg-red-600 text-white text-xs font-bold rounded-full shadow-md backdrop-blur-sm">
                               Sold Out
                             </span>
                           )}
                           {isLowStock && !isOutOfStock && (
-                            <span className="px-3 py-1 bg-orange-500 text-white text-xs font-bold rounded-full shadow-lg">
+                            <span className="px-3 py-1.5 bg-orange-500 text-white text-xs font-bold rounded-full shadow-md backdrop-blur-sm">
                               Only {item.current_stock} left
                             </span>
                           )}
@@ -890,13 +889,13 @@ const UV_Menu: React.FC = () => {
 
                         {/* Dietary Tags */}
                         {item.dietary_tags && item.dietary_tags.length > 0 && (
-                          <div className="absolute bottom-3 left-3 flex gap-1">
+                          <div className="absolute bottom-3 left-3 flex gap-1.5">
                             {item.dietary_tags.map(tag => {
                               const option = dietaryOptions.find(d => d.value === tag);
                               return option ? (
                                 <span
                                   key={tag}
-                                  className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-lg shadow-md"
+                                  className="w-9 h-9 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center text-lg shadow-md border border-gray-100"
                                   title={option.label}
                                 >
                                   {option.icon}
@@ -908,46 +907,46 @@ const UV_Menu: React.FC = () => {
                       </div>
 
                       {/* Item Details */}
-                      <div className="p-4 sm:p-6">
-                        <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 leading-tight">
+                      <div className="p-5 sm:p-6">
+                        <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 leading-tight">
                           {item.name}
                         </h3>
                         
                         {item.description && (
-                          <p className="text-gray-600 text-sm mb-3 sm:mb-4 line-clamp-2 leading-relaxed">
+                          <p className="text-gray-600 text-sm mb-4 line-clamp-2 leading-relaxed">
                             {item.description}
                           </p>
                         )}
 
                         <div className="flex items-center justify-between mb-4">
-                          <span className="text-2xl font-bold text-gray-900">
+                          <span className="text-2xl font-bold text-[#2C1A16]" style={{ letterSpacing: '-0.01em' }}>
                             €{Number(item.price).toFixed(2)}
                           </span>
 
                           {item.customization_groups.length > 0 && (
-                            <span className="text-xs text-gray-500 font-medium">
+                            <span className="px-2.5 py-1 bg-[#F2EFE9] text-[#2C1A16] text-xs font-semibold rounded-full border border-[#D4C5B0]">
                               Customizable
                             </span>
                           )}
                         </div>
 
-                        {/* COMMANDMENT #1: 48px min-height, full width on mobile */}
+                        {/* Add to Cart Button */}
                         <button
                           onClick={() => handleOpenCustomizationModal(item)}
                           disabled={isOutOfStock || loadingItemId === item.item_id}
-                          className={`w-full px-4 sm:px-6 py-3 rounded-lg sm:rounded-xl font-bold text-sm sm:text-base transition-all duration-200 flex items-center justify-center add-to-cart-btn ${
+                          className={`w-full px-5 py-3.5 rounded-xl font-bold text-base transition-all duration-200 flex items-center justify-center add-to-cart-btn ${
                             isOutOfStock
                               ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                               : loadingItemId === item.item_id
                               ? 'opacity-75 cursor-wait'
-                              : 'hover:shadow-lg'
+                              : 'hover:shadow-lg hover:-translate-y-0.5'
                           }`}
                           style={!isOutOfStock ? { 
                             backgroundColor: 'var(--btn-bg)', 
                             color: 'var(--btn-text)',
-                            minHeight: '48px'
+                            minHeight: '52px'
                           } : {
-                            minHeight: '48px'
+                            minHeight: '52px'
                           }}
                         >
                           {loadingItemId === item.item_id ? (
@@ -1051,14 +1050,14 @@ const UV_Menu: React.FC = () => {
         <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center">
           {/* Backdrop with explicit click handler */}
           <div 
-            className="fixed inset-0 bg-black bg-opacity-50 transition-opacity cursor-pointer"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity cursor-pointer"
             onClick={handleCloseCustomizationModal}
             aria-hidden="true"
           />
           
           {/* Modal Container - Bottom Sheet on Mobile, Centered on Desktop */}
           <div 
-            className="relative bg-white rounded-t-2xl sm:rounded-xl shadow-2xl w-full sm:max-w-2xl max-h-[85vh] sm:max-h-[90vh] overflow-y-auto z-10 animate-slide-up sm:animate-scale-in"
+            className="relative bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl w-full sm:max-w-2xl max-h-[85vh] sm:max-h-[90vh] overflow-y-auto z-10 animate-slide-up sm:animate-scale-in"
             onClick={(e) => e.stopPropagation()}
             style={{ 
               marginBottom: 'env(safe-area-inset-bottom, 0px)'

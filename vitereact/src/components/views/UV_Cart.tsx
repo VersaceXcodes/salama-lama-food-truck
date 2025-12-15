@@ -594,15 +594,15 @@ const UV_Cart: React.FC = () => {
                 const isUpdating = itemLoadingStates[item.cart_item_id] || false;
                 const isAvailable = item.is_available !== false;
 
-                return (
-                  <div
-                    key={item.cart_item_id}
-                    className={`rounded-xl shadow-md border p-6 transition-all duration-200 hover:shadow-lg ${
-                      isAvailable 
-                        ? 'bg-white border-gray-200' 
-                        : 'bg-red-50 border-red-300 opacity-75'
-                    }`}
-                  >
+                  return (
+                    <div
+                      key={item.cart_item_id}
+                      className={`rounded-2xl shadow-md border-2 p-5 sm:p-6 transition-all duration-200 hover:shadow-lg ${
+                        isAvailable 
+                          ? 'bg-white border-[#E8E1D6]' 
+                          : 'bg-red-50 border-red-300 opacity-75'
+                      }`}
+                    >
                     {!isAvailable && (
                       <div className="mb-3 flex items-start space-x-2 bg-red-100 border border-red-300 rounded-lg p-3">
                         <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
@@ -630,14 +630,14 @@ const UV_Cart: React.FC = () => {
                           </p>
                         )}
 
-                        {/* COMMANDMENT #1: Quantity Controls - Clean Mobile Stepper */}
+                        {/* Quantity Controls - Clean Mobile Stepper */}
                         {isAvailable && (
                           <div className="mt-3 sm:mt-4 flex items-center justify-between sm:justify-start gap-3">
-                            <div className="flex items-center bg-gray-50 rounded-lg p-1">
+                            <div className="flex items-center bg-[#F2EFE9] rounded-xl p-1.5">
                               <button
                                 onClick={() => handleQuantityChange(item.cart_item_id, item.quantity - 1)}
                                 disabled={item.quantity <= 1 || isUpdating}
-                                className="w-11 h-11 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center text-gray-700 hover:bg-gray-100 hover:border-[#2C1A16] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                                className="w-11 h-11 rounded-full bg-white border-2 border-[#E8E1D6] flex items-center justify-center text-[#2C1A16] hover:bg-white hover:border-[#2C1A16] hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm"
                                 style={{ minHeight: '44px', minWidth: '44px' }}
                                 aria-label="Decrease quantity"
                               >
@@ -648,14 +648,14 @@ const UV_Cart: React.FC = () => {
                                 )}
                               </button>
 
-                              <span className="w-16 sm:w-20 text-center font-bold text-lg sm:text-xl text-gray-900">
+                              <span className="w-16 sm:w-20 text-center font-bold text-xl sm:text-2xl text-[#2C1A16]">
                                 {item.quantity}
                               </span>
 
                               <button
                                 onClick={() => handleQuantityChange(item.cart_item_id, item.quantity + 1)}
                                 disabled={isUpdating}
-                                className="w-11 h-11 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center text-gray-700 hover:bg-gray-100 hover:border-[#2C1A16] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                                className="w-11 h-11 rounded-full bg-white border-2 border-[#E8E1D6] flex items-center justify-center text-[#2C1A16] hover:bg-white hover:border-[#2C1A16] hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm"
                                 style={{ minHeight: '44px', minWidth: '44px' }}
                                 aria-label="Increase quantity"
                               >
@@ -668,7 +668,7 @@ const UV_Cart: React.FC = () => {
                             </div>
                             
                             <div className="text-right sm:hidden">
-                              <p className="text-xl font-bold text-gray-900">
+                              <p className="text-xl font-bold text-[#2C1A16]">
                                 €{lineTotal.toFixed(2)}
                               </p>
                             </div>
@@ -757,7 +757,7 @@ const UV_Cart: React.FC = () => {
 
             {/* Order Summary Sidebar */}
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 sticky top-24">
+              <div className="bg-white rounded-2xl shadow-lg border-2 border-[#E8E1D6] p-6 sticky top-24">
                 <h2 className="text-xl font-bold text-gray-900 mb-6">Order Summary</h2>
 
                 {/* Discount Code Section */}
@@ -882,23 +882,23 @@ const UV_Cart: React.FC = () => {
           </div>
         </div>
         
-        {/* COMMANDMENT #4: Sticky Footer Bar for Mobile - Total Price & Checkout Button */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t-4 shadow-2xl z-40 lg:hidden" style={{ 
-          borderColor: 'var(--accent-color)',
+        {/* Premium Sticky Footer Bar for Mobile */}
+        <div className="fixed bottom-0 left-0 right-0 bg-white shadow-2xl z-40 lg:hidden border-t-2 border-[#E8E1D6]" style={{ 
           paddingBottom: 'env(safe-area-inset-bottom, 16px)',
-          height: 'var(--bottom-bar-height-mobile)'
+          height: 'var(--bottom-bar-height-mobile)',
+          boxShadow: '0 -8px 32px 0 rgb(44 26 22 / 0.12)'
         }}>
-          <div className="px-4 sm:px-6 py-4 flex items-center justify-between gap-3 sm:gap-4">
+          <div className="px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm text-gray-600 font-medium">Total</p>
-              <p className="text-2xl font-bold text-orange-600">
+              <p className="text-xs text-gray-600 font-semibold mb-0.5">Total</p>
+              <p className="text-2xl font-bold text-[#2C1A16]" style={{ letterSpacing: '-0.02em' }}>
                 €{total.toFixed(2)}
               </p>
             </div>
             <button
               onClick={handleProceedToCheckout}
               disabled={validateCheckoutMutation.isPending}
-              className="flex-1 max-w-xs py-4 font-bold text-lg rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center"
+              className="flex-1 max-w-xs py-4 font-bold text-lg rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 flex items-center justify-center"
               style={{ 
                 backgroundColor: 'var(--btn-bg)', 
                 color: 'var(--btn-text)',

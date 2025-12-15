@@ -63,7 +63,10 @@ html, body {
 
 @layer base {
 	:root {
-		--radius: 0.5rem;
+		/* Modern Border Radius System (16-20px for premium feel) */
+		--radius: 1rem; /* 16px */
+		--radius-lg: 1.25rem; /* 20px */
+		--radius-xl: 1.5rem; /* 24px */
 		
 		/* Global Theme Variables - Dark Coffee & Cream */
 		--primary-bg: #F2EFE9;
@@ -71,10 +74,18 @@ html, body {
 		--btn-bg: #2C1A16;
 		--btn-text: #F2EFE9;
 		--accent-color: #D4C5B0;
+		--border-light: #E8E1D6;
+		
+		/* Shadows - Soft and Subtle */
+		--shadow-sm: 0 1px 2px 0 rgb(44 26 22 / 0.05);
+		--shadow: 0 2px 8px 0 rgb(44 26 22 / 0.08);
+		--shadow-md: 0 4px 12px 0 rgb(44 26 22 / 0.1);
+		--shadow-lg: 0 8px 24px 0 rgb(44 26 22 / 0.12);
+		--shadow-xl: 0 12px 32px 0 rgb(44 26 22 / 0.15);
 		
 		/* Bottom Bar Heights for Safe Area Calculations */
-		--bottom-bar-height: 84px;
-		--bottom-bar-height-mobile: 80px;
+		--bottom-bar-height: 88px;
+		--bottom-bar-height-mobile: 88px;
 		
 		/* Brand Colors (Legacy - kept for compatibility) */
 		--salamalama-com-color-1: #2C2018;
@@ -171,43 +182,53 @@ a[class*="bg-red"]:hover {
 }
 
 /* ===================================
-   MOBILE-FIRST COMMANDMENT #5
-   TYPOGRAPHY SCALING (Mobile First)
+   MODERN TYPOGRAPHY SYSTEM
+   Responsive font sizing with fluid scaling
    =================================== */
 
-/* Mobile-first heading sizes - DOWNSCALED for mobile */
+/* Modern heading sizes with clamp() for fluid scaling */
 h1 {
-	font-size: 2.2rem; /* 35.2px on mobile - prevents 3-line wrap */
-	line-height: 1.2;
+	font-size: clamp(1.875rem, 4vw + 1rem, 3.5rem); /* 30px - 56px */
+	line-height: 1.15;
 	font-weight: 800;
-	margin-bottom: 1rem; /* 16px */
+	margin-bottom: clamp(0.75rem, 2vw, 1.5rem);
+	letter-spacing: -0.02em;
 }
 
 h2 {
-	font-size: 1.75rem; /* 28px */
-	line-height: 1.3;
+	font-size: clamp(1.5rem, 3vw + 0.5rem, 2.5rem); /* 24px - 40px */
+	line-height: 1.25;
 	font-weight: 700;
-	margin-bottom: 0.875rem; /* 14px */
+	margin-bottom: clamp(0.625rem, 1.5vw, 1.25rem);
+	letter-spacing: -0.01em;
 }
 
 h3 {
-	font-size: 1.25rem; /* 20px - Product card titles */
-	line-height: 1.4;
+	font-size: clamp(1.125rem, 2vw + 0.25rem, 1.5rem); /* 18px - 24px */
+	line-height: 1.35;
 	font-weight: 600;
-	margin-bottom: 0.5rem; /* 8px */
+	margin-bottom: 0.75rem;
 }
 
-/* Desktop scaling - larger screens get bigger text */
-@media (min-width: 769px) {
-	h1 {
-		font-size: 3.5rem; /* 56px on desktop */
-	}
-	h2 {
-		font-size: 2.5rem; /* 40px */
-	}
-	h3 {
-		font-size: 1.875rem; /* 30px */
-	}
+h4 {
+	font-size: clamp(1rem, 1.5vw + 0.25rem, 1.25rem); /* 16px - 20px */
+	line-height: 1.4;
+	font-weight: 600;
+	margin-bottom: 0.5rem;
+}
+
+/* Body text with optimal line spacing */
+p {
+	font-size: clamp(0.9375rem, 0.5vw + 0.875rem, 1.0625rem); /* 15px - 17px */
+	line-height: 1.65;
+	margin-bottom: 1rem;
+	color: #4A3B32;
+}
+
+/* Small text */
+small, .text-sm {
+	font-size: clamp(0.8125rem, 0.5vw + 0.75rem, 0.9375rem); /* 13px - 15px */
+	line-height: 1.5;
 }
 
 /* Body text - high contrast */
@@ -878,4 +899,324 @@ p {
 	h2 {
 		font-size: 1.5rem !important; /* 24px */
 	}
+}
+
+/* ===================================
+   MODERN CARD & SURFACE SYSTEM
+   Standardized cards with consistent styling
+   =================================== */
+
+/* Base card styling */
+.card,
+[class*="rounded-xl"][class*="bg-white"],
+[class*="rounded-lg"][class*="bg-white"] {
+	border-radius: var(--radius-lg) !important;
+	box-shadow: var(--shadow);
+	border: 1px solid var(--border-light);
+	transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card:hover,
+[class*="rounded-xl"][class*="bg-white"]:hover {
+	box-shadow: var(--shadow-md);
+	transform: translateY(-2px);
+}
+
+/* Menu item cards - special styling */
+.grid > div[class*="bg-white"],
+.menu-item-card {
+	border-radius: var(--radius-lg) !important;
+	box-shadow: var(--shadow);
+	border: 1.5px solid var(--border-light);
+	overflow: hidden;
+	transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.grid > div[class*="bg-white"]:hover,
+.menu-item-card:hover {
+	box-shadow: var(--shadow-lg);
+	transform: translateY(-4px);
+	border-color: var(--accent-color);
+}
+
+/* ===================================
+   MODERN BUTTON SYSTEM
+   Consistent button styling with proper states
+   =================================== */
+
+/* Primary buttons */
+button[class*="bg-"][class*="text-white"],
+a[class*="bg-"][class*="text-white"],
+.btn-primary {
+	background-color: var(--btn-bg) !important;
+	color: var(--btn-text) !important;
+	border-radius: var(--radius) !important;
+	font-weight: 600;
+	padding: 0.875rem 1.75rem !important;
+	transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+	box-shadow: var(--shadow-sm);
+	border: 2px solid var(--btn-bg) !important;
+}
+
+button[class*="bg-"][class*="text-white"]:hover:not(:disabled),
+a[class*="bg-"][class*="text-white"]:hover,
+.btn-primary:hover:not(:disabled) {
+	background-color: #1A0F0D !important;
+	transform: translateY(-1px);
+	box-shadow: var(--shadow-md);
+}
+
+button[class*="bg-"][class*="text-white"]:active:not(:disabled),
+a[class*="bg-"][class*="text-white"]:active,
+.btn-primary:active:not(:disabled) {
+	transform: translateY(0);
+	box-shadow: var(--shadow-sm);
+}
+
+/* Secondary buttons (outlined) */
+button[class*="border-"][class*="bg-transparent"],
+a[class*="border-"][class*="bg-transparent"],
+.btn-secondary {
+	background-color: transparent !important;
+	color: var(--primary-text) !important;
+	border: 2px solid var(--primary-text) !important;
+	border-radius: var(--radius) !important;
+	font-weight: 600;
+	padding: 0.875rem 1.75rem !important;
+	transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button[class*="border-"][class*="bg-transparent"]:hover:not(:disabled),
+a[class*="border-"][class*="bg-transparent"]:hover,
+.btn-secondary:hover:not(:disabled) {
+	background-color: var(--btn-bg) !important;
+	color: var(--btn-text) !important;
+	transform: translateY(-1px);
+	box-shadow: var(--shadow-sm);
+}
+
+button[class*="border-"][class*="bg-transparent"]:active:not(:disabled),
+a[class*="border-"][class*="bg-transparent"]:active,
+.btn-secondary:active:not(:disabled) {
+	transform: translateY(0);
+}
+
+/* Full-width mobile buttons */
+@media (max-width: 768px) {
+	button[class*="bg-"],
+	a[class*="bg-"],
+	.btn-primary,
+	.btn-secondary {
+		width: 100% !important;
+		justify-content: center;
+	}
+}
+
+/* ===================================
+   PREMIUM BOTTOM CART BAR (MOBILE)
+   Less intrusive, more elegant
+   =================================== */
+
+[data-floating-cart] {
+	background: linear-gradient(to top, var(--btn-bg), #1A0F0D) !important;
+	border-top: none !important;
+	box-shadow: 0 -8px 32px 0 rgb(44 26 22 / 0.25) !important;
+	backdrop-filter: blur(12px);
+	padding: 0.875rem 1rem !important;
+	padding-bottom: calc(0.875rem + env(safe-area-inset-bottom, 0px)) !important;
+}
+
+[data-floating-cart]:hover {
+	background: linear-gradient(to top, #1A0F0D, var(--btn-bg)) !important;
+}
+
+/* Adjust spacing between elements */
+[data-floating-cart] .flex {
+	align-items: center;
+	gap: 1rem;
+}
+
+/* Price display */
+[data-floating-cart] .text-xl {
+	font-size: 1.5rem !important;
+	font-weight: 800 !important;
+	letter-spacing: -0.01em;
+}
+
+/* ===================================
+   MICRO-INTERACTIONS & TRANSITIONS
+   Subtle animations for premium feel
+   =================================== */
+
+/* Smooth transitions for interactive elements */
+button,
+a,
+input,
+select,
+textarea {
+	transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Add to cart button animation */
+.add-to-cart-btn,
+.order-btn,
+.checkout-btn {
+	position: relative;
+	overflow: hidden;
+}
+
+.add-to-cart-btn::after,
+.order-btn::after,
+.checkout-btn::after {
+	content: '';
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 0;
+	height: 0;
+	border-radius: 50%;
+	background: rgba(255, 255, 255, 0.2);
+	transform: translate(-50%, -50%);
+	transition: width 0.5s, height 0.5s;
+}
+
+.add-to-cart-btn:active::after,
+.order-btn:active::after,
+.checkout-btn:active::after {
+	width: 300px;
+	height: 300px;
+}
+
+/* Toast notification improvements */
+[role="status"],
+.toast {
+	border-radius: var(--radius-lg) !important;
+	box-shadow: var(--shadow-xl) !important;
+	border: 1.5px solid var(--border-light) !important;
+	backdrop-filter: blur(12px);
+}
+
+/* Input focus states */
+input:focus,
+textarea:focus,
+select:focus {
+	border-color: var(--primary-text) !important;
+	box-shadow: 0 0 0 3px rgba(44, 26, 22, 0.1) !important;
+	outline: none;
+}
+
+/* Quantity stepper enhancements */
+button[aria-label*="quantity"] {
+	transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button[aria-label*="quantity"]:hover:not(:disabled) {
+	transform: scale(1.05);
+	border-color: var(--primary-text) !important;
+	background-color: var(--primary-bg) !important;
+}
+
+button[aria-label*="quantity"]:active:not(:disabled) {
+	transform: scale(0.95);
+}
+
+/* ===================================
+   MODAL & BOTTOM SHEET IMPROVEMENTS
+   Modern drawer-style modals
+   =================================== */
+
+/* Modal backdrop */
+.fixed.inset-0[class*="bg-black"] {
+	backdrop-filter: blur(4px);
+	transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Bottom sheet style modal (mobile) */
+@media (max-width: 640px) {
+	[role="dialog"] {
+		border-radius: var(--radius-xl) var(--radius-xl) 0 0 !important;
+		box-shadow: var(--shadow-xl) !important;
+	}
+	
+	/* Pull handle for bottom sheets */
+	[role="dialog"]::before {
+		content: '';
+		position: absolute;
+		top: 0.75rem;
+		left: 50%;
+		transform: translateX(-50%);
+		width: 48px;
+		height: 4px;
+		background-color: var(--accent-color);
+		border-radius: 2px;
+		opacity: 0.5;
+	}
+}
+
+/* Desktop modal */
+@media (min-width: 641px) {
+	[role="dialog"] {
+		border-radius: var(--radius-xl) !important;
+		box-shadow: var(--shadow-xl) !important;
+	}
+}
+
+/* ===================================
+   SEARCH, FILTER, SORT CONTROLS
+   Modern food ordering app feel
+   =================================== */
+
+/* Compact search input */
+input[type="search"],
+input[placeholder*="Search"] {
+	border-radius: var(--radius) !important;
+	border: 2px solid var(--border-light) !important;
+	padding: 0.75rem 1rem 0.75rem 2.75rem !important;
+	font-size: 0.9375rem !important;
+	transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+input[type="search"]:focus,
+input[placeholder*="Search"]:focus {
+	border-color: var(--primary-text) !important;
+	box-shadow: 0 0 0 3px rgba(44, 26, 22, 0.08) !important;
+}
+
+/* Sort dropdown */
+select {
+	border-radius: var(--radius) !important;
+	border: 2px solid var(--border-light) !important;
+	padding: 0.75rem 2.5rem 0.75rem 1rem !important;
+	font-size: 0.9375rem !important;
+	font-weight: 500;
+	background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%232C1A16' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+	background-position: right 0.75rem center;
+	background-repeat: no-repeat;
+	background-size: 1.25rem;
+	appearance: none;
+}
+
+/* Filter badges */
+span[class*="bg-orange-100"],
+span[class*="bg-green-100"] {
+	border-radius: 9999px !important;
+	padding: 0.375rem 0.875rem !important;
+	font-size: 0.8125rem !important;
+	font-weight: 600;
+	border: 1.5px solid currentColor !important;
+	opacity: 0.9;
+	transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+span[class*="bg-orange-100"]:hover,
+span[class*="bg-green-100"]:hover {
+	opacity: 1;
+	transform: scale(1.05);
+}
+
+/* Sticky controls bar */
+.sticky {
+	backdrop-filter: blur(8px);
+	background-color: rgba(242, 239, 233, 0.95) !important;
+	box-shadow: 0 2px 12px 0 rgb(44 26 22 / 0.08);
 }

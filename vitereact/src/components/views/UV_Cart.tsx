@@ -463,19 +463,21 @@ const UV_Cart: React.FC = () => {
   // Get guest cart ID for tracking (initialize early for guest users)
   const guestCartId = !authToken ? getGuestCartId() : null;
   
-  // Initialize guest cart tracking on mount
+  // Initialize guest cart tracking on mount (only runs once)
   useEffect(() => {
     if (!authToken) {
       getGuestCartId(); // Ensure guest cart ID is created early
     }
   }, [authToken]);
   
-  // Log cart totals in dev mode
+  // Log cart totals in dev mode (only when cartData changes, not on every render)
   useEffect(() => {
     if (cartData) {
-      logCartTotals('Shopping Cart Page', cartData, totals, guestCartId || 'authenticated');
+      const totalsForLogging = calculateCartTotals(parseCartData(cartData));
+      logCartTotals('Shopping Cart Page', cartData, totalsForLogging, guestCartId || 'authenticated');
     }
-  }, [cartData, totals, guestCartId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartData]);
 
   if (cartItems.length === 0) {
     return (

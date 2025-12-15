@@ -259,7 +259,7 @@ const GV_SiteHeader: React.FC = () => {
                 aria-label="Salama Lama Home"
               >
                 <img 
-                  src="/salama-lama-logo.png" 
+                  src="/assets/salama-lama-logo.png" 
                   alt="Salama Lama" 
                   className="w-auto object-contain transition-transform duration-200 group-hover:scale-105"
                   style={{ height: '26px', maxWidth: '150px' }}

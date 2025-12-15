@@ -846,7 +846,8 @@ INSERT INTO system_settings (setting_id, setting_key, setting_value, setting_typ
 ('set_012', 'collection_time_slots', '["09:00-09:30", "09:30-10:00", "10:00-10:30", "10:30-11:00", "11:00-11:30", "11:30-12:00", "12:00-12:30", "12:30-13:00", "13:00-13:30", "13:30-14:00", "14:00-14:30", "14:30-15:00", "15:00-15:30", "15:30-16:00", "16:00-16:30", "16:30-17:00"]', 'json', '2023-01-10T10:30:00Z', 'user_001'),
 ('set_013', 'featured_categories', '["cat_001", "cat_003", "cat_004"]', 'json', '2024-01-01T10:00:00Z', 'user_002'),
 ('set_014', 'max_order_items', '20', 'number', '2023-01-10T10:35:00Z', 'user_001'),
-('set_015', 'maintenance_mode', 'false', 'boolean', '2024-01-15T09:00:00Z', 'user_001');
+('set_015', 'maintenance_mode', 'false', 'boolean', '2024-01-15T09:00:00Z', 'user_001'),
+('set_016', 'store_logo_url', '"/assets/salama-lama-logo.png"', 'string', '2024-01-15T10:00:00Z', 'user_001');
 
 -- Seed Activity Logs
 INSERT INTO activity_logs (log_id, user_id, action_type, entity_type, entity_id, description, changes, ip_address, user_agent, created_at) VALUES

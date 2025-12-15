@@ -369,7 +369,7 @@ const GV_Footer: React.FC = () => {
               {/* Monochrome Logo - The Brand Anchor */}
               <div className="flex justify-center mb-4">
                 <img 
-                  src="/salama-lama-logo.png" 
+                  src="/assets/salama-lama-logo.png" 
                   alt="Salama Lama Logo" 
                   className="h-[120px] w-auto object-contain"
                   style={{ 

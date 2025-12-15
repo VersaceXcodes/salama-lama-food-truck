@@ -17,7 +17,9 @@ import {
   CheckCircle,
   X,
   Plus,
-  Trash2
+  Trash2,
+  Upload,
+  Image as ImageIcon
 } from 'lucide-react';
 
 // ===========================
@@ -238,6 +240,8 @@ const UV_AdminSettings: React.FC = () => {
   });
 
   const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
   // Fetch all settings
   const { data: settingsData, isLoading: settingsLoading } = useQuery({
@@ -442,6 +446,65 @@ const UV_AdminSettings: React.FC = () => {
     }
   }, [toastMessage]);
 
+  // Set logo preview when settings are loaded
+  useEffect(() => {
+    if (businessInfoSettings.logo_url) {
+      setLogoPreview(businessInfoSettings.logo_url);
+    }
+  }, [businessInfoSettings.logo_url]);
+
+  // Handle logo file upload
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setToastMessage({ type: 'error', message: 'Please select an image file' });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setToastMessage({ type: 'error', message: 'Image size must be less than 5MB' });
+      return;
+    }
+
+    setIsUploadingLogo(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await axios.post(`${API_BASE_URL}/api/admin/upload/image`, formData, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      const uploadedUrl = `${API_BASE_URL}${response.data.data.url}`;
+      setBusinessInfoSettings({ ...businessInfoSettings, logo_url: uploadedUrl });
+      setLogoPreview(uploadedUrl);
+      setUnsavedChanges(prev => ({ ...prev, business_info: true }));
+      setToastMessage({ type: 'success', message: 'Logo uploaded successfully! Remember to save changes.' });
+    } catch (error: any) {
+      setToastMessage({ 
+        type: 'error', 
+        message: error.response?.data?.message || 'Failed to upload logo' 
+      });
+    } finally {
+      setIsUploadingLogo(false);
+    }
+  };
+
+  // Handle logo removal
+  const handleRemoveLogo = () => {
+    setBusinessInfoSettings({ ...businessInfoSettings, logo_url: null });
+    setLogoPreview(null);
+    setUnsavedChanges(prev => ({ ...prev, business_info: true }));
+  };
+
   const sections = [
     { id: 'business_info', label: 'Business Info', icon: Building2 },
     { id: 'operating_hours', label: 'Operating Hours', icon: Clock },
@@ -595,20 +658,92 @@ const UV_AdminSettings: React.FC = () => {
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Logo URL
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      Business Logo
                     </label>
-                    <input
-                      type="url"
-                      value={businessInfoSettings.logo_url || ''}
-                      onChange={(e) => {
-                        setBusinessInfoSettings({ ...businessInfoSettings, logo_url: e.target.value || null });
-                        setUnsavedChanges(prev => ({ ...prev, business_info: true }));
-                      }}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                      placeholder="https://example.com/logo.png"
-                    />
-                    <p className="mt-1 text-sm text-gray-500">Enter the URL of your business logo image</p>
+                    
+                    {/* Logo Preview */}
+                    {logoPreview && (
+                      <div className="mb-4 p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-gray-700">Current Logo:</span>
+                          <button
+                            type="button"
+                            onClick={handleRemoveLogo}
+                            className="text-sm text-red-600 hover:text-red-800 font-medium flex items-center space-x-1"
+                          >
+                            <X className="h-4 w-4" />
+                            <span>Remove</span>
+                          </button>
+                        </div>
+                        <div className="flex items-center justify-center bg-white p-4 rounded-lg border border-gray-200">
+                          <img 
+                            src={logoPreview} 
+                            alt="Business Logo Preview" 
+                            className="max-h-24 max-w-full object-contain"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Upload Section */}
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-3">
+                        <label className="flex-1">
+                          <div className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-colors cursor-pointer">
+                            <div className="flex items-center space-x-3">
+                              {isUploadingLogo ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-orange-600"></div>
+                                  <span className="text-sm font-medium text-gray-700">Uploading...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Upload className="h-5 w-5 text-gray-500" />
+                                  <span className="text-sm font-medium text-gray-700">
+                                    {logoPreview ? 'Upload New Logo' : 'Upload Logo'}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleLogoUpload}
+                            disabled={isUploadingLogo}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+                      
+                      <div className="text-xs text-gray-500 flex items-start space-x-2">
+                        <ImageIcon className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                        <span>
+                          Recommended: PNG or SVG format, transparent background, max 5MB. 
+                          Logo will be displayed in the navigation header.
+                        </span>
+                      </div>
+
+                      {/* Optional: Manual URL Entry */}
+                      <div className="pt-2">
+                        <label className="block text-xs font-medium text-gray-600 mb-1">
+                          Or enter logo URL manually:
+                        </label>
+                        <input
+                          type="url"
+                          value={businessInfoSettings.logo_url || ''}
+                          onChange={(e) => {
+                            const url = e.target.value || null;
+                            setBusinessInfoSettings({ ...businessInfoSettings, logo_url: url });
+                            setLogoPreview(url);
+                            setUnsavedChanges(prev => ({ ...prev, business_info: true }));
+                          }}
+                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          placeholder="https://example.com/logo.png"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
 

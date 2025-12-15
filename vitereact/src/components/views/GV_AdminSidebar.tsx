@@ -139,7 +139,7 @@ const GV_AdminSidebar: React.FC = () => {
           {!is_collapsed && (
             <Link to="/admin/dashboard" className="flex items-center">
               <img 
-                src="/salama-lama-logo.png" 
+                src="/assets/salama-lama-logo.png" 
                 alt="Salama Lama" 
                 className="w-auto object-contain"
                 style={{ height: '32px', maxWidth: '180px' }}

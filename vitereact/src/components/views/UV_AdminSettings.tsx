@@ -483,7 +483,7 @@ const UV_AdminSettings: React.FC = () => {
         },
       });
 
-      const uploadedUrl = `${API_BASE_URL}${response.data.data.url}`;
+      const uploadedUrl = `${API_BASE_URL}${response.data.url}`;
       setBusinessInfoSettings({ ...businessInfoSettings, logo_url: uploadedUrl });
       setLogoPreview(uploadedUrl);
       setUnsavedChanges(prev => ({ ...prev, business_info: true }));

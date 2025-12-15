@@ -327,6 +327,16 @@ const UV_Menu: React.FC = () => {
   };
 
   const handleOpenCustomizationModal = (item: MenuItem) => {
+    // Safety check: Don't open if item is null
+    if (!item) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Unable to load product details. Please try again.'
+      });
+      return;
+    }
+
     // Initialize with default selections
     const defaultSelections: SelectedCustomization[] = [];
     item.customization_groups.forEach(group => {
@@ -346,12 +356,22 @@ const UV_Menu: React.FC = () => {
     const customizationPrice = defaultSelections.reduce((sum, c) => sum + Number(c.additional_price), 0);
     const totalPrice = basePrice + customizationPrice;
 
+    // IMPORTANT: Set product data first, then open sheet in next frame
+    // This ensures the sheet content is ready before animation starts
     setCustomizationModal({
-      is_open: true,
+      is_open: false,
       item,
       selected_customizations: defaultSelections,
       total_price: totalPrice,
       quantity: 1,
+    });
+
+    // Open sheet in next frame to ensure state is ready
+    requestAnimationFrame(() => {
+      setCustomizationModal(prev => ({
+        ...prev,
+        is_open: true,
+      }));
     });
   };
 
@@ -475,8 +495,13 @@ const UV_Menu: React.FC = () => {
   };
 
   const handleQuickAddToCart = (item: MenuItem) => {
-    // For items without customizations or without required customizations
-    if (item.customization_groups.length === 0 || !item.customization_groups.some(g => g.is_required)) {
+    // Check if item has ANY customization groups (not just required ones)
+    // If it has customizations, show the sheet so user can see all options
+    if (item.customization_groups.length > 0) {
+      // Open customization modal for items with options
+      handleOpenCustomizationModal(item);
+    } else {
+      // For items without ANY customizations, add directly to cart
       // Prepare item data for modal state (needed for onSuccess callback)
       setCustomizationModal({
         is_open: false,
@@ -492,9 +517,6 @@ const UV_Menu: React.FC = () => {
         quantity: 1,
         selected_customizations: {},
       });
-    } else {
-      // Open customization modal
-      handleOpenCustomizationModal(item);
     }
   };
 
@@ -573,6 +595,25 @@ const UV_Menu: React.FC = () => {
       };
     }
   }, [customizationModal.is_open]);
+
+  // Failsafe: Auto-close sheet if content is missing
+  useEffect(() => {
+    if (customizationModal.is_open && !customizationModal.item) {
+      // Wait a short moment to allow state to update
+      const timer = setTimeout(() => {
+        if (customizationModal.is_open && !customizationModal.item) {
+          handleCloseCustomizationModal();
+          toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Unable to load product details. Please try again.'
+          });
+        }
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [customizationModal.is_open, customizationModal.item]);
 
   return (
     <>
@@ -946,7 +987,7 @@ const UV_Menu: React.FC = () => {
 
                         {/* Add to Cart Button */}
                         <button
-                          onClick={() => handleOpenCustomizationModal(item)}
+                          onClick={() => handleQuickAddToCart(item)}
                           disabled={isOutOfStock || loadingItemId === item.item_id}
                           className={`w-full px-5 py-3.5 rounded-xl font-bold text-base transition-all duration-200 flex items-center justify-center add-to-cart-btn ${
                             isOutOfStock
@@ -1108,13 +1149,13 @@ const UV_Menu: React.FC = () => {
       )}
 
       {/* Product Customization Modal - Using BottomSheet */}
-      {customizationModal.is_open && customizationModal.item && (
+      {customizationModal.is_open && (
         <BottomSheet
           isOpen={customizationModal.is_open}
           onClose={handleCloseCustomizationModal}
-          title={customizationModal.item.name}
+          title={customizationModal.item?.name || 'Product Details'}
           maxHeight="85vh"
-          footer={
+          footer={customizationModal.item ? (
             <div className="space-y-3">
               {/* Total Price Display */}
               <div className="flex items-center justify-between px-1">
@@ -1153,10 +1194,34 @@ const UV_Menu: React.FC = () => {
                 </button>
               </div>
             </div>
-          }
+          ) : undefined}
         >
-          {/* Item Header with Image */}
-          <div className="flex gap-4 mb-6 p-4 bg-[var(--primary-bg)] rounded-[var(--radius-card)]">
+          {/* Error State: Product not found */}
+          {!customizationModal.item ? (
+            <div className="py-12 text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
+                <svg className="w-8 h-8 text-red-600" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                  <path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-[var(--primary-text)] mb-2">
+                Something went wrong
+              </h3>
+              <p className="text-[var(--primary-text)]/70 mb-6">
+                Unable to load product details. Please try again.
+              </p>
+              <button
+                onClick={handleCloseCustomizationModal}
+                className="px-6 py-3 rounded-[var(--radius-btn)] bg-[var(--btn-bg)] text-white font-bold hover:bg-[#1A0F0D] transition-colors"
+                style={{ minHeight: 'var(--tap-target-comfortable)' }}
+              >
+                Close
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* Item Header with Image */}
+              <div className="flex gap-4 mb-6 p-4 bg-[var(--primary-bg)] rounded-[var(--radius-card)]">
             <img
               src={customizationModal.item.image_url || ''}
               alt={customizationModal.item.name}
@@ -1244,22 +1309,24 @@ const UV_Menu: React.FC = () => {
             </div>
           )}
 
-          {/* Quantity Selector - Using QuantityStepper */}
-          <div className="mt-6 space-y-3">
-            <h4 className="text-base font-semibold text-[var(--primary-text)]">Quantity</h4>
-            <div className="flex justify-center">
-              <QuantityStepper
-                value={customizationModal.quantity}
-                onChange={(newQuantity) => setCustomizationModal(prev => ({
-                  ...prev,
-                  quantity: newQuantity
-                }))}
-                min={1}
-                max={99}
-                size="lg"
-              />
-            </div>
-          </div>
+              {/* Quantity Selector - Using QuantityStepper */}
+              <div className="mt-6 space-y-3">
+                <h4 className="text-base font-semibold text-[var(--primary-text)]">Quantity</h4>
+                <div className="flex justify-center">
+                  <QuantityStepper
+                    value={customizationModal.quantity}
+                    onChange={(newQuantity) => setCustomizationModal(prev => ({
+                      ...prev,
+                      quantity: newQuantity
+                    }))}
+                    min={1}
+                    max={99}
+                    size="lg"
+                  />
+                </div>
+              </div>
+            </>
+          )}
         </BottomSheet>
       )}
     </>

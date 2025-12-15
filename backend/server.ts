@@ -5799,14 +5799,44 @@ app.put('/api/admin/menu/items/:id', authenticate_token, require_role(['admin'])
   }
 });
 
-// Admin delete menu item
+// Admin delete menu item (soft delete - marks as inactive)
 app.delete('/api/admin/menu/items/:id', authenticate_token, require_role(['admin']), async (req, res) => {
   try {
     const item_id = req.params.id;
-    const del = await pool.query('DELETE FROM menu_items WHERE item_id = $1 RETURNING item_id', [item_id]);
-    if (del.rows.length === 0) return res.status(404).json(createErrorResponse('Menu item not found', null, 'NOT_FOUND', req.request_id));
-    return ok(res, 200, { message: 'Menu item deleted' });
+    
+    // Get current item details before soft delete
+    const current = await pool.query('SELECT * FROM menu_items WHERE item_id = $1', [item_id]);
+    if (current.rows.length === 0) {
+      return res.status(404).json(createErrorResponse('Menu item not found', null, 'NOT_FOUND', req.request_id));
+    }
+    
+    // Soft delete: mark as inactive instead of hard delete
+    const updated = await pool.query(
+      'UPDATE menu_items SET is_active = false, updated_at = $1 WHERE item_id = $2 RETURNING item_id, name',
+      [now_iso(), item_id]
+    );
+    
+    // Log the soft delete activity
+    await pool.query(
+      `INSERT INTO activity_logs (log_id, user_id, action_type, entity_type, entity_id, description, changes, ip_address, user_agent, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+      [
+        gen_id('log'),
+        req.user?.user_id,
+        'delete',
+        'menu_item',
+        item_id,
+        `Deactivated menu item: ${updated.rows[0].name}`,
+        JSON.stringify({ is_active: { from: current.rows[0].is_active, to: false } }),
+        req.ip,
+        req.headers['user-agent'],
+        now_iso(),
+      ]
+    );
+    
+    return ok(res, 200, { message: 'Menu item deactivated successfully', item_id: updated.rows[0].item_id });
   } catch (error) {
+    console.error('[admin/menu/items/:id DELETE] Error:', error);
     return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
   }
 });

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAppStore } from '@/store/main';
 import { Eye, EyeOff, LogIn, AlertCircle, ShoppingBag } from 'lucide-react';
+import { CHECKOUT_PATH, RETURN_TO_PARAM } from '@/lib/constants';
 
 const UV_Login: React.FC = () => {
   // ===========================
@@ -31,29 +32,24 @@ const UV_Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Extract redirect_url from URL params (check both returnTo and redirect_url)
+  // Extract redirect destination from URL params (check both returnTo and redirect)
   const searchParams = new URLSearchParams(location.search);
-  const redirect_url = searchParams.get('returnTo') || searchParams.get('redirect_url') || '/dashboard';
+  const returnTo = searchParams.get(RETURN_TO_PARAM) || searchParams.get('redirect');
 
   // ===========================
   // Effects
   // ===========================
   
-  // Redirect if already authenticated (but not for guests during checkout)
+  // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      // Check if this is a guest checkout session
-      const checkoutIntent = sessionStorage.getItem('checkout_intent');
+      // Determine redirect destination
+      const destination = returnTo || '/dashboard';
       
-      if (checkoutIntent === '1') {
-        // Guest checkout flow - don't auto-redirect, let handleGuestCheckout handle it
-        return;
-      }
-      
-      // Normal login - redirect to dashboard or returnTo URL
-      navigate(redirect_url);
+      // Navigate to the appropriate page
+      navigate(destination, { replace: true });
     }
-  }, [isAuthenticated, redirect_url, navigate]);
+  }, [isAuthenticated, returnTo, navigate]);
 
   // Clear errors when user starts typing
   useEffect(() => {
@@ -140,34 +136,23 @@ const UV_Login: React.FC = () => {
     setGuestError(null);
     setGuestLoading(true);
 
-    // Set checkout intent flag BEFORE creating session to prevent auto-redirect to dashboard
-    sessionStorage.setItem('checkout_intent', '1');
-
     try {
       // Create guest session with optional email
       const emailToSend = email && validateEmail(email) ? email : undefined;
       const { redirectTo } = await startGuestCheckout(emailToSend);
       
-      // Check if there's a returnTo/redirect_url parameter
-      const searchParams = new URLSearchParams(location.search);
-      const returnTo = searchParams.get('returnTo') || searchParams.get('redirect_url');
+      // Determine the final redirect URL in priority order:
+      // 1. returnTo query param
+      // 2. Backend redirectTo
+      // 3. Fallback to CHECKOUT_PATH
+      const destination = returnTo || redirectTo || CHECKOUT_PATH;
       
-      // Determine the final redirect URL
-      const finalRedirect = returnTo || redirectTo || '/checkout/order-type';
-      
-      // Remove checkout intent flag after successful guest session
-      sessionStorage.removeItem('checkout_intent');
-      
-      // Navigate to checkout flow
-      navigate(finalRedirect);
+      // Navigate to checkout flow using replace to avoid login in history
+      navigate(destination, { replace: true });
       
     } catch (error: any) {
-      // Error is already handled by store and set in error_message
       console.error('Guest checkout error:', error);
       setGuestError('Failed to start guest checkout. Please try again.');
-      
-      // Remove checkout intent flag on error
-      sessionStorage.removeItem('checkout_intent');
     } finally {
       setGuestLoading(false);
     }

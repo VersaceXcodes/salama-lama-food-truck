@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAppStore } from '@/store/main';
+import { RETURN_TO_PARAM } from '@/lib/constants';
 // Configure axios to send cookies with requests (CRITICAL for cart persistence)
 import '@/config/axios';
 
@@ -133,6 +134,7 @@ const LoadingSpinner: React.FC = () => (
 
 // Customer Protected Route (also allows guest users for checkout)
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const location = useLocation();
   const isAuthenticated = useAppStore(state => state.authentication_state.authentication_status.is_authenticated);
   const isLoading = useAppStore(state => state.authentication_state.authentication_status.is_loading);
   const userRole = useAppStore(state => state.authentication_state.current_user?.role);
@@ -142,7 +144,9 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    // Redirect to login with returnTo parameter
+    const returnTo = encodeURIComponent(location.pathname + location.search);
+    return <Navigate to={`/login?${RETURN_TO_PARAM}=${returnTo}`} replace />;
   }
 
   // Allow customer and guest roles to access protected routes

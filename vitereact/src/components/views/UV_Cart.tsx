@@ -5,6 +5,7 @@ import { useAppStore } from '@/store/main';
 import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
 import { ShoppingBag, Trash2, Minus, Plus, Tag, ArrowRight, AlertCircle, Loader2, X, CheckCircle, ShoppingCart } from 'lucide-react';
+import { CHECKOUT_PATH, RETURN_TO_PARAM } from '@/lib/constants';
 
 // ===========================
 // Types & Interfaces
@@ -265,7 +266,7 @@ const UV_Cart: React.FC = () => {
     },
     onSuccess: (data) => {
       if (data.valid) {
-        navigate('/checkout/order-type');
+        navigate(CHECKOUT_PATH);
       } else {
         // Store validation errors to display them
         setValidationErrors(data.errors || []);
@@ -285,7 +286,7 @@ const UV_Cart: React.FC = () => {
           title: 'Authentication Required',
           description: 'Please sign in to proceed with checkout'
         });
-        navigate('/login?redirect=/cart');
+        navigate(`/login?${RETURN_TO_PARAM}=${encodeURIComponent(CHECKOUT_PATH)}`);
         return;
       }
       
@@ -373,10 +374,10 @@ const UV_Cart: React.FC = () => {
       toast({
         variant: 'destructive',
         title: 'Authentication Required',
-        description: 'Please sign in to proceed with checkout'
+        description: 'Please sign in or continue as guest to proceed with checkout'
       });
-      // Redirect to login page with return URL to cart
-      navigate('/login?redirect=/cart');
+      // Redirect to login page with return URL to checkout
+      navigate(`/login?${RETURN_TO_PARAM}=${encodeURIComponent(CHECKOUT_PATH)}`);
       return;
     }
     validateCheckoutMutation.mutate();

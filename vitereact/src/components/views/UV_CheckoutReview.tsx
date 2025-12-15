@@ -4,6 +4,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppStore } from '@/store/main';
 import { AlertCircle, CheckCircle, Edit2, Loader2, ShoppingBag, CreditCard, MapPin, Clock, User } from 'lucide-react';
+import { RETURN_TO_PARAM } from '@/lib/constants';
 
 // ===========================
 // Types & Interfaces
@@ -390,7 +391,7 @@ const UV_CheckoutReview: React.FC = () => {
       // Handle authentication errors specifically
       if (error.response?.status === 401) {
         set_place_order_error('Authentication required. Please sign in again.');
-        navigate('/login?redirect=/checkout/review');
+        navigate(`/login?${RETURN_TO_PARAM}=/checkout/review`);
         return;
       }
       
@@ -447,7 +448,7 @@ const UV_CheckoutReview: React.FC = () => {
       // Handle authentication errors in validation
       if (error.response?.status === 401) {
         set_place_order_error('Authentication required. Please sign in again.');
-        navigate('/login?redirect=/checkout/review');
+        navigate(`/login?${RETURN_TO_PARAM}=/checkout/review`);
         return;
       }
       

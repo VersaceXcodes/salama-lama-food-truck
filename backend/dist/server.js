@@ -1969,6 +1969,7 @@ app.get('/api/business/info', async (req, res) => {
         const store_address = await get_setting('store_address', null);
         const store_hours = await get_setting('store_hours', null);
         const delivery_enabled = await get_setting('delivery_enabled', true);
+        const logo_url = await get_setting('store_logo_url', null);
         // Very lightweight computed "open".
         const is_currently_open = true;
         return ok(res, 200, {
@@ -1980,6 +1981,7 @@ app.get('/api/business/info', async (req, res) => {
             social_links: await get_setting('social_links', {}),
             delivery_enabled: delivery_enabled !== false,
             is_currently_open,
+            logo_url,
         });
     }
     catch (error) {
@@ -2329,11 +2331,16 @@ app.delete('/api/cart', authenticate_token_optional, async (req, res) => {
 /**
  * DISCOUNT VALIDATION
  */
-app.post('/api/discount/validate', authenticate_token, async (req, res) => {
+app.post('/api/discount/validate', authenticate_token_optional, async (req, res) => {
     try {
+        // Determine user_id (supports both authenticated users and guests)
+        const user_id = req.user?.user_id || req.guest_session_id || null;
+        if (!user_id) {
+            return res.status(400).json(createErrorResponse('User session required', null, 'SESSION_REQUIRED', req.request_id));
+        }
         const payload = validateDiscountCodeInputSchema.parse({
             ...req.body,
-            user_id: req.user.user_id, // Get user_id from authenticated token
+            user_id: user_id,
             order_value: Number(req.body?.order_value),
         });
         const result = await validate_discount_code({
@@ -2346,9 +2353,9 @@ app.post('/api/discount/validate', authenticate_token, async (req, res) => {
             return ok(res, 200, { valid: false, discount_amount: 0, message: result.message });
         }
         // Apply the discount to the cart
-        const cart = read_cart_sync(req.user.user_id);
+        const cart = read_cart_sync(user_id);
         cart.discount_code = result.code_row.code;
-        write_cart_sync(req.user.user_id, cart);
+        write_cart_sync(user_id, cart);
         return ok(res, 200, {
             valid: true,
             discount_amount: result.discount_amount,
@@ -2366,20 +2373,25 @@ app.post('/api/discount/validate', authenticate_token, async (req, res) => {
 /**
  * REMOVE DISCOUNT FROM CART
  */
-app.delete('/api/discount/remove', authenticate_token, async (req, res) => {
+app.delete('/api/discount/remove', authenticate_token_optional, async (req, res) => {
     try {
-        console.log(`[DISCOUNT REMOVE] User ${req.user.user_id} removing discount from cart`);
-        const cart = read_cart_sync(req.user.user_id);
+        // Determine user_id (supports both authenticated users and guests)
+        const user_id = req.user?.user_id || req.guest_session_id || null;
+        if (!user_id) {
+            return res.status(400).json(createErrorResponse('User session required', null, 'SESSION_REQUIRED', req.request_id));
+        }
+        console.log(`[DISCOUNT REMOVE] User ${user_id} removing discount from cart`);
+        const cart = read_cart_sync(user_id);
         cart.discount_code = null;
-        write_cart_sync(req.user.user_id, cart);
-        console.log(`[DISCOUNT REMOVE] Discount removed from cart for user ${req.user.user_id}`);
+        write_cart_sync(user_id, cart);
+        console.log(`[DISCOUNT REMOVE] Discount removed from cart for user ${user_id}`);
         return ok(res, 200, {
             success: true,
             message: 'Discount removed from cart'
         });
     }
     catch (error) {
-        console.error(`[DISCOUNT REMOVE ERROR] User ${req.user?.user_id}:`, error);
+        console.error(`[DISCOUNT REMOVE ERROR] User ${req.user?.user_id || req.guest_session_id}:`, error);
         return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
     }
 });
@@ -4996,16 +5008,35 @@ app.put('/api/admin/menu/items/:id', authenticate_token, require_role(['admin'])
         return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
     }
 });
-// Admin delete menu item
+// Admin delete menu item (soft delete - marks as inactive)
 app.delete('/api/admin/menu/items/:id', authenticate_token, require_role(['admin']), async (req, res) => {
     try {
         const item_id = req.params.id;
-        const del = await pool.query('DELETE FROM menu_items WHERE item_id = $1 RETURNING item_id', [item_id]);
-        if (del.rows.length === 0)
+        // Get current item details before soft delete
+        const current = await pool.query('SELECT * FROM menu_items WHERE item_id = $1', [item_id]);
+        if (current.rows.length === 0) {
             return res.status(404).json(createErrorResponse('Menu item not found', null, 'NOT_FOUND', req.request_id));
-        return ok(res, 200, { message: 'Menu item deleted' });
+        }
+        // Soft delete: mark as inactive instead of hard delete
+        const updated = await pool.query('UPDATE menu_items SET is_active = false, updated_at = $1 WHERE item_id = $2 RETURNING item_id, name', [now_iso(), item_id]);
+        // Log the soft delete activity
+        await pool.query(`INSERT INTO activity_logs (log_id, user_id, action_type, entity_type, entity_id, description, changes, ip_address, user_agent, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`, [
+            gen_id('log'),
+            req.user?.user_id,
+            'delete',
+            'menu_item',
+            item_id,
+            `Deactivated menu item: ${updated.rows[0].name}`,
+            JSON.stringify({ is_active: { from: current.rows[0].is_active, to: false } }),
+            req.ip,
+            req.headers['user-agent'],
+            now_iso(),
+        ]);
+        return ok(res, 200, { message: 'Menu item deactivated successfully', item_id: updated.rows[0].item_id });
     }
     catch (error) {
+        console.error('[admin/menu/items/:id DELETE] Error:', error);
         return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
     }
 });

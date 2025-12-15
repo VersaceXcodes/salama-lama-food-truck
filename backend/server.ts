@@ -2631,11 +2631,18 @@ app.delete('/api/cart', authenticate_token_optional, async (req, res) => {
 /**
  * DISCOUNT VALIDATION
  */
-app.post('/api/discount/validate', authenticate_token, async (req, res) => {
+app.post('/api/discount/validate', authenticate_token_optional, async (req, res) => {
   try {
+    // Determine user_id (supports both authenticated users and guests)
+    const user_id = req.user?.user_id || (req as any).guest_session_id || null;
+    
+    if (!user_id) {
+      return res.status(400).json(createErrorResponse('User session required', null, 'SESSION_REQUIRED', req.request_id));
+    }
+
     const payload = validateDiscountCodeInputSchema.parse({
       ...req.body,
-      user_id: req.user.user_id, // Get user_id from authenticated token
+      user_id: user_id,
       order_value: Number(req.body?.order_value),
     });
 
@@ -2651,9 +2658,9 @@ app.post('/api/discount/validate', authenticate_token, async (req, res) => {
     }
 
     // Apply the discount to the cart
-    const cart = read_cart_sync(req.user.user_id);
+    const cart = read_cart_sync(user_id);
     cart.discount_code = result.code_row.code;
-    write_cart_sync(req.user.user_id, cart);
+    write_cart_sync(user_id, cart);
 
     return ok(res, 200, {
       valid: true,
@@ -2672,21 +2679,28 @@ app.post('/api/discount/validate', authenticate_token, async (req, res) => {
 /**
  * REMOVE DISCOUNT FROM CART
  */
-app.delete('/api/discount/remove', authenticate_token, async (req, res) => {
+app.delete('/api/discount/remove', authenticate_token_optional, async (req, res) => {
   try {
-    console.log(`[DISCOUNT REMOVE] User ${req.user.user_id} removing discount from cart`);
-    const cart = read_cart_sync(req.user.user_id);
-    cart.discount_code = null;
-    write_cart_sync(req.user.user_id, cart);
+    // Determine user_id (supports both authenticated users and guests)
+    const user_id = req.user?.user_id || (req as any).guest_session_id || null;
     
-    console.log(`[DISCOUNT REMOVE] Discount removed from cart for user ${req.user.user_id}`);
+    if (!user_id) {
+      return res.status(400).json(createErrorResponse('User session required', null, 'SESSION_REQUIRED', req.request_id));
+    }
+
+    console.log(`[DISCOUNT REMOVE] User ${user_id} removing discount from cart`);
+    const cart = read_cart_sync(user_id);
+    cart.discount_code = null;
+    write_cart_sync(user_id, cart);
+    
+    console.log(`[DISCOUNT REMOVE] Discount removed from cart for user ${user_id}`);
     
     return ok(res, 200, {
       success: true,
       message: 'Discount removed from cart'
     });
   } catch (error) {
-    console.error(`[DISCOUNT REMOVE ERROR] User ${req.user?.user_id}:`, error);
+    console.error(`[DISCOUNT REMOVE ERROR] User ${req.user?.user_id || (req as any).guest_session_id}:`, error);
     return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
   }
 });

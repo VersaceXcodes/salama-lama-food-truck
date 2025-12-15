@@ -482,7 +482,8 @@ const UV_CustomerDashboard: React.FC = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4 sm:px-6 lg:px-8">
+      {/* Main Content with proper spacing below sticky header */}
+      <div className="min-h-screen bg-[#F2EFE9] py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           
           {/* Loading State */}

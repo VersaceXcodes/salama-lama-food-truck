@@ -6,8 +6,7 @@ import { useAppStore } from '@/store/main';
 import '@/config/axios';
 
 // Import Global Views
-import GV_TopNav_Public from '@/components/views/GV_TopNav_Public';
-import GV_TopNav_Customer from '@/components/views/GV_TopNav_Customer';
+import GV_SiteHeader from '@/components/views/GV_SiteHeader';
 import GV_TopNav_Staff from '@/components/views/GV_TopNav_Staff';
 import GV_TopNav_Admin from '@/components/views/GV_TopNav_Admin';
 import GV_AdminSidebar from '@/components/views/GV_AdminSidebar';
@@ -244,13 +243,9 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     TopNavComponent = GV_TopNav_Admin;
   } else if (isStaffRoute && isAuthenticated && (userRole === 'staff' || userRole === 'manager')) {
     TopNavComponent = GV_TopNav_Staff;
-  } else if (isAuthenticated && userRole === 'customer' && !isAdminRoute && !isStaffRoute) {
-    TopNavComponent = GV_TopNav_Customer;
-  } else if (isAuthenticated && userRole === 'guest' && !isAdminRoute && !isStaffRoute) {
-    // Guest users see public nav
-    TopNavComponent = GV_TopNav_Public;
-  } else if (!isAuthenticated && !isAdminRoute && !isStaffRoute) {
-    TopNavComponent = GV_TopNav_Public;
+  } else if (!isAdminRoute && !isStaffRoute) {
+    // Use new unified SiteHeader for all public and customer routes
+    TopNavComponent = GV_SiteHeader;
   }
 
   return (

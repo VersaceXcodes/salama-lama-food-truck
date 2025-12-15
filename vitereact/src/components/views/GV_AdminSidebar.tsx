@@ -137,7 +137,14 @@ const GV_AdminSidebar: React.FC = () => {
         {/* Sidebar Header */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-gray-800 flex-shrink-0">
           {!is_collapsed && (
-            <h2 className="text-xl font-bold text-orange-500">Salama Lama</h2>
+            <Link to="/admin/dashboard" className="flex items-center">
+              <img 
+                src="/salama-lama-logo.png" 
+                alt="Salama Lama" 
+                className="w-auto object-contain"
+                style={{ height: '32px', maxWidth: '180px' }}
+              />
+            </Link>
           )}
           <button
             onClick={toggleSidebar}

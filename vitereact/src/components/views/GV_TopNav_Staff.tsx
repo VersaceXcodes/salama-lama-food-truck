@@ -183,13 +183,13 @@ const GV_TopNav_Staff: React.FC = () => {
                   src="/salama-lama-logo.png" 
                   alt="Salama Lama" 
                   className="w-auto object-contain transition-transform duration-200 group-hover:scale-105"
-                  style={{ height: '36px', filter: 'brightness(0) invert(1)' }}
+                  style={{ height: '30px', maxWidth: '150px', filter: 'brightness(0) invert(1)' }}
                   onError={(e) => { 
-                    // Fallback to text if image fails to load
+                    // Fallback to screen-reader-only text if image fails to load
                     const target = e.target as HTMLImageElement;
                     target.style.display = 'none';
                     const textSpan = document.createElement('span');
-                    textSpan.className = 'text-white font-bold text-lg';
+                    textSpan.className = 'sr-only';
                     textSpan.textContent = 'Salama Lama';
                     target.parentElement?.appendChild(textSpan);
                   }}
@@ -423,7 +423,8 @@ const GV_TopNav_Staff: React.FC = () => {
       <style>{`
         @media (min-width: 768px) {
           nav img[alt="Salama Lama"] {
-            height: 44px !important;
+            height: 36px !important;
+            max-width: 200px !important;
           }
         }
       `}</style>

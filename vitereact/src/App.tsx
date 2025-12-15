@@ -100,7 +100,7 @@ const LoadingSpinner: React.FC = () => (
     <div className="text-center">
       <div className="animate-pulse-slow">
         <img 
-          src="/logo-salama-lama.png" 
+          src="/salama-lama-logo.png" 
           alt="Salama Lama Logo" 
           className="h-32 w-auto object-contain mx-auto"
           style={{ 

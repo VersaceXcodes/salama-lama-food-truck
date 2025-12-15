@@ -717,19 +717,19 @@ const UV_Menu: React.FC = () => {
         </div>
 
         {/* Category Chips - Mobile-Friendly Horizontal Scroll */}
-        <div className="mb-6 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
-          <div className="flex gap-2 pb-1" style={{ width: 'max-content' }} aria-label="Categories">
+        <div className="mb-6 overflow-x-auto scrollbar-hide -mx-4 sm:mx-0">
+          <div className="flex gap-2 pb-2 px-4 sm:px-0" style={{ minWidth: '100%', width: 'max-content' }} aria-label="Categories">
             <button
               onClick={() => handleCategoryChange(null)}
               className={`
                 inline-flex items-center justify-center px-4 rounded-full text-sm font-semibold whitespace-nowrap
-                transition-all duration-200
+                transition-all duration-200 flex-shrink-0
                 ${activeCategory === null
                   ? 'bg-[#2C1A16] text-white shadow-md'
                   : 'bg-white text-[#2C1A16] border-2 border-[#D4C5B0] hover:border-[#2C1A16]'
                 }
               `}
-              style={{ height: '44px', minHeight: '44px', flex: '0 0 auto' }}
+              style={{ height: '44px', minHeight: '44px' }}
             >
               All Items
             </button>
@@ -740,13 +740,13 @@ const UV_Menu: React.FC = () => {
                 onClick={() => handleCategoryChange(category.category_id)}
                 className={`
                   inline-flex items-center justify-center px-4 rounded-full text-sm font-semibold whitespace-nowrap
-                  transition-all duration-200
+                  transition-all duration-200 flex-shrink-0
                   ${activeCategory === category.category_id
                     ? 'bg-[#2C1A16] text-white shadow-md'
                     : 'bg-white text-[#2C1A16] border-2 border-[#D4C5B0] hover:border-[#2C1A16]'
                   }
                 `}
-                style={{ height: '44px', minHeight: '44px', flex: '0 0 auto' }}
+                style={{ height: '44px', minHeight: '44px' }}
               >
                 {category.name}
               </button>

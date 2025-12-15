@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppStore } from '@/store/main';
 import { MapPin, Clock, Plus, X, AlertCircle, Check, ChevronRight } from 'lucide-react';
+import CollectionTimePicker from '@/components/checkout/CollectionTimePicker';
 
 // ===========================
 // Type Definitions
@@ -547,40 +548,23 @@ const UV_CheckoutOrderType: React.FC = () => {
                 </div>
               </fieldset>
 
-              {/* Collection Time Slots */}
+              {/* Collection Time Picker */}
               {orderType === 'collection' && (
                 <div className="mt-8">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Collection Time</h3>
-                  
                   {loadingStates.time_slots_loading ? (
                     <div className="flex items-center justify-center py-12">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600"></div>
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-4" style={{ borderColor: '#2C2018' }}></div>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                      {availableTimeSlots.map((slot, index) => (
-                        <button
-                          key={index}
-                          type="button"
-                          onClick={() => {
-                            if (slot.is_available) {
-                              setCollectionTimeSlot(slot.slot_time);
-                              setErrorMessage(null);
-                            }
-                          }}
-                          disabled={!slot.is_available}
-                          className={`px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                            collectionTimeSlot === slot.slot_time
-                              ? 'bg-blue-600 text-white shadow-lg ring-2 ring-blue-600 ring-offset-2'
-                              : slot.is_available
-                              ? 'bg-white border-2 border-gray-200 text-gray-900 hover:border-blue-300 hover:shadow-md'
-                              : 'bg-gray-100 text-gray-400 cursor-not-allowed border-2 border-gray-200'
-                          }`}
-                        >
-                          {formatTimeSlot(slot.slot_time)}
-                        </button>
-                      ))}
-                    </div>
+                    <CollectionTimePicker
+                      availableTimeSlots={availableTimeSlots}
+                      selectedTimeSlot={collectionTimeSlot}
+                      onSelectTimeSlot={(slotTime) => {
+                        setCollectionTimeSlot(slotTime);
+                        setErrorMessage(null);
+                      }}
+                      error={errorMessage && !collectionTimeSlot ? 'Please select a collection time' : null}
+                    />
                   )}
                 </div>
               )}

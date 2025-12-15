@@ -6,6 +6,8 @@ import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
 import { ShoppingBag, Trash2, Minus, Plus, Tag, ArrowRight, AlertCircle, Loader2, X, CheckCircle, ShoppingCart } from 'lucide-react';
 import { CHECKOUT_PATH, RETURN_TO_PARAM } from '@/lib/constants';
+import { calculateCartTotals, parseCartData, logCartTotals, getGuestCartId } from '@/utils/cartTotals';
+import OrderSummary from '@/components/checkout/OrderSummary';
 
 // ===========================
 // Types & Interfaces
@@ -336,13 +338,11 @@ const UV_Cart: React.FC = () => {
       setDiscountError('Please enter a discount code');
       return;
     }
-
-    const subtotal = Number(cartData?.subtotal || 0);
     
     validateDiscountMutation.mutate({
       code: discountCode.trim().toUpperCase(),
       order_type: 'collection',
-      order_value: subtotal
+      order_value: totals.subtotalCents / 100 // Convert cents to euros
     });
   };
 
@@ -460,6 +460,26 @@ const UV_Cart: React.FC = () => {
   // ===========================
 
   const cartItems = cartData?.items || [];
+  
+  // Calculate totals using shared utility
+  const totals = calculateCartTotals(parseCartData(cartData));
+  
+  // Get guest cart ID for tracking (initialize early for guest users)
+  const guestCartId = !authToken ? getGuestCartId() : null;
+  
+  // Initialize guest cart tracking on mount
+  useEffect(() => {
+    if (!authToken) {
+      getGuestCartId(); // Ensure guest cart ID is created early
+    }
+  }, [authToken]);
+  
+  // Log cart totals in dev mode
+  useEffect(() => {
+    if (cartData) {
+      logCartTotals('Shopping Cart Page', cartData, totals, guestCartId || 'authenticated');
+    }
+  }, [cartData, totals, guestCartId]);
 
   if (cartItems.length === 0) {
     return (
@@ -491,13 +511,8 @@ const UV_Cart: React.FC = () => {
   // Cart with Items
   // ===========================
 
-  // Convert numeric fields from PostgreSQL strings
-  const subtotal = Number(cartData?.subtotal || 0);
-  const discountAmount = Number(cartData?.discount_amount || 0);
-  const deliveryFee = Number(cartData?.delivery_fee || 0);
-  const taxAmount = Number(cartData?.tax_amount || 0);
-  const total = Number(cartData?.total || 0);
-  const hasDiscount = cartData?.discount_code && discountAmount > 0;
+  // Use shared totals calculation
+  const hasDiscount = cartData?.discount_code && totals.discountCents > 0;
 
   // Helper function to get item name from validation error field
   const getItemNameFromField = (field: string) => {
@@ -814,40 +829,15 @@ const UV_Cart: React.FC = () => {
                   )}
                 </div>
 
-                {/* Pricing Breakdown */}
-                <div className="space-y-3 mb-6">
-                  <div className="flex justify-between text-gray-700">
-                    <span>Subtotal</span>
-                    <span className="font-medium">€{subtotal.toFixed(2)}</span>
-                  </div>
-
-                  {hasDiscount && (
-                    <div className="flex justify-between text-green-600">
-                      <span>Discount</span>
-                      <span className="font-medium">-€{discountAmount.toFixed(2)}</span>
-                    </div>
-                  )}
-
-                  <div className="flex justify-between text-gray-700">
-                    <span>Delivery Fee</span>
-                    <span className="font-medium">
-                      {deliveryFee > 0 ? `€${deliveryFee.toFixed(2)}` : 'Free'}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between text-gray-700">
-                    <span>Tax (VAT)</span>
-                    <span className="font-medium">€{taxAmount.toFixed(2)}</span>
-                  </div>
-
-                  <div className="pt-3 border-t-2 border-gray-200">
-                    <div className="flex justify-between items-center">
-                      <span className="text-lg font-bold text-gray-900">Total</span>
-                      <span className="text-2xl font-bold text-orange-600">
-                        €{total.toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
+                {/* Pricing Breakdown - Using Shared OrderSummary Component */}
+                <div className="mb-6">
+                  <OrderSummary
+                    totals={totals}
+                    discountCode={cartData?.discount_code}
+                    hasDiscount={hasDiscount}
+                    showDeliveryFee={true}
+                    showTax={true}
+                  />
                 </div>
 
                 {/* Checkout Button */}
@@ -893,7 +883,7 @@ const UV_Cart: React.FC = () => {
             <div>
               <p className="text-xs text-gray-600 font-semibold mb-0.5">Total</p>
               <p className="text-2xl font-bold text-[#2C1A16]" style={{ letterSpacing: '-0.02em' }}>
-                €{total.toFixed(2)}
+                €{totals.total}
               </p>
             </div>
             <button

@@ -4,6 +4,8 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppStore } from '@/store/main';
 import { CreditCard, Lock, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { calculateCartTotals, parseCartData, logCartTotals, getGuestCartId } from '@/utils/cartTotals';
+import OrderSummary from '@/components/checkout/OrderSummary';
 
 // ===========================
 // Type Definitions
@@ -115,12 +117,27 @@ const UV_CheckoutPayment: React.FC = () => {
   });
 
   // Extract cart values with safe defaults
-  const cartTotal = Number(cartData?.total || 0);
-  const cartSubtotal = Number(cartData?.subtotal || 0);
-  const cartDiscountAmount = Number(cartData?.discount_amount || 0);
-  const cartDeliveryFee = Number(cartData?.delivery_fee || 0);
-  const cartTaxAmount = Number(cartData?.tax_amount || 0);
   const cartItems = cartData?.items || [];
+  
+  // Calculate totals using shared utility
+  const cartTotals = calculateCartTotals(parseCartData(cartData));
+  
+  // Get guest cart ID for tracking
+  const guestCartId = !authToken ? getGuestCartId() : null;
+  
+  // Initialize guest cart tracking on mount
+  useEffect(() => {
+    if (!authToken) {
+      getGuestCartId(); // Ensure guest cart ID is created early
+    }
+  }, [authToken]);
+  
+  // Log cart totals in dev mode
+  useEffect(() => {
+    if (cartData) {
+      logCartTotals('Payment Step', cartData, cartTotals, guestCartId || 'authenticated');
+    }
+  }, [cartData, cartTotals, guestCartId]);
 
   // Fetch saved payment methods
   const {
@@ -164,7 +181,7 @@ const UV_CheckoutPayment: React.FC = () => {
 
   // Get order type from checkout state (would be stored in global state in real app)
   // For this demo, we'll check if there's a delivery fee to determine order type
-  const orderType = cartDeliveryFee > 0 ? 'delivery' : 'collection';
+  const orderType = cartTotals.deliveryFeeCents > 0 ? 'delivery' : 'collection';
 
   // Validate order type and contact info on mount
   useEffect(() => {
@@ -711,7 +728,7 @@ const UV_CheckoutPayment: React.FC = () => {
                     <button
                       type="button"
                       onClick={handleContinueToReview}
-                      disabled={loadingPaymentMethods || isCartLoading || savePaymentMethodMutation.isPending || cartTotal <= 0}
+                      disabled={loadingPaymentMethods || isCartLoading || savePaymentMethodMutation.isPending || cartTotals.totalCents <= 0}
                       className="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-4 focus:ring-blue-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
                     >
                       {savePaymentMethodMutation.isPending ? (
@@ -772,37 +789,16 @@ const UV_CheckoutPayment: React.FC = () => {
                     ))}
                   </div>
 
-                  <div className="border-t border-gray-200 pt-4 space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Subtotal</span>
-                      <span className="font-medium text-gray-900">€{Number(cartSubtotal || 0).toFixed(2)}</span>
-                    </div>
-
-                    {cartDiscountAmount > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-green-600">Discount</span>
-                        <span className="font-medium text-green-600">-€{Number(cartDiscountAmount || 0).toFixed(2)}</span>
-                      </div>
-                    )}
-
-                    {cartDeliveryFee > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Delivery Fee</span>
-                        <span className="font-medium text-gray-900">€{Number(cartDeliveryFee || 0).toFixed(2)}</span>
-                      </div>
-                    )}
-
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Tax</span>
-                      <span className="font-medium text-gray-900">€{Number(cartTaxAmount || 0).toFixed(2)}</span>
-                    </div>
-                  </div>
-
-                  <div className="border-t-2 border-gray-200 pt-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-lg font-bold text-gray-900">Total</span>
-                      <span className="text-2xl font-bold text-blue-600">€{Number(cartTotal || 0).toFixed(2)}</span>
-                    </div>
+                  {/* Using Shared OrderSummary Component */}
+                  <div className="border-t border-gray-200 pt-4">
+                    <OrderSummary
+                      totals={cartTotals}
+                      discountCode={cartData?.discount_code}
+                      hasDiscount={!!cartData?.discount_code && cartTotals.discountCents > 0}
+                      showDeliveryFee={true}
+                      showTax={true}
+                      className="text-sm"
+                    />
                   </div>
                 </div>
               </div>

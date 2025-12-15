@@ -5,6 +5,8 @@ import axios from 'axios';
 import { useAppStore } from '@/store/main';
 import { AlertCircle, CheckCircle, Edit2, Loader2, ShoppingBag, CreditCard, MapPin, Clock, User } from 'lucide-react';
 import { RETURN_TO_PARAM } from '@/lib/constants';
+import { calculateCartTotals, parseCartData, logCartTotals, getGuestCartId } from '@/utils/cartTotals';
+import OrderSummary from '@/components/checkout/OrderSummary';
 
 // ===========================
 // Types & Interfaces
@@ -207,6 +209,16 @@ const UV_CheckoutReview: React.FC = () => {
 
   const cart_items = cart_data?.items || [];
   const cart_discount_code = cart_data?.discount_code || null;
+  
+  // Get guest cart ID for tracking
+  const guestCartId = !auth_token ? getGuestCartId() : null;
+  
+  // Initialize guest cart tracking on mount
+  useEffect(() => {
+    if (!auth_token) {
+      getGuestCartId(); // Ensure guest cart ID is created early
+    }
+  }, [auth_token]);
 
   // ===========================
   // Load Order Review Data (on mount)
@@ -298,16 +310,28 @@ const UV_CheckoutReview: React.FC = () => {
   // Update pricing state when API responds
   useEffect(() => {
     if (calculated_pricing) {
-      set_final_pricing({
+      const pricing = {
         subtotal: Number(calculated_pricing.subtotal || 0),
         discount_code: calculated_pricing.discount_code,
         discount_amount: Number(calculated_pricing.discount_amount || 0),
         delivery_fee: calculated_pricing.delivery_fee !== null ? Number(calculated_pricing.delivery_fee) : null,
         tax_amount: Number(calculated_pricing.tax_amount || 0),
         total_amount: Number(calculated_pricing.total_amount || 0),
+      };
+      
+      set_final_pricing(pricing);
+      
+      // Log cart totals in dev mode
+      const totals = calculateCartTotals({
+        subtotal: pricing.subtotal,
+        discountAmount: pricing.discount_amount,
+        deliveryFee: pricing.delivery_fee || 0,
+        taxAmount: pricing.tax_amount,
       });
+      
+      logCartTotals('Review Step', { items: cart_items }, totals, guestCartId || 'authenticated');
     }
-  }, [calculated_pricing]);
+  }, [calculated_pricing, cart_items, guestCartId]);
 
   // ===========================
   // Validate Order Mutation
@@ -746,38 +770,18 @@ const UV_CheckoutReview: React.FC = () => {
                     <Loader2 className="h-8 w-8 text-orange-600 animate-spin" />
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    <div className="flex justify-between text-gray-700">
-                      <span>Subtotal</span>
-                      <span className="font-medium">{format_price(final_pricing.subtotal)}</span>
-                    </div>
-
-                    {final_pricing.discount_code && (
-                      <div className="flex justify-between text-green-700 bg-green-50 px-2 py-1 rounded">
-                        <span className="text-sm">Discount ({final_pricing.discount_code})</span>
-                        <span className="font-medium text-sm">-{format_price(final_pricing.discount_amount)}</span>
-                      </div>
-                    )}
-
-                    {final_pricing.delivery_fee !== null && final_pricing.delivery_fee > 0 && (
-                      <div className="flex justify-between text-gray-700">
-                        <span>Delivery Fee</span>
-                        <span className="font-medium">{format_price(final_pricing.delivery_fee)}</span>
-                      </div>
-                    )}
-
-                    <div className="flex justify-between text-gray-700">
-                      <span>Tax (VAT)</span>
-                      <span className="font-medium">{format_price(final_pricing.tax_amount)}</span>
-                    </div>
-
-                    <div className="border-t-2 border-gray-300 pt-3 mt-3">
-                      <div className="flex justify-between items-baseline">
-                        <span className="text-lg font-bold text-gray-900">Total</span>
-                        <span className="text-2xl font-bold text-orange-600">{format_price(final_pricing.total_amount)}</span>
-                      </div>
-                    </div>
-                  </div>
+                  <OrderSummary
+                    totals={calculateCartTotals({
+                      subtotal: final_pricing.subtotal,
+                      discountAmount: final_pricing.discount_amount,
+                      deliveryFee: final_pricing.delivery_fee || 0,
+                      taxAmount: final_pricing.tax_amount,
+                    })}
+                    discountCode={final_pricing.discount_code}
+                    hasDiscount={!!final_pricing.discount_code && final_pricing.discount_amount > 0}
+                    showDeliveryFee={true}
+                    showTax={true}
+                  />
                 )}
 
                 {/* Terms & Conditions */}

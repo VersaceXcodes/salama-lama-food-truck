@@ -242,38 +242,43 @@ const GV_SiteHeader: React.FC = () => {
   
   return (
     <>
-      {/* Main Navigation Bar - Sticky at top, clean and compact */}
+      {/* Main Navigation Bar - Sticky at top, clean and compact with iOS safe area */}
       <nav 
         className="sticky top-0 left-0 right-0 bg-[#F5F0EB] border-b border-[#2C1A16]/10 shadow-sm z-50 transition-all duration-200"
-        style={{ backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+        style={{ 
+          backdropFilter: 'blur(8px)', 
+          WebkitBackdropFilter: 'blur(8px)',
+          paddingTop: 'env(safe-area-inset-top)'
+        }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           
           {/* ======================================
               MOBILE HEADER - flex md:hidden
+              Compact single-row layout: 56px height
               ====================================== */}
-          <div className="flex md:hidden items-center justify-between h-16 gap-3">
+          <div className="flex md:hidden items-center justify-between h-14 gap-2">
             {/* Left: Hamburger Menu */}
             <button
               onClick={toggleMobileMenu}
-              className="flex items-center justify-center w-10 h-10 text-[#2C1A16] hover:text-[#D97706] focus:outline-none focus:ring-2 focus:ring-[#D97706] rounded-lg transition-colors duration-200"
+              className="flex items-center justify-center w-10 h-10 text-[#2C1A16] hover:text-[#D97706] focus:outline-none focus:ring-2 focus:ring-[#D97706] rounded-lg transition-colors duration-200 flex-shrink-0"
               aria-label="Toggle navigation menu"
               aria-expanded={isMobileMenuOpen}
             >
-              <Menu className="h-6 w-6" />
+              <Menu className="h-5 w-5" />
             </button>
             
-            {/* Center: Brand Logo */}
+            {/* Center: Brand Logo - Compact for Mobile */}
             <Link 
               to="/"
-              className="flex items-center justify-center group flex-1"
+              className="flex items-center justify-center group flex-1 overflow-visible"
               aria-label="Salama Lama Home"
             >
               <BrandLogo variant="header" />
             </Link>
             
             {/* Right: Cart + User Icon */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 flex-shrink-0">
               {/* Cart Icon with Badge */}
               <Link
                 to="/cart"
@@ -282,7 +287,7 @@ const GV_SiteHeader: React.FC = () => {
               >
                 <ShoppingCart className="h-5 w-5" />
                 {cartItemCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-[#DC2626] text-white text-[10px] font-bold rounded-full h-4 min-w-[16px] flex items-center justify-center px-1">
+                  <span className="absolute -top-0.5 -right-0.5 bg-[#DC2626] text-white text-[10px] font-bold rounded-full h-4 min-w-[16px] flex items-center justify-center px-1">
                     {getCartBadgeDisplay()}
                   </span>
                 )}
@@ -298,8 +303,8 @@ const GV_SiteHeader: React.FC = () => {
                   <User className="h-5 w-5" />
                 </Link>
               ) : (
-                <div className="w-10 h-10 bg-[#2C1A16] rounded-full flex items-center justify-center">
-                  <User className="h-5 w-5 text-white" />
+                <div className="w-9 h-9 bg-[#2C1A16] rounded-full flex items-center justify-center">
+                  <User className="h-4 w-4 text-white" />
                 </div>
               )}
             </div>
@@ -618,12 +623,31 @@ const GV_SiteHeader: React.FC = () => {
           animation: fadeIn 0.2s ease-out;
         }
         
-        /* Ensure logo is properly sized and contained */
-        nav img[alt="Salama Lama"],
-        nav svg {
-          max-height: 40px !important;
-          width: auto !important;
-          object-fit: contain;
+        /* Ensure logo is properly sized and contained - Mobile First */
+        @media (max-width: 767px) {
+          nav img[alt="Salama Lama"] {
+            max-height: 28px !important;
+            height: 28px !important;
+            width: auto !important;
+            object-fit: contain !important;
+            display: block !important;
+          }
+          
+          /* Ensure logo container doesn't overflow */
+          nav a[aria-label="Salama Lama Home"] {
+            overflow: visible !important;
+            display: flex !important;
+            align-items: center !important;
+          }
+        }
+        
+        /* Desktop logo sizing */
+        @media (min-width: 768px) {
+          nav img[alt="Salama Lama"] {
+            max-height: 40px !important;
+            width: auto !important;
+            object-fit: contain !important;
+          }
         }
       `}</style>
     </>

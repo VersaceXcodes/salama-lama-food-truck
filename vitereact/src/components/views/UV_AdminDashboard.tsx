@@ -94,10 +94,31 @@ const fetchRecentOrders = async (token: string): Promise<RecentOrder[]> => {
     }
   );
 
+  // Helper function to decode and sanitize customer names
+  const sanitizeCustomerName = (name: string): string => {
+    if (!name) return 'Unknown';
+    try {
+      // Decode HTML entities and fix common encoding issues
+      const textarea = document.createElement('textarea');
+      textarea.innerHTML = name;
+      let decoded = textarea.value;
+      
+      // Fix common UTF-8 encoding issues
+      decoded = decoded.replace(/=\s/g, ' '); // Fix "Moh= Als=" to "Moh Als"
+      decoded = decoded.replace(/â€™/g, "'"); // Fix smart quotes
+      decoded = decoded.replace(/â€"/g, "-"); // Fix dashes
+      decoded = decoded.trim();
+      
+      return decoded;
+    } catch {
+      return name;
+    }
+  };
+
   return (response.data.orders || []).map((order: any) => ({
     order_id: order.order_id,
     order_number: order.order_number,
-    customer_name: order.customer_name,
+    customer_name: sanitizeCustomerName(order.customer_name),
     order_type: order.order_type,
     total_amount: Number(order.total_amount || 0),
     status: order.status,
@@ -148,6 +169,12 @@ const LineChart: React.FC<{
   height?: number;
   color?: string;
 }> = ({ data, height = 200, color = '#3b82f6' }) => {
+  const [hoveredPoint, setHoveredPoint] = React.useState<{
+    index: number;
+    x: number;
+    y: number;
+  } | null>(null);
+
   if (data.length === 0) {
     return (
       <div className="flex items-center justify-center h-full text-gray-400">
@@ -157,39 +184,165 @@ const LineChart: React.FC<{
   }
 
   const maxValue = Math.max(...data.map((d) => d.value), 1);
+  const minValue = Math.min(...data.map((d) => d.value), 0);
+  const valueRange = maxValue - minValue || 1;
+  
+  // Chart dimensions with padding for axes
   const width = 100;
-  const padding = 10;
+  const paddingLeft = 15;
+  const paddingRight = 5;
+  const paddingTop = 5;
+  const paddingBottom = 10;
+  const chartWidth = width - paddingLeft - paddingRight;
+  const chartHeight = height - paddingTop - paddingBottom;
 
+  // Generate Y-axis ticks (5 ticks)
+  const yTicks = Array.from({ length: 5 }, (_, i) => {
+    const value = minValue + (valueRange * (4 - i)) / 4;
+    return Math.round(value);
+  });
+
+  // Calculate points
   const points = data
     .map((point, index) => {
-      const x = (index / (data.length - 1 || 1)) * (width - padding * 2) + padding;
-      const y = height - (point.value / maxValue) * (height - padding * 2) - padding;
+      const x = (index / (data.length - 1 || 1)) * chartWidth + paddingLeft;
+      const normalizedValue = (point.value - minValue) / valueRange;
+      const y = paddingTop + chartHeight - (normalizedValue * chartHeight);
       return `${x},${y}`;
     })
     .join(' ');
 
+  // Format currency for tooltip
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat('en-IE', {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  // Format date for tooltip
+  const formatDate = (dateString: string): string => {
+    return new Intl.DateTimeFormat('en-IE', {
+      month: 'short',
+      day: 'numeric',
+    }).format(new Date(dateString));
+  };
+
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full">
-      <polyline
-        fill="none"
-        stroke={color}
-        strokeWidth="2"
-        points={points}
-      />
-      {data.map((point, index) => {
-        const x = (index / (data.length - 1 || 1)) * (width - padding * 2) + padding;
-        const y = height - (point.value / maxValue) * (height - padding * 2) - padding;
-        return (
-          <circle
-            key={index}
-            cx={x}
-            cy={y}
-            r="2"
-            fill={color}
-          />
-        );
-      })}
-    </svg>
+    <div className="relative w-full h-full">
+      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full">
+        {/* Y-axis grid lines and labels */}
+        {yTicks.map((tick, i) => {
+          const y = paddingTop + (chartHeight * i) / (yTicks.length - 1);
+          return (
+            <g key={i}>
+              {/* Grid line */}
+              <line
+                x1={paddingLeft}
+                y1={y}
+                x2={width - paddingRight}
+                y2={y}
+                stroke="#e5e7eb"
+                strokeWidth="0.5"
+                strokeDasharray="2,2"
+              />
+              {/* Y-axis label */}
+              <text
+                x={paddingLeft - 2}
+                y={y}
+                textAnchor="end"
+                alignmentBaseline="middle"
+                fontSize="3"
+                fill="#6b7280"
+              >
+                €{tick}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* X-axis labels */}
+        {data.length <= 7 && data.map((point, index) => {
+          const x = (index / (data.length - 1 || 1)) * chartWidth + paddingLeft;
+          const y = height - paddingBottom + 3;
+          return (
+            <text
+              key={index}
+              x={x}
+              y={y}
+              textAnchor="middle"
+              fontSize="3"
+              fill="#6b7280"
+            >
+              {formatDate(point.date)}
+            </text>
+          );
+        })}
+
+        {/* Line */}
+        <polyline
+          fill="none"
+          stroke={color}
+          strokeWidth="2"
+          points={points}
+        />
+
+        {/* Data points */}
+        {data.map((point, index) => {
+          const x = (index / (data.length - 1 || 1)) * chartWidth + paddingLeft;
+          const normalizedValue = (point.value - minValue) / valueRange;
+          const y = paddingTop + chartHeight - (normalizedValue * chartHeight);
+          const isHovered = hoveredPoint?.index === index;
+          
+          return (
+            <g key={index}>
+              {/* Invisible larger circle for better hover detection */}
+              <circle
+                cx={x}
+                cy={y}
+                r="4"
+                fill="transparent"
+                style={{ cursor: 'pointer' }}
+                onMouseEnter={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  setHoveredPoint({ index, x: rect.left, y: rect.top });
+                }}
+                onMouseLeave={() => setHoveredPoint(null)}
+              />
+              {/* Visible circle */}
+              <circle
+                cx={x}
+                cy={y}
+                r={isHovered ? "2.5" : "2"}
+                fill={color}
+                style={{ cursor: 'pointer', transition: 'r 0.2s' }}
+              />
+            </g>
+          );
+        })}
+      </svg>
+
+      {/* Tooltip */}
+      {hoveredPoint !== null && (
+        <div
+          className="absolute z-10 px-3 py-2 text-sm bg-gray-900 text-white rounded-lg shadow-lg pointer-events-none"
+          style={{
+            left: `${((hoveredPoint.index / (data.length - 1 || 1)) * 100)}%`,
+            top: '-40px',
+            transform: 'translateX(-50%)',
+          }}
+        >
+          <div className="font-semibold">
+            {formatCurrency(data[hoveredPoint.index].value)}
+          </div>
+          <div className="text-xs text-gray-300">
+            {formatDate(data[hoveredPoint.index].date)}
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
@@ -211,6 +364,7 @@ const UV_AdminDashboard: React.FC = () => {
   const [selectedDateRange, setSelectedDateRange] = useState<string>(
     searchParams.get('date_range') || 'today'
   );
+  const [chartDateRange, setChartDateRange] = useState<string>('last_7_days');
   const [lastUpdatedAt, setLastUpdatedAt] = useState<string | null>(null);
 
   // Update URL when date range changes
@@ -270,8 +424,8 @@ const UV_AdminDashboard: React.FC = () => {
     isLoading: chartLoading,
     error: chartError,
   } = useQuery({
-    queryKey: ['admin-revenue-chart', selectedDateRange],
-    queryFn: () => fetchRevenueChartData(authToken!, selectedDateRange),
+    queryKey: ['admin-revenue-chart', chartDateRange],
+    queryFn: () => fetchRevenueChartData(authToken!, chartDateRange),
     enabled: !!authToken,
     staleTime: 60000,
     refetchOnWindowFocus: false,
@@ -459,36 +613,44 @@ const UV_AdminDashboard: React.FC = () => {
               ) : metricsError ? (
                 <p className="text-sm text-red-600">Error loading</p>
               ) : (
-                <div className="space-y-3">
-                  <div>
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-xs text-gray-600">Collection</span>
-                      <span className="text-xs font-semibold text-gray-900">
-                        {dashboardMetrics?.collection_percentage.toFixed(0) || 0}%
-                      </span>
+                <>
+                  {dashboardMetrics?.collection_percentage === 0 && dashboardMetrics?.delivery_percentage === 0 ? (
+                    <div className="flex items-center justify-center h-20 text-center">
+                      <p className="text-xs text-gray-400 italic">No data yet today</p>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${dashboardMetrics?.collection_percentage || 0}%` }}
-                      ></div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div>
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-xs text-gray-600">Collection</span>
+                          <span className="text-xs font-semibold text-gray-900">
+                            {dashboardMetrics?.collection_percentage.toFixed(0) || 0}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${dashboardMetrics?.collection_percentage || 0}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-xs text-gray-600">Delivery</span>
+                          <span className="text-xs font-semibold text-gray-900">
+                            {dashboardMetrics?.delivery_percentage.toFixed(0) || 0}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-orange-600 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${dashboardMetrics?.delivery_percentage || 0}%` }}
+                          ></div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-xs text-gray-600">Delivery</span>
-                      <span className="text-xs font-semibold text-gray-900">
-                        {dashboardMetrics?.delivery_percentage.toFixed(0) || 0}%
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-orange-600 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${dashboardMetrics?.delivery_percentage || 0}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -541,9 +703,21 @@ const UV_AdminDashboard: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
             {/* Revenue Chart */}
             <div className="lg:col-span-2 bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                Revenue Trend
-              </h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Revenue Trend
+                </h2>
+                <select
+                  value={chartDateRange}
+                  onChange={(e) => setChartDateRange(e.target.value)}
+                  className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                >
+                  <option value="today">Today</option>
+                  <option value="last_7_days">Last 7 Days</option>
+                  <option value="last_30_days">Last 30 Days</option>
+                  <option value="this_month">This Month</option>
+                </select>
+              </div>
               {chartLoading ? (
                 <div className="h-64 bg-gray-200 animate-pulse rounded"></div>
               ) : chartError ? (
@@ -567,42 +741,51 @@ const UV_AdminDashboard: React.FC = () => {
                 Quick Actions
               </h2>
               <div className="space-y-4">
-                {/* Toggle Delivery */}
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <span className="text-sm font-medium text-gray-700">
-                    Delivery Service
-                  </span>
-                  <button
-                    onClick={() => toggleDeliveryMutation.mutate(!deliveryEnabled)}
-                    disabled={toggleDeliveryMutation.isPending}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                      deliveryEnabled ? 'bg-blue-600' : 'bg-gray-300'
-                    } ${toggleDeliveryMutation.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        deliveryEnabled ? 'translate-x-6' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
+                {/* Toggle Delivery with Clear Status Label */}
+                <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-900">
+                      Delivery Status
+                    </span>
+                    <button
+                      onClick={() => toggleDeliveryMutation.mutate(!deliveryEnabled)}
+                      disabled={toggleDeliveryMutation.isPending}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                        deliveryEnabled ? 'bg-green-600' : 'bg-gray-300'
+                      } ${toggleDeliveryMutation.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      aria-label={`Turn delivery ${deliveryEnabled ? 'off' : 'on'}`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          deliveryEnabled ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  <div className="flex items-center">
+                    <div className={`w-2 h-2 rounded-full mr-2 ${deliveryEnabled ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                    <span className={`text-xs font-medium ${deliveryEnabled ? 'text-green-700' : 'text-gray-600'}`}>
+                      {deliveryEnabled ? 'Online' : 'Offline'}
+                    </span>
+                  </div>
                 </div>
 
-                {/* Action Buttons */}
+                {/* Action Buttons with Clear Hierarchy */}
                 <Link
                   to="/admin/menu/item"
-                  className="block w-full px-4 py-3 text-center text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors duration-200"
+                  className="block w-full px-4 py-3 text-center text-sm font-semibold text-white bg-gray-900 hover:bg-gray-800 rounded-lg transition-colors duration-200 shadow-sm"
                 >
                   Add Menu Item
                 </Link>
                 <Link
                   to="/admin/discounts/code"
-                  className="block w-full px-4 py-3 text-center text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors duration-200"
+                  className="block w-full px-4 py-3 text-center text-sm font-medium text-gray-700 border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 rounded-lg transition-colors duration-200"
                 >
                   Create Discount
                 </Link>
                 <Link
                   to="/admin/analytics"
-                  className="block w-full px-4 py-3 text-center text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
+                  className="block w-full px-4 py-3 text-center text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200"
                 >
                   View Analytics
                 </Link>
@@ -646,13 +829,28 @@ const UV_AdminDashboard: React.FC = () => {
                         Type
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Amount
+                        <div className="flex items-center cursor-pointer hover:text-gray-700 transition-colors group">
+                          Amount
+                          <svg className="w-3 h-3 ml-1 text-gray-400 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                          </svg>
+                        </div>
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
+                        <div className="flex items-center cursor-pointer hover:text-gray-700 transition-colors group">
+                          Status
+                          <svg className="w-3 h-3 ml-1 text-gray-400 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                          </svg>
+                        </div>
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Time
+                        <div className="flex items-center cursor-pointer hover:text-gray-700 transition-colors group">
+                          Time
+                          <svg className="w-3 h-3 ml-1 text-gray-400 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                          </svg>
+                        </div>
                       </th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions

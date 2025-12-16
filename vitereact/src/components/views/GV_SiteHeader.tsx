@@ -244,7 +244,7 @@ const GV_SiteHeader: React.FC = () => {
     <>
       {/* Main Navigation Bar - Floating container with 20px top margin */}
       <nav 
-        className={`fixed left-0 right-0 z-50 transition-all duration-300 ${
+        className={`fixed left-0 right-0 z-[100] transition-all duration-300 ${
           hasShadow 
             ? 'top-3 md:top-5' 
             : 'top-3 md:top-5'
@@ -266,8 +266,8 @@ const GV_SiteHeader: React.FC = () => {
           {/* ======================================
               MOBILE HEADER - flex md:hidden
               ====================================== */}
-          <div className="flex md:hidden items-center h-14 py-2 px-4">
-            <div className="flex items-center justify-between w-full gap-3">
+          <div className="flex md:hidden items-center h-14 py-2 px-4" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="flex items-center justify-between w-full gap-3" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               {/* Left: Cart Icon */}
               <Link
                 to="/cart"
@@ -289,10 +289,11 @@ const GV_SiteHeader: React.FC = () => {
                 aria-label="Salama Lama Home"
               >
                 <img
-                  src="/brand/salama-lama-logo.png"
+                  src="/logo-salama-lama.jpg"
                   alt="Salama Lama"
                   loading="eager"
                   className="h-7 w-auto max-w-[140px] object-contain transition-transform duration-200 group-hover:scale-105"
+                  style={{ maxHeight: '40px', width: 'auto' }}
                   onError={(e) => {
                     // Only show SL fallback if image fails to load
                     const target = e.target as HTMLImageElement;
@@ -322,10 +323,11 @@ const GV_SiteHeader: React.FC = () => {
                   </Link>
                 )}
                 
-                {/* Hamburger Menu */}
+                {/* Hamburger Menu - Always Visible on Mobile */}
                 <button
                   onClick={toggleMobileMenu}
-                  className="flex items-center justify-center w-10 h-10 text-[#2C1A16] hover:text-[#D97706] focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 rounded-lg transition-colors duration-200"
+                  className="flex md:hidden items-center justify-center w-10 h-10 text-[#2C1A16] hover:text-[#D97706] focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 rounded-lg transition-colors duration-200"
+                  style={{ display: 'flex' }}
                   aria-label="Toggle navigation menu"
                   aria-expanded={isMobileMenuOpen}
                 >
@@ -655,17 +657,17 @@ const GV_SiteHeader: React.FC = () => {
           animation: fadeIn 0.2s ease-out;
         }
         
-        /* Responsive logo sizing */
+        /* Responsive logo sizing - Mobile First with constraints */
         nav img[alt="Salama Lama"] {
-          height: 28px;
-          width: auto;
+          max-height: 40px !important;
+          width: auto !important;
           max-width: 140px;
           object-fit: contain;
         }
         
         @media (min-width: 640px) {
           nav img[alt="Salama Lama"] {
-            height: 30px;
+            max-height: 40px !important;
             max-width: 150px;
           }
         }
@@ -673,6 +675,7 @@ const GV_SiteHeader: React.FC = () => {
         @media (min-width: 768px) {
           nav img[alt="Salama Lama"] {
             height: 36px;
+            max-height: 48px !important;
             max-width: 180px;
           }
         }
@@ -681,6 +684,18 @@ const GV_SiteHeader: React.FC = () => {
         @media (max-width: 767px) {
           nav {
             min-height: 56px;
+          }
+          
+          /* Ensure hamburger is always visible on mobile */
+          button[aria-label="Toggle navigation menu"] {
+            display: flex !important;
+          }
+        }
+        
+        /* Hide hamburger on desktop */
+        @media (min-width: 768px) {
+          button[aria-label="Toggle navigation menu"] {
+            display: none !important;
           }
         }
       `}</style>

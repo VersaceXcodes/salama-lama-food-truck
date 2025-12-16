@@ -135,7 +135,7 @@ const GV_TopNav_Public: React.FC = () => {
     <>
       {/* Main Navigation Bar - Fixed at top with Mobile-First Design */}
       <nav 
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-200`}
+        className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-200`}
       >
         <div className={`max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 ${
           has_shadow 
@@ -153,7 +153,7 @@ const GV_TopNav_Public: React.FC = () => {
           >
             {/* Mobile Layout: Logo Left | Cart & Hamburger Right */}
             {/* Desktop Layout: Left Nav | Center Logo | Right Actions */}
-            <div className="flex items-center justify-between h-16 md:h-20 px-4 md:px-6">
+            <div className="flex items-center justify-between h-16 md:h-20 px-4 md:px-6" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               
               {/* LEFT GROUP: Logo on Mobile, Navigation Links on Desktop */}
               <div className="flex items-center flex-1">
@@ -168,7 +168,7 @@ const GV_TopNav_Public: React.FC = () => {
                       src="/logo-salama-lama.jpg" 
                       alt="Salama Lama" 
                       className="w-auto object-contain transition-transform duration-200 group-hover:scale-105"
-                      style={{ height: '32px', maxWidth: '120px' }}
+                      style={{ height: '32px', maxHeight: '40px', maxWidth: '120px', width: 'auto' }}
                       onError={(e) => { 
                         // Fallback to default logo if custom logo fails to load
                         const target = e.target as HTMLImageElement;
@@ -273,10 +273,11 @@ const GV_TopNav_Public: React.FC = () => {
                   )}
                 </Link>
                 
-                {/* Hamburger Menu Button - Mobile Only */}
+                {/* Hamburger Menu Button - Mobile Only - Always Visible */}
                 <button
                   onClick={toggleMobileMenu}
-                  className="md:hidden text-[#2E211D] hover:text-[#1a0f0d] focus:outline-none focus:ring-2 focus:ring-[#2E211D] focus:ring-offset-2 rounded-lg transition-colors duration-200 p-1"
+                  className="block md:hidden text-[#2E211D] hover:text-[#1a0f0d] focus:outline-none focus:ring-2 focus:ring-[#2E211D] focus:ring-offset-2 rounded-lg transition-colors duration-200 p-1"
+                  style={{ display: 'block' }}
                   aria-label="Open navigation menu"
                   aria-expanded={is_mobile_menu_open}
                 >
@@ -294,13 +295,13 @@ const GV_TopNav_Public: React.FC = () => {
         <>
           {/* Backdrop */}
           <div 
-            className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden transition-opacity duration-300"
+            className="fixed inset-0 bg-black bg-opacity-50 z-[90] md:hidden transition-opacity duration-300"
             onClick={closeMobileMenu}
             aria-hidden="true"
           />
           
           {/* Mobile Menu Drawer - Off-Canvas, Slides from Right */}
-          <div className="fixed top-0 right-0 bottom-0 w-[85%] max-w-sm z-50 md:hidden shadow-2xl overflow-y-auto animate-slide-in-right bg-[#F2EFE9]">
+          <div className="fixed top-0 right-0 bottom-0 w-[85%] max-w-sm z-[95] md:hidden shadow-2xl overflow-y-auto animate-slide-in-right bg-[#F2EFE9]">
             <div className="px-6 py-8 space-y-8">
               
               {/* Close Button - Top Right Corner */}
@@ -432,11 +433,30 @@ const GV_TopNav_Public: React.FC = () => {
           animation: bounce-subtle 0.5s ease-in-out;
         }
         
-        /* Responsive logo sizing */
+        /* Responsive logo sizing - Mobile First */
+        nav img[alt="Salama Lama"] {
+          max-height: 40px !important;
+          width: auto !important;
+        }
+        
         @media (min-width: 768px) {
           nav img[alt="Salama Lama"] {
             height: 34px !important;
+            max-height: 48px !important;
             max-width: 200px !important;
+          }
+        }
+        
+        /* Ensure hamburger is visible on mobile */
+        @media (max-width: 767px) {
+          button[aria-label="Open navigation menu"] {
+            display: block !important;
+          }
+        }
+        
+        @media (min-width: 768px) {
+          button[aria-label="Open navigation menu"] {
+            display: none !important;
           }
         }
       `}</style>

@@ -27,6 +27,7 @@ const BrandLogo: React.FC<BrandLogoProps> = ({ variant = 'header', className = '
   const variantStyles = variant === 'header' 
     ? {
         height: '30px', // Mobile-first: 28-32px range
+        maxHeight: '40px', // Constraint for mobile
         maxWidth: '160px',
       }
     : {

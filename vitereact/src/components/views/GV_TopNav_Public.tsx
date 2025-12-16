@@ -191,19 +191,37 @@ const GV_TopNav_Public: React.FC = () => {
               </Link>
             </div>
             
-            {/* RIGHT GROUP: User Actions - Log In + Cart */}
-            <div className="flex items-center justify-end gap-5 flex-1 z-20">
+            {/* RIGHT GROUP: User Actions - Log In + Sign Up + Cart */}
+            <div className="flex items-center justify-end gap-3 md:gap-4 flex-1 z-20">
               
-              {/* Log In Link - Desktop: Text, Mobile: User Icon */}
+              {/* Desktop: Log In + Sign Up Buttons */}
+              <div className="hidden md:flex items-center gap-3">
+                {/* Log In Button - Secondary Style */}
+                <Link
+                  to="/login"
+                  className="px-5 py-2 text-sm font-semibold text-[#6F4E37] bg-white border-2 border-[#6F4E37] rounded-lg hover:bg-[#F2EFE9] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 shadow-sm whitespace-nowrap"
+                  aria-label="Log In"
+                >
+                  Log In
+                </Link>
+                
+                {/* Sign Up Button - Primary Style */}
+                <Link
+                  to="/signup"
+                  className="px-5 py-2 text-sm font-bold text-white bg-[#6F4E37] rounded-lg hover:bg-[#5a3d2a] hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 shadow-sm whitespace-nowrap"
+                  aria-label="Sign Up"
+                >
+                  Sign Up
+                </Link>
+              </div>
+              
+              {/* Mobile: Account Icon (opens mobile menu with login/signup options) */}
               <Link
                 to="/login"
-                className="text-[#6F4E37] hover:text-orange-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-lg"
-                aria-label="Log In"
+                className="md:hidden text-[#6F4E37] hover:text-orange-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-lg"
+                aria-label="Account - Log In or Sign Up"
               >
-                {/* Desktop: Text Link */}
-                <span className="hidden md:inline text-base font-medium">Log In</span>
-                {/* Mobile: User Icon */}
-                <User className="md:hidden h-6 w-6" />
+                <User className="h-6 w-6" />
               </Link>
               
               {/* Cart Button with Badge */}

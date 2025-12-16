@@ -266,7 +266,7 @@ const GV_SiteHeader: React.FC = () => {
               MOBILE HEADER - flex md:hidden
               ====================================== */}
           <div className="flex md:hidden items-center h-14 py-2 px-4">
-            <div className="grid grid-cols-[48px_1fr_48px] items-center w-full gap-2">
+            <div className="flex items-center justify-between w-full gap-3">
               {/* Left: Cart Icon */}
               <Link
                 to="/cart"
@@ -284,7 +284,7 @@ const GV_SiteHeader: React.FC = () => {
               {/* Center: Brand Logo - Real logo with fallback only on error */}
               <Link 
                 to="/"
-                className="flex items-center justify-center group"
+                className="flex items-center justify-center group flex-1"
                 aria-label="Salama Lama Home"
               >
                 <img
@@ -308,19 +308,33 @@ const GV_SiteHeader: React.FC = () => {
                 </div>
               </Link>
               
-              {/* Right: Hamburger Menu */}
-              <button
-                onClick={toggleMobileMenu}
-                className="flex items-center justify-center w-10 h-10 text-[#2C1A16] hover:text-[#D97706] focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 rounded-lg transition-colors duration-200"
-                aria-label="Toggle navigation menu"
-                aria-expanded={isMobileMenuOpen}
-              >
-                {isMobileMenuOpen ? (
-                  <X className="h-6 w-6" />
-                ) : (
-                  <Menu className="h-6 w-6" />
+              {/* Right: Account Icon (if not authenticated) or Hamburger Menu */}
+              <div className="flex items-center gap-2">
+                {/* Show Account Icon for non-authenticated users */}
+                {!isAuthenticated && (
+                  <Link
+                    to="/login"
+                    className="flex items-center justify-center w-10 h-10 text-[#2C1A16] hover:text-[#D97706] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 rounded-lg"
+                    aria-label="Account - Log In or Sign Up"
+                  >
+                    <User className="h-6 w-6" />
+                  </Link>
                 )}
-              </button>
+                
+                {/* Hamburger Menu */}
+                <button
+                  onClick={toggleMobileMenu}
+                  className="flex items-center justify-center w-10 h-10 text-[#2C1A16] hover:text-[#D97706] focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 rounded-lg transition-colors duration-200"
+                  aria-label="Toggle navigation menu"
+                  aria-expanded={isMobileMenuOpen}
+                >
+                  {isMobileMenuOpen ? (
+                    <X className="h-6 w-6" />
+                  ) : (
+                    <Menu className="h-6 w-6" />
+                  )}
+                </button>
+              </div>
             </div>
           </div>
           
@@ -357,8 +371,8 @@ const GV_SiteHeader: React.FC = () => {
               </Link>
             </div>
             
-            {/* Right Section: Cart Icon Only */}
-            <div className="flex items-center" style={{ flexWrap: 'nowrap' }}>
+            {/* Right Section: Cart + Account (Authenticated) OR Cart + Login/Signup (Not Authenticated) */}
+            <div className="flex items-center gap-4" style={{ flexWrap: 'nowrap' }}>
               
               {/* Cart Button with Badge */}
               <Link
@@ -374,6 +388,79 @@ const GV_SiteHeader: React.FC = () => {
                   </span>
                 )}
               </Link>
+              
+              {/* Authenticated Users: Account Dropdown */}
+              {isAuthenticated && !isGuest && (
+                <div className="relative" ref={profileDropdownRef}>
+                  <button
+                    onClick={toggleProfileDropdown}
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-[#2C1A16] bg-white border-2 border-[#2C1A16] rounded-lg hover:bg-[#F5F0EB] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 shadow-sm whitespace-nowrap"
+                    aria-label="Account Menu"
+                    aria-expanded={isProfileDropdownOpen}
+                  >
+                    <User className="h-4 w-4" />
+                    <span>Account</span>
+                    <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isProfileDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  
+                  {/* Dropdown Menu */}
+                  {isProfileDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50 animate-fadeIn">
+                      <Link
+                        to="/orders"
+                        onClick={closeProfileDropdown}
+                        className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-[#2C1A16] hover:bg-[#F5F0EB] transition-colors"
+                      >
+                        <ShoppingCart className="h-4 w-4" />
+                        <span>My Orders / Tickets</span>
+                      </Link>
+                      
+                      <Link
+                        to="/dashboard"
+                        onClick={closeProfileDropdown}
+                        className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-[#2C1A16] hover:bg-[#F5F0EB] transition-colors"
+                      >
+                        <User className="h-4 w-4" />
+                        <span>Profile</span>
+                      </Link>
+                      
+                      <div className="border-t border-gray-200 my-2" />
+                      
+                      <button
+                        onClick={handleLogout}
+                        disabled={isLoggingOut}
+                        className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span>{isLoggingOut ? 'Signing Out...' : 'Logout'}</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {/* Not Authenticated: Login + Sign Up Buttons */}
+              {!isAuthenticated && (
+                <>
+                  {/* Log In Button - Secondary Style */}
+                  <Link
+                    to="/login"
+                    className="px-5 py-2 text-sm font-semibold text-[#2C1A16] bg-white border-2 border-[#2C1A16] rounded-lg hover:bg-[#F5F0EB] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 shadow-sm whitespace-nowrap"
+                    aria-label="Log In"
+                  >
+                    Log In
+                  </Link>
+                  
+                  {/* Sign Up Button - Primary Style */}
+                  <Link
+                    to="/signup"
+                    className="px-5 py-2 text-sm font-bold text-white bg-[#2C1A16] rounded-lg hover:bg-[#1A0F0D] hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 shadow-sm whitespace-nowrap"
+                    aria-label="Sign Up"
+                  >
+                    Sign Up
+                  </Link>
+                </>
+              )}
               
             </div>
           </div>

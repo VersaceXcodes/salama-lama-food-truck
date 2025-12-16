@@ -106,9 +106,13 @@ html {
 		--stack-spacing-sm: 0.75rem; /* 12px - gap-3 */
 		--stack-spacing: 1rem; /* 16px - gap-4 */
 		
+		/* Header Heights */
+		--header-height-mobile: 3.5rem; /* 56px */
+		--header-height-desktop: 4.5rem; /* 72px */
+		
 		/* Bottom Cart Bar Heights (Mobile-safe) */
-		--bottom-bar-height: 84px;
-		--bottom-bar-height-mobile: 84px;
+		--bottom-bar-height: 5.5rem; /* 88px including padding */
+		--bottom-bar-height-mobile: 5.5rem;
 		
 		/* Tap Targets - Minimum 44px for mobile */
 		--tap-target-min: 44px;
@@ -528,8 +532,7 @@ p {
 	/* Site Header: Fixed height, no wrapping, single row layout */
 	.site-header {
 		height: auto !important;
-		min-height: 56px !important;
-		max-height: 72px !important;
+		min-height: var(--header-height-mobile) !important;
 	}
 	
 	/* CRITICAL: Prevent header flex containers from wrapping */
@@ -541,7 +544,7 @@ p {
 	
 	/* Logo sizing for mobile */
 	.site-header img {
-		max-height: 32px !important;
+		max-height: 2rem !important;
 		height: auto !important;
 		width: auto !important;
 		object-fit: contain !important;
@@ -549,21 +552,31 @@ p {
 		min-width: 0 !important;
 	}
 	
-	/* Hamburger and action buttons - fixed size, no shrink */
+	/* Hamburger and action buttons - proper tap targets */
 	.site-header button,
 	.site-header a[aria-label] {
 		flex-shrink: 0 !important;
-		min-width: 44px !important;
-		min-height: 44px !important;
+		min-width: var(--tap-target-min) !important;
+		min-height: var(--tap-target-min) !important;
 	}
 	
 	/* Icons inside buttons */
 	.site-header button svg,
 	.site-header a svg {
-		width: 20px !important;
-		height: 20px !important;
+		width: 1.25rem !important;
+		height: 1.25rem !important;
 		flex-shrink: 0 !important;
 	}
+}
+
+/* ===================================
+   SITE HEADER SCROLL STATE
+   Modern frosted glass effect on scroll
+   =================================== */
+
+.site-header {
+	/* Base transition for smooth scroll state changes */
+	transition: background-color 0.3s ease, box-shadow 0.3s ease, backdrop-filter 0.3s ease;
 }
 
 /* Legacy nav styling for other nav elements (not site-header) */
@@ -734,15 +747,11 @@ p {
 	}
 
 	/* CRITICAL FIX #3: Sticky Footer Safe Area - Prevent Overlap */
-	/* Only add bottom padding on pages with the floating cart */
-	body:has([data-floating-cart]),
-	#root:has([data-floating-cart]) {
-		padding-bottom: calc(var(--bottom-bar-height-mobile) + env(safe-area-inset-bottom, 16px)) !important;
-	}
-
 	/* Add bottom padding to page content when floating cart is present */
-	main:has(~ [data-floating-cart]) {
-		padding-bottom: calc(var(--bottom-bar-height-mobile) + env(safe-area-inset-bottom, 16px)) !important;
+	/* Using :has() selector for modern browsers */
+	body:has([data-floating-cart]) main,
+	#root:has([data-floating-cart]) main {
+		padding-bottom: calc(var(--bottom-bar-height-mobile) + env(safe-area-inset-bottom, 1rem)) !important;
 	}
 
 	/* CRITICAL FIX #4: Visual Polish - Side Padding */
@@ -1081,33 +1090,19 @@ a[class*="border-"][class*="bg-transparent"]:active,
 
 /* ===================================
    PREMIUM BOTTOM CART BAR (MOBILE)
-   Less intrusive, more elegant
+   Modern floating "sheet" style
    =================================== */
 
+/* The floating cart bar container */
 [data-floating-cart] {
-	background: linear-gradient(to top, var(--btn-bg), #1A0F0D) !important;
-	border-top: none !important;
-	box-shadow: 0 -8px 32px 0 rgb(44 26 22 / 0.25) !important;
-	backdrop-filter: blur(12px);
-	padding: 0.875rem 1rem !important;
-	padding-bottom: calc(0.875rem + env(safe-area-inset-bottom, 0px)) !important;
+	/* Allow the component styles to take precedence */
+	pointer-events: auto;
 }
 
-[data-floating-cart]:hover {
-	background: linear-gradient(to top, #1A0F0D, var(--btn-bg)) !important;
-}
-
-/* Adjust spacing between elements */
-[data-floating-cart] .flex {
-	align-items: center;
-	gap: 1rem;
-}
-
-/* Price display */
-[data-floating-cart] .text-xl {
-	font-size: 1.5rem !important;
-	font-weight: 800 !important;
-	letter-spacing: -0.01em;
+/* Ensure the link inside is fully tappable */
+[data-floating-cart] > a {
+	display: flex;
+	width: 100%;
 }
 
 /* ===================================

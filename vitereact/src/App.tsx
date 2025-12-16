@@ -233,9 +233,11 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isStaffRoute = location.pathname.startsWith('/staff');
 
-  // Routes that should show floating cart
-  const showFloatingCartRoutes = ['/', '/menu', '/catering', '/dashboard'];
-  const showFloatingCart = showFloatingCartRoutes.includes(location.pathname);
+  // Routes that should show floating cart (more inclusive now - component handles hiding on checkout/admin/staff)
+  const showFloatingCartPaths = ['/', '/menu', '/catering', '/dashboard', '/cart', '/about', '/contact', '/faqs', '/terms', '/privacy', '/track-order', '/orders', '/rewards', '/profile', '/addresses', '/payment-methods'];
+  const showFloatingCart = showFloatingCartPaths.includes(location.pathname) || 
+    location.pathname.startsWith('/catering/') ||
+    location.pathname.startsWith('/orders/');
 
   // Routes that should show footer (public + customer routes)
   const noFooterRoutes = isAdminRoute || isStaffRoute;

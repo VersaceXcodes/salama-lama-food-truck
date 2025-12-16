@@ -1,90 +1,15 @@
-Add a Home item in the admin sidebar and improve the sidebar menu structure.
-
-Requirements
-
-Add “Home” to the very top of the admin sidebar (above Dashboard).
-
-Icon: house
-
-Route: navigate to the public website landing page / (NOT the admin dashboard).
-
-On click, it should close the mobile sidebar (if open).
-
-Reorder and standardize the sidebar items in this order (use existing routes if they exist; don’t break anything):
-
-Home → /
-
-Dashboard → existing route
-
-Orders → existing route
-
-Menu Items (or “Menu”) → existing route
-
-Categories → create route if missing (admin page that lists/adds/edits/reorders categories used on the customer menu)
-
-Stock → existing route
-
-Delivery → existing route
-
-Discounts → existing route
-
-Customers → existing route
-
-Staff / Roles → existing route (if “Staff” exists, keep it; if not, create)
-
-Invoices → existing route
-
-Analytics / Reports → existing route
-
-Activity Logs → existing route
-
-Settings → existing route
-
-Mobile behavior
-
-On screens under md:
-
-Sidebar must be hidden by default.
-
-A hamburger button in the admin top bar should open it.
-
-Sidebar should slide in from the left.
-
-Show a dark translucent overlay behind it.
-
-User can close it by:
-
-Tapping the overlay
-
-Tapping a visible “X” close button at the top of the sidebar
-
-Pressing ESC
-
-When sidebar is open, prevent background scrolling.
-
-Desktop behavior
-
-On md and above:
-
-Sidebar is fixed on the left, not overlaying the content.
-
-Main content area should have correct left padding/margin so nothing is covered.
-
-Implementation notes
-
-Reuse the existing sidebar component and styles as much as possible.
-
-Do not introduce a new UI library.
-
-Make sure the active route is highlighted.
-
-If you create a new Categories admin page/route, make it minimal but functional (list, add, edit name, delete, reorder optional).
-
-Provide the exact files changed and the code changes.
-
-Deliverable
-
-Make the changes, ensure it compiles, and summarize what you changed.
+https://123salama-lama-food-truck.launchpulse.ai/checkout/review i still have an issue in the checkout/review page when a customer places an order it gives me error message " {
+    "success": false,
+    "message": "Internal server error",
+    "error_code": "INTERNAL_SERVER_ERROR",
+    "timestamp": "2025-12-16T15:03:15.868Z",
+    "request_id": "req_m0XoKvyanbqD",
+    "debug": {
+        "name": "error",
+        "message": "current transaction is aborted, commands ignored until end of transaction block",
+        "stack": "error: current transaction is aborted, commands ignored until end of transaction block\n    at /app/backend/node_modules/pg-pool/index.js:45:11\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at compute_cart_totals (/app/backend/server.ts:1075:21)\n    at <anonymous> (/app/backend/server.ts:2982:20)"
+    }
+} " fix ir
 
 When the user mentions generic pages, map them to concrete files/components by scanning for headings and routes. Examples you MUST follow:
 - If the user says "login" or "sign in", search for components containing the literal heading "Sign in to your account" and edit that file.
@@ -95,91 +20,16 @@ When the user mentions generic pages, map them to concrete files/components by s
 - The user's request above is the PRIMARY task. Complete it first.
 - Ignore any existing errors, warnings, or issues you detect in the project unless they directly prevent you from completing the user's requested task.
 - Do NOT automatically fix unrelated errors or refactor code unless explicitly requested.
-- Focus solely on implementing the user's request: "Add a Home item in the admin sidebar and improve the sidebar menu structure.
-
-Requirements
-
-Add “Home” to the very top of the admin sidebar (above Dashboard).
-
-Icon: house
-
-Route: navigate to the public website landing page / (NOT the admin dashboard).
-
-On click, it should close the mobile sidebar (if open).
-
-Reorder and standardize the sidebar items in this order (use existing routes if they exist; don’t break anything):
-
-Home → /
-
-Dashboard → existing route
-
-Orders → existing route
-
-Menu Items (or “Menu”) → existing route
-
-Categories → create route if missing (admin page that lists/adds/edits/reorders categories used on the customer menu)
-
-Stock → existing route
-
-Delivery → existing route
-
-Discounts → existing route
-
-Customers → existing route
-
-Staff / Roles → existing route (if “Staff” exists, keep it; if not, create)
-
-Invoices → existing route
-
-Analytics / Reports → existing route
-
-Activity Logs → existing route
-
-Settings → existing route
-
-Mobile behavior
-
-On screens under md:
-
-Sidebar must be hidden by default.
-
-A hamburger button in the admin top bar should open it.
-
-Sidebar should slide in from the left.
-
-Show a dark translucent overlay behind it.
-
-User can close it by:
-
-Tapping the overlay
-
-Tapping a visible “X” close button at the top of the sidebar
-
-Pressing ESC
-
-When sidebar is open, prevent background scrolling.
-
-Desktop behavior
-
-On md and above:
-
-Sidebar is fixed on the left, not overlaying the content.
-
-Main content area should have correct left padding/margin so nothing is covered.
-
-Implementation notes
-
-Reuse the existing sidebar component and styles as much as possible.
-
-Do not introduce a new UI library.
-
-Make sure the active route is highlighted.
-
-If you create a new Categories admin page/route, make it minimal but functional (list, add, edit name, delete, reorder optional).
-
-Provide the exact files changed and the code changes.
-
-Deliverable
-
-Make the changes, ensure it compiles, and summarize what you changed."
+- Focus solely on implementing the user's request: "https://123salama-lama-food-truck.launchpulse.ai/checkout/review i still have an issue in the checkout/review page when a customer places an order it gives me error message " {
+    "success": false,
+    "message": "Internal server error",
+    "error_code": "INTERNAL_SERVER_ERROR",
+    "timestamp": "2025-12-16T15:03:15.868Z",
+    "request_id": "req_m0XoKvyanbqD",
+    "debug": {
+        "name": "error",
+        "message": "current transaction is aborted, commands ignored until end of transaction block",
+        "stack": "error: current transaction is aborted, commands ignored until end of transaction block\n    at /app/backend/node_modules/pg-pool/index.js:45:11\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at compute_cart_totals (/app/backend/server.ts:1075:21)\n    at <anonymous> (/app/backend/server.ts:2982:20)"
+    }
+} " fix ir"
 - Only address errors if they block the specific functionality requested by the user.

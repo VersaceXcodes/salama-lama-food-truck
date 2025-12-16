@@ -298,14 +298,27 @@ const UV_Contact: React.FC = () => {
 
   return (
     <>
-      <main className="min-h-screen bg-[#F2EFE9]">
+      {/* Sticky Floating Action Button - Mobile Only */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 p-4 bg-gradient-to-t from-[#F2EFE9] via-[#F2EFE9] to-transparent pointer-events-none">
+        <a
+          href={`tel:${business_contact_info?.phone || business_settings.business_info.phone}`}
+          onClick={handle_phone_click}
+          className="flex items-center justify-center w-full bg-[#2C1A16] text-[#F2EFE9] font-bold rounded-full shadow-2xl hover:shadow-3xl hover:bg-[#3E2F26] transition-all duration-300 active:scale-95 pointer-events-auto"
+          style={{ minHeight: '56px', fontSize: '17px' }}
+        >
+          <Phone className="h-5 w-5 mr-2" />
+          Call Us Now
+        </a>
+      </div>
+      
+      <main className="min-h-screen bg-[#F2EFE9] pb-24 lg:pb-0">
         {/* Modern Split Layout Hero Section */}
         <section className="relative bg-[#F2EFE9] overflow-hidden min-h-screen flex items-center">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-12 sm:py-16 lg:py-20 w-full">
             <div className="flex flex-col lg:grid lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-20 items-stretch">
               
               {/* Left Side - Get in Touch & Contact Details (Floating Elements) */}
-              <div className="order-2 lg:order-1 flex flex-col justify-center space-y-8 sm:space-y-12 relative z-10">
+              <div className="order-1 lg:order-1 flex flex-col justify-center space-y-8 sm:space-y-12 relative z-10">
                 
                 {/* Main Heading */}
                 <div>
@@ -338,39 +351,47 @@ const UV_Contact: React.FC = () => {
                   </div>
                 ) : (
                   // Success State - Floating Contact Details
-                  <div className="space-y-8 sm:space-y-10">
+                  <div className="space-y-6 sm:space-y-8">
                     
-                    {/* Phone & Email - Floating with Icon */}
-                    <div className="flex items-start space-x-5 group transform hover:translate-x-2 transition-transform duration-300">
-                      <div className="flex-shrink-0">
-                        <div className="h-14 w-14 rounded-full bg-[#2C1A16] flex items-center justify-center shadow-lg">
-                          <Phone className="h-7 w-7 text-[#F2EFE9]" />
+                    {/* Phone & Email - Thumb-Friendly Buttons */}
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-4 mb-3">
+                        <div className="flex-shrink-0">
+                          <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-[#2C1A16] flex items-center justify-center shadow-lg">
+                            <Phone className="h-6 w-6 sm:h-7 sm:w-7 text-[#F2EFE9]" />
+                          </div>
                         </div>
+                        <h3 className="text-lg sm:text-xl font-bold text-[#2C1A16]">Call or Text</h3>
                       </div>
-                      <div className="flex-1 pt-1">
-                        <h3 className="text-lg sm:text-xl font-bold text-[#2C1A16] mb-2">Call or Text</h3>
-                        <a
-                          href={`tel:${business_contact_info?.phone || business_settings.business_info.phone}`}
-                          onClick={handle_phone_click}
-                          className="block text-base sm:text-lg text-[#4A3B32] hover:text-[#2C1A16] font-medium transition-colors"
-                        >
-                          {business_contact_info?.phone || business_settings.business_info.phone || '+353-1-234-5678'}
-                        </a>
-                        <a
-                          href={`mailto:${business_contact_info?.email || business_settings.business_info.email}`}
-                          onClick={handle_email_click}
-                          className="block text-base sm:text-lg text-[#4A3B32] hover:text-[#2C1A16] font-medium transition-colors mt-1"
-                        >
-                          {business_contact_info?.email || business_settings.business_info.email || 'hello@salamalama.ie'}
-                        </a>
-                      </div>
+                      
+                      {/* Call/Text Button - Thumb-Friendly */}
+                      <a
+                        href={`tel:${business_contact_info?.phone || business_settings.business_info.phone}`}
+                        onClick={handle_phone_click}
+                        className="flex items-center justify-center w-full bg-[#2C1A16] text-[#F2EFE9] font-bold rounded-2xl shadow-lg hover:shadow-xl hover:bg-[#3E2F26] transition-all duration-300 active:scale-95"
+                        style={{ minHeight: '56px', fontSize: '17px' }}
+                      >
+                        <Phone className="h-5 w-5 mr-2" />
+                        {business_contact_info?.phone || business_settings.business_info.phone || '+353-1-234-5678'}
+                      </a>
+                      
+                      {/* Email Button - Thumb-Friendly */}
+                      <a
+                        href={`mailto:${business_contact_info?.email || business_settings.business_info.email}`}
+                        onClick={handle_email_click}
+                        className="flex items-center justify-center w-full bg-white border-2 border-[#2C1A16] text-[#2C1A16] font-bold rounded-2xl shadow-md hover:shadow-lg hover:bg-[#F2EFE9] transition-all duration-300 active:scale-95"
+                        style={{ minHeight: '56px', fontSize: '17px' }}
+                      >
+                        <Mail className="h-5 w-5 mr-2" />
+                        {business_contact_info?.email || business_settings.business_info.email || 'hello@salamalama.ie'}
+                      </a>
                     </div>
 
                     {/* Opening Hours - Floating with Icon */}
-                    <div className="flex items-start space-x-5 group transform hover:translate-x-2 transition-transform duration-300">
+                    <div className="flex items-start space-x-4 group transform hover:translate-x-2 transition-transform duration-300">
                       <div className="flex-shrink-0">
-                        <div className="h-14 w-14 rounded-full bg-[#2C1A16] flex items-center justify-center shadow-lg">
-                          <Clock className="h-7 w-7 text-[#F2EFE9]" />
+                        <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-[#2C1A16] flex items-center justify-center shadow-lg">
+                          <Clock className="h-6 w-6 sm:h-7 sm:w-7 text-[#F2EFE9]" />
                         </div>
                       </div>
                       <div className="flex-1 pt-1">
@@ -381,7 +402,7 @@ const UV_Contact: React.FC = () => {
                             
                             if (!hours || Object.keys(hours).length === 0) {
                               return (
-                                <p className="text-[#4A3B32] text-sm sm:text-base">
+                                <p className="text-[#4A3B32] font-medium" style={{ fontSize: '16px' }}>
                                   Please contact us for our operating hours.
                                 </p>
                               );
@@ -394,9 +415,9 @@ const UV_Contact: React.FC = () => {
                               const day_hours = hours[day];
                               
                               return (
-                                <div key={day} className="flex justify-between items-center text-sm sm:text-base">
-                                  <span className="font-medium text-[#4A3B32]">{day_names[index]}</span>
-                                  <span className="text-[#4A3B32]">
+                                <div key={day} className="flex justify-between items-center" style={{ fontSize: '16px' }}>
+                                  <span className="font-semibold text-[#2C1A16]">{day_names[index]}</span>
+                                  <span className="font-medium text-[#4A3B32]">
                                     {day_hours && day_hours.open && day_hours.close
                                       ? `${day_hours.open} - ${day_hours.close}`
                                       : 'Closed'
@@ -410,46 +431,51 @@ const UV_Contact: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Address - Floating with Icon */}
-                    <div className="flex items-start space-x-5 group transform hover:translate-x-2 transition-transform duration-300">
-                      <div className="flex-shrink-0">
-                        <div className="h-14 w-14 rounded-full bg-[#2C1A16] flex items-center justify-center shadow-lg">
-                          <MapPin className="h-7 w-7 text-[#F2EFE9]" />
+                    {/* Address - Thumb-Friendly Get Directions Button */}
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-4 mb-3">
+                        <div className="flex-shrink-0">
+                          <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-[#2C1A16] flex items-center justify-center shadow-lg">
+                            <MapPin className="h-6 w-6 sm:h-7 sm:w-7 text-[#F2EFE9]" />
+                          </div>
                         </div>
+                        <h3 className="text-lg sm:text-xl font-bold text-[#2C1A16]">Visit Us</h3>
                       </div>
-                      <div className="flex-1 pt-1">
-                        <h3 className="text-lg sm:text-xl font-bold text-[#2C1A16] mb-2">Visit Us</h3>
-                        <p className="text-base sm:text-lg text-[#4A3B32] leading-relaxed mb-3">
-                          {business_contact_info?.address && typeof business_contact_info.address === 'object'
-                            ? `${business_contact_info.address.line1}${business_contact_info.address.line2 ? ', ' + business_contact_info.address.line2 : ''}, ${business_contact_info.address.city}, ${business_contact_info.address.postal_code}`
+                      
+                      {/* Address Text - Increased readability */}
+                      <p className="text-[#4A3B32] leading-relaxed font-medium mb-4" style={{ fontSize: '17px' }}>
+                        {business_contact_info?.address && typeof business_contact_info.address === 'object'
+                          ? `${business_contact_info.address.line1}${business_contact_info.address.line2 ? ', ' + business_contact_info.address.line2 : ''}, ${business_contact_info.address.city}, ${business_contact_info.address.postal_code}`
+                          : (business_settings.business_info.address && typeof business_settings.business_info.address === 'object')
+                            ? `${business_settings.business_info.address.line1}${business_settings.business_info.address.line2 ? ', ' + business_settings.business_info.address.line2 : ''}, ${business_settings.business_info.address.city}, ${business_settings.business_info.address.postal_code}`
+                            : 'Dublin, Ireland'
+                        }
+                      </p>
+                      
+                      {/* Get Directions Button - Thumb-Friendly */}
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                          business_contact_info?.address && typeof business_contact_info.address === 'object'
+                            ? `${business_contact_info.address.line1}, ${business_contact_info.address.city}, ${business_contact_info.address.postal_code}`
                             : (business_settings.business_info.address && typeof business_settings.business_info.address === 'object')
-                              ? `${business_settings.business_info.address.line1}${business_settings.business_info.address.line2 ? ', ' + business_settings.business_info.address.line2 : ''}, ${business_settings.business_info.address.city}, ${business_settings.business_info.address.postal_code}`
+                              ? `${business_settings.business_info.address.line1}, ${business_settings.business_info.address.city}, ${business_settings.business_info.address.postal_code}`
                               : 'Dublin, Ireland'
-                          }
-                        </p>
-                        <a
-                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                            business_contact_info?.address && typeof business_contact_info.address === 'object'
-                              ? `${business_contact_info.address.line1}, ${business_contact_info.address.city}, ${business_contact_info.address.postal_code}`
-                              : (business_settings.business_info.address && typeof business_settings.business_info.address === 'object')
-                                ? `${business_settings.business_info.address.line1}, ${business_settings.business_info.address.city}, ${business_settings.business_info.address.postal_code}`
-                                : 'Dublin, Ireland'
-                          )}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center text-[#2C1A16] hover:text-[#4A3B32] font-semibold transition-colors text-sm sm:text-base"
-                        >
-                          Get Directions
-                          <MapPin className="h-4 w-4 ml-1" />
-                        </a>
-                      </div>
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center w-full bg-white border-2 border-[#2C1A16] text-[#2C1A16] font-bold rounded-2xl shadow-md hover:shadow-lg hover:bg-[#F2EFE9] transition-all duration-300 active:scale-95"
+                        style={{ minHeight: '56px', fontSize: '17px' }}
+                      >
+                        <MapPin className="h-5 w-5 mr-2" />
+                        Get Directions
+                      </a>
                     </div>
                   </div>
                 )}
               </div>
 
               {/* Right Side - High-Quality Food Image (Top-down wooden board style) */}
-              <div className="order-1 lg:order-2 relative w-full">
+              <div className="order-2 lg:order-2 relative w-full">
                 <div className="relative rounded-3xl overflow-hidden shadow-2xl transform lg:translate-x-8 hover:scale-105 transition-transform duration-500">
                   <img
                     src="https://images.unsplash.com/photo-1513104890138-7c749659a591?w=1000&h=1200&fit=crop&q=90"

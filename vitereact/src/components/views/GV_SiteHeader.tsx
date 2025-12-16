@@ -266,7 +266,7 @@ const GV_SiteHeader: React.FC = () => {
           {/* ======================================
               MOBILE HEADER - flex md:hidden
               ====================================== */}
-          <div className="flex md:hidden items-center h-14 py-2 px-4" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="flex md:hidden items-center h-14 py-2" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingLeft: '20px', paddingRight: '20px' }}>
             <div className="flex items-center justify-between w-full gap-3" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               {/* Left: Cart Icon */}
               <Link
@@ -311,7 +311,7 @@ const GV_SiteHeader: React.FC = () => {
               </Link>
               
               {/* Right: Account Icon (if not authenticated) or Hamburger Menu */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center" style={{ gap: '15px' }}>
                 {/* Show Account Icon for non-authenticated users */}
                 {!isAuthenticated && (
                   <Link

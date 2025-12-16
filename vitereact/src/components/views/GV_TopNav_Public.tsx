@@ -154,7 +154,7 @@ const GV_TopNav_Public: React.FC = () => {
           >
             {/* Mobile Layout: Logo Left | Hamburger Right (No Cart - using bottom sticky cart) */}
             {/* Desktop Layout: Left Nav | Center Logo | Right Actions */}
-            <div className="h-16 md:h-20 px-5 md:px-6" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="h-16 md:h-20" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingLeft: '20px', paddingRight: '20px' }}>
               
               {/* LEFT GROUP: Logo on Mobile, Navigation Links on Desktop */}
               <div className="flex items-center flex-1">
@@ -247,7 +247,7 @@ const GV_TopNav_Public: React.FC = () => {
               </div>
               
               {/* RIGHT GROUP: Menu/Auth Actions (Cart removed on mobile - using sticky bottom cart) */}
-              <div className="flex items-center gap-3 md:gap-4">
+              <div className="flex items-center" style={{ gap: '15px' }}>
                 
                 {/* Desktop: Log In + Sign Up Buttons - Hidden on Mobile */}
                 <div className="hidden md:flex items-center gap-3">

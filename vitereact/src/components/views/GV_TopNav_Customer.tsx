@@ -184,7 +184,7 @@ const GV_TopNav_Customer: React.FC = () => {
       <nav className="fixed top-0 left-0 right-0 bg-[#F2EFE9] shadow-md backdrop-blur-md transition-all duration-200" style={{ zIndex: 9999 }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* COMMANDMENT #2: Mobile Logo Centered, Hamburger Right */}
-          <div className="h-16 md:h-20" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="h-16 md:h-20" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingLeft: '20px', paddingRight: '20px' }}>
             
             {/* Left Section: Logo & Desktop Nav Links */}
             <div className="flex items-center space-x-8 md:static absolute left-1/2 md:left-0 transform -translate-x-1/2 md:transform-none z-10">
@@ -253,7 +253,7 @@ const GV_TopNav_Customer: React.FC = () => {
             </div>
             
             {/* Right Section: Loyalty Badge, Cart, Profile, Mobile Menu Button */}
-            <div className="flex items-center space-x-2 md:space-x-4 z-20">
+            <div className="flex items-center z-20" style={{ gap: '15px' }}>
               
               {/* Loyalty Points Badge (Desktop) - COMMANDMENT #1: 48px min */}
               <Link

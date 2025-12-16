@@ -135,22 +135,78 @@ const GV_TopNav_Public: React.FC = () => {
     <>
       {/* Main Navigation Bar - Fixed at top with Mobile-First Design */}
       <nav 
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-200 ${
-          has_shadow 
-            ? 'bg-[#F2EFE9]/95 backdrop-blur-md shadow-md' 
-            : 'bg-[#F2EFE9] shadow-sm'
-        }`}
-        style={{ backgroundColor: has_shadow ? 'rgba(242, 239, 233, 0.95)' : '#F2EFE9' }}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-200`}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Mobile Layout: Logo Left | Cart & Hamburger Right */}
-          {/* Desktop Layout: Left Nav | Center Logo | Right Actions */}
-          <div className="flex items-center justify-between h-16 md:h-20">
-            
-            {/* LEFT GROUP: Logo on Mobile, Navigation Links on Desktop */}
-            <div className="flex items-center flex-1">
-              {/* Mobile Logo - Left Aligned */}
-              <div className="md:hidden">
+        <div className={`max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 ${
+          has_shadow 
+            ? 'mt-2' 
+            : 'mt-2'
+        }`}>
+          <div className={`bg-[#F2EFE9] rounded-full md:rounded-2xl transition-all duration-200 ${
+            has_shadow 
+              ? 'shadow-lg backdrop-blur-md' 
+              : 'shadow-md'
+          }`}
+          style={{ 
+            backgroundColor: has_shadow ? 'rgba(242, 239, 233, 0.95)' : '#F2EFE9',
+          }}
+          >
+            {/* Mobile Layout: Logo Left | Cart & Hamburger Right */}
+            {/* Desktop Layout: Left Nav | Center Logo | Right Actions */}
+            <div className="flex items-center justify-between h-16 md:h-20 px-4 md:px-6">
+              
+              {/* LEFT GROUP: Logo on Mobile, Navigation Links on Desktop */}
+              <div className="flex items-center flex-1">
+                {/* Mobile Logo - Left Aligned */}
+                <div className="md:hidden">
+                  <Link 
+                    to="/"
+                    className="flex items-center group"
+                    aria-label="Salama Lama Home"
+                  >
+                    <img 
+                      src="/logo-salama-lama.jpg" 
+                      alt="Salama Lama" 
+                      className="w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+                      style={{ height: '32px', maxWidth: '120px' }}
+                      onError={(e) => { 
+                        // Fallback to default logo if custom logo fails to load
+                        const target = e.target as HTMLImageElement;
+                        if (target.src !== '/logo-salama-lama.jpg') {
+                          target.src = '/logo-salama-lama.jpg';
+                        } else {
+                          // Show text fallback
+                          target.style.display = 'none';
+                          const textSpan = document.createElement('span');
+                          textSpan.className = 'text-lg font-bold text-[#6F4E37]';
+                          textSpan.textContent = 'Salama Lama';
+                          target.parentElement?.appendChild(textSpan);
+                        }
+                      }}
+                    />
+                  </Link>
+                </div>
+                
+                {/* Desktop Navigation Links - Hidden on Mobile */}
+                <div className="hidden md:flex md:items-center md:gap-8">
+                  {mainNavigationLinks.map((link) => (
+                    <Link
+                      key={link.path}
+                      to={link.path}
+                      className={`text-base font-medium transition-all duration-200 whitespace-nowrap ${
+                        isActivePath(link.path)
+                          ? 'text-[#6F4E37] border-b-2 border-[#6F4E37]'
+                          : 'text-[#6F4E37] hover:text-orange-600 hover:opacity-80'
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+              
+              {/* CENTER: Logo - Desktop Only, Absolutely Centered */}
+              <div className="hidden md:block absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
                 <Link 
                   to="/"
                   className="flex items-center group"
@@ -160,7 +216,7 @@ const GV_TopNav_Public: React.FC = () => {
                     src="/logo-salama-lama.jpg" 
                     alt="Salama Lama" 
                     className="w-auto object-contain transition-transform duration-200 group-hover:scale-105"
-                    style={{ height: '32px', maxWidth: '120px' }}
+                    style={{ height: '34px', maxWidth: '180px' }}
                     onError={(e) => { 
                       // Fallback to default logo if custom logo fails to load
                       const target = e.target as HTMLImageElement;
@@ -170,7 +226,7 @@ const GV_TopNav_Public: React.FC = () => {
                         // Show text fallback
                         target.style.display = 'none';
                         const textSpan = document.createElement('span');
-                        textSpan.className = 'text-lg font-bold text-[#6F4E37]';
+                        textSpan.className = 'text-xl font-bold text-[#6F4E37]';
                         textSpan.textContent = 'Salama Lama';
                         target.parentElement?.appendChild(textSpan);
                       }
@@ -179,112 +235,61 @@ const GV_TopNav_Public: React.FC = () => {
                 </Link>
               </div>
               
-              {/* Desktop Navigation Links - Hidden on Mobile */}
-              <div className="hidden md:flex md:items-center md:gap-8">
-                {mainNavigationLinks.map((link) => (
+              {/* RIGHT GROUP: Cart + Menu/Auth Actions */}
+              <div className="flex items-center gap-3 md:gap-4">
+                
+                {/* Desktop: Log In + Sign Up Buttons - Hidden on Mobile */}
+                <div className="hidden md:flex items-center gap-3">
+                  {/* Log In Button - Secondary Style */}
                   <Link
-                    key={link.path}
-                    to={link.path}
-                    className={`text-base font-medium transition-all duration-200 whitespace-nowrap ${
-                      isActivePath(link.path)
-                        ? 'text-[#6F4E37] border-b-2 border-[#6F4E37]'
-                        : 'text-[#6F4E37] hover:text-orange-600 hover:opacity-80'
-                    }`}
+                    to="/login"
+                    className="px-5 py-2 text-sm font-semibold text-[#6F4E37] bg-white border-2 border-[#6F4E37] rounded-lg hover:bg-[#F2EFE9] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 shadow-sm whitespace-nowrap"
+                    aria-label="Log In"
                   >
-                    {link.label}
+                    Log In
                   </Link>
-                ))}
-              </div>
-            </div>
-            
-            {/* CENTER: Logo - Desktop Only, Absolutely Centered */}
-            <div className="hidden md:block absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-              <Link 
-                to="/"
-                className="flex items-center group"
-                aria-label="Salama Lama Home"
-              >
-                <img 
-                  src="/logo-salama-lama.jpg" 
-                  alt="Salama Lama" 
-                  className="w-auto object-contain transition-transform duration-200 group-hover:scale-105"
-                  style={{ height: '34px', maxWidth: '180px' }}
-                  onError={(e) => { 
-                    // Fallback to default logo if custom logo fails to load
-                    const target = e.target as HTMLImageElement;
-                    if (target.src !== '/logo-salama-lama.jpg') {
-                      target.src = '/logo-salama-lama.jpg';
-                    } else {
-                      // Show text fallback
-                      target.style.display = 'none';
-                      const textSpan = document.createElement('span');
-                      textSpan.className = 'text-xl font-bold text-[#6F4E37]';
-                      textSpan.textContent = 'Salama Lama';
-                      target.parentElement?.appendChild(textSpan);
-                    }
-                  }}
-                />
-              </Link>
-            </div>
-            
-            {/* RIGHT GROUP: Cart + Menu/Auth Actions */}
-            <div className="flex items-center gap-3 md:gap-4">
-              
-              {/* Desktop: Log In + Sign Up Buttons - Hidden on Mobile */}
-              <div className="hidden md:flex items-center gap-3">
-                {/* Log In Button - Secondary Style */}
+                  
+                  {/* Sign Up Button - Primary Style */}
+                  <Link
+                    to="/signup"
+                    className="px-5 py-2 text-sm font-bold text-white bg-[#6F4E37] rounded-lg hover:bg-[#5a3d2a] hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 shadow-sm whitespace-nowrap"
+                    aria-label="Sign Up"
+                  >
+                    Sign Up
+                  </Link>
+                </div>
+                
+                {/* Cart Button with Badge - Visible on Both Mobile and Desktop */}
                 <Link
-                  to="/login"
-                  className="px-5 py-2 text-sm font-semibold text-[#6F4E37] bg-white border-2 border-[#6F4E37] rounded-lg hover:bg-[#F2EFE9] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 shadow-sm whitespace-nowrap"
-                  aria-label="Log In"
+                  to="/cart"
+                  className="relative text-[#2E211D] hover:text-[#1a0f0d] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#2E211D] focus:ring-offset-2 rounded-lg"
+                  aria-label={`Shopping cart with ${cart_item_count} items`}
                 >
-                  Log In
+                  <ShoppingCart className="h-6 w-6" />
+                  {cart_item_count > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full h-5 min-w-[20px] flex items-center justify-center px-1 animate-bounce-subtle">
+                      {getCartBadgeDisplay()}
+                    </span>
+                  )}
                 </Link>
                 
-                {/* Sign Up Button - Primary Style */}
-                <Link
-                  to="/signup"
-                  className="px-5 py-2 text-sm font-bold text-white bg-[#6F4E37] rounded-lg hover:bg-[#5a3d2a] hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 shadow-sm whitespace-nowrap"
-                  aria-label="Sign Up"
+                {/* Hamburger Menu Button - Mobile Only */}
+                <button
+                  onClick={toggleMobileMenu}
+                  className="md:hidden text-[#2E211D] hover:text-[#1a0f0d] focus:outline-none focus:ring-2 focus:ring-[#2E211D] focus:ring-offset-2 rounded-lg transition-colors duration-200 p-1"
+                  aria-label="Open navigation menu"
+                  aria-expanded={is_mobile_menu_open}
                 >
-                  Sign Up
-                </Link>
-              </div>
-              
-              {/* Cart Button with Badge - Visible on Both Mobile and Desktop */}
-              <Link
-                to="/cart"
-                className="relative text-[#6F4E37] hover:text-orange-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-lg"
-                aria-label={`Shopping cart with ${cart_item_count} items`}
-              >
-                <ShoppingCart className="h-6 w-6" />
-                {cart_item_count > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full h-5 min-w-[20px] flex items-center justify-center px-1 animate-bounce-subtle">
-                    {getCartBadgeDisplay()}
-                  </span>
-                )}
-              </Link>
-              
-              {/* Hamburger Menu Button - Mobile Only */}
-              <button
-                onClick={toggleMobileMenu}
-                className="md:hidden text-[#6F4E37] hover:text-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-lg transition-colors duration-200 p-1"
-                aria-label="Open navigation menu"
-                aria-expanded={is_mobile_menu_open}
-              >
-                {is_mobile_menu_open ? (
-                  <X className="h-7 w-7" />
-                ) : (
                   <Menu className="h-7 w-7" />
-                )}
-              </button>
-              
+                </button>
+                
+              </div>
             </div>
           </div>
         </div>
       </nav>
       
-      {/* COMMANDMENT #2: Full-Screen Mobile Drawer */}
+      {/* Off-Canvas Mobile Menu Drawer */}
       {is_mobile_menu_open && (
         <>
           {/* Backdrop */}
@@ -294,39 +299,36 @@ const GV_TopNav_Public: React.FC = () => {
             aria-hidden="true"
           />
           
-          {/* Mobile Menu Drawer - Full Screen, Slides from Right */}
-          <div className="fixed top-0 right-0 bottom-0 w-full max-w-full z-50 md:hidden shadow-2xl overflow-y-auto animate-slide-in-right" style={{ backgroundColor: 'var(--primary-bg)' }}>
+          {/* Mobile Menu Drawer - Off-Canvas, Slides from Right */}
+          <div className="fixed top-0 right-0 bottom-0 w-[85%] max-w-sm z-50 md:hidden shadow-2xl overflow-y-auto animate-slide-in-right bg-[#F2EFE9]">
             <div className="px-6 py-8 space-y-8">
               
-              {/* Close Button */}
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold" style={{ color: 'var(--primary-text)' }}>Menu</h2>
+              {/* Close Button - Top Right Corner */}
+              <div className="flex items-center justify-end">
                 <button
                   onClick={closeMobileMenu}
-                  className="p-3 text-gray-700 hover:text-orange-600 rounded-lg"
+                  className="p-2 text-[#2E211D] hover:text-[#1a0f0d] hover:bg-[#E8E1D6] rounded-lg transition-all duration-200"
                   style={{ minHeight: '48px', minWidth: '48px' }}
                   aria-label="Close navigation menu"
                 >
-                  <X className="h-7 w-7" />
+                  <X className="h-7 w-7" strokeWidth={2.5} />
                 </button>
               </div>
               
-              {/* Mobile Navigation Links - COMMANDMENT #1: Large Touch Targets */}
-              <div className="space-y-2">
+              {/* Mobile Navigation Links - Bold Dark Brown with Large Padding */}
+              <div className="space-y-3">
                 {allNavigationLinks.map((link) => (
                   <Link
                     key={link.path}
                     to={link.path}
                     onClick={closeMobileMenu}
-                    className={`flex items-center justify-between px-6 py-4 rounded-xl text-lg font-semibold transition-all duration-200 ${
+                    className={`flex items-center justify-between px-6 py-5 rounded-xl text-xl font-bold transition-all duration-200 ${
                       isActivePath(link.path)
-                        ? 'hover:bg-gray-50'
-                        : 'hover:bg-gray-50'
+                        ? 'bg-[#E8E1D6] text-[#2E211D]'
+                        : 'text-[#2E211D] hover:bg-[#E8E1D6]'
                     }`}
                     style={{
                       minHeight: '64px',
-                      backgroundColor: isActivePath(link.path) ? 'rgba(212, 197, 176, 0.3)' : 'transparent',
-                      color: 'var(--primary-text)'
                     }}
                   >
                     <span>{link.label}</span>
@@ -335,18 +337,16 @@ const GV_TopNav_Public: React.FC = () => {
                 ))}
               </div>
               
-              {/* Divider - COMMANDMENT #1: 16px spacing */}
-              <div className="border-t-2 border-gray-200" style={{ marginTop: '16px', marginBottom: '16px' }} />
+              {/* Divider */}
+              <div className="border-t-2 border-[#D4C5B0]" style={{ marginTop: '16px', marginBottom: '16px' }} />
               
-              {/* Mobile Action Buttons - COMMANDMENT #1: 48px min-height, full width */}
+              {/* Mobile Action Buttons - Full Width with Large Padding */}
               <div className="space-y-4">
                 <Link
                   to="/login"
                   onClick={closeMobileMenu}
-                  className="flex items-center justify-center w-full px-8 py-4 border-2 text-lg font-semibold rounded-xl bg-white focus:outline-none focus:ring-2 transition-all duration-200"
+                  className="flex items-center justify-center w-full px-8 py-4 border-2 border-[#2E211D] text-lg font-bold rounded-xl bg-white hover:bg-[#2E211D] hover:text-white focus:outline-none focus:ring-2 focus:ring-[#2E211D] transition-all duration-200 text-[#2E211D]"
                   style={{ 
-                    borderColor: 'var(--accent-color)',
-                    color: 'var(--primary-text)',
                     minHeight: '56px'
                   }}
                 >
@@ -356,10 +356,8 @@ const GV_TopNav_Public: React.FC = () => {
                 <Link
                   to="/signup"
                   onClick={closeMobileMenu}
-                  className="flex items-center justify-center w-full px-8 py-4 border border-transparent text-lg font-bold rounded-xl hover:shadow-lg focus:outline-none focus:ring-2 transition-all duration-200"
+                  className="flex items-center justify-center w-full px-8 py-4 border border-transparent text-lg font-bold rounded-xl hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#2E211D] transition-all duration-200 bg-[#2E211D] text-white hover:bg-[#1a0f0d]"
                   style={{ 
-                    backgroundColor: 'var(--btn-bg)',
-                    color: 'var(--btn-text)',
                     minHeight: '56px'
                   }}
                 >
@@ -370,28 +368,28 @@ const GV_TopNav_Public: React.FC = () => {
               {/* Mobile Cart Summary (if items exist) */}
               {cart_item_count > 0 && (
                 <>
-                  <div className="border-t-2 border-gray-200" style={{ marginTop: '16px', marginBottom: '16px' }} />
+                  <div className="border-t-2 border-[#D4C5B0]" style={{ marginTop: '16px', marginBottom: '16px' }} />
                   
                   <Link
                     to="/cart"
                     onClick={closeMobileMenu}
-                    className="flex items-center justify-between px-6 py-4 bg-orange-50 rounded-xl hover:bg-orange-100 transition-colors duration-200"
+                    className="flex items-center justify-between px-6 py-4 bg-[#E8E1D6] rounded-xl hover:bg-[#D4C5B0] transition-colors duration-200"
                     style={{ minHeight: '72px' }}
                   >
                     <div className="flex items-center space-x-4">
-                      <div className="bg-orange-600 text-white rounded-full p-3">
+                      <div className="bg-[#2E211D] text-white rounded-full p-3">
                         <ShoppingCart className="h-6 w-6" />
                       </div>
                       <div>
-                        <p className="text-base font-bold text-gray-900">
+                        <p className="text-base font-bold text-[#2E211D]">
                           Your Cart
                         </p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-[#4A3B32]">
                           {cart_item_count} {cart_item_count === 1 ? 'item' : 'items'}
                         </p>
                       </div>
                     </div>
-                    <ChevronRight className="h-6 w-6 text-orange-600" />
+                    <ChevronRight className="h-6 w-6 text-[#2E211D]" />
                   </Link>
                 </>
               )}
@@ -402,7 +400,7 @@ const GV_TopNav_Public: React.FC = () => {
       )}
       
       {/* Spacer to prevent content from going under fixed navbar */}
-      <div className="h-16 md:h-20" aria-hidden="true" />
+      <div className="h-20 md:h-24" aria-hidden="true" />
       
       {/* Custom Animation Styles */}
       <style>{`

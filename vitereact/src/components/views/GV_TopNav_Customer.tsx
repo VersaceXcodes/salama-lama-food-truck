@@ -262,7 +262,7 @@ const GV_TopNav_Customer: React.FC = () => {
               {/* Cart Icon with Badge - COMMANDMENT #1: 48px min */}
               <Link
                 to="/cart"
-                className="relative p-3 text-gray-700 hover:text-orange-600 transition-colors rounded-lg"
+                className="relative p-3 text-[#2E211D] hover:text-[#1a0f0d] transition-colors rounded-lg"
                 style={{ minHeight: '48px', minWidth: '48px' }}
                 aria-label="Shopping cart"
               >
@@ -356,16 +356,12 @@ const GV_TopNav_Customer: React.FC = () => {
               {/* COMMANDMENT #2: Hamburger Menu Button */}
               <button
                 onClick={toggleMobileMenu}
-                className="md:hidden p-3 text-gray-700 hover:text-orange-600 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-lg"
+                className="md:hidden p-3 text-[#2E211D] hover:text-[#1a0f0d] transition-colors focus:outline-none focus:ring-2 focus:ring-[#2E211D] focus:ring-offset-2 rounded-lg"
                 style={{ minHeight: '48px', minWidth: '48px' }}
                 aria-label="Toggle mobile menu"
                 aria-expanded={isMobileMenuOpen}
               >
-                {isMobileMenuOpen ? (
-                  <X className="h-7 w-7" />
-                ) : (
-                  <Menu className="h-7 w-7" />
-                )}
+                <Menu className="h-7 w-7" />
               </button>
             </div>
           </div>
@@ -380,39 +376,38 @@ const GV_TopNav_Customer: React.FC = () => {
               onClick={closeMobileMenu}
             ></div>
             
-            {/* COMMANDMENT #2: Full-Screen Mobile Drawer */}
-            <div className="fixed top-0 right-0 bottom-0 w-full max-w-full bg-white shadow-2xl z-50 md:hidden overflow-y-auto animate-slideInRight">
+            {/* Off-Canvas Mobile Drawer */}
+            <div className="fixed top-0 right-0 bottom-0 w-[85%] max-w-sm bg-[#F2EFE9] shadow-2xl z-50 md:hidden overflow-y-auto animate-slideInRight">
               <div className="p-6">
-                {/* Close Button - COMMANDMENT #1: 48px min */}
-                <div className="flex items-center justify-between mb-8">
-                  <h2 className="text-2xl font-bold text-gray-900">Menu</h2>
+                {/* Close Button - Top Right Corner */}
+                <div className="flex items-center justify-end mb-8">
                   <button
                     onClick={closeMobileMenu}
-                    className="p-3 text-gray-500 hover:text-gray-700 transition-colors rounded-lg"
+                    className="p-2 text-[#2E211D] hover:text-[#1a0f0d] hover:bg-[#E8E1D6] rounded-lg transition-all duration-200"
                     style={{ minHeight: '48px', minWidth: '48px' }}
                     aria-label="Close mobile menu"
                   >
-                    <X className="h-7 w-7" />
+                    <X className="h-7 w-7" strokeWidth={2.5} />
                   </button>
                 </div>
                 
-                {/* User Info - COMMANDMENT #1: 16px spacing */}
-                <div className="mb-8 p-5 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl" style={{ marginBottom: '16px' }}>
+                {/* User Info */}
+                <div className="mb-8 p-5 bg-[#E8E1D6] rounded-xl" style={{ marginBottom: '16px' }}>
                   <div className="flex items-center space-x-4 mb-4">
-                    <div className="h-14 w-14 bg-orange-500 rounded-full flex items-center justify-center">
+                    <div className="h-14 w-14 bg-[#2E211D] rounded-full flex items-center justify-center">
                       <User className="h-7 w-7 text-white" />
                     </div>
                     <div>
-                      <p className="font-bold text-lg text-gray-900">{userDisplayName}</p>
-                      <p className="text-sm text-gray-600">{currentUser?.email}</p>
+                      <p className="font-bold text-lg text-[#2E211D]">{userDisplayName}</p>
+                      <p className="text-sm text-[#4A3B32]">{currentUser?.email}</p>
                     </div>
                   </div>
                   
-                  {/* Loyalty Points Badge (Mobile) - COMMANDMENT #1: 48px min */}
+                  {/* Loyalty Points Badge (Mobile) */}
                   <Link
                     to="/rewards"
                     onClick={closeMobileMenu}
-                    className="flex items-center justify-between p-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-lg"
+                    className="flex items-center justify-between p-4 bg-[#2E211D] text-white rounded-xl hover:bg-[#1a0f0d] transition-all duration-200 shadow-lg"
                     style={{ minHeight: '64px' }}
                   >
                     <div className="flex items-center space-x-3">
@@ -423,56 +418,56 @@ const GV_TopNav_Customer: React.FC = () => {
                   </Link>
                 </div>
                 
-                {/* Navigation Links - COMMANDMENT #1: Large Touch Targets */}
-                <nav className="space-y-2 mb-8">
+                {/* Navigation Links - Bold Dark Brown with Large Padding */}
+                <nav className="space-y-3 mb-8">
                   <Link
                     to="/dashboard"
                     onClick={closeMobileMenu}
-                    className="flex items-center space-x-4 px-6 py-4 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
+                    className="flex items-center space-x-4 px-6 py-5 text-[#2E211D] hover:bg-[#E8E1D6] rounded-xl transition-colors font-bold text-xl"
                     style={{ minHeight: '64px' }}
                   >
                     <Home className="h-6 w-6" />
-                    <span className="font-semibold text-lg">Dashboard</span>
+                    <span>Dashboard</span>
                   </Link>
                   
                   <Link
                     to="/menu"
                     onClick={closeMobileMenu}
-                    className="flex items-center space-x-4 px-6 py-4 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
+                    className="flex items-center space-x-4 px-6 py-5 text-[#2E211D] hover:bg-[#E8E1D6] rounded-xl transition-colors font-bold text-xl"
                     style={{ minHeight: '64px' }}
                   >
                     <Utensils className="h-6 w-6" />
-                    <span className="font-semibold text-lg">Menu</span>
+                    <span>Menu</span>
                   </Link>
                   
                   <Link
                     to="/orders"
                     onClick={closeMobileMenu}
-                    className="flex items-center space-x-4 px-6 py-4 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
+                    className="flex items-center space-x-4 px-6 py-5 text-[#2E211D] hover:bg-[#E8E1D6] rounded-xl transition-colors font-bold text-xl"
                     style={{ minHeight: '64px' }}
                   >
                     <Package className="h-6 w-6" />
-                    <span className="font-semibold text-lg">My Orders</span>
+                    <span>My Orders</span>
                   </Link>
                   
                   <Link
                     to="/rewards"
                     onClick={closeMobileMenu}
-                    className="flex items-center space-x-4 px-6 py-4 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
+                    className="flex items-center space-x-4 px-6 py-5 text-[#2E211D] hover:bg-[#E8E1D6] rounded-xl transition-colors font-bold text-xl"
                     style={{ minHeight: '64px' }}
                   >
                     <Gift className="h-6 w-6" />
-                    <span className="font-semibold text-lg">Rewards</span>
+                    <span>Rewards</span>
                   </Link>
                   
                   <Link
                     to="/catering"
                     onClick={closeMobileMenu}
-                    className="flex items-center space-x-4 px-6 py-4 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
+                    className="flex items-center space-x-4 px-6 py-5 text-[#2E211D] hover:bg-[#E8E1D6] rounded-xl transition-colors font-bold text-xl"
                     style={{ minHeight: '64px' }}
                   >
                     <Utensils className="h-6 w-6" />
-                    <span className="font-semibold text-lg">Catering</span>
+                    <span>Catering</span>
                   </Link>
                 </nav>
                 

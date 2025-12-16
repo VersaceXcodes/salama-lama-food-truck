@@ -18,7 +18,8 @@ import {
   ChevronRight,
   ChevronDown,
   Menu,
-  X
+  X,
+  House
 } from 'lucide-react';
 
 const GV_AdminSidebar: React.FC = () => {
@@ -100,6 +101,11 @@ const GV_AdminSidebar: React.FC = () => {
   // Navigation items structure
   const navigation = [
     {
+      name: 'Home',
+      path: '/',
+      icon: House,
+    },
+    {
       name: 'Dashboard',
       path: '/admin/dashboard',
       icon: LayoutDashboard,
@@ -110,14 +116,14 @@ const GV_AdminSidebar: React.FC = () => {
       icon: ShoppingBag,
     },
     {
-      name: 'Menu',
+      name: 'Menu Items',
+      path: '/admin/menu',
       icon: UtensilsCrossed,
-      hasSubmenu: true,
-      section: 'menu',
-      submenu: [
-        { name: 'Menu Items', path: '/admin/menu' },
-        { name: 'Categories', path: '/admin/menu/categories' },
-      ],
+    },
+    {
+      name: 'Categories',
+      path: '/admin/menu/categories',
+      icon: Tag,
     },
     {
       name: 'Stock',
@@ -143,11 +149,6 @@ const GV_AdminSidebar: React.FC = () => {
       name: 'Staff',
       path: '/admin/staff',
       icon: UserCog,
-    },
-    {
-      name: 'Catering',
-      path: '/admin/catering',
-      icon: Calendar,
     },
     {
       name: 'Invoices',
@@ -253,68 +254,16 @@ const GV_AdminSidebar: React.FC = () => {
         <nav className="flex-1 overflow-y-auto py-4 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
           <ul className="space-y-1 px-2">
             {navigation.map((item) => {
-              if (item.hasSubmenu && item.submenu) {
-                const isExpanded = expanded_sections[item.section || ''];
-                const hasActiveSubmenu = item.submenu.some(sub => isActiveRoute(sub.path));
-
-                return (
-                  <li key={item.name}>
-                    {/* Parent menu item with submenu */}
-                    <button
-                      onClick={() => toggleSection(item.section || '')}
-                      className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 ${
-                        hasActiveSubmenu
-                          ? 'bg-orange-600 text-white'
-                          : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                      }`}
-                      aria-expanded={isExpanded}
-                      title={is_collapsed ? item.name : undefined}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <item.icon className="w-5 h-5 flex-shrink-0" />
-                        {!is_collapsed && (
-                          <span className="font-medium">{item.name}</span>
-                        )}
-                      </div>
-                      {!is_collapsed && (
-                        <span>
-                          {isExpanded ? (
-                            <ChevronDown className="w-4 h-4" />
-                          ) : (
-                            <ChevronRight className="w-4 h-4" />
-                          )}
-                        </span>
-                      )}
-                    </button>
-
-                    {/* Submenu items */}
-                    {!is_collapsed && isExpanded && (
-                      <ul className="mt-1 ml-4 space-y-1">
-                        {item.submenu.map((subItem) => (
-                          <li key={subItem.path}>
-                            <Link
-                              to={subItem.path}
-                              className={`block px-4 py-2 rounded-lg text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 ${
-                                isActiveRoute(subItem.path)
-                                  ? 'bg-orange-600 text-white font-medium'
-                                  : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-                              }`}
-                            >
-                              {subItem.name}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </li>
-                );
-              }
-
-              // Regular navigation item without submenu
               return (
                 <li key={item.name}>
                   <Link
                     to={item.path || '#'}
+                    onClick={() => {
+                      // Close mobile drawer when navigating
+                      if (is_mobile_open) {
+                        closeMobileDrawer();
+                      }
+                    }}
                     className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 ${
                       isActiveRoute(item.path || '')
                         ? 'bg-orange-600 text-white'

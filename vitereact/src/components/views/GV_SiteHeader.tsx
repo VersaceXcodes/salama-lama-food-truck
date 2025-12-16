@@ -251,11 +251,17 @@ const GV_SiteHeader: React.FC = () => {
         style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className={`rounded-2xl transition-all duration-200 ${
+          <div className={`transition-all duration-200 ${
             hasShadow 
-              ? 'bg-white/95 backdrop-blur-md shadow-xl' 
-              : 'bg-white shadow-md'
-          }`}>
+              ? 'bg-[rgba(245,240,235,0.7)] backdrop-blur-xl shadow-xl' 
+              : 'bg-[rgba(245,240,235,0.7)] shadow-md'
+          }`}
+          style={{
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            border: '1px solid rgba(62, 47, 38, 0.1)',
+            borderRadius: '100px'
+          }}>
           {/* ======================================
               MOBILE HEADER - flex md:hidden
               ====================================== */}

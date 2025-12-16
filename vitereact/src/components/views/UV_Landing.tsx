@@ -245,8 +245,8 @@ const UV_Landing: React.FC = () => {
               <div className="flex flex-col md:flex-row gap-3 md:gap-4 w-full">
                 <Link
                   to="/menu"
-                  className="group flex items-center justify-center px-8 py-4 bg-[#2C1A16] text-[#F2EFE9] text-lg font-bold rounded-full shadow-xl hover:bg-[#F2EFE9] hover:text-[#2C1A16] border-4 border-[#2C1A16] transition-all duration-300 ease-in-out w-full md:w-auto"
-                  style={{ minHeight: '56px' }}
+                  className="group flex items-center justify-center px-8 py-4 bg-[#3E2F26] text-[#F5F0EB] text-lg font-bold shadow-xl hover:bg-[#2C1A16] transition-all duration-300 ease-in-out w-full md:w-auto"
+                  style={{ minHeight: '56px', borderRadius: '50px' }}
                 >
                   Order Now
                   <ChevronRight className="ml-2 w-6 h-6 group-hover:translate-x-1 transition-transform duration-300" />
@@ -254,8 +254,8 @@ const UV_Landing: React.FC = () => {
                 
                 <Link
                   to="/about"
-                  className="group flex items-center justify-center px-8 py-4 bg-transparent text-[#2C1A16] text-lg font-bold rounded-full border-4 border-[#2C1A16] hover:bg-[#2C1A16] hover:text-[#F2EFE9] transition-all duration-300 ease-in-out w-full md:w-auto"
-                  style={{ minHeight: '56px' }}
+                  className="group flex items-center justify-center px-8 py-4 bg-transparent text-[#3E2F26] text-lg font-bold hover:bg-[#3E2F26] hover:text-[#F5F0EB] transition-all duration-300 ease-in-out w-full md:w-auto"
+                  style={{ minHeight: '56px', borderRadius: '50px', border: '1.5px solid #3E2F26' }}
                 >
                   Our Story
                   <ChevronRight className="ml-2 w-6 h-6 group-hover:translate-x-1 transition-transform duration-300" />

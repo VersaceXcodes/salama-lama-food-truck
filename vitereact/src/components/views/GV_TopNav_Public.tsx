@@ -143,48 +143,82 @@ const GV_TopNav_Public: React.FC = () => {
         style={{ backgroundColor: has_shadow ? 'rgba(242, 239, 233, 0.95)' : '#F2EFE9' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Symmetrical 3-Column Layout: Left Nav | Center Logo | Right Actions */}
-          <div className="relative flex items-center h-16 md:h-20">
+          {/* Mobile Layout: Logo Left | Cart & Hamburger Right */}
+          {/* Desktop Layout: Left Nav | Center Logo | Right Actions */}
+          <div className="flex items-center justify-between h-16 md:h-20">
             
-            {/* LEFT GROUP: Navigation Links - Desktop Only */}
-            <div className="hidden md:flex md:items-center md:gap-8 flex-1">
-              {mainNavigationLinks.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  className={`text-base font-medium transition-all duration-200 whitespace-nowrap ${
-                    isActivePath(link.path)
-                      ? 'text-[#6F4E37] border-b-2 border-[#6F4E37]'
-                      : 'text-[#6F4E37] hover:text-orange-600 hover:opacity-80'
-                  }`}
+            {/* LEFT GROUP: Logo on Mobile, Navigation Links on Desktop */}
+            <div className="flex items-center flex-1">
+              {/* Mobile Logo - Left Aligned */}
+              <div className="md:hidden">
+                <Link 
+                  to="/"
+                  className="flex items-center group"
+                  aria-label="Salama Lama Home"
                 >
-                  {link.label}
+                  <img 
+                    src="/logo-salama-lama.jpg" 
+                    alt="Salama Lama" 
+                    className="w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+                    style={{ height: '32px', maxWidth: '120px' }}
+                    onError={(e) => { 
+                      // Fallback to default logo if custom logo fails to load
+                      const target = e.target as HTMLImageElement;
+                      if (target.src !== '/logo-salama-lama.jpg') {
+                        target.src = '/logo-salama-lama.jpg';
+                      } else {
+                        // Show text fallback
+                        target.style.display = 'none';
+                        const textSpan = document.createElement('span');
+                        textSpan.className = 'text-lg font-bold text-[#6F4E37]';
+                        textSpan.textContent = 'Salama Lama';
+                        target.parentElement?.appendChild(textSpan);
+                      }
+                    }}
+                  />
                 </Link>
-              ))}
+              </div>
+              
+              {/* Desktop Navigation Links - Hidden on Mobile */}
+              <div className="hidden md:flex md:items-center md:gap-8">
+                {mainNavigationLinks.map((link) => (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    className={`text-base font-medium transition-all duration-200 whitespace-nowrap ${
+                      isActivePath(link.path)
+                        ? 'text-[#6F4E37] border-b-2 border-[#6F4E37]'
+                        : 'text-[#6F4E37] hover:text-orange-600 hover:opacity-80'
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
             </div>
             
-            {/* CENTER: Logo - Absolutely Centered */}
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+            {/* CENTER: Logo - Desktop Only, Absolutely Centered */}
+            <div className="hidden md:block absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
               <Link 
                 to="/"
                 className="flex items-center group"
                 aria-label="Salama Lama Home"
               >
                 <img 
-                  src={logoUrl} 
+                  src="/logo-salama-lama.jpg" 
                   alt="Salama Lama" 
                   className="w-auto object-contain transition-transform duration-200 group-hover:scale-105"
-                  style={{ height: '26px', maxWidth: '150px' }}
+                  style={{ height: '34px', maxWidth: '180px' }}
                   onError={(e) => { 
                     // Fallback to default logo if custom logo fails to load
                     const target = e.target as HTMLImageElement;
-                    if (target.src !== '/assets/salama-lama-logo.png') {
-                      target.src = '/assets/salama-lama-logo.png';
+                    if (target.src !== '/logo-salama-lama.jpg') {
+                      target.src = '/logo-salama-lama.jpg';
                     } else {
-                      // Fallback to screen-reader-only text if even default logo fails
+                      // Show text fallback
                       target.style.display = 'none';
                       const textSpan = document.createElement('span');
-                      textSpan.className = 'sr-only';
+                      textSpan.className = 'text-xl font-bold text-[#6F4E37]';
                       textSpan.textContent = 'Salama Lama';
                       target.parentElement?.appendChild(textSpan);
                     }
@@ -193,10 +227,10 @@ const GV_TopNav_Public: React.FC = () => {
               </Link>
             </div>
             
-            {/* RIGHT GROUP: User Actions - Log In + Sign Up + Cart */}
-            <div className="flex items-center justify-end gap-3 md:gap-4 flex-1 z-20">
+            {/* RIGHT GROUP: Cart + Menu/Auth Actions */}
+            <div className="flex items-center gap-3 md:gap-4">
               
-              {/* Desktop: Log In + Sign Up Buttons */}
+              {/* Desktop: Log In + Sign Up Buttons - Hidden on Mobile */}
               <div className="hidden md:flex items-center gap-3">
                 {/* Log In Button - Secondary Style */}
                 <Link
@@ -217,16 +251,7 @@ const GV_TopNav_Public: React.FC = () => {
                 </Link>
               </div>
               
-              {/* Mobile: Account Icon (opens mobile menu with login/signup options) */}
-              <Link
-                to="/login"
-                className="md:hidden text-[#6F4E37] hover:text-orange-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-lg"
-                aria-label="Account - Log In or Sign Up"
-              >
-                <User className="h-6 w-6" />
-              </Link>
-              
-              {/* Cart Button with Badge */}
+              {/* Cart Button with Badge - Visible on Both Mobile and Desktop */}
               <Link
                 to="/cart"
                 className="relative text-[#6F4E37] hover:text-orange-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-lg"
@@ -243,7 +268,7 @@ const GV_TopNav_Public: React.FC = () => {
               {/* Hamburger Menu Button - Mobile Only */}
               <button
                 onClick={toggleMobileMenu}
-                className="md:hidden text-[#6F4E37] hover:text-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-lg transition-colors duration-200"
+                className="md:hidden text-[#6F4E37] hover:text-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-lg transition-colors duration-200 p-1"
                 aria-label="Open navigation menu"
                 aria-expanded={is_mobile_menu_open}
               >

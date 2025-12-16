@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppStore } from '@/store/main';
-import { Search, Bell, User, LogOut, Settings, ChevronDown, Menu, X } from 'lucide-react';
+import { Search, Bell, User, LogOut, Settings, ChevronDown, Menu, X, House } from 'lucide-react';
 
 // ===========================
 // Type Definitions
@@ -508,6 +508,16 @@ const GV_TopNav_Admin: React.FC = () => {
                 {/* Navigation Links */}
                 <nav className="space-y-2 mb-8">
                   <Link
+                    to="/"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center space-x-4 px-6 py-4 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
+                    style={{ minHeight: '64px' }}
+                  >
+                    <House className="h-6 w-6" />
+                    <span className="font-semibold text-lg">Home</span>
+                  </Link>
+                  
+                  <Link
                     to="/admin/dashboard"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="flex items-center space-x-4 px-6 py-4 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
@@ -535,12 +545,39 @@ const GV_TopNav_Admin: React.FC = () => {
                   </Link>
                   
                   <Link
+                    to="/admin/menu/categories"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center space-x-4 px-6 py-4 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
+                    style={{ minHeight: '64px' }}
+                  >
+                    <span className="font-semibold text-lg">Categories</span>
+                  </Link>
+                  
+                  <Link
                     to="/admin/stock"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="flex items-center space-x-4 px-6 py-4 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
                     style={{ minHeight: '64px' }}
                   >
                     <span className="font-semibold text-lg">Stock</span>
+                  </Link>
+                  
+                  <Link
+                    to="/admin/delivery"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center space-x-4 px-6 py-4 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
+                    style={{ minHeight: '64px' }}
+                  >
+                    <span className="font-semibold text-lg">Delivery</span>
+                  </Link>
+                  
+                  <Link
+                    to="/admin/discounts"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center space-x-4 px-6 py-4 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
+                    style={{ minHeight: '64px' }}
+                  >
+                    <span className="font-semibold text-lg">Discounts</span>
                   </Link>
                   
                   <Link
@@ -553,12 +590,39 @@ const GV_TopNav_Admin: React.FC = () => {
                   </Link>
                   
                   <Link
+                    to="/admin/staff"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center space-x-4 px-6 py-4 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
+                    style={{ minHeight: '64px' }}
+                  >
+                    <span className="font-semibold text-lg">Staff</span>
+                  </Link>
+                  
+                  <Link
+                    to="/admin/invoices"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center space-x-4 px-6 py-4 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
+                    style={{ minHeight: '64px' }}
+                  >
+                    <span className="font-semibold text-lg">Invoices</span>
+                  </Link>
+                  
+                  <Link
                     to="/admin/analytics"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="flex items-center space-x-4 px-6 py-4 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
                     style={{ minHeight: '64px' }}
                   >
                     <span className="font-semibold text-lg">Analytics</span>
+                  </Link>
+                  
+                  <Link
+                    to="/admin/activity-logs"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center space-x-4 px-6 py-4 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
+                    style={{ minHeight: '64px' }}
+                  >
+                    <span className="font-semibold text-lg">Activity Logs</span>
                   </Link>
                 </nav>
                 

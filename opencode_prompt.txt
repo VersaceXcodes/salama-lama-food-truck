@@ -1,69 +1,90 @@
-ou must fix the production issue: opening /cart directly shows a blank page.
+Add a Home item in the admin sidebar and improve the sidebar menu structure.
 
-Non-negotiable rules
+Requirements
 
-Do NOT assume the cause. First reproduce using the same server that production uses.
+Add “Home” to the very top of the admin sidebar (above Dashboard).
 
-You must prove the fix by showing what view-source:/cart contains and that the referenced JS returns HTTP 200.
+Icon: house
 
-A React ErrorBoundary is NOT a fix if the JS bundle never loads.
+Route: navigate to the public website landing page / (NOT the admin dashboard).
 
-Step A — Identify what HTML production is serving
+On click, it should close the mobile sidebar (if open).
 
-Programmatically read the exact HTML served for /cart (the final index.html your server returns).
+Reorder and standardize the sidebar items in this order (use existing routes if they exist; don’t break anything):
 
-Confirm whether it contains /src/main.tsx (dev) or /assets/... (built).
+Home → /
 
-Output the findings clearly.
+Dashboard → existing route
 
-Step B — If HTML contains /src/main.tsx, fix the build/deploy pipeline
+Orders → existing route
 
-This means production is serving the wrong index.html.
-Fix by ensuring:
+Menu Items (or “Menu”) → existing route
 
-Vite build output is used (vitereact/dist/index.html + vitereact/dist/assets/*)
+Categories → create route if missing (admin page that lists/adds/edits/reorders categories used on the customer menu)
 
-Backend serves ONLY the built files for SPA routes
+Stock → existing route
 
-The file that backend returns for any app.get("*") is the built dist index.html, not the source one
+Delivery → existing route
 
-Implement one clean approach:
+Discounts → existing route
 
-Set backend public directory to vitereact/dist
+Customers → existing route
 
-Or copy the ENTIRE dist output into backend/public on deploy (including index.html and assets)
+Staff / Roles → existing route (if “Staff” exists, keep it; if not, create)
 
-Remove/ignore any “source” index.html that references /src/main.tsx
+Invoices → existing route
 
-Step C — If HTML contains /assets/... but /assets/*.js is 404
+Analytics / Reports → existing route
 
-Fix static serving:
+Activity Logs → existing route
 
-Ensure express.static() points to the folder that actually contains /assets
+Settings → existing route
 
-Ensure the folder contains the exact hashed filenames referenced in index.html
+Mobile behavior
 
-Ensure static middleware is mounted before the SPA fallback route
+On screens under md:
 
-Step D — If assets return 200 but page is still blank
+Sidebar must be hidden by default.
 
-This is a runtime crash before React renders:
+A hamburger button in the admin top bar should open it.
 
-Open browser console logs (or reproduce by running the app and capturing stack trace)
+Sidebar should slide in from the left.
 
-Add a minimal window.onerror + unhandledrejection overlay in production to display the error message
+Show a dark translucent overlay behind it.
 
-Fix the underlying crash so the app renders on /cart
+User can close it by:
 
-Step E — Verification (required)
+Tapping the overlay
 
-After changes:
+Tapping a visible “X” close button at the top of the sidebar
 
-Show view-source:/cart script tags and confirm they are /assets/...
+Pressing ESC
 
-Fetch the main JS asset and confirm status 200
+When sidebar is open, prevent background scrolling.
 
-Confirm /cart renders UI
+Desktop behavior
+
+On md and above:
+
+Sidebar is fixed on the left, not overlaying the content.
+
+Main content area should have correct left padding/margin so nothing is covered.
+
+Implementation notes
+
+Reuse the existing sidebar component and styles as much as possible.
+
+Do not introduce a new UI library.
+
+Make sure the active route is highlighted.
+
+If you create a new Categories admin page/route, make it minimal but functional (list, add, edit name, delete, reorder optional).
+
+Provide the exact files changed and the code changes.
+
+Deliverable
+
+Make the changes, ensure it compiles, and summarize what you changed.
 
 When the user mentions generic pages, map them to concrete files/components by scanning for headings and routes. Examples you MUST follow:
 - If the user says "login" or "sign in", search for components containing the literal heading "Sign in to your account" and edit that file.
@@ -74,70 +95,91 @@ When the user mentions generic pages, map them to concrete files/components by s
 - The user's request above is the PRIMARY task. Complete it first.
 - Ignore any existing errors, warnings, or issues you detect in the project unless they directly prevent you from completing the user's requested task.
 - Do NOT automatically fix unrelated errors or refactor code unless explicitly requested.
-- Focus solely on implementing the user's request: "ou must fix the production issue: opening /cart directly shows a blank page.
+- Focus solely on implementing the user's request: "Add a Home item in the admin sidebar and improve the sidebar menu structure.
 
-Non-negotiable rules
+Requirements
 
-Do NOT assume the cause. First reproduce using the same server that production uses.
+Add “Home” to the very top of the admin sidebar (above Dashboard).
 
-You must prove the fix by showing what view-source:/cart contains and that the referenced JS returns HTTP 200.
+Icon: house
 
-A React ErrorBoundary is NOT a fix if the JS bundle never loads.
+Route: navigate to the public website landing page / (NOT the admin dashboard).
 
-Step A — Identify what HTML production is serving
+On click, it should close the mobile sidebar (if open).
 
-Programmatically read the exact HTML served for /cart (the final index.html your server returns).
+Reorder and standardize the sidebar items in this order (use existing routes if they exist; don’t break anything):
 
-Confirm whether it contains /src/main.tsx (dev) or /assets/... (built).
+Home → /
 
-Output the findings clearly.
+Dashboard → existing route
 
-Step B — If HTML contains /src/main.tsx, fix the build/deploy pipeline
+Orders → existing route
 
-This means production is serving the wrong index.html.
-Fix by ensuring:
+Menu Items (or “Menu”) → existing route
 
-Vite build output is used (vitereact/dist/index.html + vitereact/dist/assets/*)
+Categories → create route if missing (admin page that lists/adds/edits/reorders categories used on the customer menu)
 
-Backend serves ONLY the built files for SPA routes
+Stock → existing route
 
-The file that backend returns for any app.get("*") is the built dist index.html, not the source one
+Delivery → existing route
 
-Implement one clean approach:
+Discounts → existing route
 
-Set backend public directory to vitereact/dist
+Customers → existing route
 
-Or copy the ENTIRE dist output into backend/public on deploy (including index.html and assets)
+Staff / Roles → existing route (if “Staff” exists, keep it; if not, create)
 
-Remove/ignore any “source” index.html that references /src/main.tsx
+Invoices → existing route
 
-Step C — If HTML contains /assets/... but /assets/*.js is 404
+Analytics / Reports → existing route
 
-Fix static serving:
+Activity Logs → existing route
 
-Ensure express.static() points to the folder that actually contains /assets
+Settings → existing route
 
-Ensure the folder contains the exact hashed filenames referenced in index.html
+Mobile behavior
 
-Ensure static middleware is mounted before the SPA fallback route
+On screens under md:
 
-Step D — If assets return 200 but page is still blank
+Sidebar must be hidden by default.
 
-This is a runtime crash before React renders:
+A hamburger button in the admin top bar should open it.
 
-Open browser console logs (or reproduce by running the app and capturing stack trace)
+Sidebar should slide in from the left.
 
-Add a minimal window.onerror + unhandledrejection overlay in production to display the error message
+Show a dark translucent overlay behind it.
 
-Fix the underlying crash so the app renders on /cart
+User can close it by:
 
-Step E — Verification (required)
+Tapping the overlay
 
-After changes:
+Tapping a visible “X” close button at the top of the sidebar
 
-Show view-source:/cart script tags and confirm they are /assets/...
+Pressing ESC
 
-Fetch the main JS asset and confirm status 200
+When sidebar is open, prevent background scrolling.
 
-Confirm /cart renders UI"
+Desktop behavior
+
+On md and above:
+
+Sidebar is fixed on the left, not overlaying the content.
+
+Main content area should have correct left padding/margin so nothing is covered.
+
+Implementation notes
+
+Reuse the existing sidebar component and styles as much as possible.
+
+Do not introduce a new UI library.
+
+Make sure the active route is highlighted.
+
+If you create a new Categories admin page/route, make it minimal but functional (list, add, edit name, delete, reorder optional).
+
+Provide the exact files changed and the code changes.
+
+Deliverable
+
+Make the changes, ensure it compiles, and summarize what you changed."
 - Only address errors if they block the specific functionality requested by the user.

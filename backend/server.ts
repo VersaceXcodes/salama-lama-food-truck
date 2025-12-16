@@ -3110,10 +3110,14 @@ app.post('/api/delivery/validate-address', authenticate_token, async (req, res) 
 
 // Shared handler for order creation (used by both /api/checkout/create-order and /api/checkout/order)
 const handleCheckoutCreateOrder = async (req, res) => {
+  console.log(`[CHECKOUT CREATE ORDER] request_id=${req.request_id} Starting order creation`);
+  
   try {
     const body = checkout_create_order_input_schema.parse(req.body);
     const identifier = get_cart_identifier(req);
     const cart = read_cart_sync(identifier);
+
+    console.log(`[CHECKOUT CREATE ORDER] request_id=${req.request_id} Cart loaded: ${cart.items.length} items`);
 
     if (cart.items.length === 0) {
       return res.status(400).json(createErrorResponse('Cart is empty', null, 'CART_EMPTY', req.request_id));
@@ -3122,6 +3126,8 @@ const handleCheckoutCreateOrder = async (req, res) => {
     // Determine if this is an authenticated user or guest
     const is_authenticated = !!req.user?.user_id;
     const auth_user_id = req.user?.user_id || null;
+    
+    console.log(`[CHECKOUT CREATE ORDER] request_id=${req.request_id} is_authenticated=${is_authenticated} auth_user_id=${auth_user_id} discount_code=${body.discount_code || cart.discount_code || 'none'}`);
     
     // For authenticated users, validate that the user exists in the database
     if (is_authenticated) {
@@ -3201,10 +3207,13 @@ const handleCheckoutCreateOrder = async (req, res) => {
     // Transactional order creation.
     await with_client(async (client) => {
       await client.query('BEGIN');
+      console.log(`[CHECKOUT CREATE ORDER] request_id=${req.request_id} STEP: BEGIN transaction`);
 
       const order_id = gen_id('ord');
       const order_number = `SL-${String(Math.floor(Date.now() / 1000)).slice(-6)}-${nanoid(4).toUpperCase()}`;
       const created_at = now_iso();
+      
+      console.log(`[CHECKOUT CREATE ORDER] request_id=${req.request_id} order_id=${order_id} order_number=${order_number}`);
       
       // Generate ticket number and tracking token for guest-friendly tracking
       const ticket_number = `SL-${String(Math.floor(Math.random() * 1000000)).padStart(6, '0')}`;
@@ -3245,73 +3254,81 @@ const handleCheckoutCreateOrder = async (req, res) => {
       }
 
       // Insert order.
-      await client.query(
-        `INSERT INTO orders (
-          order_id, order_number, ticket_number, tracking_token,
-          user_id, order_type, status,
-          collection_time_slot, delivery_address_id, delivery_address_snapshot,
-          delivery_fee, estimated_delivery_time,
-          subtotal, discount_code, discount_amount, tax_amount, total_amount,
-          payment_status, payment_method_id, payment_method_type,
-          sumup_transaction_id, invoice_url, loyalty_points_awarded,
-          special_instructions, customer_name, customer_email, customer_phone,
-          created_at, updated_at,
-          completed_at, cancelled_at, cancellation_reason, refund_amount, refund_reason,
-          refunded_at, internal_notes
-        ) VALUES (
-          $1,$2,$3,$4,
-          $5,$6,$7,
-          $8,$9,$10::jsonb,
-          $11,$12,
-          $13,$14,$15,$16,$17,
-          $18,$19,$20,
-          $21,$22,$23,
-          $24,$25,$26,$27,
-          $28,$29,
-          $30,$31,$32,$33,$34,
-          $35,$36
-        )`,
-        [
-          order_id,
-          order_number,
-          ticket_number,
-          tracking_token,
-          auth_user_id, // NULL for guests, user_id for authenticated users
-          body.order_type,
-          'received',
-          body.collection_time_slot ?? null,
-          delivery_address_id,
-          delivery_address_snapshot ? JSON.stringify(delivery_address_snapshot) : null,
-          delivery_address_id ? delivery_fee : null,
-          estimated_delivery_time,
-          totals.subtotal,
-          totals.discount_code ?? null,
-          totals.discount_amount,
-          totals.tax_amount,
-          totals.total,
-          'pending',
-          (is_cash_payment || is_new_card_demo) ? null : pm_id,
-          payment_method_type,
-          null,
-          null,
-          0,
-          body.special_instructions ?? null,
-          body.customer_name,
-          body.customer_email,
-          body.customer_phone,
-          created_at,
-          created_at,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-        ]
-      );
+      console.log(`[CHECKOUT CREATE ORDER] request_id=${req.request_id} STEP: insert order auth_user_id=${auth_user_id}`);
+      try {
+        await client.query(
+          `INSERT INTO orders (
+            order_id, order_number, ticket_number, tracking_token,
+            user_id, order_type, status,
+            collection_time_slot, delivery_address_id, delivery_address_snapshot,
+            delivery_fee, estimated_delivery_time,
+            subtotal, discount_code, discount_amount, tax_amount, total_amount,
+            payment_status, payment_method_id, payment_method_type,
+            sumup_transaction_id, invoice_url, loyalty_points_awarded,
+            special_instructions, customer_name, customer_email, customer_phone,
+            created_at, updated_at,
+            completed_at, cancelled_at, cancellation_reason, refund_amount, refund_reason,
+            refunded_at, internal_notes
+          ) VALUES (
+            $1,$2,$3,$4,
+            $5,$6,$7,
+            $8,$9,$10::jsonb,
+            $11,$12,
+            $13,$14,$15,$16,$17,
+            $18,$19,$20,
+            $21,$22,$23,
+            $24,$25,$26,$27,
+            $28,$29,
+            $30,$31,$32,$33,$34,
+            $35,$36
+          )`,
+          [
+            order_id,
+            order_number,
+            ticket_number,
+            tracking_token,
+            auth_user_id, // NULL for guests, user_id for authenticated users
+            body.order_type,
+            'received',
+            body.collection_time_slot ?? null,
+            delivery_address_id,
+            delivery_address_snapshot ? JSON.stringify(delivery_address_snapshot) : null,
+            delivery_address_id ? delivery_fee : null,
+            estimated_delivery_time,
+            totals.subtotal,
+            totals.discount_code ?? null,
+            totals.discount_amount,
+            totals.tax_amount,
+            totals.total,
+            'pending',
+            (is_cash_payment || is_new_card_demo) ? null : pm_id,
+            payment_method_type,
+            null,
+            null,
+            0,
+            body.special_instructions ?? null,
+            body.customer_name,
+            body.customer_email,
+            body.customer_phone,
+            created_at,
+            created_at,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+          ]
+        );
+        console.log(`[CHECKOUT CREATE ORDER] request_id=${req.request_id} STEP: insert order SUCCESS`);
+      } catch (err) {
+        console.error(`[CHECKOUT CREATE ORDER] request_id=${req.request_id} STEP: insert order FAILED code=${err.code} constraint=${err.constraint} detail=${err.detail} message=${err.message}`);
+        throw err;
+      }
 
       // Insert order items.
+      console.log(`[CHECKOUT CREATE ORDER] request_id=${req.request_id} STEP: insert order_items count=${totals.items.length}`);
       for (const ci of totals.items) {
         await client.query(
           `INSERT INTO order_items (
@@ -3371,28 +3388,49 @@ const handleCheckoutCreateOrder = async (req, res) => {
       // For cash payments, payment_status remains 'pending' until payment is received
 
       // Discount usage.
+      console.log(`[CHECKOUT CREATE ORDER] request_id=${req.request_id} STEP: discount usage discount_code=${totals.discount_code || 'none'} auth_user_id=${auth_user_id}`);
       if (totals.discount_code) {
-        const dc_res = await client.query('SELECT code_id, total_used_count FROM discount_codes WHERE code = $1', [ensure_upper(totals.discount_code)]);
-        if (dc_res.rows.length > 0) {
-          const dc = dc_res.rows[0];
-          await client.query(
-            `INSERT INTO discount_usage (usage_id, code_id, user_id, order_id, discount_amount_applied, used_at)
-             VALUES ($1,$2,$3,$4,$5,$6)`,
-            [gen_id('du'), dc.code_id, auth_user_id, order_id, totals.discount_amount, now_iso()]
-          );
-          await client.query('UPDATE discount_codes SET total_used_count = total_used_count + 1, updated_at = $1 WHERE code_id = $2', [now_iso(), dc.code_id]);
+        try {
+          const dc_res = await client.query('SELECT code_id, total_used_count FROM discount_codes WHERE code = $1', [ensure_upper(totals.discount_code)]);
+          if (dc_res.rows.length > 0) {
+            const dc = dc_res.rows[0];
+            console.log(`[CHECKOUT CREATE ORDER] request_id=${req.request_id} STEP: discount usage - inserting discount_usage record code_id=${dc.code_id} auth_user_id=${auth_user_id}`);
+            
+            // CRITICAL FIX: Only insert discount_usage if user is authenticated
+            // Guest users cannot have discount usage tracked in user_id column
+            if (auth_user_id) {
+              await client.query(
+                `INSERT INTO discount_usage (usage_id, code_id, user_id, order_id, discount_amount_applied, used_at)
+                 VALUES ($1,$2,$3,$4,$5,$6)`,
+                [gen_id('du'), dc.code_id, auth_user_id, order_id, totals.discount_amount, now_iso()]
+              );
+              console.log(`[CHECKOUT CREATE ORDER] request_id=${req.request_id} STEP: discount usage - discount_usage record inserted`);
+            } else {
+              console.log(`[CHECKOUT CREATE ORDER] request_id=${req.request_id} STEP: discount usage - SKIPPED for guest (auth_user_id is NULL)`);
+            }
+            
+            await client.query('UPDATE discount_codes SET total_used_count = total_used_count + 1, updated_at = $1 WHERE code_id = $2', [now_iso(), dc.code_id]);
 
-          // First-order discount usage flag.
-          await client.query('UPDATE users SET first_order_discount_used = true WHERE user_id = $1 AND first_order_discount_code = $2', [auth_user_id, totals.discount_code]);
+            // First-order discount usage flag - only for authenticated users.
+            if (auth_user_id) {
+              await client.query('UPDATE users SET first_order_discount_used = true WHERE user_id = $1 AND first_order_discount_code = $2', [auth_user_id, totals.discount_code]);
+            }
 
-          // If discount code is a redeemed reward, mark as used.
-          await client.query(
-            `UPDATE redeemed_rewards
-             SET usage_status = 'used', used_in_order_id = $1, used_at = $2
-             WHERE reward_code = $3 AND loyalty_account_id = (SELECT loyalty_account_id FROM loyalty_accounts WHERE user_id = $4)
-               AND usage_status = 'unused'`,
-            [order_id, now_iso(), ensure_upper(totals.discount_code), auth_user_id]
-          );
+            // If discount code is a redeemed reward, mark as used - only for authenticated users.
+            if (auth_user_id) {
+              await client.query(
+                `UPDATE redeemed_rewards
+                 SET usage_status = 'used', used_in_order_id = $1, used_at = $2
+                 WHERE reward_code = $3 AND loyalty_account_id = (SELECT loyalty_account_id FROM loyalty_accounts WHERE user_id = $4)
+                   AND usage_status = 'unused'`,
+                [order_id, now_iso(), ensure_upper(totals.discount_code), auth_user_id]
+              );
+            }
+          }
+          console.log(`[CHECKOUT CREATE ORDER] request_id=${req.request_id} STEP: discount usage SUCCESS`);
+        } catch (err) {
+          console.error(`[CHECKOUT CREATE ORDER] request_id=${req.request_id} STEP: discount usage FAILED code=${err.code} constraint=${err.constraint} detail=${err.detail} message=${err.message}`);
+          throw err;
         }
       }
 
@@ -3528,7 +3566,9 @@ const handleCheckoutCreateOrder = async (req, res) => {
       // Clear cart.
       write_cart_sync(cart_identifier, { items: [], discount_code: null, updated_at: now_iso() });
 
+      console.log(`[CHECKOUT CREATE ORDER] request_id=${req.request_id} STEP: COMMIT transaction`);
       await client.query('COMMIT');
+      console.log(`[CHECKOUT CREATE ORDER] request_id=${req.request_id} STEP: COMMIT SUCCESS - Order ${order_number} created successfully`);
 
       // WebSocket: new order to staff.
       io.to('staff').emit('new_order', {
@@ -3580,13 +3620,15 @@ const handleCheckoutCreateOrder = async (req, res) => {
       });
     });
   } catch (error) {
+    console.error(`[CHECKOUT CREATE ORDER] request_id=${req.request_id} ERROR occurred:`, error);
+    
     if (error instanceof z.ZodError) {
       return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
     }
     
     // Handle PostgreSQL foreign key constraint violations
     if (error.code === '23503') {
-      console.error('Foreign key constraint violation in order creation:', error.detail || error.message);
+      console.error(`[CHECKOUT CREATE ORDER] request_id=${req.request_id} Foreign key constraint violation: code=${error.code} constraint=${error.constraint} detail=${error.detail} message=${error.message}`);
       
       // Map specific constraint violations to user-friendly messages
       if (error.constraint === 'orders_user_id_fkey') {
@@ -3594,7 +3636,26 @@ const handleCheckoutCreateOrder = async (req, res) => {
           'User account not found. Please log in again.',
           null,
           'USER_NOT_FOUND',
-          req.request_id
+          req.request_id,
+          { 
+            error_code: error.code,
+            constraint: error.constraint,
+            step: 'insert_order'
+          }
+        ));
+      }
+      
+      if (error.constraint === 'discount_usage_user_id_fkey') {
+        return res.status(400).json(createErrorResponse(
+          'Cannot apply discount. Please try again or contact support.',
+          null,
+          'DISCOUNT_APPLICATION_FAILED',
+          req.request_id,
+          {
+            error_code: error.code,
+            constraint: error.constraint,
+            step: 'discount_usage'
+          }
         ));
       }
       
@@ -3603,12 +3664,35 @@ const handleCheckoutCreateOrder = async (req, res) => {
         null,
         'CONSTRAINT_VIOLATION',
         req.request_id,
-        { constraint: error.constraint }
+        { 
+          error_code: error.code,
+          constraint: error.constraint,
+          detail: error.detail
+        }
       ));
     }
     
-    console.error('create-order error', error);
-    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    // Handle NOT NULL constraint violations
+    if (error.code === '23502') {
+      console.error(`[CHECKOUT CREATE ORDER] request_id=${req.request_id} NOT NULL constraint violation: code=${error.code} column=${error.column} detail=${error.detail} message=${error.message}`);
+      return res.status(400).json(createErrorResponse(
+        'Order creation failed: missing required field.',
+        null,
+        'REQUIRED_FIELD_MISSING',
+        req.request_id,
+        {
+          error_code: error.code,
+          column: error.column,
+          detail: error.detail
+        }
+      ));
+    }
+    
+    console.error(`[CHECKOUT CREATE ORDER] request_id=${req.request_id} Unexpected error: code=${error.code} message=${error.message}`, error);
+    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id, {
+      error_code: error.code,
+      constraint: error.constraint
+    }));
   }
 };
 

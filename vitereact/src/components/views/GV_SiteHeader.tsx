@@ -241,20 +241,25 @@ const GV_SiteHeader: React.FC = () => {
   
   return (
     <>
-      {/* Main Navigation Bar - Sticky at top */}
+      {/* Main Navigation Bar - Floating container with 20px top margin */}
       <nav 
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-200 ${
+        className={`fixed left-0 right-0 z-50 transition-all duration-300 ${
           hasShadow 
-            ? 'bg-[#F2EFE9]/95 backdrop-blur-md shadow-lg' 
-            : 'bg-[#F2EFE9] shadow-sm'
+            ? 'top-3 md:top-5' 
+            : 'top-3 md:top-5'
         }`}
         style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className={`rounded-2xl transition-all duration-200 ${
+            hasShadow 
+              ? 'bg-white/95 backdrop-blur-md shadow-xl' 
+              : 'bg-white shadow-md'
+          }`}>
           {/* ======================================
               MOBILE HEADER - flex md:hidden
               ====================================== */}
-          <div className="flex md:hidden items-center h-14 py-2">
+          <div className="flex md:hidden items-center h-14 py-2 px-4">
             <div className="grid grid-cols-[48px_1fr_48px] items-center w-full gap-2">
               {/* Left: Cart Icon */}
               <Link
@@ -316,22 +321,11 @@ const GV_SiteHeader: React.FC = () => {
           {/* ======================================
               DESKTOP HEADER - hidden md:flex
               ====================================== */}
-          <div className="hidden md:flex items-center justify-between h-20" style={{ flexWrap: 'nowrap' }}>
+          <div className="hidden md:flex items-center justify-between h-20 px-6" style={{ flexWrap: 'nowrap' }}>
             
-            {/* Left Section: Logo */}
-            <div className="flex-shrink-0">
-              <Link 
-                to="/"
-                className="flex items-center group"
-                aria-label="Salama Lama Home"
-              >
-                <BrandLogo variant="header" />
-              </Link>
-            </div>
-            
-            {/* Center Section: Desktop Navigation Links */}
+            {/* Left Section: Navigation Links (Menu, Catering, About) */}
             <div className="flex items-center space-x-8" style={{ flexWrap: 'nowrap', whiteSpace: 'nowrap' }}>
-              {navigationLinks.map((link) => (
+              {navigationLinks.slice(0, 3).map((link) => (
                 <Link
                   key={link.path}
                   to={link.path}
@@ -346,8 +340,19 @@ const GV_SiteHeader: React.FC = () => {
               ))}
             </div>
             
-            {/* Right Section: Cart, Profile/Auth */}
-            <div className="flex items-center space-x-4" style={{ flexWrap: 'nowrap' }}>
+            {/* Center Section: Logo */}
+            <div className="flex-shrink-0 absolute left-1/2 transform -translate-x-1/2">
+              <Link 
+                to="/"
+                className="flex items-center group"
+                aria-label="Salama Lama Home"
+              >
+                <BrandLogo variant="header" />
+              </Link>
+            </div>
+            
+            {/* Right Section: Cart Icon Only */}
+            <div className="flex items-center" style={{ flexWrap: 'nowrap' }}>
               
               {/* Cart Button with Badge */}
               <Link
@@ -364,102 +369,8 @@ const GV_SiteHeader: React.FC = () => {
                 )}
               </Link>
               
-              {/* Authenticated User - Desktop Profile Dropdown */}
-              {isAuthenticated && (
-                <div className="relative" ref={profileDropdownRef}>
-                  <button
-                    onClick={toggleProfileDropdown}
-                    className="flex items-center space-x-2 text-[#2C1A16] hover:text-[#D97706] transition-colors focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 rounded-lg px-3 py-2"
-                    style={{ minHeight: '48px' }}
-                    aria-label="User profile menu"
-                    aria-expanded={isProfileDropdownOpen}
-                  >
-                    <div className="h-8 w-8 bg-[#D4C5B0] rounded-full flex items-center justify-center border-2 border-[#2C1A16]">
-                      <User className="h-5 w-5 text-[#2C1A16]" />
-                    </div>
-                    <span className="font-medium text-[#2C1A16]">{userDisplayName}</span>
-                    <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isProfileDropdownOpen ? 'rotate-180' : ''}`} />
-                  </button>
-                  
-                  {/* Desktop Dropdown Menu */}
-                  {isProfileDropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border-2 border-[#D4C5B0] py-2 z-50 animate-fadeIn">
-                      {isCustomer && (
-                        <>
-                          <Link
-                            to="/dashboard"
-                            onClick={closeProfileDropdown}
-                            className="flex items-center space-x-3 px-4 py-3 text-[#2C1A16] hover:bg-[#F2EFE9] hover:text-[#D97706] transition-colors"
-                          >
-                            <User className="h-5 w-5" />
-                            <span className="font-medium">My Account</span>
-                          </Link>
-                          
-                          <Link
-                            to="/orders"
-                            onClick={closeProfileDropdown}
-                            className="flex items-center space-x-3 px-4 py-3 text-[#2C1A16] hover:bg-[#F2EFE9] hover:text-[#D97706] transition-colors"
-                          >
-                            <ShoppingCart className="h-5 w-5" />
-                            <span className="font-medium">My Orders</span>
-                          </Link>
-                          
-                          <div className="border-t border-[#D4C5B0] my-2"></div>
-                        </>
-                      )}
-                      
-                      {isGuest && (
-                        <>
-                          <Link
-                            to="/checkout/order-type"
-                            onClick={closeProfileDropdown}
-                            className="flex items-center space-x-3 px-4 py-3 text-[#2C1A16] hover:bg-[#F2EFE9] hover:text-[#D97706] transition-colors"
-                          >
-                            <ShoppingCart className="h-5 w-5" />
-                            <span className="font-medium">Continue Ordering</span>
-                          </Link>
-                          
-                          <div className="border-t border-[#D4C5B0] my-2"></div>
-                        </>
-                      )}
-                      
-                      <button
-                        onClick={handleLogout}
-                        disabled={isLoggingOut}
-                        className="w-full flex items-center space-x-3 px-4 py-3 text-[#DC2626] hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <LogOut className="h-5 w-5" />
-                        <span className="font-medium">
-                          {isLoggingOut ? 'Signing out...' : 'Sign Out'}
-                        </span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-              
-              {/* Guest/Unauthenticated - Desktop Auth Buttons */}
-              {!isAuthenticated && (
-                <>
-                  <Link
-                    to="/login"
-                    className="inline-flex items-center px-6 py-3 border-2 border-[#2C1A16] text-base font-medium rounded-lg text-[#2C1A16] bg-white hover:bg-[#F2EFE9] hover:border-[#D97706] hover:text-[#D97706] focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 transition-all duration-200"
-                    style={{ minHeight: '48px' }}
-                  >
-                    Log In
-                  </Link>
-                  
-                  <Link
-                    to="/signup"
-                    className="inline-flex items-center px-8 py-3 border border-transparent text-base font-semibold rounded-lg text-white bg-[#D97706] hover:bg-[#B45309] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 transition-all duration-200 transform hover:scale-105"
-                    style={{ minHeight: '48px' }}
-                  >
-                    Sign Up
-                  </Link>
-                </>
-              )}
-              
             </div>
+          </div>
           </div>
         </div>
       </nav>
@@ -615,8 +526,8 @@ const GV_SiteHeader: React.FC = () => {
         </MobileDrawer>
       )}
       
-      {/* Spacer to prevent content from going under fixed navbar */}
-      <div className="h-14 md:h-20" aria-hidden="true" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }} />
+      {/* Spacer to prevent content from going under floating navbar */}
+      <div className="h-[68px] md:h-[108px]" aria-hidden="true" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }} />
       
       {/* Custom Animation Styles */}
       <style>{`

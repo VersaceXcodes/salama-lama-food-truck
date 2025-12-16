@@ -25,6 +25,7 @@ html, body {
 	width: 100%;
 	max-width: 100vw;
 	position: relative;
+	background-color: #F5F0EB;
 }
 
 /* Safe area insets for mobile browsers (WhatsApp, Safari, etc.) */

@@ -241,11 +241,11 @@ const UV_Landing: React.FC = () => {
                 Authentic Subs. Custom Bowls. Made with Heart.
               </p>
 
-              {/* COMMANDMENT #1: Primary CTA - 48px min-height, full width on mobile */}
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full">
+              {/* COMMANDMENT #1: Primary CTA - 48px min-height, stacked on mobile, side-by-side on desktop */}
+              <div className="flex flex-col md:flex-row gap-3 md:gap-4 w-full">
                 <Link
                   to="/menu"
-                  className="group flex items-center justify-center px-8 py-4 bg-[#2C1A16] text-[#F2EFE9] text-lg font-bold rounded-full shadow-xl hover:bg-[#F2EFE9] hover:text-[#2C1A16] border-4 border-[#2C1A16] transition-all duration-300 ease-in-out w-full sm:w-auto"
+                  className="group flex items-center justify-center px-8 py-4 bg-[#2C1A16] text-[#F2EFE9] text-lg font-bold rounded-full shadow-xl hover:bg-[#F2EFE9] hover:text-[#2C1A16] border-4 border-[#2C1A16] transition-all duration-300 ease-in-out w-full md:w-auto"
                   style={{ minHeight: '56px' }}
                 >
                   Order Now
@@ -254,7 +254,7 @@ const UV_Landing: React.FC = () => {
                 
                 <Link
                   to="/about"
-                  className="group flex items-center justify-center px-8 py-4 bg-transparent text-[#2C1A16] text-lg font-bold rounded-full border-4 border-[#2C1A16] hover:bg-[#2C1A16] hover:text-[#F2EFE9] transition-all duration-300 ease-in-out w-full sm:w-auto"
+                  className="group flex items-center justify-center px-8 py-4 bg-transparent text-[#2C1A16] text-lg font-bold rounded-full border-4 border-[#2C1A16] hover:bg-[#2C1A16] hover:text-[#F2EFE9] transition-all duration-300 ease-in-out w-full md:w-auto"
                   style={{ minHeight: '56px' }}
                 >
                   Our Story

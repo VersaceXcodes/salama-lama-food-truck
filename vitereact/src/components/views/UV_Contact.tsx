@@ -298,125 +298,187 @@ const UV_Contact: React.FC = () => {
 
   return (
     <>
-      <main className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-yellow-50">
-        {/* Hero Section */}
-        <section className="bg-gradient-to-r from-orange-600 to-yellow-600 text-white py-16 lg:py-24">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 className="text-4xl lg:text-5xl font-bold mb-4 leading-tight">
-              Get in Touch
-            </h1>
-            <p className="text-xl lg:text-2xl text-orange-100 max-w-3xl mx-auto leading-relaxed">
-              We'd love to hear from you! Whether you have a question about our menu, want to place a bulk order, or just want to say hello, we're here to help.
-            </p>
-          </div>
-        </section>
-
-        {/* Contact Information Section */}
-        <section className="py-12 lg:py-20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            {info_loading ? (
-              // Loading State
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="bg-white rounded-xl shadow-lg p-8 animate-pulse">
-                    <div className="h-12 w-12 bg-gray-200 rounded-full mb-6"></div>
-                    <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
-                    <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-                    <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-                  </div>
-                ))}
-              </div>
-            ) : info_error ? (
-              // Error State
-              <div className="bg-red-50 border-2 border-red-200 rounded-xl p-8 text-center">
-                <AlertCircle className="h-12 w-12 text-red-600 mx-auto mb-4" />
-                <p className="text-red-700 font-medium">Failed to load contact information</p>
-              </div>
-            ) : (
-              // Success State - Contact Info Grid
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {/* Phone & Email */}
-                <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8 transition-all duration-200 hover:shadow-xl">
-                  <div className="flex items-center justify-center h-12 w-12 rounded-full bg-orange-100 mb-6">
-                    <Phone className="h-6 w-6 text-orange-600" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-4">Call or Text</h3>
-                  <div className="space-y-3">
-                    <a
-                      href={`tel:${business_contact_info?.phone || business_settings.business_info.phone}`}
-                      onClick={handle_phone_click}
-                      className="flex items-center text-gray-700 hover:text-orange-600 transition-colors group"
-                    >
-                      <Phone className="h-5 w-5 mr-3 text-gray-400 group-hover:text-orange-600" />
-                      <span className="font-medium">
-                        {business_contact_info?.phone || business_settings.business_info.phone || '+353-1-234-5678'}
-                      </span>
-                    </a>
-                    <a
-                      href={`mailto:${business_contact_info?.email || business_settings.business_info.email}`}
-                      onClick={handle_email_click}
-                      className="flex items-center text-gray-700 hover:text-orange-600 transition-colors group"
-                    >
-                      <Mail className="h-5 w-5 mr-3 text-gray-400 group-hover:text-orange-600" />
-                      <span className="font-medium">
-                        {business_contact_info?.email || business_settings.business_info.email || 'hello@salamalama.ie'}
-                      </span>
-                    </a>
-                  </div>
-                </div>
-
-                {/* Operating Hours */}
-                <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8 transition-all duration-200 hover:shadow-xl">
-                  <div className="flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-6">
-                    <Clock className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-4">Opening Hours</h3>
-                  {render_operating_hours()}
-                </div>
-
-                {/* Location */}
-                <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8 transition-all duration-200 hover:shadow-xl">
-                  <div className="flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-6">
-                    <MapPin className="h-6 w-6 text-green-600" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-4">Visit Us</h3>
-                  <p className="text-gray-700 leading-relaxed">
-                    {business_contact_info?.address && typeof business_contact_info.address === 'object'
-                      ? `${business_contact_info.address.line1}${business_contact_info.address.line2 ? ', ' + business_contact_info.address.line2 : ''}, ${business_contact_info.address.city}, ${business_contact_info.address.postal_code}`
-                      : (business_settings.business_info.address && typeof business_settings.business_info.address === 'object')
-                        ? `${business_settings.business_info.address.line1}${business_settings.business_info.address.line2 ? ', ' + business_settings.business_info.address.line2 : ''}, ${business_settings.business_info.address.city}, ${business_settings.business_info.address.postal_code}`
-                        : 'Dublin, Ireland'
-                    }
+      <main className="min-h-screen bg-[#F2EFE9]">
+        {/* Modern Split Layout Hero Section */}
+        <section className="relative bg-[#F2EFE9] overflow-hidden min-h-screen flex items-center">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-12 sm:py-16 lg:py-20 w-full">
+            <div className="flex flex-col lg:grid lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-20 items-stretch">
+              
+              {/* Left Side - Get in Touch & Contact Details (Floating Elements) */}
+              <div className="order-2 lg:order-1 flex flex-col justify-center space-y-8 sm:space-y-12 relative z-10">
+                
+                {/* Main Heading */}
+                <div>
+                  <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold text-[#2C1A16] mb-4 sm:mb-6 leading-tight tracking-tight">
+                    Get in Touch
+                  </h1>
+                  <p className="text-base sm:text-lg lg:text-xl text-[#4A3B32] leading-relaxed font-medium max-w-lg">
+                    We'd love to hear from you! Whether you have a question about our menu or want to say hello.
                   </p>
-                  <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                      business_contact_info?.address && typeof business_contact_info.address === 'object'
-                        ? `${business_contact_info.address.line1}, ${business_contact_info.address.city}, ${business_contact_info.address.postal_code}`
-                        : (business_settings.business_info.address && typeof business_settings.business_info.address === 'object')
-                          ? `${business_settings.business_info.address.line1}, ${business_settings.business_info.address.city}, ${business_settings.business_info.address.postal_code}`
-                          : 'Dublin, Ireland'
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center mt-4 text-orange-600 hover:text-orange-700 font-medium transition-colors"
-                  >
-                    <MapPin className="h-4 w-4 mr-2" />
-                    Get Directions
-                  </a>
+                </div>
+
+                {info_loading ? (
+                  // Loading State
+                  <div className="space-y-8">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="flex items-start space-x-4 animate-pulse">
+                        <div className="h-12 w-12 bg-[#4A3B32]/20 rounded-full"></div>
+                        <div className="flex-1 space-y-2">
+                          <div className="h-4 bg-[#4A3B32]/20 rounded w-1/2"></div>
+                          <div className="h-3 bg-[#4A3B32]/20 rounded w-3/4"></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : info_error ? (
+                  // Error State
+                  <div className="bg-red-50 border-2 border-red-200 rounded-xl p-6">
+                    <AlertCircle className="h-8 w-8 text-red-600 mb-2" />
+                    <p className="text-red-700 font-medium">Failed to load contact information</p>
+                  </div>
+                ) : (
+                  // Success State - Floating Contact Details
+                  <div className="space-y-8 sm:space-y-10">
+                    
+                    {/* Phone & Email - Floating with Icon */}
+                    <div className="flex items-start space-x-5 group transform hover:translate-x-2 transition-transform duration-300">
+                      <div className="flex-shrink-0">
+                        <div className="h-14 w-14 rounded-full bg-[#2C1A16] flex items-center justify-center shadow-lg">
+                          <Phone className="h-7 w-7 text-[#F2EFE9]" />
+                        </div>
+                      </div>
+                      <div className="flex-1 pt-1">
+                        <h3 className="text-lg sm:text-xl font-bold text-[#2C1A16] mb-2">Call or Text</h3>
+                        <a
+                          href={`tel:${business_contact_info?.phone || business_settings.business_info.phone}`}
+                          onClick={handle_phone_click}
+                          className="block text-base sm:text-lg text-[#4A3B32] hover:text-[#2C1A16] font-medium transition-colors"
+                        >
+                          {business_contact_info?.phone || business_settings.business_info.phone || '+353-1-234-5678'}
+                        </a>
+                        <a
+                          href={`mailto:${business_contact_info?.email || business_settings.business_info.email}`}
+                          onClick={handle_email_click}
+                          className="block text-base sm:text-lg text-[#4A3B32] hover:text-[#2C1A16] font-medium transition-colors mt-1"
+                        >
+                          {business_contact_info?.email || business_settings.business_info.email || 'hello@salamalama.ie'}
+                        </a>
+                      </div>
+                    </div>
+
+                    {/* Opening Hours - Floating with Icon */}
+                    <div className="flex items-start space-x-5 group transform hover:translate-x-2 transition-transform duration-300">
+                      <div className="flex-shrink-0">
+                        <div className="h-14 w-14 rounded-full bg-[#2C1A16] flex items-center justify-center shadow-lg">
+                          <Clock className="h-7 w-7 text-[#F2EFE9]" />
+                        </div>
+                      </div>
+                      <div className="flex-1 pt-1">
+                        <h3 className="text-lg sm:text-xl font-bold text-[#2C1A16] mb-3">Opening Hours</h3>
+                        <div className="space-y-2">
+                          {(() => {
+                            const hours = business_contact_info?.operating_hours || business_settings.operating_hours;
+                            
+                            if (!hours || Object.keys(hours).length === 0) {
+                              return (
+                                <p className="text-[#4A3B32] text-sm sm:text-base">
+                                  Please contact us for our operating hours.
+                                </p>
+                              );
+                            }
+
+                            const days_of_week = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+                            const day_names = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+                            return days_of_week.slice(0, 3).map((day, index) => {
+                              const day_hours = hours[day];
+                              
+                              return (
+                                <div key={day} className="flex justify-between items-center text-sm sm:text-base">
+                                  <span className="font-medium text-[#4A3B32]">{day_names[index]}</span>
+                                  <span className="text-[#4A3B32]">
+                                    {day_hours && day_hours.open && day_hours.close
+                                      ? `${day_hours.open} - ${day_hours.close}`
+                                      : 'Closed'
+                                    }
+                                  </span>
+                                </div>
+                              );
+                            });
+                          })()}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Address - Floating with Icon */}
+                    <div className="flex items-start space-x-5 group transform hover:translate-x-2 transition-transform duration-300">
+                      <div className="flex-shrink-0">
+                        <div className="h-14 w-14 rounded-full bg-[#2C1A16] flex items-center justify-center shadow-lg">
+                          <MapPin className="h-7 w-7 text-[#F2EFE9]" />
+                        </div>
+                      </div>
+                      <div className="flex-1 pt-1">
+                        <h3 className="text-lg sm:text-xl font-bold text-[#2C1A16] mb-2">Visit Us</h3>
+                        <p className="text-base sm:text-lg text-[#4A3B32] leading-relaxed mb-3">
+                          {business_contact_info?.address && typeof business_contact_info.address === 'object'
+                            ? `${business_contact_info.address.line1}${business_contact_info.address.line2 ? ', ' + business_contact_info.address.line2 : ''}, ${business_contact_info.address.city}, ${business_contact_info.address.postal_code}`
+                            : (business_settings.business_info.address && typeof business_settings.business_info.address === 'object')
+                              ? `${business_settings.business_info.address.line1}${business_settings.business_info.address.line2 ? ', ' + business_settings.business_info.address.line2 : ''}, ${business_settings.business_info.address.city}, ${business_settings.business_info.address.postal_code}`
+                              : 'Dublin, Ireland'
+                          }
+                        </p>
+                        <a
+                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                            business_contact_info?.address && typeof business_contact_info.address === 'object'
+                              ? `${business_contact_info.address.line1}, ${business_contact_info.address.city}, ${business_contact_info.address.postal_code}`
+                              : (business_settings.business_info.address && typeof business_settings.business_info.address === 'object')
+                                ? `${business_settings.business_info.address.line1}, ${business_settings.business_info.address.city}, ${business_settings.business_info.address.postal_code}`
+                                : 'Dublin, Ireland'
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center text-[#2C1A16] hover:text-[#4A3B32] font-semibold transition-colors text-sm sm:text-base"
+                        >
+                          Get Directions
+                          <MapPin className="h-4 w-4 ml-1" />
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Right Side - High-Quality Food Image (Top-down wooden board style) */}
+              <div className="order-1 lg:order-2 relative w-full">
+                <div className="relative rounded-3xl overflow-hidden shadow-2xl transform lg:translate-x-8 hover:scale-105 transition-transform duration-500">
+                  <img
+                    src="https://images.unsplash.com/photo-1513104890138-7c749659a591?w=1000&h=1200&fit=crop&q=90"
+                    alt="Delicious pizza on wooden board"
+                    className="w-full aspect-[4/3] sm:aspect-[3/2] lg:aspect-[4/5] object-cover"
+                  />
+                  {/* Subtle Overlay for Premium Look */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#2C1A16]/30 via-transparent to-transparent"></div>
+                </div>
+                
+                {/* Floating Badge Element from Landing Page */}
+                <div className="hidden sm:block absolute -bottom-6 sm:-bottom-8 -left-6 sm:-left-8 bg-[#2C1A16] text-[#F2EFE9] px-8 py-5 rounded-2xl shadow-2xl transform rotate-3 hover:rotate-0 transition-transform duration-300 z-20">
+                  <p className="text-sm font-medium mb-1">Made Fresh Daily</p>
+                  <p className="text-2xl font-extrabold">100% Quality</p>
                 </div>
               </div>
-            )}
+
+            </div>
           </div>
         </section>
 
-        {/* Map Section */}
-        <section className="py-12 lg:py-16 bg-white">
+        {/* Styled Map Section with Custom Muted Colors */}
+        <section className="py-16 lg:py-24 bg-white relative">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Find Us on the Map</h2>
-            <div className="relative rounded-xl overflow-hidden shadow-lg border border-gray-200">
+            <h2 className="text-3xl sm:text-4xl font-bold text-[#2C1A16] mb-10 text-center">Find Us on the Map</h2>
+            <div className="relative rounded-3xl overflow-hidden shadow-xl border-4 border-[#F2EFE9]">
               {map_loading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-orange-600"></div>
+                <div className="absolute inset-0 flex items-center justify-center bg-[#F2EFE9] z-10">
+                  <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-[#2C1A16]"></div>
                 </div>
               )}
               <iframe
@@ -426,10 +488,13 @@ const UV_Contact: React.FC = () => {
                     : (business_settings.business_info.address && typeof business_settings.business_info.address === 'object')
                       ? `${business_settings.business_info.address.line1}, ${business_settings.business_info.address.city}, ${business_settings.business_info.address.postal_code}`
                       : 'Dublin, Ireland'
-                )}&zoom=15`}
+                )}&zoom=15&maptype=roadmap`}
                 width="100%"
-                height="450"
-                style={{ border: 0 }}
+                height="500"
+                style={{ 
+                  border: 0,
+                  filter: 'grayscale(20%) sepia(10%) brightness(105%) contrast(95%)'
+                }}
                 allowFullScreen
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
@@ -442,16 +507,20 @@ const UV_Contact: React.FC = () => {
         </section>
 
         {/* Contact Form Section */}
-        <section className="py-12 lg:py-20 bg-gradient-to-br from-gray-50 to-white">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="py-16 lg:py-24 bg-[#F2EFE9] relative overflow-hidden">
+          {/* Decorative Background Elements */}
+          <div className="absolute top-0 right-0 w-96 h-96 bg-[#2C1A16]/5 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#4A3B32]/5 rounded-full blur-3xl"></div>
+          
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="text-center mb-12">
-              <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">Send Us a Message</h2>
-              <p className="text-lg text-gray-600 leading-relaxed max-w-2xl mx-auto">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#2C1A16] mb-4">Send Us a Message</h2>
+              <p className="text-base sm:text-lg text-[#4A3B32] leading-relaxed max-w-2xl mx-auto">
                 Have a question or feedback? Fill out the form below and we'll get back to you as soon as possible.
               </p>
             </div>
 
-            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8 lg:p-12">
+            <div className="bg-white rounded-3xl shadow-2xl border border-[#2C1A16]/10 p-8 lg:p-12">
               {/* Success Message */}
               {form_success && (
                 <div className="mb-8 bg-green-50 border-2 border-green-200 rounded-lg p-6 flex items-start">
@@ -476,15 +545,15 @@ const UV_Contact: React.FC = () => {
 
               {/* Contact Form */}
               <form onSubmit={handle_submit} className="space-y-6">
-                {/* Name & Email Row */}
+                  {/* Name & Email Row */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Name Field */}
                   <div>
-                    <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label htmlFor="name" className="block text-sm font-semibold text-[#2C1A16] mb-2">
                       Full Name <span className="text-red-500">*</span>
                     </label>
                     {/* COMMANDMENT #1: 16px font-size to prevent iOS auto-zoom */}
-                    <input
+                     <input
                       type="text"
                       id="name"
                       value={contact_form_data.name}
@@ -494,7 +563,7 @@ const UV_Contact: React.FC = () => {
                       className={`w-full px-4 py-4 rounded-xl border-2 transition-all duration-200 focus:outline-none focus:ring-4 ${
                         form_errors.name
                           ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
-                          : 'border-gray-200 focus:border-orange-500 focus:ring-orange-100'
+                          : 'border-[#2C1A16]/20 focus:border-[#2C1A16] focus:ring-[#2C1A16]/10'
                       }`}
                       style={{ fontSize: '16px', minHeight: '56px' }}
                     />
@@ -508,7 +577,7 @@ const UV_Contact: React.FC = () => {
 
                   {/* Email Field */}
                   <div>
-                    <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label htmlFor="email" className="block text-sm font-semibold text-[#2C1A16] mb-2">
                       Email Address <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -521,7 +590,7 @@ const UV_Contact: React.FC = () => {
                       className={`w-full px-4 py-4 rounded-xl border-2 transition-all duration-200 focus:outline-none focus:ring-4 ${
                         form_errors.email
                           ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
-                          : 'border-gray-200 focus:border-orange-500 focus:ring-orange-100'
+                          : 'border-[#2C1A16]/20 focus:border-[#2C1A16] focus:ring-[#2C1A16]/10'
                       }`}
                       style={{ fontSize: '16px', minHeight: '56px' }}
                     />
@@ -538,7 +607,7 @@ const UV_Contact: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Phone Field */}
                   <div>
-                    <label htmlFor="phone" className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label htmlFor="phone" className="block text-sm font-semibold text-[#2C1A16] mb-2">
                       Phone Number <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -551,7 +620,7 @@ const UV_Contact: React.FC = () => {
                       className={`w-full px-4 py-4 rounded-xl border-2 transition-all duration-200 focus:outline-none focus:ring-4 ${
                         form_errors.phone
                           ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
-                          : 'border-gray-200 focus:border-orange-500 focus:ring-orange-100'
+                          : 'border-[#2C1A16]/20 focus:border-[#2C1A16] focus:ring-[#2C1A16]/10'
                       }`}
                       style={{ fontSize: '16px', minHeight: '56px' }}
                     />
@@ -565,7 +634,7 @@ const UV_Contact: React.FC = () => {
 
                   {/* Subject Field */}
                   <div>
-                    <label htmlFor="subject" className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label htmlFor="subject" className="block text-sm font-semibold text-[#2C1A16] mb-2">
                       Subject <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -578,7 +647,7 @@ const UV_Contact: React.FC = () => {
                       className={`w-full px-4 py-4 rounded-xl border-2 transition-all duration-200 focus:outline-none focus:ring-4 ${
                         form_errors.subject
                           ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
-                          : 'border-gray-200 focus:border-orange-500 focus:ring-orange-100'
+                          : 'border-[#2C1A16]/20 focus:border-[#2C1A16] focus:ring-[#2C1A16]/10'
                       }`}
                       style={{ fontSize: '16px', minHeight: '56px' }}
                     />
@@ -593,7 +662,7 @@ const UV_Contact: React.FC = () => {
 
                 {/* Message Field */}
                 <div>
-                  <label htmlFor="message" className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label htmlFor="message" className="block text-sm font-semibold text-[#2C1A16] mb-2">
                     Message <span className="text-red-500">*</span>
                   </label>
                   <textarea
@@ -606,7 +675,7 @@ const UV_Contact: React.FC = () => {
                     className={`w-full px-4 py-4 rounded-xl border-2 transition-all duration-200 focus:outline-none focus:ring-4 resize-none ${
                       form_errors.message
                         ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
-                        : 'border-gray-200 focus:border-orange-500 focus:ring-orange-100'
+                        : 'border-[#2C1A16]/20 focus:border-[#2C1A16] focus:ring-[#2C1A16]/10'
                     }`}
                     style={{ fontSize: '16px', lineHeight: '1.5' }}
                   ></textarea>
@@ -624,7 +693,7 @@ const UV_Contact: React.FC = () => {
                   <button
                     type="submit"
                     disabled={submit_mutation.isPending}
-                    className="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-orange-600 to-yellow-600 text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-orange-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                    className="w-full md:w-auto px-10 py-4 bg-[#2C1A16] text-[#F2EFE9] font-bold text-lg rounded-full shadow-xl hover:shadow-2xl hover:bg-[#3E2F26] hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-[#2C1A16]/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                     style={{ minHeight: '56px' }}
                   >
                     {submit_mutation.isPending ? (

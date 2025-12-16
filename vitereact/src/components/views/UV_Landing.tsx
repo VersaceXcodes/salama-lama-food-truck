@@ -245,11 +245,11 @@ const UV_Landing: React.FC = () => {
               <div className="flex flex-col md:flex-row gap-3 md:gap-4 w-full">
                 <Link
                   to="/menu"
-                  className="group flex items-center justify-center px-8 py-4 bg-[#3E2F26] text-[#F5F0EB] text-lg font-bold shadow-xl hover:bg-[#2C1A16] transition-all duration-300 ease-in-out w-full md:w-auto"
+                  className="group flex items-center justify-center px-8 py-4 bg-[#3E2F26] text-[#F5F0EB] text-lg font-bold shadow-xl hover:bg-[#2C1A16] hover:scale-105 transition-all duration-300 ease-in-out w-full md:w-auto"
                   style={{ minHeight: '56px', borderRadius: '50px' }}
                 >
                   Order Now
-                  <ChevronRight className="ml-2 w-6 h-6 group-hover:translate-x-1 transition-transform duration-300" />
+                  <ChevronRight className="ml-2 w-6 h-6 group-hover:translate-x-2 transition-transform duration-300" />
                 </Link>
                 
                 <Link
@@ -666,6 +666,19 @@ const UV_Landing: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* Sticky Bottom Bar - Mobile Only */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#2C1A16] border-t border-[#4A3B32] shadow-2xl">
+        <div className="px-4 py-3">
+          <Link
+            to="/menu"
+            className="flex items-center justify-center w-full px-8 py-4 bg-[#3E2F26] text-[#F5F0EB] text-lg font-bold rounded-full shadow-xl hover:bg-[#2C1A16] transition-all duration-300"
+            style={{ minHeight: '56px' }}
+          >
+            Order Delivery
+          </Link>
+        </div>
+      </div>
     </>
   );
 };

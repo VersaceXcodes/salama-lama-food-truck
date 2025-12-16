@@ -172,10 +172,10 @@ const GV_TopNav_Public: React.FC = () => {
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`text-base font-medium transition-colors duration-200 ${
+                  className={`text-base font-medium transition-all duration-200 ${
                     isActivePath(link.path)
                       ? 'text-orange-600 border-b-2 border-orange-600'
-                      : 'text-gray-700 hover:text-orange-600'
+                      : 'text-gray-700 hover:text-orange-600 hover:opacity-80'
                   }`}
                 >
                   {link.label}

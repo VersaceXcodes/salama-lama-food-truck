@@ -54,10 +54,15 @@ axios.interceptors.request.use(
   }
 );
 
+// Flag to prevent infinite retry loops
+let isRetryingWithGuestToken = false;
+
 // Add response interceptor to handle auth errors
 axios.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config;
+    
     // Handle 401 Unauthorized errors
     if (error.response?.status === 401) {
       const errorCode = error.response?.data?.error_code;
@@ -68,7 +73,9 @@ axios.interceptors.response.use(
           errorCode === 'AUTH_TOKEN_INVALID' || 
           errorCode === 'AUTH_SESSION_SUPERSEDED') {
         
-        console.log('[AUTH ERROR]', errorCode, 'on', currentPath);
+        if (import.meta.env.DEV) {
+          console.log('[AUTH ERROR]', errorCode, 'on', currentPath);
+        }
         
         // Determine if this is a protected route that requires authentication
         const isLoginPage = currentPath.includes('/login');
@@ -106,9 +113,82 @@ axios.interceptors.response.use(
           }
         }
         
+        // GUEST TOKEN LOGIC: For guest checkout/cart, automatically fetch guest token and retry
+        const isCheckoutOrCartEndpoint = originalRequest.url?.includes('/api/checkout') || 
+                                         originalRequest.url?.includes('/api/cart') ||
+                                         originalRequest.url?.includes('/api/discount');
+        
+        if (errorCode === 'AUTH_TOKEN_REQUIRED' && 
+            (isCheckoutFlow || isCheckoutOrCartEndpoint) && 
+            !isRetryingWithGuestToken &&
+            !originalRequest._retry) {
+          
+          if (import.meta.env.DEV) {
+            console.log('[GUEST AUTH] Fetching guest token for checkout/cart');
+          }
+          
+          // Mark request as being retried to prevent infinite loops
+          originalRequest._retry = true;
+          isRetryingWithGuestToken = true;
+          
+          try {
+            // Fetch guest token
+            const guestResponse = await axios.post('/api/auth/guest', {}, {
+              // Don't retry this guest token request
+              _retry: true
+            } as any);
+            
+            const guestToken = guestResponse.data?.token;
+            
+            if (guestToken) {
+              if (import.meta.env.DEV) {
+                console.log('[GUEST AUTH] Guest token obtained, retrying original request');
+              }
+              
+              // Store guest token in localStorage
+              try {
+                const persistedState = localStorage.getItem('salama-lama-store');
+                const state = persistedState ? JSON.parse(persistedState) : { state: {} };
+                
+                if (!state.state) state.state = {};
+                if (!state.state.authentication_state) {
+                  state.state.authentication_state = {
+                    current_user: null,
+                    auth_token: null,
+                    authentication_status: {
+                      is_authenticated: false,
+                      is_loading: false,
+                    },
+                    error_message: null,
+                  };
+                }
+                
+                state.state.authentication_state.auth_token = guestToken;
+                state.state.authentication_state.current_user = guestResponse.data?.user || null;
+                state.state.authentication_state.authentication_status.is_authenticated = false; // Guest is not "authenticated"
+                
+                localStorage.setItem('salama-lama-store', JSON.stringify(state));
+              } catch (error) {
+                console.error('Error storing guest token:', error);
+              }
+              
+              // Add guest token to original request and retry
+              originalRequest.headers.Authorization = `Bearer ${guestToken}`;
+              isRetryingWithGuestToken = false;
+              return axios(originalRequest);
+            }
+          } catch (guestError) {
+            console.error('[GUEST AUTH] Failed to obtain guest token:', guestError);
+            isRetryingWithGuestToken = false;
+          }
+        }
+        
+        // Reset retry flag for other requests
+        isRetryingWithGuestToken = false;
+        
         // Only redirect to login for protected routes that require authentication
         // Don't redirect for checkout flow (guest checkout is allowed) or public routes
-        if (!noAuthRequired && !isCheckoutFlow) {
+        if (!noAuthRequired && !isCheckoutFlow && !isCheckoutOrCartEndpoint) {
           const returnTo = encodeURIComponent(currentPath + window.location.search);
           
           // Determine which login page based on route

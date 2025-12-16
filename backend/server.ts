@@ -2973,13 +2973,14 @@ app.delete('/api/addresses/:address_id', authenticate_token, async (req, res) =>
  * CHECKOUT
  */
 
-app.post('/api/checkout/validate', authenticate_token, async (req, res) => {
+app.post('/api/checkout/validate', authenticate_token_optional, async (req, res) => {
   try {
     const body = checkout_validate_input_schema.parse(req.body);
-    const cart = read_cart_sync(req.user.user_id);
+    const identifier = get_cart_identifier(req);
+    const cart = read_cart_sync(identifier);
 
     const totals = await compute_cart_totals({
-      user_id: req.user.user_id,
+      user_id: req.user?.user_id || identifier,
       cart,
       order_type: body.order_type,
       delivery_address_id: body.delivery_address_id ?? null,
@@ -3006,13 +3007,14 @@ app.post('/api/checkout/validate', authenticate_token, async (req, res) => {
   }
 });
 
-app.post('/api/checkout/calculate', authenticate_token, async (req, res) => {
+app.post('/api/checkout/calculate', authenticate_token_optional, async (req, res) => {
   try {
     const body = checkout_validate_input_schema.parse(req.body);
-    const cart = read_cart_sync(req.user.user_id);
+    const identifier = get_cart_identifier(req);
+    const cart = read_cart_sync(identifier);
 
     const totals = await compute_cart_totals({
-      user_id: req.user.user_id,
+      user_id: req.user?.user_id || identifier,
       cart,
       order_type: body.order_type,
       delivery_address_id: body.delivery_address_id ?? null,
@@ -3110,15 +3112,18 @@ app.post('/api/delivery/validate-address', authenticate_token, async (req, res) 
 const handleCheckoutCreateOrder = async (req, res) => {
   try {
     const body = checkout_create_order_input_schema.parse(req.body);
-    const cart = read_cart_sync(req.user.user_id);
+    const identifier = get_cart_identifier(req);
+    const cart = read_cart_sync(identifier);
 
     if (cart.items.length === 0) {
       return res.status(400).json(createErrorResponse('Cart is empty', null, 'CART_EMPTY', req.request_id));
     }
 
+    const user_id = req.user?.user_id || identifier;
+
     // Compute totals + validate.
     const totals = await compute_cart_totals({
-      user_id: req.user.user_id,
+      user_id: user_id,
       cart,
       order_type: body.order_type,
       delivery_address_id: body.delivery_address_id ?? null,
@@ -3147,7 +3152,7 @@ const handleCheckoutCreateOrder = async (req, res) => {
       if (!pm_id) {
         return res.status(400).json(createErrorResponse('Payment method is required', null, 'PAYMENT_METHOD_REQUIRED', req.request_id));
       }
-      const pm_res = await pool.query('SELECT payment_method_id, sumup_token, card_type, last_four_digits FROM payment_methods WHERE payment_method_id = $1 AND user_id = $2', [pm_id, req.user.user_id]);
+      const pm_res = await pool.query('SELECT payment_method_id, sumup_token, card_type, last_four_digits FROM payment_methods WHERE payment_method_id = $1 AND user_id = $2', [pm_id, user_id]);
       if (pm_res.rows.length === 0) {
         return res.status(400).json(createErrorResponse('Payment method not found', null, 'PAYMENT_METHOD_NOT_FOUND', req.request_id));
       }
@@ -3183,7 +3188,7 @@ const handleCheckoutCreateOrder = async (req, res) => {
 
       if (body.order_type === 'delivery') {
         delivery_address_id = body.delivery_address_id;
-        const addr_res = await client.query('SELECT * FROM addresses WHERE address_id = $1 AND user_id = $2', [delivery_address_id, req.user.user_id]);
+        const addr_res = await client.query('SELECT * FROM addresses WHERE address_id = $1 AND user_id = $2', [delivery_address_id, user_id]);
         const addr = addr_res.rows[0];
         delivery_address_snapshot = {
           label: addr.label,
@@ -3229,7 +3234,7 @@ const handleCheckoutCreateOrder = async (req, res) => {
           order_number,
           ticket_number,
           tracking_token,
-          req.user.user_id,
+          user_id,
           body.order_type,
           'received',
           body.collection_time_slot ?? null,
@@ -3288,7 +3293,7 @@ const handleCheckoutCreateOrder = async (req, res) => {
       await client.query(
         `INSERT INTO order_status_history (history_id, order_id, status, changed_by_user_id, changed_at, notes)
          VALUES ($1,$2,$3,$4,$5,$6)`,
-        [gen_id('osh'), order_id, 'received', req.user.user_id, created_at, 'Order placed']
+        [gen_id('osh'), order_id, 'received', user_id, created_at, 'Order placed']
       );
 
       // Process payment (mock) BEFORE committing - skip for cash payments.
@@ -3331,12 +3336,12 @@ const handleCheckoutCreateOrder = async (req, res) => {
           await client.query(
             `INSERT INTO discount_usage (usage_id, code_id, user_id, order_id, discount_amount_applied, used_at)
              VALUES ($1,$2,$3,$4,$5,$6)`,
-            [gen_id('du'), dc.code_id, req.user.user_id, order_id, totals.discount_amount, now_iso()]
+            [gen_id('du'), dc.code_id, user_id, order_id, totals.discount_amount, now_iso()]
           );
           await client.query('UPDATE discount_codes SET total_used_count = total_used_count + 1, updated_at = $1 WHERE code_id = $2', [now_iso(), dc.code_id]);
 
           // First-order discount usage flag.
-          await client.query('UPDATE users SET first_order_discount_used = true WHERE user_id = $1 AND first_order_discount_code = $2', [req.user.user_id, totals.discount_code]);
+          await client.query('UPDATE users SET first_order_discount_used = true WHERE user_id = $1 AND first_order_discount_code = $2', [user_id, totals.discount_code]);
 
           // If discount code is a redeemed reward, mark as used.
           await client.query(
@@ -3344,7 +3349,7 @@ const handleCheckoutCreateOrder = async (req, res) => {
              SET usage_status = 'used', used_in_order_id = $1, used_at = $2
              WHERE reward_code = $3 AND loyalty_account_id = (SELECT loyalty_account_id FROM loyalty_accounts WHERE user_id = $4)
                AND usage_status = 'unused'`,
-            [order_id, now_iso(), ensure_upper(totals.discount_code), req.user.user_id]
+            [order_id, now_iso(), ensure_upper(totals.discount_code), user_id]
           );
         }
       }
@@ -3374,7 +3379,7 @@ const handleCheckoutCreateOrder = async (req, res) => {
               -Math.abs(ci.quantity),
               'Order sale',
               'Sold via order',
-              req.user.user_id,
+              user_id,
               now_iso(),
               order_id,
             ]
@@ -3384,11 +3389,12 @@ const handleCheckoutCreateOrder = async (req, res) => {
 
       // Loyalty points: award on order completion per business rules, BUT MVP UX expects immediate.
       // We'll award immediately and store in order; staff completion can be used for future tightening.
+      // Only award points for authenticated users (not guests)
       const points_rate_setting = await get_setting('loyalty_points_rate', 1);
       const points_rate = Number(points_rate_setting ?? 1);
       const points = Math.max(0, Math.floor(totals.total * points_rate));
 
-      const la_res = await client.query('SELECT loyalty_account_id, current_points_balance, total_points_earned FROM loyalty_accounts WHERE user_id = $1 FOR UPDATE', [req.user.user_id]);
+      const la_res = req.user ? await client.query('SELECT loyalty_account_id, current_points_balance, total_points_earned FROM loyalty_accounts WHERE user_id = $1 FOR UPDATE', [user_id]) : { rows: [] };
       if (la_res.rows.length > 0) {
         const la = la_res.rows[0];
         const prev_balance = Number(la.current_points_balance ?? 0);
@@ -3447,7 +3453,7 @@ const handleCheckoutCreateOrder = async (req, res) => {
           inv_id,
           invoice_number,
           order_id,
-          req.user.user_id,
+          user_id,
           body.customer_name,
           body.customer_email,
           body.customer_phone,
@@ -3478,7 +3484,7 @@ const handleCheckoutCreateOrder = async (req, res) => {
       await client.query('UPDATE orders SET invoice_url = $1, updated_at = $2 WHERE order_id = $3', [pdf_url, now_iso(), order_id]);
 
       // Clear cart.
-      write_cart_sync(req.user.user_id, { items: [], discount_code: null, updated_at: now_iso() });
+      write_cart_sync(identifier, { items: [], discount_code: null, updated_at: now_iso() });
 
       await client.query('COMMIT');
 
@@ -3511,7 +3517,7 @@ const handleCheckoutCreateOrder = async (req, res) => {
         body: `Thanks for your order! Total: €${totals.total.toFixed(2)}. Invoice: ${pdf_url}`,
       }).catch(() => {});
 
-      if (req.user.order_notifications_sms) {
+      if (req.user?.order_notifications_sms) {
         send_sms_mock({
           to: body.customer_phone,
           body: `Your order ${order_number} is confirmed. Track in your account.`,
@@ -3540,9 +3546,9 @@ const handleCheckoutCreateOrder = async (req, res) => {
   }
 };
 
-app.post('/api/checkout/create-order', authenticate_token, handleCheckoutCreateOrder);
-// Alias for frontend compatibility
-app.post('/api/checkout/order', authenticate_token, handleCheckoutCreateOrder);
+app.post('/api/checkout/create-order', authenticate_token_optional, handleCheckoutCreateOrder);
+
+app.post('/api/checkout/order', authenticate_token_optional, handleCheckoutCreateOrder);
 
 /**
  * ORDERS

@@ -4595,6 +4595,11 @@ app.post('/api/catering/inquiry', (req, res, next) => {
       payload_raw = { ...payload_raw, attached_files: urls };
     }
 
+    // Trim email field to handle whitespace
+    if (payload_raw.contact_email !== undefined && typeof payload_raw.contact_email === 'string') {
+      payload_raw.contact_email = payload_raw.contact_email.trim();
+    }
+
     if (payload_raw.guest_count !== undefined) payload_raw.guest_count = Number(payload_raw.guest_count);
     if (payload_raw.guest_count_min !== undefined && payload_raw.guest_count_min !== null && payload_raw.guest_count_min !== '') payload_raw.guest_count_min = Number(payload_raw.guest_count_min);
     if (payload_raw.guest_count_max !== undefined && payload_raw.guest_count_max !== null && payload_raw.guest_count_max !== '') payload_raw.guest_count_max = Number(payload_raw.guest_count_max);

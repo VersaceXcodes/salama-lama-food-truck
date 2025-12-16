@@ -2781,6 +2781,9 @@ const handleCheckoutCreateOrder = async (req, res) => {
             const order_id = gen_id('ord');
             const order_number = `SL-${String(Math.floor(Date.now() / 1000)).slice(-6)}-${nanoid(4).toUpperCase()}`;
             const created_at = now_iso();
+            // Generate ticket number and tracking token for guest-friendly tracking
+            const ticket_number = `SL-${String(Math.floor(Math.random() * 1000000)).padStart(6, '0')}`;
+            const tracking_token = nanoid(32);
             let delivery_address_snapshot = null;
             let delivery_fee = totals.delivery_fee;
             let estimated_delivery_time = totals.estimated_delivery_time ?? null;
@@ -2802,7 +2805,8 @@ const handleCheckoutCreateOrder = async (req, res) => {
             }
             // Insert order.
             await client.query(`INSERT INTO orders (
-          order_id, order_number, user_id, order_type, status,
+          order_id, order_number, ticket_number, tracking_token,
+          user_id, order_type, status,
           collection_time_slot, delivery_address_id, delivery_address_snapshot,
           delivery_fee, estimated_delivery_time,
           subtotal, discount_code, discount_amount, tax_amount, total_amount,
@@ -2813,19 +2817,22 @@ const handleCheckoutCreateOrder = async (req, res) => {
           completed_at, cancelled_at, cancellation_reason, refund_amount, refund_reason,
           refunded_at, internal_notes
         ) VALUES (
-          $1,$2,$3,$4,$5,
-          $6,$7,$8::jsonb,
-          $9,$10,
-          $11,$12,$13,$14,$15,
-          $16,$17,$18,
-          $19,$20,$21,
-          $22,$23,$24,$25,
-          $26,$27,
-          $28,$29,$30,$31,$32,
-          $33,$34
+          $1,$2,$3,$4,
+          $5,$6,$7,
+          $8,$9,$10::jsonb,
+          $11,$12,
+          $13,$14,$15,$16,$17,
+          $18,$19,$20,
+          $21,$22,$23,
+          $24,$25,$26,$27,
+          $28,$29,
+          $30,$31,$32,$33,$34,
+          $35,$36
         )`, [
                 order_id,
                 order_number,
+                ticket_number,
+                tracking_token,
                 req.user.user_id,
                 body.order_type,
                 'received',
@@ -3068,6 +3075,8 @@ const handleCheckoutCreateOrder = async (req, res) => {
             return ok(res, 201, {
                 order_id,
                 order_number,
+                ticket_number,
+                tracking_token,
                 status: 'received',
                 total_amount: totals.total,
                 estimated_ready_time: body.order_type === 'collection' ? body.collection_time_slot : null,
@@ -3307,6 +3316,73 @@ app.get('/api/orders/:id', authenticate_token, async (req, res) => {
     }
 });
 // Order tracking endpoint - returns simplified order data for tracking
+/*
+  Public order tracking endpoint - allows guests to track orders without login
+  Requires ticket_number and tracking_token for security
+*/
+app.get('/api/orders/track', async (req, res) => {
+    try {
+        const ticket = req.query.ticket;
+        const token = req.query.token;
+        if (!ticket || !token) {
+            return res.status(400).json(createErrorResponse('Ticket number and tracking token are required', null, 'MISSING_PARAMS', req.request_id));
+        }
+        // Query by ticket_number and tracking_token
+        const order_res = await pool.query(`SELECT order_id, order_number, ticket_number, status, order_type, 
+              collection_time_slot, estimated_delivery_time, 
+              created_at, updated_at, completed_at,
+              subtotal, discount_amount, tax_amount, total_amount, delivery_fee
+       FROM orders 
+       WHERE ticket_number = $1 AND tracking_token = $2`, [ticket, token]);
+        if (order_res.rows.length === 0) {
+            return res.status(404).json(createErrorResponse("We couldn't verify this order. Please use the tracking link from your confirmation screen.", null, 'ORDER_NOT_FOUND', req.request_id));
+        }
+        const order_row = coerce_numbers(order_res.rows[0], ['subtotal', 'discount_amount', 'tax_amount', 'total_amount', 'delivery_fee']);
+        // Get order items
+        const items_res = await pool.query(`SELECT item_name, quantity, unit_price, line_total, selected_customizations
+       FROM order_items
+       WHERE order_id = $1
+       ORDER BY item_name ASC`, [order_row.order_id]);
+        const items = items_res.rows.map((r) => ({
+            item_name: r.item_name,
+            quantity: Number(r.quantity),
+            unit_price: Number(r.unit_price),
+            line_total: Number(r.line_total),
+            selected_customizations: r.selected_customizations ?? null,
+        }));
+        // Get status history
+        const status_res = await pool.query(`SELECT status, changed_at, notes 
+       FROM order_status_history 
+       WHERE order_id = $1 
+       ORDER BY changed_at ASC`, [order_row.order_id]);
+        return ok(res, 200, {
+            ticket_number: order_row.ticket_number,
+            order_number: order_row.order_number,
+            status: order_row.status,
+            order_type: order_row.order_type,
+            collection_time_slot: order_row.collection_time_slot ?? null,
+            estimated_delivery_time: order_row.estimated_delivery_time ?? null,
+            created_at: order_row.created_at,
+            updated_at: order_row.updated_at,
+            completed_at: order_row.completed_at ?? null,
+            items,
+            subtotal: order_row.subtotal,
+            discount_amount: order_row.discount_amount,
+            tax_amount: order_row.tax_amount,
+            delivery_fee: order_row.delivery_fee ?? 0,
+            total_amount: order_row.total_amount,
+            status_history: status_res.rows.map((r) => ({
+                status: r.status,
+                changed_at: r.changed_at,
+                notes: r.notes ?? null,
+            })),
+        });
+    }
+    catch (error) {
+        console.error('Track order error:', error);
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
 app.get('/api/orders/:id/track', authenticate_token, async (req, res) => {
     try {
         const identifier = req.params.id;
@@ -3874,6 +3950,10 @@ app.post('/api/catering/inquiry', (req, res, next) => {
             // Attach files as URLs.
             const urls = req.files.map((f) => `/storage/catering_attachments/${encodeURIComponent(f.filename)}`);
             payload_raw = { ...payload_raw, attached_files: urls };
+        }
+        // Trim email field to handle whitespace
+        if (payload_raw.contact_email !== undefined && typeof payload_raw.contact_email === 'string') {
+            payload_raw.contact_email = payload_raw.contact_email.trim();
         }
         if (payload_raw.guest_count !== undefined)
             payload_raw.guest_count = Number(payload_raw.guest_count);
@@ -5399,6 +5479,86 @@ app.get('/api/admin/orders/:id', authenticate_token, require_role(['admin']), as
         });
     }
     catch (error) {
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+/*
+  Admin endpoint to update order status
+  This allows staff/admin to move orders through the workflow
+*/
+app.patch('/api/admin/orders/:id/status', authenticate_token, require_role(['admin', 'staff']), async (req, res) => {
+    try {
+        const order_id = req.params.id;
+        const status_schema = z.object({
+            status: z.enum(['received', 'preparing', 'ready', 'out_for_delivery', 'completed', 'cancelled']),
+            notes: z.string().max(500).optional(),
+        });
+        const body = status_schema.parse(req.body);
+        await with_client(async (client) => {
+            await client.query('BEGIN');
+            // Get current order
+            const order_res = await client.query('SELECT order_id, order_number, ticket_number, user_id, status FROM orders WHERE order_id = $1 FOR UPDATE', [order_id]);
+            if (order_res.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return res.status(404).json(createErrorResponse('Order not found', null, 'NOT_FOUND', req.request_id));
+            }
+            const order = order_res.rows[0];
+            const old_status = order.status;
+            // Update order status
+            await client.query('UPDATE orders SET status = $1, updated_at = $2 WHERE order_id = $3', [body.status, now_iso(), order_id]);
+            // If completed, set completed_at
+            if (body.status === 'completed' && old_status !== 'completed') {
+                await client.query('UPDATE orders SET completed_at = $1 WHERE order_id = $2', [now_iso(), order_id]);
+            }
+            // Add status history entry
+            await client.query(`INSERT INTO order_status_history (history_id, order_id, status, changed_by_user_id, changed_at, notes)
+         VALUES ($1, $2, $3, $4, $5, $6)`, [gen_id('osh'), order_id, body.status, req.user.user_id, now_iso(), body.notes ?? null]);
+            // Log activity
+            await log_activity({
+                user_id: req.user.user_id,
+                action_type: 'update',
+                entity_type: 'order',
+                entity_id: order_id,
+                description: `Updated order ${order.order_number} status from ${old_status} to ${body.status}`,
+                changes: { status: { from: old_status, to: body.status } },
+                ip_address: req.ip,
+                user_agent: req.headers['user-agent'] || null,
+            });
+            await client.query('COMMIT');
+            // Emit WebSocket event for real-time updates
+            emit_order_status_updated({
+                order_id,
+                order_number: order.order_number,
+                user_id: order.user_id,
+                old_status,
+                new_status: body.status,
+                changed_by_user: req.user,
+            });
+            // Send notifications (mocked)
+            const cust_res = await pool.query('SELECT customer_email, customer_phone FROM orders WHERE order_id = $1', [order_id]);
+            if (cust_res.rows.length > 0) {
+                const cust = cust_res.rows[0];
+                send_email_mock({
+                    to: cust.customer_email,
+                    subject: `Order ${order.ticket_number} Status Update`,
+                    body: `Your order is now ${body.status}. Track at: /track/${order.ticket_number}`,
+                }).catch(() => { });
+            }
+            return ok(res, 200, {
+                order_id,
+                order_number: order.order_number,
+                ticket_number: order.ticket_number,
+                old_status,
+                new_status: body.status,
+                message: 'Order status updated successfully',
+            });
+        });
+    }
+    catch (error) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+        }
+        console.error('Update order status error:', error);
         return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
     }
 });

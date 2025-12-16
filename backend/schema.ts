@@ -1084,7 +1084,7 @@ export const cateringInquirySchema = z.object({
 export const createCateringInquiryInputSchema = z.object({
   user_id: z.string().nullable().optional(),
   contact_name: z.string().min(1).max(100),
-  contact_email: z.string().email().max(255),
+  contact_email: z.string().min(1, 'Email is required').email('Invalid email format').max(255),
   contact_phone: z.string().min(10).max(20),
   company_name: z.string().max(255).nullable().optional(),
   event_type: z.enum(['corporate', 'wedding', 'birthday', 'meeting', 'other']),

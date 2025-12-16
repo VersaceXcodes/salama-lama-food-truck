@@ -324,6 +324,17 @@ const UV_CateringInquiryForm: React.FC = () => {
   };
 
   const handleInputBlur = (field: keyof CateringInquiryFormData) => {
+    // Trim email field on blur
+    if (field === 'contact_email' && typeof formData[field] === 'string') {
+      const trimmedValue = (formData[field] as string).trim();
+      if (trimmedValue !== formData[field]) {
+        setFormData(prev => ({
+          ...prev,
+          [field]: trimmedValue,
+        }));
+      }
+    }
+    
     const error = validateField(field, formData[field]);
     if (error) {
       setValidationErrors(prev => ({
@@ -373,6 +384,7 @@ const UV_CateringInquiryForm: React.FC = () => {
     const submissionData: any = {
       ...formData,
       user_id: currentUser?.user_id || undefined,
+      contact_email: formData.contact_email.trim(),
       guest_count: Number(formData.guest_count),
       guest_count_min: formData.guest_count_min ? Number(formData.guest_count_min) : null,
       guest_count_max: formData.guest_count_max ? Number(formData.guest_count_max) : null,

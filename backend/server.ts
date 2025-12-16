@@ -3119,11 +3119,29 @@ const handleCheckoutCreateOrder = async (req, res) => {
       return res.status(400).json(createErrorResponse('Cart is empty', null, 'CART_EMPTY', req.request_id));
     }
 
-    const user_id = req.user?.user_id || identifier;
+    // Determine if this is an authenticated user or guest
+    const is_authenticated = !!req.user?.user_id;
+    const auth_user_id = req.user?.user_id || null;
+    
+    // For authenticated users, validate that the user exists in the database
+    if (is_authenticated) {
+      const user_check = await pool.query('SELECT user_id FROM users WHERE user_id = $1', [auth_user_id]);
+      if (user_check.rows.length === 0) {
+        return res.status(401).json(createErrorResponse(
+          'User account not found. Please log in again.',
+          null,
+          'USER_NOT_FOUND',
+          req.request_id
+        ));
+      }
+    }
+    
+    // Use identifier for cart lookups, but user_id will be NULL for guests in the order
+    const cart_identifier = identifier;
 
     // Compute totals + validate.
     const totals = await compute_cart_totals({
-      user_id: user_id,
+      user_id: auth_user_id || cart_identifier, // For cart totals computation
       cart,
       order_type: body.order_type,
       delivery_address_id: body.delivery_address_id ?? null,
@@ -3152,12 +3170,23 @@ const handleCheckoutCreateOrder = async (req, res) => {
       if (!pm_id) {
         return res.status(400).json(createErrorResponse('Payment method is required', null, 'PAYMENT_METHOD_REQUIRED', req.request_id));
       }
-      const pm_res = await pool.query('SELECT payment_method_id, sumup_token, card_type, last_four_digits FROM payment_methods WHERE payment_method_id = $1 AND user_id = $2', [pm_id, user_id]);
-      if (pm_res.rows.length === 0) {
-        return res.status(400).json(createErrorResponse('Payment method not found', null, 'PAYMENT_METHOD_NOT_FOUND', req.request_id));
+      // For authenticated users, verify payment method belongs to them
+      if (is_authenticated) {
+        const pm_res = await pool.query('SELECT payment_method_id, sumup_token, card_type, last_four_digits FROM payment_methods WHERE payment_method_id = $1 AND user_id = $2', [pm_id, auth_user_id]);
+        if (pm_res.rows.length === 0) {
+          return res.status(400).json(createErrorResponse('Payment method not found', null, 'PAYMENT_METHOD_NOT_FOUND', req.request_id));
+        }
+        pm = pm_res.rows[0];
+        payment_method_type = 'card';
+      } else {
+        // Guests cannot use saved payment methods - they must use cash or new card
+        return res.status(400).json(createErrorResponse(
+          'Guests cannot use saved payment methods. Please use cash payment or enter card details.',
+          null,
+          'GUEST_CANNOT_USE_SAVED_PAYMENT',
+          req.request_id
+        ));
       }
-      pm = pm_res.rows[0];
-      payment_method_type = 'card';
     } else if (is_new_card_demo) {
       // Handle new card demo mode - create a mock payment method for this transaction
       pm = {
@@ -3187,19 +3216,32 @@ const handleCheckoutCreateOrder = async (req, res) => {
       let delivery_address_id = null;
 
       if (body.order_type === 'delivery') {
-        delivery_address_id = body.delivery_address_id;
-        const addr_res = await client.query('SELECT * FROM addresses WHERE address_id = $1 AND user_id = $2', [delivery_address_id, user_id]);
-        const addr = addr_res.rows[0];
-        delivery_address_snapshot = {
-          label: addr.label,
-          address_line1: addr.address_line1,
-          address_line2: addr.address_line2,
-          city: addr.city,
-          postal_code: addr.postal_code,
-          delivery_instructions: addr.delivery_instructions,
-          latitude: addr.latitude === null || addr.latitude === undefined ? null : Number(addr.latitude),
-          longitude: addr.longitude === null || addr.longitude === undefined ? null : Number(addr.longitude),
-        };
+        // For authenticated users, load saved address
+        if (is_authenticated && body.delivery_address_id) {
+          delivery_address_id = body.delivery_address_id;
+          const addr_res = await client.query('SELECT * FROM addresses WHERE address_id = $1 AND user_id = $2', [delivery_address_id, auth_user_id]);
+          if (addr_res.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(400).json(createErrorResponse('Delivery address not found', null, 'ADDRESS_NOT_FOUND', req.request_id));
+          }
+          const addr = addr_res.rows[0];
+          delivery_address_snapshot = {
+            label: addr.label,
+            address_line1: addr.address_line1,
+            address_line2: addr.address_line2,
+            city: addr.city,
+            postal_code: addr.postal_code,
+            delivery_instructions: addr.delivery_instructions,
+            latitude: addr.latitude === null || addr.latitude === undefined ? null : Number(addr.latitude),
+            longitude: addr.longitude === null || addr.longitude === undefined ? null : Number(addr.longitude),
+          };
+        } else {
+          // For guests, create address snapshot from request body (no saved address)
+          // Guest delivery would need address details in the request body
+          // For now, guests must use collection orders or this will fail validation
+          delivery_address_id = null;
+          delivery_address_snapshot = null;
+        }
       }
 
       // Insert order.
@@ -3234,7 +3276,7 @@ const handleCheckoutCreateOrder = async (req, res) => {
           order_number,
           ticket_number,
           tracking_token,
-          user_id,
+          auth_user_id, // NULL for guests, user_id for authenticated users
           body.order_type,
           'received',
           body.collection_time_slot ?? null,
@@ -3293,7 +3335,7 @@ const handleCheckoutCreateOrder = async (req, res) => {
       await client.query(
         `INSERT INTO order_status_history (history_id, order_id, status, changed_by_user_id, changed_at, notes)
          VALUES ($1,$2,$3,$4,$5,$6)`,
-        [gen_id('osh'), order_id, 'received', user_id, created_at, 'Order placed']
+        [gen_id('osh'), order_id, 'received', auth_user_id, created_at, 'Order placed']
       );
 
       // Process payment (mock) BEFORE committing - skip for cash payments.
@@ -3379,7 +3421,7 @@ const handleCheckoutCreateOrder = async (req, res) => {
               -Math.abs(ci.quantity),
               'Order sale',
               'Sold via order',
-              user_id,
+              auth_user_id, // NULL for guests
               now_iso(),
               order_id,
             ]
@@ -3394,7 +3436,7 @@ const handleCheckoutCreateOrder = async (req, res) => {
       const points_rate = Number(points_rate_setting ?? 1);
       const points = Math.max(0, Math.floor(totals.total * points_rate));
 
-      const la_res = req.user ? await client.query('SELECT loyalty_account_id, current_points_balance, total_points_earned FROM loyalty_accounts WHERE user_id = $1 FOR UPDATE', [user_id]) : { rows: [] };
+      const la_res = is_authenticated ? await client.query('SELECT loyalty_account_id, current_points_balance, total_points_earned FROM loyalty_accounts WHERE user_id = $1 FOR UPDATE', [auth_user_id]) : { rows: [] };
       if (la_res.rows.length > 0) {
         const la = la_res.rows[0];
         const prev_balance = Number(la.current_points_balance ?? 0);
@@ -3453,7 +3495,7 @@ const handleCheckoutCreateOrder = async (req, res) => {
           inv_id,
           invoice_number,
           order_id,
-          user_id,
+          auth_user_id, // NULL for guests
           body.customer_name,
           body.customer_email,
           body.customer_phone,
@@ -3484,7 +3526,7 @@ const handleCheckoutCreateOrder = async (req, res) => {
       await client.query('UPDATE orders SET invoice_url = $1, updated_at = $2 WHERE order_id = $3', [pdf_url, now_iso(), order_id]);
 
       // Clear cart.
-      write_cart_sync(identifier, { items: [], discount_code: null, updated_at: now_iso() });
+      write_cart_sync(cart_identifier, { items: [], discount_code: null, updated_at: now_iso() });
 
       await client.query('COMMIT');
 
@@ -3541,6 +3583,30 @@ const handleCheckoutCreateOrder = async (req, res) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
     }
+    
+    // Handle PostgreSQL foreign key constraint violations
+    if (error.code === '23503') {
+      console.error('Foreign key constraint violation in order creation:', error.detail || error.message);
+      
+      // Map specific constraint violations to user-friendly messages
+      if (error.constraint === 'orders_user_id_fkey') {
+        return res.status(401).json(createErrorResponse(
+          'User account not found. Please log in again.',
+          null,
+          'USER_NOT_FOUND',
+          req.request_id
+        ));
+      }
+      
+      return res.status(400).json(createErrorResponse(
+        'Order creation failed due to invalid reference. Please check your order details.',
+        null,
+        'CONSTRAINT_VIOLATION',
+        req.request_id,
+        { constraint: error.constraint }
+      ));
+    }
+    
     console.error('create-order error', error);
     return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
   }

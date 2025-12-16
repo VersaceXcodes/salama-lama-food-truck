@@ -3378,12 +3378,12 @@ const handleCheckoutCreateOrder = async (req, res) => {
           await client.query(
             `INSERT INTO discount_usage (usage_id, code_id, user_id, order_id, discount_amount_applied, used_at)
              VALUES ($1,$2,$3,$4,$5,$6)`,
-            [gen_id('du'), dc.code_id, user_id, order_id, totals.discount_amount, now_iso()]
+            [gen_id('du'), dc.code_id, auth_user_id, order_id, totals.discount_amount, now_iso()]
           );
           await client.query('UPDATE discount_codes SET total_used_count = total_used_count + 1, updated_at = $1 WHERE code_id = $2', [now_iso(), dc.code_id]);
 
           // First-order discount usage flag.
-          await client.query('UPDATE users SET first_order_discount_used = true WHERE user_id = $1 AND first_order_discount_code = $2', [user_id, totals.discount_code]);
+          await client.query('UPDATE users SET first_order_discount_used = true WHERE user_id = $1 AND first_order_discount_code = $2', [auth_user_id, totals.discount_code]);
 
           // If discount code is a redeemed reward, mark as used.
           await client.query(
@@ -3391,7 +3391,7 @@ const handleCheckoutCreateOrder = async (req, res) => {
              SET usage_status = 'used', used_in_order_id = $1, used_at = $2
              WHERE reward_code = $3 AND loyalty_account_id = (SELECT loyalty_account_id FROM loyalty_accounts WHERE user_id = $4)
                AND usage_status = 'unused'`,
-            [order_id, now_iso(), ensure_upper(totals.discount_code), user_id]
+            [order_id, now_iso(), ensure_upper(totals.discount_code), auth_user_id]
           );
         }
       }

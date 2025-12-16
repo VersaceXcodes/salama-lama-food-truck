@@ -137,38 +137,38 @@ const GV_TopNav_Public: React.FC = () => {
       <nav 
         className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-200`}
       >
-        <div className={`max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 ${
+        <div className={`w-[95%] md:max-w-7xl mx-auto ${
           has_shadow 
-            ? 'mt-2' 
-            : 'mt-2'
+            ? 'mt-[10px]' 
+            : 'mt-[10px]'
         }`}>
-          <div className={`bg-[#F2EFE9] rounded-full md:rounded-2xl transition-all duration-200 ${
-            has_shadow 
-              ? 'shadow-lg backdrop-blur-md' 
-              : 'shadow-md'
-          }`}
+          <div className={`bg-[#F2EFE9] transition-all duration-200`}
           style={{ 
             backgroundColor: has_shadow ? 'rgba(242, 239, 233, 0.95)' : '#F2EFE9',
+            borderRadius: '50px',
+            boxShadow: has_shadow 
+              ? '0 4px 20px rgba(0, 0, 0, 0.08), 0 8px 32px rgba(0, 0, 0, 0.05)' 
+              : '0 4px 10px rgba(0, 0, 0, 0.05)',
           }}
           >
-            {/* Mobile Layout: Logo Left | Cart & Hamburger Right */}
+            {/* Mobile Layout: Logo Left | Hamburger Right (No Cart - using bottom sticky cart) */}
             {/* Desktop Layout: Left Nav | Center Logo | Right Actions */}
-            <div className="flex items-center justify-between h-16 md:h-20 px-4 md:px-6" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="flex items-center justify-between h-16 md:h-20 px-5 md:px-6" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               
               {/* LEFT GROUP: Logo on Mobile, Navigation Links on Desktop */}
               <div className="flex items-center flex-1">
-                {/* Mobile Logo - Left Aligned */}
+                {/* Mobile Logo - Left Aligned with Padding */}
                 <div className="md:hidden">
                   <Link 
                     to="/"
-                    className="flex items-center group"
+                    className="flex items-center group py-2"
                     aria-label="Salama Lama Home"
                   >
                     <img 
                       src="/logo-salama-lama.jpg" 
                       alt="Salama Lama" 
                       className="w-auto object-contain transition-transform duration-200 group-hover:scale-105"
-                      style={{ height: '32px', maxHeight: '40px', maxWidth: '120px', width: 'auto' }}
+                      style={{ height: '36px', maxHeight: '40px', maxWidth: '120px', width: 'auto' }}
                       onError={(e) => { 
                         // Fallback to default logo if custom logo fails to load
                         const target = e.target as HTMLImageElement;
@@ -235,7 +235,7 @@ const GV_TopNav_Public: React.FC = () => {
                 </Link>
               </div>
               
-              {/* RIGHT GROUP: Cart + Menu/Auth Actions */}
+              {/* RIGHT GROUP: Menu/Auth Actions (Cart removed on mobile - using sticky bottom cart) */}
               <div className="flex items-center gap-3 md:gap-4">
                 
                 {/* Desktop: Log In + Sign Up Buttons - Hidden on Mobile */}
@@ -259,10 +259,10 @@ const GV_TopNav_Public: React.FC = () => {
                   </Link>
                 </div>
                 
-                {/* Cart Button with Badge - Visible on Both Mobile and Desktop */}
+                {/* Cart Button with Badge - Desktop Only (Mobile uses sticky bottom cart) */}
                 <Link
                   to="/cart"
-                  className="relative text-[#2E211D] hover:text-[#1a0f0d] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#2E211D] focus:ring-offset-2 rounded-lg"
+                  className="hidden md:flex relative text-[#2E211D] hover:text-[#1a0f0d] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#2E211D] focus:ring-offset-2 rounded-lg"
                   aria-label={`Shopping cart with ${cart_item_count} items`}
                 >
                   <ShoppingCart className="h-6 w-6" />
@@ -276,8 +276,7 @@ const GV_TopNav_Public: React.FC = () => {
                 {/* Hamburger Menu Button - Mobile Only - Always Visible */}
                 <button
                   onClick={toggleMobileMenu}
-                  className="block md:hidden text-[#2E211D] hover:text-[#1a0f0d] focus:outline-none focus:ring-2 focus:ring-[#2E211D] focus:ring-offset-2 rounded-lg transition-colors duration-200 p-1"
-                  style={{ display: 'block' }}
+                  className="md:hidden text-[#2E211D] hover:text-[#1a0f0d] focus:outline-none focus:ring-2 focus:ring-[#2E211D] focus:ring-offset-2 rounded-lg transition-colors duration-200 p-1.5"
                   aria-label="Open navigation menu"
                   aria-expanded={is_mobile_menu_open}
                 >
@@ -316,20 +315,23 @@ const GV_TopNav_Public: React.FC = () => {
                 </button>
               </div>
               
-              {/* Mobile Navigation Links - Bold Dark Brown with Large Padding */}
-              <div className="space-y-3">
+              {/* Mobile Navigation Links - Large 24px text in Dark Brown Serif Font */}
+              <div className="space-y-4">
                 {allNavigationLinks.map((link) => (
                   <Link
                     key={link.path}
                     to={link.path}
                     onClick={closeMobileMenu}
-                    className={`flex items-center justify-between px-6 py-5 rounded-xl text-xl font-bold transition-all duration-200 ${
+                    className={`flex items-center justify-between px-6 py-6 rounded-xl transition-all duration-200 ${
                       isActivePath(link.path)
                         ? 'bg-[#E8E1D6] text-[#2E211D]'
                         : 'text-[#2E211D] hover:bg-[#E8E1D6]'
                     }`}
                     style={{
-                      minHeight: '64px',
+                      fontSize: '24px',
+                      fontFamily: 'Georgia, "Times New Roman", serif',
+                      fontWeight: '600',
+                      minHeight: '72px',
                     }}
                   >
                     <span>{link.label}</span>
@@ -433,10 +435,12 @@ const GV_TopNav_Public: React.FC = () => {
           animation: bounce-subtle 0.5s ease-in-out;
         }
         
-        /* Responsive logo sizing - Mobile First */
+        /* Responsive logo sizing - Mobile First with proper centering */
         nav img[alt="Salama Lama"] {
+          height: 36px !important;
           max-height: 40px !important;
           width: auto !important;
+          display: block !important;
         }
         
         @media (min-width: 768px) {
@@ -447,16 +451,23 @@ const GV_TopNav_Public: React.FC = () => {
           }
         }
         
-        /* Ensure hamburger is visible on mobile */
+        /* Ensure hamburger is visible on mobile only */
         @media (max-width: 767px) {
           button[aria-label="Open navigation menu"] {
-            display: block !important;
+            display: flex !important;
           }
         }
         
         @media (min-width: 768px) {
           button[aria-label="Open navigation menu"] {
             display: none !important;
+          }
+        }
+        
+        /* Mobile pill navbar - smooth transitions */
+        @media (max-width: 767px) {
+          nav > div {
+            transition: all 0.2s ease-out;
           }
         }
       `}</style>

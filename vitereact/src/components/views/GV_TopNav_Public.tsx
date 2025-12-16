@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAppStore } from '@/store/main';
-import { ShoppingCart, Menu, X, ChevronRight } from 'lucide-react';
+import { ShoppingCart, Menu, X, ChevronRight, User } from 'lucide-react';
 
 const GV_TopNav_Public: React.FC = () => {
   // ===========================
@@ -104,7 +104,15 @@ const GV_TopNav_Public: React.FC = () => {
   // Navigation Data
   // ===========================
   
-  const navigationLinks = [
+  // Main navigation links for left side (only 3 links for symmetry)
+  const mainNavigationLinks = [
+    { path: '/menu', label: 'Menu' },
+    { path: '/catering', label: 'Catering' },
+    { path: '/about', label: 'About' },
+  ];
+  
+  // All navigation links for mobile menu
+  const allNavigationLinks = [
     { path: '/menu', label: 'Menu' },
     { path: '/catering', label: 'Catering' },
     { path: '/about', label: 'About' },
@@ -133,11 +141,28 @@ const GV_TopNav_Public: React.FC = () => {
         style={{ backgroundColor: has_shadow ? 'rgba(242, 239, 233, 0.95)' : '#F2EFE9' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* COMMANDMENT #2: Mobile Logo Centered, Desktop Logo Left */}
-          <div className="flex items-center justify-between h-16 md:h-20">
+          {/* Symmetrical 3-Column Layout: Left Nav | Center Logo | Right Actions */}
+          <div className="relative flex items-center h-16 md:h-20">
             
-            {/* Logo - Centered on Mobile, Left on Desktop */}
-            <div className="flex-shrink-0 md:static absolute left-1/2 md:left-0 transform -translate-x-1/2 md:transform-none z-10">
+            {/* LEFT GROUP: Navigation Links - Desktop Only */}
+            <div className="hidden md:flex md:items-center md:gap-8 flex-1">
+              {mainNavigationLinks.map((link) => (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className={`text-base font-medium transition-all duration-200 whitespace-nowrap ${
+                    isActivePath(link.path)
+                      ? 'text-[#6F4E37] border-b-2 border-[#6F4E37]'
+                      : 'text-[#6F4E37] hover:text-orange-600 hover:opacity-80'
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+            
+            {/* CENTER: Logo - Absolutely Centered */}
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
               <Link 
                 to="/"
                 className="flex items-center group"
@@ -166,64 +191,39 @@ const GV_TopNav_Public: React.FC = () => {
               </Link>
             </div>
             
-            {/* Desktop Navigation Links - Hidden on mobile */}
-            <div className="hidden md:flex md:items-center md:space-x-8">
-              {navigationLinks.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  className={`text-base font-medium transition-all duration-200 ${
-                    isActivePath(link.path)
-                      ? 'text-orange-600 border-b-2 border-orange-600'
-                      : 'text-gray-700 hover:text-orange-600 hover:opacity-80'
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </div>
-            
-            {/* Actions Group - COMMANDMENT #1: 48px Touch Targets */}
-            <div className="flex items-center space-x-2 md:space-x-4 z-20">
+            {/* RIGHT GROUP: User Actions - Log In + Cart */}
+            <div className="flex items-center justify-end gap-5 flex-1 z-20">
               
-              {/* Cart Button with Badge - COMMANDMENT #1: 48px min */}
+              {/* Log In Link - Desktop: Text, Mobile: User Icon */}
+              <Link
+                to="/login"
+                className="text-[#6F4E37] hover:text-orange-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-lg"
+                aria-label="Log In"
+              >
+                {/* Desktop: Text Link */}
+                <span className="hidden md:inline text-base font-medium">Log In</span>
+                {/* Mobile: User Icon */}
+                <User className="md:hidden h-6 w-6" />
+              </Link>
+              
+              {/* Cart Button with Badge */}
               <Link
                 to="/cart"
-                className="relative p-3 text-gray-700 hover:text-orange-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-lg"
-                style={{ minHeight: '48px', minWidth: '48px' }}
+                className="relative text-[#6F4E37] hover:text-orange-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-lg"
                 aria-label={`Shopping cart with ${cart_item_count} items`}
               >
                 <ShoppingCart className="h-6 w-6" />
                 {cart_item_count > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-5 min-w-[20px] flex items-center justify-center px-1 animate-bounce-subtle">
+                  <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full h-5 min-w-[20px] flex items-center justify-center px-1 animate-bounce-subtle">
                     {getCartBadgeDisplay()}
                   </span>
                 )}
               </Link>
               
-              {/* Login Button - Desktop Only */}
-              <Link
-                to="/login"
-                className="hidden md:inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 hover:border-orange-600 hover:text-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-all duration-200"
-                style={{ minHeight: '48px' }}
-              >
-                Log In
-              </Link>
-              
-              {/* Sign Up Button - Desktop Only */}
-              <Link
-                to="/signup"
-                className="hidden md:inline-flex items-center px-8 py-3 border border-transparent text-base font-semibold rounded-lg text-white bg-orange-600 hover:bg-orange-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105"
-                style={{ minHeight: '48px' }}
-              >
-                Sign Up
-              </Link>
-              
-              {/* COMMANDMENT #2: Hamburger Menu Button - Mobile Only */}
+              {/* Hamburger Menu Button - Mobile Only */}
               <button
                 onClick={toggleMobileMenu}
-                className="md:hidden p-3 text-gray-700 hover:text-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-lg transition-colors duration-200"
-                style={{ minHeight: '48px', minWidth: '48px' }}
+                className="md:hidden text-[#6F4E37] hover:text-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-lg transition-colors duration-200"
                 aria-label="Open navigation menu"
                 aria-expanded={is_mobile_menu_open}
               >
@@ -268,7 +268,7 @@ const GV_TopNav_Public: React.FC = () => {
               
               {/* Mobile Navigation Links - COMMANDMENT #1: Large Touch Targets */}
               <div className="space-y-2">
-                {navigationLinks.map((link) => (
+                {allNavigationLinks.map((link) => (
                   <Link
                     key={link.path}
                     to={link.path}

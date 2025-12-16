@@ -170,39 +170,47 @@ const GV_TopNav_Staff: React.FC = () => {
   return (
     <>
       {/* Fixed Navigation Bar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-orange-600 to-orange-700 shadow-lg backdrop-blur-md transition-all duration-200">
+      <nav className="fixed top-0 left-0 right-0 bg-gradient-to-r from-orange-600 to-orange-700 shadow-lg backdrop-blur-md transition-all duration-200" style={{ zIndex: 9999 }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="h-16" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             {/* Left Section: Logo + Main Navigation */}
             <div className="flex items-center space-x-6">
               {/* Logo */}
-              <Link
-                to="/staff/dashboard"
-                className="flex items-center space-x-2 group"
-                aria-label="Salama Lama Staff Home"
-              >
-                <img 
-                  src={logoUrl} 
-                  alt="Salama Lama" 
-                  className="w-auto object-contain transition-transform duration-200 group-hover:scale-105"
-                  style={{ height: '30px', maxWidth: '150px', filter: 'brightness(0) invert(1)' }}
-                  onError={(e) => { 
-                    // Fallback to default logo if custom logo fails to load
-                    const target = e.target as HTMLImageElement;
-                    if (target.src !== '/assets/salama-lama-logo.png') {
-                      target.src = '/assets/salama-lama-logo.png';
-                    } else {
-                      // Fallback to screen-reader-only text if even default logo fails
-                      target.style.display = 'none';
-                      const textSpan = document.createElement('span');
-                      textSpan.className = 'sr-only';
-                      textSpan.textContent = 'Salama Lama';
-                      target.parentElement?.appendChild(textSpan);
-                    }
-                  }}
-                />
-                <span className="hidden sm:inline text-white font-bold text-lg">Staff</span>
-              </Link>
+              <div style={{ overflow: 'hidden' }}>
+                <Link
+                  to="/staff/dashboard"
+                  className="flex items-center space-x-2 group"
+                  aria-label="Salama Lama Staff Home"
+                >
+                  <img 
+                    src={logoUrl} 
+                    alt="Salama Lama" 
+                    className="transition-transform duration-200 group-hover:scale-105"
+                    style={{ 
+                      maxHeight: '40px', 
+                      width: 'auto', 
+                      objectFit: 'contain', 
+                      display: 'block',
+                      filter: 'brightness(0) invert(1)' 
+                    }}
+                    onError={(e) => { 
+                      // Fallback to default logo if custom logo fails to load
+                      const target = e.target as HTMLImageElement;
+                      if (target.src !== '/assets/salama-lama-logo.png') {
+                        target.src = '/assets/salama-lama-logo.png';
+                      } else {
+                        // Fallback to screen-reader-only text if even default logo fails
+                        target.style.display = 'none';
+                        const textSpan = document.createElement('span');
+                        textSpan.className = 'sr-only';
+                        textSpan.textContent = 'Salama Lama';
+                        target.parentElement?.appendChild(textSpan);
+                      }
+                    }}
+                  />
+                  <span className="hidden sm:inline text-white font-bold text-lg">Staff</span>
+                </Link>
+              </div>
 
               {/* Main Navigation Links */}
               <div className="hidden md:flex items-center space-x-2">
@@ -426,13 +434,13 @@ const GV_TopNav_Staff: React.FC = () => {
         ></div>
       )}
       
-      {/* Responsive logo sizing */}
+      {/* STRICT CSS OVERRIDES - Mobile Navigation Logo Fix */}
       <style>{`
-        @media (min-width: 768px) {
-          nav img[alt="Salama Lama"] {
-            height: 36px !important;
-            max-width: 200px !important;
-          }
+        nav img[alt="Salama Lama"] {
+          max-height: 40px !important;
+          width: auto !important;
+          object-fit: contain !important;
+          display: block !important;
         }
       `}</style>
     </>

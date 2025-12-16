@@ -195,42 +195,49 @@ const GV_TopNav_Admin: React.FC = () => {
   // ===========================
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#F2EFE9] border-b border-gray-200 shadow-sm backdrop-blur-md transition-all duration-200">
+      <nav className="fixed top-0 left-0 right-0 bg-[#F2EFE9] border-b border-gray-200 shadow-sm backdrop-blur-md transition-all duration-200" style={{ zIndex: 9999 }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="h-16" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             {/* ===========================
                 Left Section - Logo/Brand
                 =========================== */}
             <div className="flex items-center flex-shrink-0">
-              <Link
-                to="/admin/dashboard"
-                className="flex items-center space-x-3 group"
-                aria-label="Salama Lama Admin Home"
-              >
-                <img 
-                  src={logoUrl} 
-                  alt="Salama Lama" 
-                  className="w-auto object-contain transition-transform duration-200 group-hover:scale-105"
-                  style={{ height: '30px', maxWidth: '150px' }}
-                  onError={(e) => { 
-                    // Fallback to default logo if custom logo fails to load
-                    const target = e.target as HTMLImageElement;
-                    if (target.src !== '/assets/salama-lama-logo.png') {
-                      target.src = '/assets/salama-lama-logo.png';
-                    } else {
-                      // Fallback to screen-reader-only text if even default logo fails
-                      target.style.display = 'none';
-                      const textSpan = document.createElement('span');
-                      textSpan.className = 'sr-only';
-                      textSpan.textContent = 'Salama Lama';
-                      target.parentElement?.appendChild(textSpan);
-                    }
-                  }}
-                />
-                <div className="hidden md:flex flex-col">
-                  <span className="text-xs text-gray-600 leading-none">Admin Panel</span>
-                </div>
-              </Link>
+              <div style={{ overflow: 'hidden' }}>
+                <Link
+                  to="/admin/dashboard"
+                  className="flex items-center space-x-3 group"
+                  aria-label="Salama Lama Admin Home"
+                >
+                  <img 
+                    src={logoUrl} 
+                    alt="Salama Lama" 
+                    className="transition-transform duration-200 group-hover:scale-105"
+                    style={{ 
+                      maxHeight: '40px', 
+                      width: 'auto', 
+                      objectFit: 'contain', 
+                      display: 'block' 
+                    }}
+                    onError={(e) => { 
+                      // Fallback to default logo if custom logo fails to load
+                      const target = e.target as HTMLImageElement;
+                      if (target.src !== '/assets/salama-lama-logo.png') {
+                        target.src = '/assets/salama-lama-logo.png';
+                      } else {
+                        // Fallback to screen-reader-only text if even default logo fails
+                        target.style.display = 'none';
+                        const textSpan = document.createElement('span');
+                        textSpan.className = 'sr-only';
+                        textSpan.textContent = 'Salama Lama';
+                        target.parentElement?.appendChild(textSpan);
+                      }
+                    }}
+                  />
+                  <div className="hidden md:flex flex-col">
+                    <span className="text-xs text-gray-600 leading-none">Admin Panel</span>
+                  </div>
+                </Link>
+              </div>
             </div>
 
             {/* ===========================
@@ -656,13 +663,13 @@ const GV_TopNav_Admin: React.FC = () => {
       {/* Spacer to prevent content from being hidden under fixed navbar */}
       <div className="h-16"></div>
       
-      {/* Responsive logo sizing */}
+      {/* STRICT CSS OVERRIDES - Mobile Navigation Logo Fix */}
       <style>{`
-        @media (min-width: 768px) {
-          nav img[alt="Salama Lama"] {
-            height: 36px !important;
-            max-width: 200px !important;
-          }
+        nav img[alt="Salama Lama"] {
+          max-height: 40px !important;
+          width: auto !important;
+          object-fit: contain !important;
+          display: block !important;
         }
       `}</style>
     </>

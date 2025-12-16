@@ -135,7 +135,8 @@ const GV_TopNav_Public: React.FC = () => {
     <>
       {/* Main Navigation Bar - Fixed at top with Mobile-First Design */}
       <nav 
-        className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-200`}
+        className={`fixed top-0 left-0 right-0 transition-all duration-200`}
+        style={{ zIndex: 9999 }}
       >
         <div className={`w-[95%] md:max-w-7xl mx-auto ${
           has_shadow 
@@ -153,12 +154,12 @@ const GV_TopNav_Public: React.FC = () => {
           >
             {/* Mobile Layout: Logo Left | Hamburger Right (No Cart - using bottom sticky cart) */}
             {/* Desktop Layout: Left Nav | Center Logo | Right Actions */}
-            <div className="flex items-center justify-between h-16 md:h-20 px-5 md:px-6" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="h-16 md:h-20 px-5 md:px-6" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               
               {/* LEFT GROUP: Logo on Mobile, Navigation Links on Desktop */}
               <div className="flex items-center flex-1">
                 {/* Mobile Logo - Left Aligned with Padding */}
-                <div className="md:hidden">
+                <div className="md:hidden" style={{ overflow: 'hidden' }}>
                   <Link 
                     to="/"
                     className="flex items-center group py-2"
@@ -167,8 +168,13 @@ const GV_TopNav_Public: React.FC = () => {
                     <img 
                       src="/logo-salama-lama.jpg" 
                       alt="Salama Lama" 
-                      className="w-auto object-contain transition-transform duration-200 group-hover:scale-105"
-                      style={{ height: '36px', maxHeight: '40px', maxWidth: '120px', width: 'auto' }}
+                      className="transition-transform duration-200 group-hover:scale-105"
+                      style={{ 
+                        maxHeight: '40px', 
+                        width: 'auto', 
+                        objectFit: 'contain', 
+                        display: 'block' 
+                      }}
                       onError={(e) => { 
                         // Fallback to default logo if custom logo fails to load
                         const target = e.target as HTMLImageElement;
@@ -206,7 +212,7 @@ const GV_TopNav_Public: React.FC = () => {
               </div>
               
               {/* CENTER: Logo - Desktop Only, Absolutely Centered */}
-              <div className="hidden md:block absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+              <div className="hidden md:block absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ overflow: 'hidden' }}>
                 <Link 
                   to="/"
                   className="flex items-center group"
@@ -215,8 +221,13 @@ const GV_TopNav_Public: React.FC = () => {
                   <img 
                     src="/logo-salama-lama.jpg" 
                     alt="Salama Lama" 
-                    className="w-auto object-contain transition-transform duration-200 group-hover:scale-105"
-                    style={{ height: '34px', maxWidth: '180px' }}
+                    className="transition-transform duration-200 group-hover:scale-105"
+                    style={{ 
+                      maxHeight: '40px', 
+                      width: 'auto', 
+                      objectFit: 'contain', 
+                      display: 'block' 
+                    }}
                     onError={(e) => { 
                       // Fallback to default logo if custom logo fails to load
                       const target = e.target as HTMLImageElement;
@@ -435,20 +446,12 @@ const GV_TopNav_Public: React.FC = () => {
           animation: bounce-subtle 0.5s ease-in-out;
         }
         
-        /* Responsive logo sizing - Mobile First with proper centering */
+        /* STRICT CSS OVERRIDES - Mobile Navigation Logo Fix */
         nav img[alt="Salama Lama"] {
-          height: 36px !important;
           max-height: 40px !important;
           width: auto !important;
+          object-fit: contain !important;
           display: block !important;
-        }
-        
-        @media (min-width: 768px) {
-          nav img[alt="Salama Lama"] {
-            height: 34px !important;
-            max-height: 48px !important;
-            max-width: 200px !important;
-          }
         }
         
         /* Ensure hamburger is visible on mobile only */

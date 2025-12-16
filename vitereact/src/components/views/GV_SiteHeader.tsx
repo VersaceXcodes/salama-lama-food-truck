@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppStore } from '@/store/main';
-import BrandLogo from '@/components/BrandLogo';
 import { 
   Menu, 
   X, 
@@ -11,7 +10,13 @@ import {
   ShoppingCart, 
   LogOut,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Home,
+  UtensilsCrossed,
+  Info,
+  Phone,
+  HelpCircle,
+  MapPin
 } from 'lucide-react';
 
 // ===========================
@@ -44,10 +49,19 @@ const fetchLoyaltyAccount = async (token: string): Promise<LoyaltyAccount> => {
 };
 
 // ===========================
-// CSS Variables for Header Heights
+// Constants
 // ===========================
-const HEADER_HEIGHT_MOBILE = 56; // 56px for mobile
-const HEADER_HEIGHT_DESKTOP = 72; // 72px max for desktop
+const HEADER_HEIGHT_MOBILE = 56;
+const HEADER_HEIGHT_DESKTOP = 72;
+
+// Navigation links configuration
+const NAVIGATION_LINKS = [
+  { path: '/menu', label: 'Menu', icon: UtensilsCrossed },
+  { path: '/catering', label: 'Catering', icon: UtensilsCrossed },
+  { path: '/about', label: 'About', icon: Info },
+  { path: '/contact', label: 'Contact', icon: Phone },
+  { path: '/track-order', label: 'Track Order', icon: MapPin },
+];
 
 // ===========================
 // Main Component
@@ -58,7 +72,7 @@ const GV_SiteHeader: React.FC = () => {
   const location = useLocation();
   
   // ===========================
-  // Global State (Individual Selectors - CRITICAL)
+  // Global State
   // ===========================
   
   const currentUser = useAppStore(state => state.authentication_state.current_user);
@@ -86,107 +100,89 @@ const GV_SiteHeader: React.FC = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   // ===========================
-  // Refs for Click Outside Detection
+  // Refs
   // ===========================
   
   const profileDropdownRef = useRef<HTMLDivElement>(null);
+  const drawerRef = useRef<HTMLElement>(null);
   
   // ===========================
-  // React Query - Loyalty Points (only for authenticated customers)
+  // React Query - Loyalty Points
   // ===========================
   
   const { data: loyaltyData } = useQuery({
     queryKey: ['loyalty', currentUser?.user_id],
     queryFn: () => fetchLoyaltyAccount(authToken!),
     enabled: !!authToken && !!currentUser && isCustomer,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     retry: 1,
   });
   
   // ===========================
-  // Navigation Links Configuration
-  // ===========================
-  
-  const navigationLinks = [
-    { path: '/menu', label: 'Menu' },
-    { path: '/catering', label: 'Catering' },
-    { path: '/about', label: 'About' },
-    { path: '/contact', label: 'Contact' },
-    { path: '/faqs', label: 'FAQs' },
-    { path: '/track-order', label: 'Track Order' },
-  ];
-  
-  // ===========================
   // Event Handlers
   // ===========================
   
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     setIsLoggingOut(true);
     try {
-      // Clear guest session if guest user
       if (isGuest) {
-        // Clear guest-specific cookies/flags
         document.cookie = 'guest_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
         document.cookie = 'checkout_intent=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
       }
-      
       await logoutUser();
-      
-      // Redirect to home or menu page
       navigate(isGuest ? '/menu' : '/');
     } catch (error) {
       console.error('Logout failed:', error);
       setIsLoggingOut(false);
     }
-  };
+  }, [isGuest, logoutUser, navigate]);
   
-  const toggleProfileDropdown = () => {
-    setIsProfileDropdownOpen(!isProfileDropdownOpen);
-  };
+  const toggleProfileDropdown = useCallback(() => {
+    setIsProfileDropdownOpen(prev => !prev);
+  }, []);
   
-  const closeProfileDropdown = () => {
+  const closeProfileDropdown = useCallback(() => {
     setIsProfileDropdownOpen(false);
-  };
+  }, []);
   
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
+  const openMobileMenu = useCallback(() => {
+    setIsMobileMenuOpen(true);
+  }, []);
   
-  const closeMobileMenu = () => {
+  const closeMobileMenu = useCallback(() => {
     setIsMobileMenuOpen(false);
-  };
+  }, []);
   
-  const isActivePath = (path: string): boolean => {
+  const isActivePath = useCallback((path: string): boolean => {
     return location.pathname === path;
-  };
+  }, [location.pathname]);
   
-  const getCartBadgeDisplay = (): string => {
+  const getCartBadgeDisplay = useCallback((): string => {
     if (cartItemCount === 0) return '';
     if (cartItemCount > 99) return '99+';
     return cartItemCount.toString();
-  };
+  }, [cartItemCount]);
   
   // ===========================
   // Effects
   // ===========================
   
-  // Close mobile menu on route change
+  // Close menus on route change
   useEffect(() => {
     closeMobileMenu();
     closeProfileDropdown();
-  }, [location.pathname]);
+  }, [location.pathname, closeMobileMenu, closeProfileDropdown]);
   
-  // Lock body scroll when mobile menu is open
+  // Lock body scroll when drawer is open
   useEffect(() => {
     if (isMobileMenuOpen) {
       document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = '';
     }
-    
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = '';
     };
   }, [isMobileMenuOpen]);
   
@@ -204,27 +200,52 @@ const GV_SiteHeader: React.FC = () => {
     if (isProfileDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
-    
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isProfileDropdownOpen]);
+  }, [isProfileDropdownOpen, closeProfileDropdown]);
   
-  // Escape key handler
+  // Click outside handler for mobile drawer (backdrop click)
   useEffect(() => {
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        closeProfileDropdown();
+    const handleBackdropClick = (event: MouseEvent) => {
+      if (
+        drawerRef.current &&
+        !drawerRef.current.contains(event.target as Node)
+      ) {
         closeMobileMenu();
       }
     };
     
-    document.addEventListener('keydown', handleEscape);
+    if (isMobileMenuOpen) {
+      // Small delay to prevent immediate close
+      const timeoutId = setTimeout(() => {
+        document.addEventListener('mousedown', handleBackdropClick);
+      }, 10);
+      return () => {
+        clearTimeout(timeoutId);
+        document.removeEventListener('mousedown', handleBackdropClick);
+      };
+    }
+  }, [isMobileMenuOpen, closeMobileMenu]);
+  
+  // Escape key handler for both dropdown and drawer
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        if (isMobileMenuOpen) {
+          closeMobileMenu();
+        }
+        if (isProfileDropdownOpen) {
+          closeProfileDropdown();
+        }
+      }
+    };
     
+    document.addEventListener('keydown', handleEscape);
     return () => {
       document.removeEventListener('keydown', handleEscape);
     };
-  }, []);
+  }, [isMobileMenuOpen, isProfileDropdownOpen, closeMobileMenu, closeProfileDropdown]);
   
   // ===========================
   // Render
@@ -232,7 +253,11 @@ const GV_SiteHeader: React.FC = () => {
   
   return (
     <>
-      {/* Main Navigation Bar - Sticky with iOS safe area */}
+      {/* ======================================
+          MAIN HEADER - Single Sticky Bar
+          Uses CSS media queries for responsive
+          Only ONE header rendered at a time
+          ====================================== */}
       <header 
         className="site-header sticky top-0 left-0 right-0 bg-[#F5F0EB] border-b border-[#2C1A16]/10 z-50"
         style={{ 
@@ -243,60 +268,80 @@ const GV_SiteHeader: React.FC = () => {
           
           {/* ======================================
               MOBILE HEADER (< 1024px)
-              Height: 56px, clean single row
-              Left: Hamburger | Center: Logo | Right: Cart + User
+              Single row: [Hamburger] [Logo] [Cart + Profile]
               ====================================== */}
-          <div className="flex lg:hidden items-center justify-between flex-nowrap overflow-hidden" style={{ height: `${HEADER_HEIGHT_MOBILE}px` }}>
-            {/* Left: Hamburger Menu Button */}
-            <button
-              onClick={toggleMobileMenu}
-              className="flex items-center justify-center w-11 h-11 text-[#2C1A16] hover:text-[#D97706] focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 rounded-lg transition-colors duration-200"
-              aria-label="Open navigation menu"
-              aria-expanded={isMobileMenuOpen}
-              aria-controls="mobile-menu"
-            >
-              <Menu className="h-6 w-6" />
-            </button>
+          <div 
+            className="flex lg:hidden items-center justify-between"
+            style={{ 
+              height: `${HEADER_HEIGHT_MOBILE}px`,
+              minHeight: `${HEADER_HEIGHT_MOBILE}px`,
+              maxHeight: `${HEADER_HEIGHT_MOBILE}px`,
+            }}
+          >
+            {/* Left Section - Fixed width */}
+            <div className="flex items-center justify-start" style={{ width: '48px', flexShrink: 0 }}>
+              <button
+                onClick={openMobileMenu}
+                className="flex items-center justify-center w-10 h-10 text-[#2C1A16] hover:text-[#D97706] focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 rounded-lg transition-colors duration-200"
+                aria-label="Open navigation menu"
+                aria-expanded={isMobileMenuOpen}
+                aria-controls="mobile-drawer"
+              >
+                <Menu className="h-6 w-6" />
+              </button>
+            </div>
             
-            {/* Center: Brand Logo - Small for Mobile */}
-            <Link 
-              to="/"
-              className="flex items-center justify-center"
-              aria-label="Salama Lama Home"
-            >
-              <img
-                src="/logo-salama-lama.jpg"
-                alt="Salama Lama"
-                className="h-7 w-auto object-contain"
-                style={{ maxHeight: '28px' }}
-              />
-            </Link>
+            {/* Center Section - Logo (flexible but constrained) */}
+            <div className="flex items-center justify-center flex-1 min-w-0 px-2">
+              <Link 
+                to="/"
+                className="flex items-center justify-center"
+                aria-label="Salama Lama Home"
+              >
+                <img
+                  src="/logo-salama-lama.jpg"
+                  alt="Salama Lama"
+                  className="h-8 w-auto object-contain"
+                  style={{ maxHeight: '32px', maxWidth: '120px' }}
+                />
+              </Link>
+            </div>
             
-            {/* Right: Cart + User Icon */}
-            <div className="flex items-center gap-1 flex-nowrap flex-shrink-0">
+            {/* Right Section - Cart + Profile icon (fixed width) */}
+            <div className="flex items-center justify-end gap-1" style={{ width: '88px', flexShrink: 0 }}>
               {/* Cart Icon with Badge */}
               <Link
                 to="/cart"
-                className="relative flex items-center justify-center w-11 h-11 text-[#2C1A16] hover:text-[#D97706] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 rounded-lg"
+                className="relative flex items-center justify-center w-10 h-10 text-[#2C1A16] hover:text-[#D97706] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 rounded-lg"
                 aria-label={`Shopping cart${cartItemCount > 0 ? ` with ${cartItemCount} items` : ''}`}
               >
                 <ShoppingCart className="h-5 w-5" />
                 {cartItemCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 bg-[#DC2626] text-white text-[10px] font-bold rounded-full h-4 min-w-[16px] flex items-center justify-center px-1 pointer-events-none">
+                  <span 
+                    className="absolute flex items-center justify-center bg-[#DC2626] text-white text-[10px] font-bold rounded-full pointer-events-none"
+                    style={{
+                      top: '2px',
+                      right: '2px',
+                      height: '16px',
+                      minWidth: '16px',
+                      paddingLeft: '4px',
+                      paddingRight: '4px',
+                    }}
+                  >
                     {getCartBadgeDisplay()}
                   </span>
                 )}
               </Link>
               
-              {/* User Icon (simplified for mobile) */}
+              {/* Profile/Account Icon - Always visible */}
               {isAuthenticated ? (
-                <div className="flex items-center justify-center w-9 h-9 bg-[#2C1A16] rounded-full">
+                <div className="flex items-center justify-center w-8 h-8 bg-[#2C1A16] rounded-full flex-shrink-0">
                   <User className="h-4 w-4 text-white" />
                 </div>
               ) : (
                 <Link
                   to="/login"
-                  className="flex items-center justify-center w-11 h-11 text-[#2C1A16] hover:text-[#D97706] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 rounded-lg"
+                  className="flex items-center justify-center w-10 h-10 text-[#2C1A16] hover:text-[#D97706] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 rounded-lg"
                   aria-label="Log In"
                 >
                   <User className="h-5 w-5" />
@@ -307,12 +352,17 @@ const GV_SiteHeader: React.FC = () => {
           
           {/* ======================================
               DESKTOP HEADER (≥ 1024px)
-              Height: 72px max
-              Left: Logo | Center: Nav Links | Right: Cart + Auth
+              [Logo] [Nav Links] [Cart + Auth Buttons]
               ====================================== */}
-          <div className="hidden lg:flex items-center justify-between flex-nowrap" style={{ height: `${HEADER_HEIGHT_DESKTOP}px` }}>
-            
-            {/* Left: Logo (clickable → /) */}
+          <div 
+            className="hidden lg:flex items-center justify-between"
+            style={{ 
+              height: `${HEADER_HEIGHT_DESKTOP}px`,
+              minHeight: `${HEADER_HEIGHT_DESKTOP}px`,
+              maxHeight: `${HEADER_HEIGHT_DESKTOP}px`,
+            }}
+          >
+            {/* Left: Logo */}
             <Link 
               to="/"
               className="flex items-center flex-shrink-0"
@@ -326,10 +376,10 @@ const GV_SiteHeader: React.FC = () => {
               />
             </Link>
             
-            {/* Center: Nav Links - Horizontally centered and evenly spaced */}
+            {/* Center: Nav Links */}
             <nav className="flex items-center justify-center flex-1 px-8" aria-label="Main navigation">
               <ul className="flex items-center gap-8">
-                {navigationLinks.map((link) => (
+                {NAVIGATION_LINKS.map((link) => (
                   <li key={link.path}>
                     <Link
                       to={link.path}
@@ -348,7 +398,6 @@ const GV_SiteHeader: React.FC = () => {
             
             {/* Right: Cart + Auth Buttons */}
             <div className="flex items-center gap-3 flex-shrink-0">
-              
               {/* Cart Button with Badge */}
               <Link
                 to="/cart"
@@ -357,13 +406,23 @@ const GV_SiteHeader: React.FC = () => {
               >
                 <ShoppingCart className="h-5 w-5" />
                 {cartItemCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-[#DC2626] text-white text-xs font-bold rounded-full h-5 min-w-[20px] flex items-center justify-center px-1 pointer-events-none">
+                  <span 
+                    className="absolute flex items-center justify-center bg-[#DC2626] text-white text-xs font-bold rounded-full pointer-events-none"
+                    style={{
+                      top: '-4px',
+                      right: '-4px',
+                      height: '20px',
+                      minWidth: '20px',
+                      paddingLeft: '4px',
+                      paddingRight: '4px',
+                    }}
+                  >
                     {getCartBadgeDisplay()}
                   </span>
                 )}
               </Link>
               
-              {/* Authenticated Users: Account Dropdown */}
+              {/* Authenticated: Account Dropdown */}
               {isAuthenticated && !isGuest && (
                 <div className="relative" ref={profileDropdownRef}>
                   <button
@@ -421,10 +480,9 @@ const GV_SiteHeader: React.FC = () => {
                 </div>
               )}
               
-              {/* Not Authenticated: Login + Sign Up Buttons */}
+              {/* Not Authenticated: Log In + Sign Up Buttons */}
               {!isAuthenticated && (
                 <>
-                  {/* Log In Button - Pill style */}
                   <Link
                     to="/login"
                     className="px-5 py-2 text-sm font-semibold text-[#2C1A16] bg-white border-2 border-[#2C1A16] rounded-full hover:bg-[#F5F0EB] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 shadow-sm whitespace-nowrap"
@@ -433,7 +491,6 @@ const GV_SiteHeader: React.FC = () => {
                     Log In
                   </Link>
                   
-                  {/* Sign Up Button - Filled pill style */}
                   <Link
                     to="/signup"
                     className="px-5 py-2 text-sm font-bold text-white bg-[#2C1A16] rounded-full hover:bg-[#1A0F0D] hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 shadow-sm whitespace-nowrap"
@@ -443,36 +500,53 @@ const GV_SiteHeader: React.FC = () => {
                   </Link>
                 </>
               )}
-              
             </div>
           </div>
         </nav>
       </header>
       
       {/* ======================================
-          MOBILE MENU DRAWER - Left Slide
+          MOBILE NAVIGATION DRAWER
+          Slides in from left
           ====================================== */}
       {isMobileMenuOpen && (
         <>
-          {/* Backdrop */}
+          {/* Backdrop overlay - closes drawer on click */}
           <div 
             className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] lg:hidden"
             onClick={closeMobileMenu}
             aria-hidden="true"
           />
           
-          {/* Drawer - Slides from LEFT */}
+          {/* Drawer panel */}
           <aside 
-            id="mobile-menu"
-            className="fixed top-0 left-0 bottom-0 w-full max-w-xs bg-white shadow-2xl z-[101] lg:hidden overflow-y-auto animate-slide-in-left"
+            ref={drawerRef}
+            id="mobile-drawer"
+            className="fixed top-0 left-0 bottom-0 w-[280px] max-w-[85vw] bg-white shadow-2xl z-[101] lg:hidden overflow-y-auto"
             role="dialog"
             aria-modal="true"
             aria-label="Navigation menu"
-            style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
+            style={{ 
+              paddingTop: 'env(safe-area-inset-top, 0px)',
+              paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+              animation: 'slideInLeft 0.25s ease-out',
+            }}
           >
             {/* Drawer Header */}
             <div className="sticky top-0 bg-white border-b border-[#E8E1D6] px-4 py-4 flex items-center justify-between z-10">
-              <h2 className="text-lg font-bold text-[#2C1A16]">Menu</h2>
+              <Link 
+                to="/" 
+                onClick={closeMobileMenu}
+                className="flex items-center"
+                aria-label="Salama Lama Home"
+              >
+                <img
+                  src="/logo-salama-lama.jpg"
+                  alt="Salama Lama"
+                  className="h-8 w-auto object-contain"
+                  style={{ maxHeight: '32px' }}
+                />
+              </Link>
               <button
                 onClick={closeMobileMenu}
                 className="flex items-center justify-center w-10 h-10 text-[#2C1A16] hover:bg-[#F5F0EB] rounded-lg transition-colors"
@@ -485,7 +559,7 @@ const GV_SiteHeader: React.FC = () => {
             {/* Drawer Content */}
             <div className="px-4 py-6 space-y-6">
               
-              {/* User Info Card (if authenticated) */}
+              {/* User Info Card (authenticated users) */}
               {isAuthenticated && (
                 <div className="p-4 bg-gradient-to-br from-[#F5F0EB] to-[#E8E1D6] rounded-2xl border border-[#E8E1D6]">
                   <div className="flex items-center gap-3">
@@ -506,6 +580,11 @@ const GV_SiteHeader: React.FC = () => {
                           Guest checkout
                         </p>
                       )}
+                      {loyaltyData && loyaltyData.current_points_balance > 0 && (
+                        <p className="text-sm text-[#D97706] font-medium mt-1">
+                          {loyaltyData.current_points_balance} loyalty points
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -514,7 +593,27 @@ const GV_SiteHeader: React.FC = () => {
               {/* Navigation Links */}
               <nav aria-label="Mobile navigation">
                 <ul className="border border-[#E8E1D6] rounded-2xl divide-y divide-[#E8E1D6] overflow-hidden">
-                  {navigationLinks.map((link) => (
+                  {/* Home link */}
+                  <li>
+                    <Link
+                      to="/"
+                      onClick={closeMobileMenu}
+                      className={`flex items-center justify-between px-4 py-4 text-base font-medium transition-colors ${
+                        isActivePath('/')
+                          ? 'bg-[#F5F0EB] text-[#D97706]'
+                          : 'text-[#2C1A16] hover:bg-[#F5F0EB]'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Home className="h-5 w-5 opacity-60" />
+                        <span>Home</span>
+                      </div>
+                      <ChevronRight className="h-5 w-5 opacity-40" />
+                    </Link>
+                  </li>
+                  
+                  {/* Main nav links */}
+                  {NAVIGATION_LINKS.map((link) => (
                     <li key={link.path}>
                       <Link
                         to={link.path}
@@ -525,13 +624,35 @@ const GV_SiteHeader: React.FC = () => {
                             : 'text-[#2C1A16] hover:bg-[#F5F0EB]'
                         }`}
                       >
-                        <span>{link.label}</span>
+                        <div className="flex items-center gap-3">
+                          <link.icon className="h-5 w-5 opacity-60" />
+                          <span>{link.label}</span>
+                        </div>
                         <ChevronRight className="h-5 w-5 opacity-40" />
                       </Link>
                     </li>
                   ))}
                   
-                  {/* View Cart (if items in cart) */}
+                  {/* FAQs */}
+                  <li>
+                    <Link
+                      to="/faqs"
+                      onClick={closeMobileMenu}
+                      className={`flex items-center justify-between px-4 py-4 text-base font-medium transition-colors ${
+                        isActivePath('/faqs')
+                          ? 'bg-[#F5F0EB] text-[#D97706]'
+                          : 'text-[#2C1A16] hover:bg-[#F5F0EB]'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <HelpCircle className="h-5 w-5 opacity-60" />
+                        <span>FAQs</span>
+                      </div>
+                      <ChevronRight className="h-5 w-5 opacity-40" />
+                    </Link>
+                  </li>
+                  
+                  {/* View Cart (if items) */}
                   {cartItemCount > 0 && (
                     <li>
                       <Link
@@ -539,10 +660,10 @@ const GV_SiteHeader: React.FC = () => {
                         onClick={closeMobileMenu}
                         className="flex items-center justify-between px-4 py-4 text-base font-medium text-[#2C1A16] hover:bg-[#F5F0EB] transition-colors"
                       >
-                        <div className="flex items-center gap-2">
-                          <ShoppingCart className="h-5 w-5" />
+                        <div className="flex items-center gap-3">
+                          <ShoppingCart className="h-5 w-5 opacity-60" />
                           <span>View Cart</span>
-                          <span className="bg-[#2C1A16] text-white text-xs font-bold rounded-full h-5 min-w-[20px] px-1.5 flex items-center justify-center">
+                          <span className="bg-[#DC2626] text-white text-xs font-bold rounded-full h-5 min-w-[20px] px-1.5 flex items-center justify-center">
                             {cartItemCount}
                           </span>
                         </div>
@@ -593,13 +714,15 @@ const GV_SiteHeader: React.FC = () => {
                         handleLogout();
                       }}
                       disabled={isLoggingOut}
-                      className="flex items-center justify-center w-full px-6 py-3.5 text-base font-bold rounded-full text-white bg-[#2C1A16] hover:bg-[#1A0F0D] focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex items-center justify-center gap-2 w-full px-6 py-3.5 text-base font-bold rounded-full text-white bg-[#2C1A16] hover:bg-[#1A0F0D] focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
+                      <LogOut className="h-5 w-5" />
                       {isLoggingOut ? 'Signing Out...' : 'Sign Out'}
                     </button>
                   </>
                 ) : (
                   <>
+                    {/* Log In and Sign Up moved to drawer for mobile */}
                     <Link
                       to="/login"
                       onClick={closeMobileMenu}
@@ -623,67 +746,23 @@ const GV_SiteHeader: React.FC = () => {
         </>
       )}
       
-      {/* Spacer div to prevent content from being hidden under the fixed/sticky header */}
-      {/* This ensures the first section is fully visible below the header */}
-      <div 
-        aria-hidden="true" 
-        className="header-spacer"
-        style={{ 
-          height: 0, // Sticky header doesn't need a spacer, content flows naturally
-          // If using fixed positioning, change to: height: `${HEADER_HEIGHT_MOBILE}px` (mobile) or `${HEADER_HEIGHT_DESKTOP}px` (desktop)
-        }} 
-      />
-
-      {/* Custom Animation Styles */}
+      {/* Animation Keyframes */}
       <style>{`
-        /* CSS Custom Property for header height */
-        :root {
-          --header-height-mobile: ${HEADER_HEIGHT_MOBILE}px;
-          --header-height-desktop: ${HEADER_HEIGHT_DESKTOP}px;
-        }
-        
-        /* Slide in from left animation */
         @keyframes slideInLeft {
           from {
             transform: translateX(-100%);
-            opacity: 0;
           }
           to {
             transform: translateX(0);
-            opacity: 1;
           }
         }
         
-        .animate-slide-in-left {
-          animation: slideInLeft 0.3s ease-out;
+        /* Ensure header never causes horizontal scroll */
+        .site-header {
+          overflow-x: hidden;
         }
         
-        /* CRITICAL: Ensure header NEVER wraps into multiple rows */
-        .site-header,
-        .site-header nav,
-        .site-header nav > div {
-          overflow: visible;
-        }
-        
-        /* Mobile header: strict no-wrap single row */
-        .site-header .flex {
-          flex-wrap: nowrap !important;
-        }
-        
-        /* Logo should never be clipped and should shrink if needed */
-        .site-header img {
-          display: block;
-          flex-shrink: 1;
-          min-width: 0;
-        }
-        
-        /* Ensure hamburger and action icons don't shrink */
-        .site-header button,
-        .site-header a[aria-label] {
-          flex-shrink: 0;
-        }
-        
-        /* iOS safe area support for the header */
+        /* iOS safe area insets */
         @supports (padding-top: env(safe-area-inset-top)) {
           .site-header {
             padding-top: env(safe-area-inset-top);

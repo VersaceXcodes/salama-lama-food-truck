@@ -108,6 +108,7 @@ const GV_SiteHeader: React.FC = () => {
     { path: '/menu', label: 'Menu' },
     { path: '/catering', label: 'Catering' },
     { path: '/about', label: 'About' },
+    { path: '/track-order', label: 'Track Order' },
     { path: '/contact', label: 'Contact' },
     { path: '/faqs', label: 'FAQs' },
   ];

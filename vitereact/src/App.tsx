@@ -46,6 +46,7 @@ import UV_CateringInquiryDetail from '@/components/views/UV_CateringInquiryDetai
 import UV_About from '@/components/views/UV_About';
 import UV_Contact from '@/components/views/UV_Contact';
 import UV_FAQs from '@/components/views/UV_FAQs';
+import UV_TrackOrder from '@/components/views/UV_TrackOrder';
 import UV_Terms from '@/components/views/UV_Terms';
 import UV_Privacy from '@/components/views/UV_Privacy';
 import UV_StaffLogin from '@/components/views/UV_StaffLogin';
@@ -301,6 +302,9 @@ const AppRoutes: React.FC = () => {
         <Route path="/faqs" element={<UV_FAQs />} />
         <Route path="/terms" element={<UV_Terms />} />
         <Route path="/privacy" element={<UV_Privacy />} />
+        
+        {/* Track Order - Public route for guests */}
+        <Route path="/track-order" element={<UV_TrackOrder />} />
 
         {/* Menu & Cart */}
         <Route path="/menu" element={<UV_Menu />} />

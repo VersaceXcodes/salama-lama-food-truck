@@ -217,6 +217,14 @@ const GV_Footer: React.FC = () => {
                   </li>
                   <li>
                     <Link
+                      to="/track-order"
+                      className="hover:opacity-80 transition-opacity duration-200"
+                    >
+                      Track Order
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
                       to="/contact"
                       className="hover:opacity-80 transition-opacity duration-200"
                     >

@@ -104,11 +104,12 @@ const GV_TopNav_Public: React.FC = () => {
   // Navigation Data
   // ===========================
   
-  // Main navigation links for left side (only 3 links for symmetry)
+  // Main navigation links for left side (4 links now including Track Order)
   const mainNavigationLinks = [
     { path: '/menu', label: 'Menu' },
     { path: '/catering', label: 'Catering' },
     { path: '/about', label: 'About' },
+    { path: '/track-order', label: 'Track Order' },
   ];
   
   // All navigation links for mobile menu
@@ -116,6 +117,7 @@ const GV_TopNav_Public: React.FC = () => {
     { path: '/menu', label: 'Menu' },
     { path: '/catering', label: 'Catering' },
     { path: '/about', label: 'About' },
+    { path: '/track-order', label: 'Track Order' },
     { path: '/contact', label: 'Contact' },
     { path: '/faqs', label: 'FAQs' },
   ];

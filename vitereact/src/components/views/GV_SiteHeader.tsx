@@ -242,119 +242,83 @@ const GV_SiteHeader: React.FC = () => {
   
   return (
     <>
-      {/* Main Navigation Bar - Floating container with 20px top margin */}
+      {/* Main Navigation Bar - Sticky at top, clean and compact */}
       <nav 
-        className={`fixed left-0 right-0 z-[100] transition-all duration-300 ${
-          hasShadow 
-            ? 'top-3 md:top-5' 
-            : 'top-3 md:top-5'
-        }`}
-        style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
+        className="sticky top-0 left-0 right-0 bg-[#F5F0EB] border-b border-[#2C1A16]/10 shadow-sm z-50 transition-all duration-200"
+        style={{ backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className={`transition-all duration-200 ${
-            hasShadow 
-              ? 'bg-[rgba(245,240,235,0.7)] backdrop-blur-xl shadow-xl' 
-              : 'bg-[rgba(245,240,235,0.7)] shadow-md'
-          }`}
-          style={{
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-            border: '1px solid rgba(62, 47, 38, 0.1)',
-            borderRadius: '100px'
-          }}>
+          
           {/* ======================================
               MOBILE HEADER - flex md:hidden
               ====================================== */}
-          <div className="flex md:hidden items-center h-14 py-2" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingLeft: '20px', paddingRight: '20px' }}>
-            <div className="flex items-center justify-between w-full gap-3" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              {/* Left: Cart Icon */}
+          <div className="flex md:hidden items-center justify-between h-16 gap-3">
+            {/* Left: Hamburger Menu */}
+            <button
+              onClick={toggleMobileMenu}
+              className="flex items-center justify-center w-10 h-10 text-[#2C1A16] hover:text-[#D97706] focus:outline-none focus:ring-2 focus:ring-[#D97706] rounded-lg transition-colors duration-200"
+              aria-label="Toggle navigation menu"
+              aria-expanded={isMobileMenuOpen}
+            >
+              <Menu className="h-6 w-6" />
+            </button>
+            
+            {/* Center: Brand Logo */}
+            <Link 
+              to="/"
+              className="flex items-center justify-center group flex-1"
+              aria-label="Salama Lama Home"
+            >
+              <BrandLogo variant="header" />
+            </Link>
+            
+            {/* Right: Cart + User Icon */}
+            <div className="flex items-center gap-2">
+              {/* Cart Icon with Badge */}
               <Link
                 to="/cart"
-                className="relative flex items-center justify-center w-10 h-10 text-[#2C1A16] hover:text-[#D97706] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 rounded-lg"
+                className="relative flex items-center justify-center w-10 h-10 text-[#2C1A16] hover:text-[#D97706] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#D97706] rounded-lg"
                 aria-label={`Shopping cart with ${cartItemCount} items`}
               >
-                <ShoppingCart className="h-6 w-6" />
+                <ShoppingCart className="h-5 w-5" />
                 {cartItemCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 bg-[#DC2626] text-white text-[10px] font-bold rounded-full h-4 min-w-[16px] flex items-center justify-center px-1">
+                  <span className="absolute -top-1 -right-1 bg-[#DC2626] text-white text-[10px] font-bold rounded-full h-4 min-w-[16px] flex items-center justify-center px-1">
                     {getCartBadgeDisplay()}
                   </span>
                 )}
               </Link>
               
-              {/* Center: Brand Logo - Real logo with fallback only on error */}
-              <Link 
-                to="/"
-                className="flex items-center justify-center group flex-1"
-                aria-label="Salama Lama Home"
-              >
-                <img
-                  src="/logo-salama-lama.jpg"
-                  alt="Salama Lama"
-                  loading="eager"
-                  className="h-7 w-auto max-w-[140px] object-contain transition-transform duration-200 group-hover:scale-105"
-                  style={{ maxHeight: '40px', width: 'auto' }}
-                  onError={(e) => {
-                    // Only show SL fallback if image fails to load
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                    const fallback = target.nextElementSibling as HTMLElement;
-                    if (fallback) fallback.style.display = 'flex';
-                  }}
-                />
-                <div 
-                  className="hidden items-center justify-center bg-[#D97706] text-white font-bold rounded-full w-8 h-8 text-xs"
-                  title="Salama Lama"
+              {/* User Icon or Login Link */}
+              {!isAuthenticated ? (
+                <Link
+                  to="/login"
+                  className="flex items-center justify-center w-10 h-10 text-[#2C1A16] hover:text-[#D97706] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#D97706] rounded-lg"
+                  aria-label="Log In"
                 >
-                  SL
+                  <User className="h-5 w-5" />
+                </Link>
+              ) : (
+                <div className="w-10 h-10 bg-[#2C1A16] rounded-full flex items-center justify-center">
+                  <User className="h-5 w-5 text-white" />
                 </div>
-              </Link>
-              
-              {/* Right: Account Icon (if not authenticated) or Hamburger Menu */}
-              <div className="flex items-center" style={{ gap: '15px' }}>
-                {/* Show Account Icon for non-authenticated users */}
-                {!isAuthenticated && (
-                  <Link
-                    to="/login"
-                    className="flex items-center justify-center w-10 h-10 text-[#2C1A16] hover:text-[#D97706] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 rounded-lg"
-                    aria-label="Account - Log In or Sign Up"
-                  >
-                    <User className="h-6 w-6" />
-                  </Link>
-                )}
-                
-                {/* Hamburger Menu - Always Visible on Mobile */}
-                <button
-                  onClick={toggleMobileMenu}
-                  className="flex md:hidden items-center justify-center w-10 h-10 text-[#2C1A16] hover:text-[#D97706] focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 rounded-lg transition-colors duration-200"
-                  style={{ display: 'flex' }}
-                  aria-label="Toggle navigation menu"
-                  aria-expanded={isMobileMenuOpen}
-                >
-                  {isMobileMenuOpen ? (
-                    <X className="h-6 w-6" />
-                  ) : (
-                    <Menu className="h-6 w-6" />
-                  )}
-                </button>
-              </div>
+              )}
             </div>
           </div>
           
           {/* ======================================
               DESKTOP HEADER - hidden md:flex
               ====================================== */}
-          <div className="hidden md:flex items-center justify-between h-20 px-6" style={{ flexWrap: 'nowrap' }}>
+          <div className="hidden md:flex items-center h-16 relative">
             
             {/* Left Section: Navigation Links (Menu, Catering, About) */}
-            <div className="flex items-center space-x-8" style={{ flexWrap: 'nowrap', whiteSpace: 'nowrap' }}>
+            <div className="flex items-center gap-6">
               {navigationLinks.slice(0, 3).map((link) => (
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`text-base font-medium transition-all duration-200 pb-1 whitespace-nowrap ${
+                  className={`text-sm font-medium transition-all duration-200 whitespace-nowrap ${
                     isActivePath(link.path)
-                      ? 'text-[#D97706] border-b-2 border-[#D97706]'
+                      ? 'text-[#D97706]'
                       : 'text-[#2C1A16] hover:text-[#D97706]'
                   }`}
                 >
@@ -363,8 +327,8 @@ const GV_SiteHeader: React.FC = () => {
               ))}
             </div>
             
-            {/* Center Section: Logo */}
-            <div className="flex-shrink-0 absolute left-1/2 transform -translate-x-1/2">
+            {/* Center Section: Logo - Absolutely Centered */}
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
               <Link 
                 to="/"
                 className="flex items-center group"
@@ -374,17 +338,16 @@ const GV_SiteHeader: React.FC = () => {
               </Link>
             </div>
             
-            {/* Right Section: Cart + Account (Authenticated) OR Cart + Login/Signup (Not Authenticated) */}
-            <div className="flex items-center gap-4" style={{ flexWrap: 'nowrap' }}>
+            {/* Right Section: Cart + Auth Buttons */}
+            <div className="flex items-center gap-3 ml-auto">
               
               {/* Cart Button with Badge */}
               <Link
                 to="/cart"
-                className="relative p-3 text-[#2C1A16] hover:text-[#D97706] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 rounded-lg"
-                style={{ minHeight: '48px', minWidth: '48px' }}
+                className="relative p-2 text-[#2C1A16] hover:text-[#D97706] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#D97706] rounded-lg"
                 aria-label={`Shopping cart with ${cartItemCount} items`}
               >
-                <ShoppingCart className="h-6 w-6" />
+                <ShoppingCart className="h-5 w-5" />
                 {cartItemCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-[#DC2626] text-white text-xs font-bold rounded-full h-5 min-w-[20px] flex items-center justify-center px-1">
                     {getCartBadgeDisplay()}
@@ -397,12 +360,12 @@ const GV_SiteHeader: React.FC = () => {
                 <div className="relative" ref={profileDropdownRef}>
                   <button
                     onClick={toggleProfileDropdown}
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-[#2C1A16] bg-white border-2 border-[#2C1A16] rounded-lg hover:bg-[#F5F0EB] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 shadow-sm whitespace-nowrap"
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-[#2C1A16] bg-white border-2 border-[#2C1A16] rounded-lg hover:bg-[#F5F0EB] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#D97706] shadow-sm whitespace-nowrap"
                     aria-label="Account Menu"
                     aria-expanded={isProfileDropdownOpen}
                   >
                     <User className="h-4 w-4" />
-                    <span>Account</span>
+                    <span>{userDisplayName}</span>
                     <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isProfileDropdownOpen ? 'rotate-180' : ''}`} />
                   </button>
                   
@@ -415,7 +378,7 @@ const GV_SiteHeader: React.FC = () => {
                         className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-[#2C1A16] hover:bg-[#F5F0EB] transition-colors"
                       >
                         <ShoppingCart className="h-4 w-4" />
-                        <span>My Orders / Tickets</span>
+                        <span>My Orders</span>
                       </Link>
                       
                       <Link
@@ -445,19 +408,19 @@ const GV_SiteHeader: React.FC = () => {
               {/* Not Authenticated: Login + Sign Up Buttons */}
               {!isAuthenticated && (
                 <>
-                  {/* Log In Button - Secondary Style */}
+                  {/* Log In Button */}
                   <Link
                     to="/login"
-                    className="px-5 py-2 text-sm font-semibold text-[#2C1A16] bg-white border-2 border-[#2C1A16] rounded-lg hover:bg-[#F5F0EB] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 shadow-sm whitespace-nowrap"
+                    className="px-4 py-2 text-sm font-semibold text-[#2C1A16] bg-white border-2 border-[#2C1A16] rounded-lg hover:bg-[#F5F0EB] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#D97706] shadow-sm whitespace-nowrap"
                     aria-label="Log In"
                   >
                     Log In
                   </Link>
                   
-                  {/* Sign Up Button - Primary Style */}
+                  {/* Sign Up Button */}
                   <Link
                     to="/signup"
-                    className="px-5 py-2 text-sm font-bold text-white bg-[#2C1A16] rounded-lg hover:bg-[#1A0F0D] hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#D97706] focus:ring-offset-2 shadow-sm whitespace-nowrap"
+                    className="px-4 py-2 text-sm font-bold text-white bg-[#2C1A16] rounded-lg hover:bg-[#1A0F0D] hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#D97706] shadow-sm whitespace-nowrap"
                     aria-label="Sign Up"
                   >
                     Sign Up
@@ -466,7 +429,6 @@ const GV_SiteHeader: React.FC = () => {
               )}
               
             </div>
-          </div>
           </div>
         </div>
       </nav>
@@ -622,8 +584,7 @@ const GV_SiteHeader: React.FC = () => {
         </MobileDrawer>
       )}
       
-      {/* Spacer to prevent content from going under floating navbar */}
-      <div className="h-[68px] md:h-[108px]" aria-hidden="true" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }} />
+      {/* No spacer needed for sticky navbar */}
       
       {/* Custom Animation Styles */}
       <style>{`
@@ -657,46 +618,12 @@ const GV_SiteHeader: React.FC = () => {
           animation: fadeIn 0.2s ease-out;
         }
         
-        /* Responsive logo sizing - Mobile First with constraints */
-        nav img[alt="Salama Lama"] {
+        /* Ensure logo is properly sized and contained */
+        nav img[alt="Salama Lama"],
+        nav svg {
           max-height: 40px !important;
           width: auto !important;
-          max-width: 140px;
           object-fit: contain;
-        }
-        
-        @media (min-width: 640px) {
-          nav img[alt="Salama Lama"] {
-            max-height: 40px !important;
-            max-width: 150px;
-          }
-        }
-        
-        @media (min-width: 768px) {
-          nav img[alt="Salama Lama"] {
-            height: 36px;
-            max-height: 48px !important;
-            max-width: 180px;
-          }
-        }
-        
-        /* Mobile header optimization */
-        @media (max-width: 767px) {
-          nav {
-            min-height: 56px;
-          }
-          
-          /* Ensure hamburger is always visible on mobile */
-          button[aria-label="Toggle navigation menu"] {
-            display: flex !important;
-          }
-        }
-        
-        /* Hide hamburger on desktop */
-        @media (min-width: 768px) {
-          button[aria-label="Toggle navigation menu"] {
-            display: none !important;
-          }
         }
       `}</style>
     </>

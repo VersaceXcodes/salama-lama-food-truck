@@ -181,101 +181,123 @@ const GV_TopNav_Customer: React.FC = () => {
   
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 bg-[#F2EFE9] shadow-md backdrop-blur-md transition-all duration-200" style={{ zIndex: 9999 }}>
+      <nav className="sticky top-0 left-0 right-0 bg-[#F2EFE9] shadow-md border-b border-gray-200 z-50 transition-all duration-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* COMMANDMENT #2: Mobile Logo Centered, Hamburger Right */}
-          <div className="h-16 md:h-20" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingLeft: '20px', paddingRight: '20px' }}>
+          
+          {/* Mobile Header */}
+          <div className="flex md:hidden items-center justify-between h-16">
+            {/* Left: Hamburger Menu */}
+            <button
+              onClick={toggleMobileMenu}
+              className="p-2 text-[#2E211D] hover:text-orange-600 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 rounded-lg"
+              aria-label="Toggle mobile menu"
+              aria-expanded={isMobileMenuOpen}
+            >
+              <Menu className="h-6 w-6" />
+            </button>
             
-            {/* Left Section: Logo & Desktop Nav Links */}
-            <div className="flex items-center space-x-8 md:static absolute left-1/2 md:left-0 transform -translate-x-1/2 md:transform-none z-10">
-              {/* Logo - Centered on Mobile, Left on Desktop */}
-              <div style={{ overflow: 'hidden' }}>
-                <Link 
-                  to="/"
-                  className="flex items-center group"
-                  aria-label="Salama Lama Home"
-                >
-                  <img 
-                    src={logoUrl} 
-                    alt="Salama Lama" 
-                    className="transition-transform duration-200 group-hover:scale-105"
-                    style={{ 
-                      maxHeight: '40px', 
-                      width: 'auto', 
-                      objectFit: 'contain', 
-                      display: 'block' 
-                    }}
-                    onError={(e) => { 
-                      // Fallback to default logo if custom logo fails to load
-                      const target = e.target as HTMLImageElement;
-                      if (target.src !== '/assets/salama-lama-logo.png') {
-                        target.src = '/assets/salama-lama-logo.png';
-                      } else {
-                        // Fallback to screen-reader-only text if even default logo fails
-                        target.style.display = 'none';
-                        const textSpan = document.createElement('span');
-                        textSpan.className = 'sr-only';
-                        textSpan.textContent = 'Salama Lama';
-                        target.parentElement?.appendChild(textSpan);
-                      }
-                    }}
-                  />
-                </Link>
-              </div>
-              
-              {/* Desktop Navigation Links */}
-              <div className="hidden md:flex items-center space-x-6">
-                <Link
-                  to="/menu"
-                  className="text-gray-700 hover:text-orange-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                >
-                  Menu
-                </Link>
-                <Link
-                  to="/orders"
-                  className="text-gray-700 hover:text-orange-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                >
-                  My Orders
-                </Link>
-                <Link
-                  to="/rewards"
-                  className="text-gray-700 hover:text-orange-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                >
-                  Rewards
-                </Link>
-                <Link
-                  to="/catering"
-                  className="text-gray-700 hover:text-orange-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                >
-                  Catering
-                </Link>
-              </div>
+            {/* Center: Logo */}
+            <Link 
+              to="/"
+              className="flex items-center group"
+              aria-label="Salama Lama Home"
+            >
+              <img 
+                src={logoUrl} 
+                alt="Salama Lama" 
+                className="h-8 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+                onError={(e) => { 
+                  const target = e.target as HTMLImageElement;
+                  if (target.src !== '/assets/salama-lama-logo.png') {
+                    target.src = '/assets/salama-lama-logo.png';
+                  }
+                }}
+              />
+            </Link>
+            
+            {/* Right: Cart Icon */}
+            <Link
+              to="/cart"
+              className="relative p-2 text-[#2E211D] hover:text-orange-600 transition-colors rounded-lg"
+              aria-label="Shopping cart"
+            >
+              <ShoppingCart className="h-6 w-6" />
+              {cartItemCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  {cartItemCount}
+                </span>
+              )}
+            </Link>
+          </div>
+          
+          {/* Desktop Header */}
+          <div className="hidden md:flex items-center h-16 relative">
+            
+            {/* Left Section: Desktop Nav Links */}
+            <div className="flex items-center gap-6">
+              <Link
+                to="/menu"
+                className="text-gray-700 hover:text-orange-600 text-sm font-medium transition-colors"
+              >
+                Menu
+              </Link>
+              <Link
+                to="/catering"
+                className="text-gray-700 hover:text-orange-600 text-sm font-medium transition-colors"
+              >
+                Catering
+              </Link>
+              <Link
+                to="/about"
+                className="text-gray-700 hover:text-orange-600 text-sm font-medium transition-colors"
+              >
+                About
+              </Link>
             </div>
             
-            {/* Right Section: Loyalty Badge, Cart, Profile, Mobile Menu Button */}
-            <div className="flex items-center z-20" style={{ gap: '15px' }}>
+            {/* Center: Logo - Absolutely Centered */}
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+              <Link 
+                to="/"
+                className="flex items-center group"
+                aria-label="Salama Lama Home"
+              >
+                <img 
+                  src={logoUrl} 
+                  alt="Salama Lama" 
+                  className="h-10 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+                  onError={(e) => { 
+                    const target = e.target as HTMLImageElement;
+                    if (target.src !== '/assets/salama-lama-logo.png') {
+                      target.src = '/assets/salama-lama-logo.png';
+                    }
+                  }}
+                />
+              </Link>
+            </div>
+            
+            {/* Right Section: Cart, Profile */}
+            <div className="flex items-center gap-3 ml-auto">
               
-              {/* Loyalty Points Badge (Desktop) - COMMANDMENT #1: 48px min */}
+              {/* Loyalty Points Badge (Desktop) */}
               <Link
                 to="/rewards"
-                className="hidden md:flex items-center space-x-2 bg-gradient-to-r from-orange-500 to-red-500 text-white px-5 py-3 rounded-full hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-                style={{ minHeight: '48px' }}
+                className="hidden md:flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-full hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-md hover:shadow-lg"
               >
-                <Award className="h-5 w-5" />
-                <span className="font-bold">{loyaltyPointsBalance}</span>
-                <span className="text-sm font-medium">pts</span>
+                <Award className="h-4 w-4" />
+                <span className="font-bold text-sm">{loyaltyPointsBalance}</span>
+                <span className="text-xs font-medium">pts</span>
               </Link>
               
-              {/* Cart Icon with Badge - COMMANDMENT #1: 48px min */}
+              {/* Cart Icon with Badge */}
               <Link
                 to="/cart"
-                className="relative p-3 text-[#2E211D] hover:text-[#1a0f0d] transition-colors rounded-lg"
-                style={{ minHeight: '48px', minWidth: '48px' }}
+                className="relative p-2 text-[#2E211D] hover:text-orange-600 transition-colors rounded-lg"
                 aria-label="Shopping cart"
               >
-                <ShoppingCart className="h-6 w-6" />
+                <ShoppingCart className="h-5 w-5" />
                 {cartItemCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 min-w-[20px] flex items-center justify-center px-1">
                     {cartItemCount}
                   </span>
                 )}
@@ -285,14 +307,12 @@ const GV_TopNav_Customer: React.FC = () => {
               <div className="hidden md:block relative" ref={profileDropdownRef}>
                 <button
                   onClick={toggleProfileDropdown}
-                  className="flex items-center space-x-2 text-gray-700 hover:text-orange-600 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-md px-3 py-2"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 shadow-sm"
                   aria-label="User profile menu"
                   aria-expanded={isProfileDropdownOpen}
                 >
-                  <div className="h-8 w-8 bg-orange-100 rounded-full flex items-center justify-center">
-                    <User className="h-5 w-5 text-orange-600" />
-                  </div>
-                  <span className="font-medium">{userDisplayName}</span>
+                  <User className="h-4 w-4" />
+                  <span>{userDisplayName}</span>
                   <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isProfileDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
                 
@@ -302,46 +322,46 @@ const GV_TopNav_Customer: React.FC = () => {
                     <Link
                       to="/dashboard"
                       onClick={closeProfileDropdown}
-                      className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors"
+                      className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors"
                     >
-                      <Home className="h-5 w-5" />
-                      <span className="font-medium">Dashboard</span>
+                      <Home className="h-4 w-4" />
+                      <span>Dashboard</span>
                     </Link>
                     
                     <Link
                       to="/profile"
                       onClick={closeProfileDropdown}
-                      className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors"
+                      className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors"
                     >
-                      <User className="h-5 w-5" />
-                      <span className="font-medium">My Profile</span>
+                      <User className="h-4 w-4" />
+                      <span>My Profile</span>
                     </Link>
                     
                     <Link
                       to="/orders"
                       onClick={closeProfileDropdown}
-                      className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors"
+                      className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors"
                     >
-                      <Package className="h-5 w-5" />
-                      <span className="font-medium">My Orders</span>
+                      <Package className="h-4 w-4" />
+                      <span>My Orders</span>
                     </Link>
                     
                     <Link
                       to="/addresses"
                       onClick={closeProfileDropdown}
-                      className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors"
+                      className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors"
                     >
-                      <MapPin className="h-5 w-5" />
-                      <span className="font-medium">Saved Addresses</span>
+                      <MapPin className="h-4 w-4" />
+                      <span>Saved Addresses</span>
                     </Link>
                     
                     <Link
                       to="/payment-methods"
                       onClick={closeProfileDropdown}
-                      className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors"
+                      className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors"
                     >
-                      <CreditCard className="h-5 w-5" />
-                      <span className="font-medium">Payment Methods</span>
+                      <CreditCard className="h-4 w-4" />
+                      <span>Payment Methods</span>
                     </Link>
                     
                     <div className="border-t border-gray-200 my-2"></div>
@@ -349,27 +369,14 @@ const GV_TopNav_Customer: React.FC = () => {
                     <button
                       onClick={handleLogout}
                       disabled={isLoggingOut}
-                      className="w-full flex items-center space-x-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <LogOut className="h-5 w-5" />
-                      <span className="font-medium">
-                        {isLoggingOut ? 'Logging out...' : 'Logout'}
-                      </span>
+                      <LogOut className="h-4 w-4" />
+                      <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
                     </button>
                   </div>
                 )}
               </div>
-              
-              {/* COMMANDMENT #2: Hamburger Menu Button */}
-              <button
-                onClick={toggleMobileMenu}
-                className="md:hidden p-3 text-[#2E211D] hover:text-[#1a0f0d] transition-colors focus:outline-none focus:ring-2 focus:ring-[#2E211D] focus:ring-offset-2 rounded-lg"
-                style={{ minHeight: '48px', minWidth: '48px' }}
-                aria-label="Toggle mobile menu"
-                aria-expanded={isMobileMenuOpen}
-              >
-                <Menu className="h-7 w-7" />
-              </button>
             </div>
           </div>
         </div>
@@ -528,16 +535,29 @@ const GV_TopNav_Customer: React.FC = () => {
         )}
       </nav>
       
-      {/* Spacer to prevent content from hiding under fixed nav */}
-      <div className="h-16 md:h-20"></div>
+      {/* No spacer needed for sticky navbar */}
       
-      {/* STRICT CSS OVERRIDES - Mobile Navigation Logo Fix */}
+      {/* Logo size consistency */}
       <style>{`
         nav img[alt="Salama Lama"] {
           max-height: 40px !important;
           width: auto !important;
           object-fit: contain !important;
-          display: block !important;
+        }
+        
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        .animate-fadeIn {
+          animation: fadeIn 0.2s ease-out;
         }
       `}</style>
     </>

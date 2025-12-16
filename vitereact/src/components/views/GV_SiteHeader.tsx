@@ -246,7 +246,7 @@ const GV_SiteHeader: React.FC = () => {
               Height: 56px, clean single row
               Left: Hamburger | Center: Logo | Right: Cart + User
               ====================================== */}
-          <div className="flex lg:hidden items-center justify-between" style={{ height: `${HEADER_HEIGHT_MOBILE}px` }}>
+          <div className="flex lg:hidden items-center justify-between flex-nowrap overflow-hidden" style={{ height: `${HEADER_HEIGHT_MOBILE}px` }}>
             {/* Left: Hamburger Menu Button */}
             <button
               onClick={toggleMobileMenu}
@@ -273,7 +273,7 @@ const GV_SiteHeader: React.FC = () => {
             </Link>
             
             {/* Right: Cart + User Icon */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 flex-nowrap flex-shrink-0">
               {/* Cart Icon with Badge */}
               <Link
                 to="/cart"
@@ -310,7 +310,7 @@ const GV_SiteHeader: React.FC = () => {
               Height: 72px max
               Left: Logo | Center: Nav Links | Right: Cart + Auth
               ====================================== */}
-          <div className="hidden lg:flex items-center justify-between" style={{ height: `${HEADER_HEIGHT_DESKTOP}px` }}>
+          <div className="hidden lg:flex items-center justify-between flex-nowrap" style={{ height: `${HEADER_HEIGHT_DESKTOP}px` }}>
             
             {/* Left: Logo (clickable → /) */}
             <Link 
@@ -623,6 +623,17 @@ const GV_SiteHeader: React.FC = () => {
         </>
       )}
       
+      {/* Spacer div to prevent content from being hidden under the fixed/sticky header */}
+      {/* This ensures the first section is fully visible below the header */}
+      <div 
+        aria-hidden="true" 
+        className="header-spacer"
+        style={{ 
+          height: 0, // Sticky header doesn't need a spacer, content flows naturally
+          // If using fixed positioning, change to: height: `${HEADER_HEIGHT_MOBILE}px` (mobile) or `${HEADER_HEIGHT_DESKTOP}px` (desktop)
+        }} 
+      />
+
       {/* Custom Animation Styles */}
       <style>{`
         /* CSS Custom Property for header height */
@@ -647,19 +658,36 @@ const GV_SiteHeader: React.FC = () => {
           animation: slideInLeft 0.3s ease-out;
         }
         
-        /* Ensure header doesn't clip content */
-        .site-header {
+        /* CRITICAL: Ensure header NEVER wraps into multiple rows */
+        .site-header,
+        .site-header nav,
+        .site-header nav > div {
           overflow: visible;
         }
         
-        /* Prevent any parent overflow issues */
-        .site-header nav {
-          overflow: visible;
+        /* Mobile header: strict no-wrap single row */
+        .site-header .flex {
+          flex-wrap: nowrap !important;
         }
         
-        /* Logo should never be clipped */
+        /* Logo should never be clipped and should shrink if needed */
         .site-header img {
           display: block;
+          flex-shrink: 1;
+          min-width: 0;
+        }
+        
+        /* Ensure hamburger and action icons don't shrink */
+        .site-header button,
+        .site-header a[aria-label] {
+          flex-shrink: 0;
+        }
+        
+        /* iOS safe area support for the header */
+        @supports (padding-top: env(safe-area-inset-top)) {
+          .site-header {
+            padding-top: env(safe-area-inset-top);
+          }
         }
       `}</style>
     </>

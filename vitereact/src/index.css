@@ -524,18 +524,61 @@ p {
    HEADER & NAVIGATION (Mobile Optimization)
    =================================== */
 
+@media (max-width: 1023px) {
+	/* Site Header: Fixed height, no wrapping, single row layout */
+	.site-header {
+		height: auto !important;
+		min-height: 56px !important;
+		max-height: 72px !important;
+	}
+	
+	/* CRITICAL: Prevent header flex containers from wrapping */
+	.site-header .flex,
+	.site-header nav > div {
+		flex-wrap: nowrap !important;
+		overflow: hidden !important;
+	}
+	
+	/* Logo sizing for mobile */
+	.site-header img {
+		max-height: 32px !important;
+		height: auto !important;
+		width: auto !important;
+		object-fit: contain !important;
+		flex-shrink: 1 !important;
+		min-width: 0 !important;
+	}
+	
+	/* Hamburger and action buttons - fixed size, no shrink */
+	.site-header button,
+	.site-header a[aria-label] {
+		flex-shrink: 0 !important;
+		min-width: 44px !important;
+		min-height: 44px !important;
+	}
+	
+	/* Icons inside buttons */
+	.site-header button svg,
+	.site-header a svg {
+		width: 20px !important;
+		height: 20px !important;
+		flex-shrink: 0 !important;
+	}
+}
+
+/* Legacy nav styling for other nav elements (not site-header) */
 @media (max-width: 768px) {
 	/* CRITICAL FIX #2: Navbar Container with Flexbox Layout */
-	nav[class*="fixed"],
-	header,
-	[role="navigation"] {
+	nav[class*="fixed"]:not(.site-header nav),
+	header:not(.site-header),
+	[role="navigation"]:not(.site-header nav) {
 		height: 60px !important;
 		min-height: 60px !important;
 	}
 
 	/* Ensure navbar uses flex layout with proper alignment */
-	nav > div,
-	nav > div > div {
+	nav:not(.site-header nav) > div,
+	nav:not(.site-header nav) > div > div {
 		display: flex !important;
 		align-items: center !important;
 		justify-content: space-between !important;
@@ -543,10 +586,8 @@ p {
 	}
 
 	/* CRITICAL FIX #2: Logo - Restrict Size to Prevent Overlay */
-	nav img,
-	nav [class*="logo"] img,
-	header img,
-	nav a img {
+	nav:not(.site-header nav) img,
+	header:not(.site-header) img {
 		max-height: 40px !important;
 		height: 40px !important;
 		width: auto !important;
@@ -555,9 +596,8 @@ p {
 	}
 
 	/* Hamburger Menu & Cart Icons - 24px size, 16px from edges */
-	nav button,
-	nav a[class*="cart"],
-	nav [class*="hamburger"],
+	nav:not(.site-header nav) button,
+	nav:not(.site-header nav) a[class*="cart"],
 	.menu-icon,
 	.cart-icon {
 		font-size: 24px !important;
@@ -569,14 +609,14 @@ p {
 		flex-shrink: 0 !important;
 	}
 
-	nav button svg,
-	nav a svg {
+	nav:not(.site-header nav) button svg,
+	nav:not(.site-header nav) a svg {
 		width: 24px !important;
 		height: 24px !important;
 	}
 
 	/* Push icons 16px from screen edges */
-	nav > div > .flex {
+	nav:not(.site-header nav) > div > .flex {
 		padding-left: 16px !important;
 		padding-right: 16px !important;
 	}
@@ -654,8 +694,8 @@ p {
 		height: auto !important;
 	}
 
-	/* Fix flex containers that might overflow */
-	.flex {
+	/* Fix flex containers that might overflow - but exclude header/nav */
+	.flex:not(.site-header *):not(nav *):not(.flex-nowrap) {
 		flex-wrap: wrap !important;
 	}
 

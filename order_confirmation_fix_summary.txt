@@ -1,0 +1,97 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║            ORDER CONFIRMATION BLANK PAGE FIX - SUMMARY                     ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+PROBLEM
+───────
+After "Place Order", browser navigates to blank page at:
+  /order-confirmation?ticket=...&token=...&order_number=...
+
+Console Error:
+  "Cannot access 'x' before initialization" (TDZ error)
+
+ROOT CAUSE
+──────────
+UV_OrderConfirmation component had variables defined AFTER they were used:
+
+  ❌ BROKEN CODE STRUCTURE:
+  
+  useEffect(() => {
+    if (displayTicketNumber && displayTrackingToken) {  // ← Used here
+      // ...
+    }
+  }, [displayTicketNumber, displayTrackingToken]);
+  
+  if (!finalTicketNumber) {
+    return <ErrorPage />;  // ← Early return
+  }
+  
+  const displayTicketNumber = finalTicketNumber;  // ← Defined here (too late!)
+  const displayTrackingToken = finalTrackingToken;
+
+SOLUTION
+────────
+  ✅ FIXED CODE STRUCTURE:
+  
+  const displayTicketNumber = finalTicketNumber;  // ← Defined FIRST
+  const displayTrackingToken = finalTrackingToken;
+  
+  useEffect(() => {
+    if (displayTicketNumber && displayTrackingToken) {  // ← Can use now
+      // ...
+    }
+  }, [displayTicketNumber, displayTrackingToken]);
+  
+  if (!finalTicketNumber) {
+    return <ErrorPage />;  // ← Comes after all hooks
+  }
+
+FILES CHANGED
+─────────────
+1. vitereact/src/components/views/UV_OrderConfirmation.tsx
+   • Reordered variable declarations before useEffect
+   • Moved useEffect before conditional returns
+   
+2. vitereact/src/components/ErrorBoundary.tsx (NEW)
+   • Catches any future component errors
+   • Shows friendly error page (not blank screen)
+   • "Try Again" and "Back to Menu" buttons
+   
+3. vitereact/src/App.tsx
+   • Wrapped /order-confirmation route with ErrorBoundary
+
+PROTECTION ADDED
+────────────────
+✓ ErrorBoundary catches runtime errors → shows friendly page
+✓ Missing params → shows friendly "Not Found" message
+✓ Works with direct URL navigation (no state dependency)
+✓ Survives page refresh
+✓ Development mode shows error details for debugging
+
+BACKEND ENDPOINT
+────────────────
+Already exists: GET /api/orders/track?ticket=...&token=...
+Returns: order details, items, status, totals
+
+TESTING
+───────
+✓ Guest checkout → confirmation page renders
+✓ Logged-in checkout → confirmation page renders
+✓ Direct URL navigation → works
+✓ Page refresh → works
+✓ Missing params → friendly error (not blank)
+✓ No console errors
+✓ ErrorBoundary catches component crashes
+
+MANUAL TEST STEPS
+─────────────────
+1. cd /app/backend && npm start
+2. cd /app/vitereact && npm run dev
+3. Open http://localhost:5173
+4. Add items to cart
+5. Complete checkout (guest or logged-in)
+6. Verify order confirmation page renders (NOT blank)
+7. Check console - should have NO "Cannot access" error
+8. Refresh page - should still work
+9. Open URL in new tab - should still work
+

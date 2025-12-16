@@ -15,6 +15,7 @@ import GV_Footer from '@/components/views/GV_Footer';
 import GV_CookieConsent from '@/components/views/GV_CookieConsent';
 import GV_FloatingCart from '@/components/views/GV_FloatingCart';
 import { Toaster } from '@/components/ui/toaster';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 // Import Unique Views
 import UV_Landing from '@/components/views/UV_Landing';
@@ -358,7 +359,14 @@ const AppRoutes: React.FC = () => {
         <Route path="/track/:ticketNumber" element={<UV_OrderTracking />} />
         
         {/* Order Confirmation - Accessible after checkout */}
-        <Route path="/order-confirmation" element={<UV_OrderConfirmation />} />
+        <Route path="/order-confirmation" element={
+          <ErrorBoundary 
+            fallbackRoute="/menu" 
+            fallbackMessage="We encountered an error loading your order confirmation. Please check your order history or contact support if you need assistance."
+          >
+            <UV_OrderConfirmation />
+          </ErrorBoundary>
+        } />
 
         {/* Checkout Flow - Accessible without authentication for guest checkout */}
         <Route path="/checkout" element={<Navigate to="/checkout/order-type" replace />} />

@@ -19,18 +19,6 @@ const UV_OrderConfirmation: React.FC = () => {
   const loyaltyPoints = searchParams.get('points');
   const status = searchParams.get('status') || 'received';
 
-  // Save tracking info to localStorage for easy access
-  useEffect(() => {
-    if (displayTicketNumber && displayTrackingToken) {
-      localStorage.setItem('lastOrder', JSON.stringify({
-        ticket_number: displayTicketNumber,
-        tracking_token: displayTrackingToken,
-        order_number: displayOrderNumber,
-        created_at: new Date().toISOString(),
-      }));
-    }
-  }, [displayTicketNumber, displayTrackingToken, displayOrderNumber]);
-
   // Try to get data from localStorage if not in URL params
   let finalTicketNumber = ticketNumber;
   let finalTrackingToken = trackingToken;
@@ -50,7 +38,26 @@ const UV_OrderConfirmation: React.FC = () => {
     }
   }
 
+  // Assign final values BEFORE any hooks or early returns (to avoid TDZ errors)
+  const displayTicketNumber = finalTicketNumber;
+  const displayTrackingToken = finalTrackingToken;
+  const displayOrderNumber = finalOrderNumber || orderNumber;
+
+  // Save tracking info to localStorage for easy access
+  // This hook MUST come before any conditional returns
+  useEffect(() => {
+    if (displayTicketNumber && displayTrackingToken) {
+      localStorage.setItem('lastOrder', JSON.stringify({
+        ticket_number: displayTicketNumber,
+        tracking_token: displayTrackingToken,
+        order_number: displayOrderNumber,
+        created_at: new Date().toISOString(),
+      }));
+    }
+  }, [displayTicketNumber, displayTrackingToken, displayOrderNumber]);
+
   // Show friendly message if still missing required data
+  // This conditional return comes AFTER all hooks
   if (!finalTicketNumber || !finalTrackingToken) {
     return (
       <div className="min-h-screen bg-[#F2EFE9] pb-20">
@@ -74,11 +81,6 @@ const UV_OrderConfirmation: React.FC = () => {
       </div>
     );
   }
-
-  // Use final values
-  const displayTicketNumber = finalTicketNumber;
-  const displayTrackingToken = finalTrackingToken;
-  const displayOrderNumber = finalOrderNumber || orderNumber;
 
   // Format currency
   const formatCurrency = (amount: string | null): string => {

@@ -10,6 +10,7 @@ interface BottomSheetProps {
   footer?: React.ReactNode;
   className?: string;
   maxHeight?: string;
+  overlayType?: 'mobile-menu' | 'filter' | 'customization' | 'cart-drawer' | 'checkout-modal';
 }
 
 /**
@@ -30,13 +31,14 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   footer,
   className = '',
   maxHeight = '90vh',
+  overlayType = 'filter',
 }) => {
   const { openOverlay, closeOverlay } = useOverlayState();
 
   // Notify overlay state and lock body scroll when sheet is open
   useEffect(() => {
     if (isOpen) {
-      openOverlay('filter');
+      openOverlay(overlayType);
       document.body.style.overflow = 'hidden';
     } else {
       closeOverlay();
@@ -47,7 +49,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
       closeOverlay();
       document.body.style.overflow = 'unset';
     };
-  }, [isOpen, openOverlay, closeOverlay]);
+  }, [isOpen, openOverlay, closeOverlay, overlayType]);
 
   // Handle escape key
   useEffect(() => {

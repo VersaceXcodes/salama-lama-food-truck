@@ -326,8 +326,12 @@ const UV_Menu: React.FC = () => {
   };
 
   const handleOpenCustomizationModal = (item: MenuItem) => {
+    // DEBUG: Log when customize is clicked
+    console.log('[Customization] Opening modal for item:', item?.item_id, item?.name);
+    
     // Safety check: Don't open if item is null
     if (!item) {
+      console.error('[Customization] Error: Item is null or undefined');
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -355,23 +359,18 @@ const UV_Menu: React.FC = () => {
     const customizationPrice = defaultSelections.reduce((sum, c) => sum + Number(c.additional_price), 0);
     const totalPrice = basePrice + customizationPrice;
 
-    // IMPORTANT: Set product data first, then open sheet in next frame
-    // This ensures the sheet content is ready before animation starts
+    // Set all state at once - no race condition, no requestAnimationFrame needed
+    // The sheet will be rendered with the item data immediately
     setCustomizationModal({
-      is_open: false,
+      is_open: true,
       item,
       selected_customizations: defaultSelections,
       total_price: totalPrice,
       quantity: 1,
     });
-
-    // Open sheet in next frame to ensure state is ready
-    requestAnimationFrame(() => {
-      setCustomizationModal(prev => ({
-        ...prev,
-        is_open: true,
-      }));
-    });
+    
+    // DEBUG: Log the state being set
+    console.log('[Customization] Modal state set with item:', item.item_id);
   };
 
   const handleCloseCustomizationModal = () => {
@@ -588,22 +587,10 @@ const UV_Menu: React.FC = () => {
     }
   }, [customizationModal.is_open]);
 
-  // Failsafe: Auto-close sheet if content is missing
+  // DEBUG: Log when sheet opens
   useEffect(() => {
-    if (customizationModal.is_open && !customizationModal.item) {
-      // Wait a short moment to allow state to update
-      const timer = setTimeout(() => {
-        if (customizationModal.is_open && !customizationModal.item) {
-          handleCloseCustomizationModal();
-          toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: 'Unable to load product details. Please try again.'
-          });
-        }
-      }, 100);
-      
-      return () => clearTimeout(timer);
+    if (customizationModal.is_open) {
+      console.log('[Customization] Sheet opened, selectedItem:', customizationModal.item?.item_id, customizationModal.item?.name);
     }
   }, [customizationModal.is_open, customizationModal.item]);
 
@@ -1102,186 +1089,189 @@ const UV_Menu: React.FC = () => {
       </BottomSheet>
 
       {/* Product Customization Modal - Using BottomSheet */}
-      {customizationModal.is_open && (
-        <BottomSheet
-          isOpen={customizationModal.is_open}
-          onClose={handleCloseCustomizationModal}
-          title={customizationModal.item?.name || 'Product Details'}
-          maxHeight="85vh"
-          footer={customizationModal.item ? (
-            <div className="space-y-3">
-              {/* Total Price Display */}
-              <div className="flex items-center justify-between px-1">
-                <span className="text-lg font-semibold text-[var(--primary-text)]">Total:</span>
-                <span className="text-3xl font-bold text-[var(--primary-text)]" style={{ letterSpacing: '-0.02em' }}>
-                  €{(Number(customizationModal.total_price) * customizationModal.quantity).toFixed(2)}
-                </span>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-3">
-                <button
-                  onClick={handleCloseCustomizationModal}
-                  className="flex-1 px-6 py-3 border-2 border-[var(--primary-text)] rounded-[var(--radius-btn)] text-[var(--primary-text)] font-semibold hover:bg-[var(--primary-bg)] transition-colors"
-                  style={{ minHeight: 'var(--tap-target-comfortable)' }}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleAddToCart}
-                  disabled={addToCartMutation.isPending}
-                  className="flex-1 px-6 py-3 rounded-[var(--radius-btn)] bg-[var(--btn-bg)] text-white font-bold hover:bg-[#1A0F0D] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                  style={{ minHeight: 'var(--tap-target-comfortable)' }}
-                >
-                  {addToCartMutation.isPending ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Adding...
-                    </>
-                  ) : (
-                    'Add to Cart'
-                  )}
-                </button>
-              </div>
+      {/* Always render BottomSheet - it handles visibility internally via isOpen prop */}
+      <BottomSheet
+        isOpen={customizationModal.is_open}
+        onClose={handleCloseCustomizationModal}
+        title={customizationModal.item?.name || 'Product Details'}
+        maxHeight="85vh"
+        overlayType="customization"
+        footer={customizationModal.item ? (
+          <div className="space-y-3">
+            {/* Total Price Display */}
+            <div className="flex items-center justify-between px-1">
+              <span className="text-lg font-semibold text-[var(--primary-text)]">Total:</span>
+              <span className="text-3xl font-bold text-[var(--primary-text)]" style={{ letterSpacing: '-0.02em' }}>
+                €{(Number(customizationModal.total_price) * customizationModal.quantity).toFixed(2)}
+              </span>
             </div>
-          ) : undefined}
-        >
-          {/* Error State: Product not found */}
-          {!customizationModal.item ? (
-            <div className="py-12 text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
-                <svg className="w-8 h-8 text-red-600" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-                  <path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-[var(--primary-text)] mb-2">
-                Something went wrong
-              </h3>
-              <p className="text-[var(--primary-text)]/70 mb-6">
-                Unable to load product details. Please try again.
-              </p>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
               <button
                 onClick={handleCloseCustomizationModal}
-                className="px-6 py-3 rounded-[var(--radius-btn)] bg-[var(--btn-bg)] text-white font-bold hover:bg-[#1A0F0D] transition-colors"
+                className="flex-1 px-6 py-3 border-2 border-[var(--primary-text)] rounded-[var(--radius-btn)] text-[var(--primary-text)] font-semibold hover:bg-[var(--primary-bg)] transition-colors"
                 style={{ minHeight: 'var(--tap-target-comfortable)' }}
               >
-                Close
+                Cancel
+              </button>
+              <button
+                onClick={handleAddToCart}
+                disabled={addToCartMutation.isPending}
+                className="flex-1 px-6 py-3 rounded-[var(--radius-btn)] bg-[var(--btn-bg)] text-white font-bold hover:bg-[#1A0F0D] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                style={{ minHeight: 'var(--tap-target-comfortable)' }}
+              >
+                {addToCartMutation.isPending ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Adding...
+                  </>
+                ) : (
+                  'Add to Cart'
+                )}
               </button>
             </div>
-          ) : (
-            <>
-              {/* Item Header with Image */}
-              <div className="flex gap-4 mb-6 p-4 bg-[var(--primary-bg)] rounded-[var(--radius-card)]">
-            <img
-              src={customizationModal.item.image_url || ''}
-              alt={customizationModal.item.name}
-              className="w-20 h-20 object-cover flex-shrink-0"
-              style={{ borderRadius: 'var(--radius-card)' }}
-            />
-            <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-bold text-[var(--primary-text)] mb-1 leading-tight">
-                {customizationModal.item.name}
-              </h3>
-              {customizationModal.item.description && (
-                <p className="text-sm text-[var(--primary-text)]/70 line-clamp-2 leading-relaxed">
-                  {customizationModal.item.description}
-                </p>
-              )}
-            </div>
           </div>
-
-          {/* Customization Groups */}
-          {customizationModal.item.customization_groups.length > 0 ? (
-            <div className="space-y-6">
-              {customizationModal.item.customization_groups.map(group => (
-                <div key={group.group_id} className="space-y-3">
-                  <h4 className="text-base font-semibold text-[var(--primary-text)]">
-                    {group.name}
-                    {group.is_required && (
-                      <span className="ml-2 text-red-600 text-sm">*</span>
-                    )}
-                  </h4>
-
-                  <div className="space-y-2">
-                    {group.options.map(option => {
-                      const isSelected = customizationModal.selected_customizations.some(
-                        c => c.group_id === group.group_id && c.option_id === option.option_id
-                      );
-
-                      return (
-                        <label
-                          key={option.option_id}
-                          className={`flex items-center justify-between p-3 border-2 cursor-pointer transition-all ${
-                            isSelected
-                              ? 'border-[var(--btn-bg)] bg-[var(--primary-bg)]'
-                              : 'border-[var(--border-light)] hover:border-[var(--primary-text)]'
-                          }`}
-                          style={{ 
-                            borderRadius: 'var(--radius-card)',
-                            minHeight: '52px'
-                          }}
-                        >
-                          <div className="flex items-center gap-3">
-                            <input
-                              type={group.type === 'single' ? 'radio' : 'checkbox'}
-                              name={group.group_id}
-                              checked={isSelected}
-                              onChange={() => handleCustomizationChange(
-                                group.group_id,
-                                group.name,
-                                group.type,
-                                option
-                              )}
-                              className={`w-5 h-5 text-[var(--btn-bg)] border-2 border-[var(--border-light)] focus:ring-2 focus:ring-[var(--primary-text)]/20 transition-all ${
-                                group.type === 'single' ? '' : 'rounded'
-                              }`}
-                            />
-                            <span className="text-[var(--primary-text)] font-medium">
-                              {option.name}
-                            </span>
-                          </div>
-
-                          {Number(option.additional_price) > 0 && (
-                            <span className="text-[var(--primary-text)]/70 font-semibold">
-                              +€{Number(option.additional_price).toFixed(2)}
-                            </span>
-                          )}
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
+        ) : undefined}
+      >
+        {/* DEBUG: Log when content renders */}
+        {(() => { console.log('[Customization] Rendering content, item:', customizationModal.item?.item_id); return null; })()}
+        
+        {/* Loading State: Sheet is open but item not ready yet */}
+        {customizationModal.is_open && !customizationModal.item ? (
+          <div className="py-12 text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-[var(--primary-bg)] rounded-full mb-4 animate-pulse">
+              <svg className="w-8 h-8 text-[var(--primary-text)]" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+              </svg>
             </div>
-          ) : (
-            <div className="py-8 text-center">
-              <p className="text-[var(--primary-text)]/70">Select quantity and add to your cart.</p>
-            </div>
-          )}
-
-              {/* Quantity Selector - Using QuantityStepper */}
-              <div className="mt-6 space-y-3">
-                <h4 className="text-base font-semibold text-[var(--primary-text)]">Quantity</h4>
-                <div className="flex justify-center">
-                  <QuantityStepper
-                    value={customizationModal.quantity}
-                    onChange={(newQuantity) => setCustomizationModal(prev => ({
-                      ...prev,
-                      quantity: newQuantity
-                    }))}
-                    min={1}
-                    max={99}
-                    size="lg"
-                  />
-                </div>
+            <h3 className="text-lg font-semibold text-[var(--primary-text)] mb-2">
+              Loading item...
+            </h3>
+            <p className="text-[var(--primary-text)]/70 mb-6">
+              Please wait while we load the product details.
+            </p>
+            <button
+              onClick={handleCloseCustomizationModal}
+              className="px-6 py-3 border-2 border-[var(--primary-text)] rounded-[var(--radius-btn)] text-[var(--primary-text)] font-semibold hover:bg-[var(--primary-bg)] transition-colors"
+              style={{ minHeight: 'var(--tap-target-comfortable)' }}
+            >
+              Close
+            </button>
+          </div>
+        ) : customizationModal.item ? (
+          <>
+            {/* Item Header with Image */}
+            <div className="flex gap-4 mb-6 p-4 bg-[var(--primary-bg)] rounded-[var(--radius-card)]">
+              <img
+                src={customizationModal.item.image_url || ''}
+                alt={customizationModal.item.name}
+                className="w-20 h-20 object-cover flex-shrink-0"
+                style={{ borderRadius: 'var(--radius-card)' }}
+              />
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-bold text-[var(--primary-text)] mb-1 leading-tight">
+                  {customizationModal.item.name}
+                </h3>
+                {customizationModal.item.description && (
+                  <p className="text-sm text-[var(--primary-text)]/70 line-clamp-2 leading-relaxed">
+                    {customizationModal.item.description}
+                  </p>
+                )}
               </div>
-            </>
-          )}
-        </BottomSheet>
-      )}
+            </div>
+
+            {/* Customization Groups */}
+            {customizationModal.item.customization_groups.length > 0 ? (
+              <div className="space-y-6">
+                {customizationModal.item.customization_groups.map(group => (
+                  <div key={group.group_id} className="space-y-3">
+                    <h4 className="text-base font-semibold text-[var(--primary-text)]">
+                      {group.name}
+                      {group.is_required && (
+                        <span className="ml-2 text-red-600 text-sm">*</span>
+                      )}
+                    </h4>
+
+                    <div className="space-y-2">
+                      {group.options.map(option => {
+                        const isSelected = customizationModal.selected_customizations.some(
+                          c => c.group_id === group.group_id && c.option_id === option.option_id
+                        );
+
+                        return (
+                          <label
+                            key={option.option_id}
+                            className={`flex items-center justify-between p-3 border-2 cursor-pointer transition-all ${
+                              isSelected
+                                ? 'border-[var(--btn-bg)] bg-[var(--primary-bg)]'
+                                : 'border-[var(--border-light)] hover:border-[var(--primary-text)]'
+                            }`}
+                            style={{ 
+                              borderRadius: 'var(--radius-card)',
+                              minHeight: '52px'
+                            }}
+                          >
+                            <div className="flex items-center gap-3">
+                              <input
+                                type={group.type === 'single' ? 'radio' : 'checkbox'}
+                                name={group.group_id}
+                                checked={isSelected}
+                                onChange={() => handleCustomizationChange(
+                                  group.group_id,
+                                  group.name,
+                                  group.type,
+                                  option
+                                )}
+                                className={`w-5 h-5 text-[var(--btn-bg)] border-2 border-[var(--border-light)] focus:ring-2 focus:ring-[var(--primary-text)]/20 transition-all ${
+                                  group.type === 'single' ? '' : 'rounded'
+                                }`}
+                              />
+                              <span className="text-[var(--primary-text)] font-medium">
+                                {option.name}
+                              </span>
+                            </div>
+
+                            {Number(option.additional_price) > 0 && (
+                              <span className="text-[var(--primary-text)]/70 font-semibold">
+                                +€{Number(option.additional_price).toFixed(2)}
+                              </span>
+                            )}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-8 text-center">
+                <p className="text-[var(--primary-text)]/70">Select quantity and add to your cart.</p>
+              </div>
+            )}
+
+            {/* Quantity Selector - Using QuantityStepper */}
+            <div className="mt-6 space-y-3">
+              <h4 className="text-base font-semibold text-[var(--primary-text)]">Quantity</h4>
+              <div className="flex justify-center">
+                <QuantityStepper
+                  value={customizationModal.quantity}
+                  onChange={(newQuantity) => setCustomizationModal(prev => ({
+                    ...prev,
+                    quantity: newQuantity
+                  }))}
+                  min={1}
+                  max={99}
+                  size="lg"
+                />
+              </div>
+            </div>
+          </>
+        ) : null}
+      </BottomSheet>
     </>
   );
 };

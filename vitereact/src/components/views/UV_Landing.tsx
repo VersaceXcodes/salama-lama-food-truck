@@ -580,12 +580,13 @@ const UV_Landing: React.FC = () => {
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
               {['Corporate Events', 'Weddings', 'Private Parties', 'Festivals'].map((type) => (
-                <div
+                <Link
                   key={type}
-                  className="bg-[#F2EFE9]/10 backdrop-blur-sm rounded-lg p-4 text-center border border-[#F2EFE9]/20"
+                  to={`/catering?event=${encodeURIComponent(type)}`}
+                  className="bg-[#F2EFE9]/10 backdrop-blur-sm rounded-lg p-4 text-center border border-[#F2EFE9]/20 hover:bg-[#F2EFE9]/20 hover:border-[#F2EFE9]/40 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#F2EFE9]/50 focus:ring-offset-2 focus:ring-offset-[#2C1A16]"
                 >
                   <p className="font-medium text-[#F2EFE9]">{type}</p>
-                </div>
+                </Link>
               ))}
             </div>
 

@@ -37,7 +37,9 @@ export const CartBar: React.FC<CartBarProps> = ({
   }, [location.pathname]); // Re-check when route changes
   
   // Routes where cart bar should be hidden
+  // Note: /cart has its own mobile footer bar
   const hiddenRoutes = [
+    '/cart',
     '/checkout',
     '/order-confirmation',
     '/admin',

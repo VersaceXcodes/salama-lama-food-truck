@@ -1,12 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '@/store/main';
 import { useOverlayState } from '@/hooks/use-overlay-state';
 import { CartBar } from '@/components/ui/cart-bar';
 import { ShoppingCart } from 'lucide-react';
+import { calculateCartTotals, parseCartData } from '@/utils/cartTotals';
+import axios from 'axios';
 
 const GV_FloatingCart: React.FC = () => {
   const location = useLocation();
+  const queryClient = useQueryClient();
   
   // ===========================
   // Global State Access (Zustand - Individual Selectors)
@@ -15,6 +19,10 @@ const GV_FloatingCart: React.FC = () => {
   // CRITICAL: Individual selectors, no object destructuring to prevent infinite re-renders
   const cartItems = useAppStore(state => state.cart_state.items);
   const cartTotal = useAppStore(state => state.cart_state.total);
+  const isHydrated = useAppStore(state => state.cart_state.isHydrated);
+  const authToken = useAppStore(state => state.authentication_state.auth_token);
+  const syncCartFromApi = useAppStore(state => state.sync_cart_from_api);
+  const setCartHydrated = useAppStore(state => state.set_cart_hydrated);
   
   // Check if any overlay is open
   const isOverlayOpen = useOverlayState(state => state.isOverlayOpen);
@@ -26,15 +34,79 @@ const GV_FloatingCart: React.FC = () => {
   const [isAnimating, setIsAnimating] = useState(false);
   
   // ===========================
-  // Derived State
+  // API URL
+  // ===========================
+  
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+  
+  // Create axios instance with credentials (for guest session cookies)
+  const axiosWithCredentials = useMemo(() => {
+    return axios.create({
+      baseURL: API_BASE_URL,
+      withCredentials: true,
+    });
+  }, [API_BASE_URL]);
+
+  // ===========================
+  // React Query: Fetch Cart (Single Source of Truth)
+  // ===========================
+  
+  const { data: serverCartData, isLoading: isCartLoading } = useQuery({
+    queryKey: ['cart'],
+    queryFn: async () => {
+      const response = await axiosWithCredentials.get('/api/cart', {
+        headers: authToken ? { Authorization: `Bearer ${authToken}` } : {}
+      });
+      return response.data;
+    },
+    staleTime: 30000, // 30 seconds
+    refetchOnWindowFocus: false,
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 3000),
+  });
+
+  // ===========================
+  // Sync API cart data to Zustand (single source of truth)
+  // ===========================
+  
+  useEffect(() => {
+    if (serverCartData && !isCartLoading) {
+      syncCartFromApi(serverCartData);
+      
+      // Dev logging for cart consistency check
+      if (import.meta.env.DEV) {
+        const apiItemCount = serverCartData.items?.length || 0;
+        const zustandItemCount = cartItems.length;
+        if (apiItemCount !== zustandItemCount) {
+          console.warn('[CART CONSISTENCY] Item count mismatch detected:', {
+            api: apiItemCount,
+            zustand: zustandItemCount,
+            location: 'GV_FloatingCart',
+          });
+        }
+      }
+    }
+  }, [serverCartData, isCartLoading, syncCartFromApi]);
+
+  // Mark cart as hydrated if API fails but we have local data
+  useEffect(() => {
+    if (!isCartLoading && !serverCartData && cartItems.length > 0 && !isHydrated) {
+      setCartHydrated(true);
+    }
+  }, [isCartLoading, serverCartData, cartItems.length, isHydrated, setCartHydrated]);
+  
+  // ===========================
+  // Derived State - Use Zustand as single source (synced from API)
   // ===========================
   
   // Calculate total item count (sum of all quantities)
   const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-  const isEmpty = itemCount === 0;
+  const isEmpty = itemCount === 0 || (!isHydrated && !isCartLoading && serverCartData?.items?.length === 0);
   
   // Routes where floating cart should be hidden
+  // Note: /cart has its own mobile footer, so we hide the floating cart there too
   const hiddenRoutes = [
+    '/cart',
     '/checkout',
     '/order-confirmation',
     '/admin',
@@ -64,6 +136,12 @@ const GV_FloatingCart: React.FC = () => {
   // ===========================
   // Early Return - Hide When Empty or on Hidden Routes
   // ===========================
+  
+  // Don't show floating cart until cart is hydrated to prevent flicker
+  // Also hide if cart is loading or empty
+  if (!isHydrated && isCartLoading) {
+    return null;
+  }
   
   if (isEmpty || isHiddenRoute) {
     return null;

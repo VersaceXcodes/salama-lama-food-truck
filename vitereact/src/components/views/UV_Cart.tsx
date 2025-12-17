@@ -79,7 +79,7 @@ const UV_Cart: React.FC = () => {
   // Global state (individual selectors to avoid infinite loops)
   const authToken = useAppStore(state => state.authentication_state.auth_token);
   
-  // Local cart state from Zustand store (for fallback when API fails)
+  // Local cart state from Zustand store (synced from API as single source of truth)
   const localCartItems = useAppStore(state => state.cart_state.items);
   const localCartSubtotal = useAppStore(state => state.cart_state.subtotal);
   const localCartDiscountCode = useAppStore(state => state.cart_state.discount_code);
@@ -87,11 +87,14 @@ const UV_Cart: React.FC = () => {
   const localCartDeliveryFee = useAppStore(state => state.cart_state.delivery_fee);
   const localCartTaxAmount = useAppStore(state => state.cart_state.tax_amount);
   const localCartTotal = useAppStore(state => state.cart_state.total);
+  const isCartHydrated = useAppStore(state => state.cart_state.isHydrated);
   
   // Cart actions for local state updates
   const updateCartQuantity = useAppStore(state => state.update_cart_quantity);
   const removeFromCart = useAppStore(state => state.remove_from_cart);
   const clearCart = useAppStore(state => state.clear_cart);
+  const syncCartFromApi = useAppStore(state => state.sync_cart_from_api);
+  const setCartHydrated = useAppStore(state => state.set_cart_hydrated);
   
   // Local state
   const [discountCode, setDiscountCode] = useState('');
@@ -219,6 +222,40 @@ const UV_Cart: React.FC = () => {
     // Last resort: return local cart data if available
     return localCartData;
   }, [serverCartData, cartError, localCartData, usingLocalCart]);
+  
+  // ===========================
+  // Sync API cart data to Zustand (single source of truth)
+  // ===========================
+  
+  useEffect(() => {
+    if (serverCartData && !cartError) {
+      // Sync API data to Zustand so floating cart bar shows the same data
+      syncCartFromApi(serverCartData);
+      
+      // Dev logging for cart consistency
+      if (import.meta.env.DEV) {
+        console.log('[CART PAGE] API data synced to Zustand:', {
+          itemCount: serverCartData.items?.length || 0,
+          total: serverCartData.total,
+          hydrated: true,
+        });
+      }
+    }
+  }, [serverCartData, cartError, syncCartFromApi]);
+
+  // Mark cart as hydrated even if API fails but we have local data
+  useEffect(() => {
+    if (!isCartLoading && cartError && localCartItems.length > 0 && !isCartHydrated) {
+      setCartHydrated(true);
+    }
+  }, [isCartLoading, cartError, localCartItems.length, isCartHydrated, setCartHydrated]);
+
+  // Mark cart as hydrated when API returns empty
+  useEffect(() => {
+    if (!isCartLoading && serverCartData && serverCartData.items?.length === 0 && !isCartHydrated) {
+      setCartHydrated(true);
+    }
+  }, [isCartLoading, serverCartData, isCartHydrated, setCartHydrated]);
   
   // Log cart totals in dev mode (only when cartData changes, not on every render)
   useEffect(() => {
@@ -543,15 +580,75 @@ const UV_Cart: React.FC = () => {
   };
 
   // ===========================
-  // Loading State
+  // Loading State - Show skeleton until cart is fully hydrated
   // ===========================
 
-  if (isCartLoading) {
+  if (isCartLoading || (!isCartHydrated && !cartData)) {
     return (
-      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-[#F2EFE9]">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-[#2C1A16]" />
-          <p className="font-medium text-[#4A3B32]">Loading your cart...</p>
+      <div className="min-h-screen py-4 sm:py-6 lg:py-8 px-4 sm:px-6 lg:px-10 bg-[#F2EFE9]">
+        <div className="max-w-6xl mx-auto">
+          {/* Page Header Skeleton */}
+          <div className="mb-4 sm:mb-6 lg:mb-8">
+            <div className="h-8 sm:h-10 lg:h-12 bg-gray-200 rounded-lg w-48 animate-pulse"></div>
+            <div className="h-4 sm:h-5 bg-gray-200 rounded w-64 mt-2 animate-pulse"></div>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Cart Items Skeleton */}
+            <div className="lg:col-span-2 space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-white rounded-2xl shadow-md border-2 border-[#E8E1D6] p-5 sm:p-6 animate-pulse">
+                  <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+                    <div className="flex-1 w-full">
+                      <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+                      <div className="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
+                      <div className="h-5 bg-gray-200 rounded w-24"></div>
+                      <div className="mt-4 flex items-center gap-3">
+                        <div className="h-11 w-11 bg-gray-200 rounded-full"></div>
+                        <div className="h-8 w-16 bg-gray-200 rounded"></div>
+                        <div className="h-11 w-11 bg-gray-200 rounded-full"></div>
+                      </div>
+                    </div>
+                    <div className="h-8 w-24 bg-gray-200 rounded"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {/* Order Summary Skeleton */}
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-2xl shadow-lg border-2 border-[#E8E1D6] p-6 animate-pulse">
+                <div className="h-6 bg-gray-200 rounded w-36 mb-6"></div>
+                <div className="space-y-3 mb-6 pb-6 border-b border-gray-200">
+                  <div className="h-10 bg-gray-200 rounded"></div>
+                  <div className="h-10 bg-gray-200 rounded w-24"></div>
+                </div>
+                <div className="space-y-2 mb-6">
+                  <div className="flex justify-between">
+                    <div className="h-4 bg-gray-200 rounded w-20"></div>
+                    <div className="h-4 bg-gray-200 rounded w-16"></div>
+                  </div>
+                  <div className="flex justify-between">
+                    <div className="h-4 bg-gray-200 rounded w-16"></div>
+                    <div className="h-4 bg-gray-200 rounded w-12"></div>
+                  </div>
+                  <div className="flex justify-between pt-2 border-t">
+                    <div className="h-5 bg-gray-200 rounded w-14"></div>
+                    <div className="h-5 bg-gray-200 rounded w-20"></div>
+                  </div>
+                </div>
+                <div className="h-14 bg-gray-200 rounded-lg"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Mobile loading indicator */}
+        <div className="fixed bottom-0 left-0 right-0 bg-white shadow-2xl z-40 lg:hidden border-t-2 border-[#E8E1D6] p-4">
+          <div className="flex items-center justify-center">
+            <Loader2 className="h-6 w-6 animate-spin text-[#2C1A16] mr-2" />
+            <span className="text-sm text-[#4A3B32]">Loading your cart...</span>
+          </div>
         </div>
       </div>
     );
@@ -729,19 +826,19 @@ const UV_Cart: React.FC = () => {
       )}
 
     
-      <div className="min-h-screen py-4 sm:py-6 lg:py-8 px-4 sm:px-6 lg:px-10 bg-[#F2EFE9]">
+      <div className="min-h-screen py-4 sm:py-6 lg:py-8 px-4 sm:px-6 lg:px-8 bg-[#F2EFE9]">
         <div className="max-w-6xl mx-auto">
-          {/* Page Header */}
+          {/* Page Header - Mobile first */}
           <div className="mb-4 sm:mb-6 lg:mb-8">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold" style={{ color: 'var(--primary-text)' }}>Shopping Cart</h1>
-            <p className="mt-1 sm:mt-2 text-sm sm:text-base" style={{ color: '#4A3B32' }}>
-              Review your items before checkout
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-[#2C1A16]">Shopping Cart</h1>
+            <p className="mt-1 text-sm text-[#4A3B32]">
+              {cartItems.length} {cartItems.length === 1 ? 'item' : 'items'} in your cart
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
             {/* Cart Items Section */}
-            <div className="lg:col-span-2 space-y-4">
+            <div className="lg:col-span-2 space-y-3 sm:space-y-4">
               {cartItems.map((item) => {
                 const unitPrice = Number(item.unit_price || 0);
                 const lineTotal = Number(item.line_total || 0);
@@ -751,7 +848,7 @@ const UV_Cart: React.FC = () => {
                   return (
                     <div
                       key={item.cart_item_id}
-                      className={`rounded-2xl shadow-md border-2 p-5 sm:p-6 transition-all duration-200 hover:shadow-lg ${
+                      className={`rounded-xl sm:rounded-2xl shadow-sm sm:shadow-md border p-4 sm:p-5 transition-all duration-200 hover:shadow-md ${
                         isAvailable 
                           ? 'bg-white border-[#E8E1D6]' 
                           : 'bg-red-50 border-red-300 opacity-75'
@@ -766,114 +863,91 @@ const UV_Cart: React.FC = () => {
                         </div>
                       </div>
                     )}
-                    {/* COMMANDMENT #4: Mobile Cart Card Layout */}
-                    <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
-                      <div className="flex-1 w-full">
-                        {/* Item Name */}
-                        <h3 className={`text-lg lg:text-xl font-bold mb-2 ${isAvailable ? 'text-gray-900' : 'text-gray-500 line-through'}`}>
-                          {item.item_name}
-                        </h3>
-
-                        {/* Customizations */}
-                        {renderCustomizations(item.selected_customizations)}
-
-                        {/* Unit Price */}
+                    {/* Mobile-first Cart Card Layout */}
+                    <div className="flex flex-col gap-3">
+                      {/* Top Row: Item name and price */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <h3 className={`text-base sm:text-lg font-bold leading-tight ${isAvailable ? 'text-[#2C1A16]' : 'text-gray-500 line-through'}`}>
+                            {item.item_name}
+                          </h3>
+                          {/* Customizations */}
+                          {renderCustomizations(item.selected_customizations)}
+                          {/* Unit Price */}
+                          {isAvailable && (
+                            <p className="mt-1 text-sm text-gray-500">
+                              €{unitPrice.toFixed(2)} each
+                            </p>
+                          )}
+                        </div>
+                        {/* Line Total - Always visible */}
                         {isAvailable && (
-                          <p className="mt-2 text-base text-gray-600 font-medium">
-                            €{unitPrice.toFixed(2)} each
-                          </p>
-                        )}
-
-                        {/* Quantity Controls - Clean Mobile Stepper */}
-                        {isAvailable && (
-                          <div className="mt-3 sm:mt-4 flex items-center justify-between sm:justify-start gap-3">
-                            <div className="flex items-center bg-[#F2EFE9] rounded-xl p-1.5">
-                              <button
-                                onClick={() => handleQuantityChange(item.cart_item_id, item.quantity - 1, item.item_id)}
-                                disabled={item.quantity <= 1 || isUpdating}
-                                className="w-11 h-11 rounded-full bg-white border-2 border-[#E8E1D6] flex items-center justify-center text-[#2C1A16] hover:bg-white hover:border-[#2C1A16] hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm"
-                                style={{ minHeight: '44px', minWidth: '44px' }}
-                                aria-label="Decrease quantity"
-                              >
-                                {isUpdating ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <Minus className="h-4 w-4 stroke-[3]" />
-                                )}
-                              </button>
-
-                              <span className="w-16 sm:w-20 text-center font-bold text-xl sm:text-2xl text-[#2C1A16]">
-                                {item.quantity}
-                              </span>
-
-                              <button
-                                onClick={() => handleQuantityChange(item.cart_item_id, item.quantity + 1, item.item_id)}
-                                disabled={isUpdating}
-                                className="w-11 h-11 rounded-full bg-white border-2 border-[#E8E1D6] flex items-center justify-center text-[#2C1A16] hover:bg-white hover:border-[#2C1A16] hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm"
-                                style={{ minHeight: '44px', minWidth: '44px' }}
-                                aria-label="Increase quantity"
-                              >
-                                {isUpdating ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <Plus className="h-4 w-4 stroke-[3]" />
-                                )}
-                              </button>
-                            </div>
-                            
-                            <div className="text-right sm:hidden">
-                              <p className="text-xl font-bold text-[#2C1A16]">
-                                €{lineTotal.toFixed(2)}
-                              </p>
-                            </div>
+                          <div className="text-right flex-shrink-0">
+                            <p className="text-lg sm:text-xl font-bold text-[#2C1A16]">
+                              €{lineTotal.toFixed(2)}
+                            </p>
                           </div>
                         )}
                       </div>
 
-                      {/* Right Side: Line Total and Remove Button */}
-                      <div className="flex sm:flex-col items-center sm:items-end gap-3 w-full sm:w-auto">
-                        {!isAvailable ? (
+                      {/* Bottom Row: Quantity Controls and Remove Button */}
+                      {isAvailable ? (
+                        <div className="flex items-center justify-between gap-3 pt-2 border-t border-gray-100">
+                          {/* Quantity Stepper */}
+                          <div className="flex items-center bg-[#F2EFE9] rounded-lg p-1">
+                            <button
+                              onClick={() => handleQuantityChange(item.cart_item_id, item.quantity - 1, item.item_id)}
+                              disabled={item.quantity <= 1 || isUpdating}
+                              className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-white border border-[#E8E1D6] flex items-center justify-center text-[#2C1A16] hover:border-[#2C1A16] disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+                              aria-label="Decrease quantity"
+                            >
+                              {isUpdating ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Minus className="h-4 w-4" />
+                              )}
+                            </button>
+
+                            <span className="w-10 sm:w-12 text-center font-bold text-lg text-[#2C1A16]">
+                              {item.quantity}
+                            </span>
+
+                            <button
+                              onClick={() => handleQuantityChange(item.cart_item_id, item.quantity + 1, item.item_id)}
+                              disabled={isUpdating}
+                              className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-white border border-[#E8E1D6] flex items-center justify-center text-[#2C1A16] hover:border-[#2C1A16] disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+                              aria-label="Increase quantity"
+                            >
+                              {isUpdating ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Plus className="h-4 w-4" />
+                              )}
+                            </button>
+                          </div>
+                          
+                          {/* Remove Button */}
                           <button
                             onClick={() => handleRemoveItem(item.cart_item_id, item.item_name, item.item_id)}
                             disabled={removeItemMutation.isPending}
-                            className="w-full sm:w-auto px-6 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-all duration-200 disabled:opacity-50 flex items-center justify-center space-x-2"
-                            style={{ minHeight: '48px' }}
-                            aria-label="Remove unavailable item"
+                            className="flex items-center justify-center px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 text-sm font-medium rounded-lg transition-all duration-200 disabled:opacity-50"
+                            aria-label="Remove item"
                           >
-                            <Trash2 className="h-5 w-5" />
+                            <Trash2 className="h-4 w-4 mr-1.5" />
                             <span>Remove</span>
                           </button>
-                        ) : (
-                          <>
-                            <button
-                              onClick={() => handleRemoveItem(item.cart_item_id, item.item_name, item.item_id)}
-                              disabled={removeItemMutation.isPending}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50 p-3 rounded-xl transition-all duration-200 disabled:opacity-50 sm:block hidden"
-                              style={{ minHeight: '48px', minWidth: '48px' }}
-                              aria-label="Remove item"
-                            >
-                              <Trash2 className="h-6 w-6" />
-                            </button>
-
-                            <div className="text-right hidden sm:block">
-                              <p className="text-2xl font-bold text-gray-900">
-                                €{lineTotal.toFixed(2)}
-                              </p>
-                            </div>
-                            
-                            <button
-                              onClick={() => handleRemoveItem(item.cart_item_id, item.item_name, item.item_id)}
-                              disabled={removeItemMutation.isPending}
-                              className="sm:hidden flex items-center justify-center px-5 py-3 text-red-600 hover:text-red-700 hover:bg-red-50 font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 border-2 border-red-300"
-                              style={{ minHeight: '48px' }}
-                              aria-label="Remove item"
-                            >
-                              <Trash2 className="h-5 w-5 mr-2" />
-                              Remove
-                            </button>
-                          </>
-                        )}
-                      </div>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleRemoveItem(item.cart_item_id, item.item_name, item.item_id)}
+                          disabled={removeItemMutation.isPending}
+                          className="w-full py-2.5 bg-red-600 text-white font-semibold text-sm rounded-lg hover:bg-red-700 transition-all duration-200 disabled:opacity-50 flex items-center justify-center"
+                          aria-label="Remove unavailable item"
+                        >
+                          <Trash2 className="h-4 w-4 mr-1.5" />
+                          <span>Remove Unavailable Item</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
@@ -909,10 +983,77 @@ const UV_Cart: React.FC = () => {
               </div>
             </div>
 
-            {/* Order Summary Sidebar */}
-            <div className="lg:col-span-1">
+            {/* Mobile Order Summary - Visible only on mobile */}
+            <div className="lg:hidden">
+              <div className="bg-white rounded-xl shadow-sm border border-[#E8E1D6] p-4">
+                <h2 className="text-lg font-bold text-[#2C1A16] mb-4">Order Summary</h2>
+                
+                {/* Discount Code Section - Mobile */}
+                <div className="mb-4 pb-4 border-b border-gray-100">
+                  <label htmlFor="discount-code-mobile" className="block text-sm font-medium text-gray-700 mb-2">
+                    Discount Code
+                  </label>
+                  
+                  {hasDiscount ? (
+                    <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                      <div className="flex items-center">
+                        <Tag className="h-4 w-4 text-green-600 mr-1.5" />
+                        <span className="font-medium text-green-900 text-sm">{cartData?.discount_code}</span>
+                      </div>
+                      <button
+                        onClick={handleRemoveDiscount}
+                        className="text-xs text-red-600 hover:text-red-700 font-medium"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <input
+                        id="discount-code-mobile"
+                        type="text"
+                        value={discountCode}
+                        onChange={handleDiscountInputChange}
+                        placeholder="Enter code"
+                        className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-200"
+                      />
+                      <button
+                        onClick={handleApplyDiscount}
+                        disabled={validateDiscountMutation.isPending || !discountCode.trim()}
+                        className="px-4 py-2 bg-orange-600 text-white text-sm font-medium rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {validateDiscountMutation.isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          'Apply'
+                        )}
+                      </button>
+                    </div>
+                  )}
+                  
+                  {discountError && (
+                    <div className="mt-2 flex items-start text-xs text-red-600 bg-red-50 px-2 py-1.5 rounded">
+                      <AlertCircle className="h-3.5 w-3.5 mr-1.5 mt-0.5 flex-shrink-0" />
+                      <span>{discountError}</span>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Pricing Breakdown - Mobile */}
+                <OrderSummary
+                  totals={totals}
+                  discountCode={cartData?.discount_code}
+                  hasDiscount={hasDiscount}
+                  showDeliveryFee={true}
+                  showTax={true}
+                />
+              </div>
+            </div>
+
+            {/* Order Summary Sidebar - Desktop only */}
+            <div className="lg:col-span-1 hidden lg:block">
               <div className="bg-white rounded-2xl shadow-lg border-2 border-[#E8E1D6] p-6 sticky top-24">
-                <h2 className="text-xl font-bold text-gray-900 mb-6">Order Summary</h2>
+                <h2 className="text-xl font-bold text-[#2C1A16] mb-6">Order Summary</h2>
 
                 {/* Discount Code Section */}
                 <div className="mb-6 pb-6 border-b border-gray-200">
@@ -1007,33 +1148,35 @@ const UV_Cart: React.FC = () => {
           </div>
         </div>
         
-        {/* Premium Sticky Footer Bar for Mobile */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white shadow-2xl z-40 lg:hidden border-t-2 border-[#E8E1D6]" style={{ 
-          paddingBottom: 'env(safe-area-inset-bottom, 16px)',
-          height: 'var(--bottom-bar-height-mobile)',
-          boxShadow: '0 -8px 32px 0 rgb(44 26 22 / 0.12)'
-        }}>
-          <div className="px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
-            <div>
-              <p className="text-xs text-gray-600 font-semibold mb-0.5">Total</p>
-              <p className="text-2xl font-bold text-[#2C1A16]" style={{ letterSpacing: '-0.02em' }}>
+        {/* Premium Sticky Footer Bar for Mobile - Fixed at bottom with safe area */}
+        <div 
+          className="fixed bottom-0 left-0 right-0 bg-white z-40 lg:hidden border-t-2 border-[#E8E1D6]" 
+          style={{ 
+            paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)',
+            boxShadow: '0 -8px 32px 0 rgb(44 26 22 / 0.15)'
+          }}
+        >
+          <div className="px-4 py-3 flex items-center justify-between gap-4">
+            <div className="flex-shrink-0">
+              <p className="text-xs text-gray-500 font-medium mb-0.5">Total</p>
+              <p className="text-xl sm:text-2xl font-bold text-[#2C1A16]" style={{ letterSpacing: '-0.02em' }}>
                 €{totals.total}
               </p>
             </div>
             <button
               onClick={handleProceedToCheckout}
               disabled={validateCheckoutMutation.isPending}
-              className="flex-1 max-w-xs py-4 font-bold text-lg rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 flex items-center justify-center bg-[#2C1A16] text-[#F2EFE9]"
-              style={{ minHeight: '56px' }}
+              className="flex-1 max-w-[200px] py-3.5 font-bold text-base rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] flex items-center justify-center bg-[#2C1A16] text-[#F2EFE9]"
+              style={{ minHeight: '48px' }}
             >
               {validateCheckoutMutation.isPending ? (
                 <>
                   <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                  Validating...
+                  <span>Validating...</span>
                 </>
               ) : (
                 <>
-                  Checkout
+                  <span>Checkout</span>
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </>
               )}
@@ -1041,8 +1184,8 @@ const UV_Cart: React.FC = () => {
           </div>
         </div>
         
-        {/* Spacer for sticky footer on mobile */}
-        <div className="h-24 lg:hidden" aria-hidden="true" />
+        {/* Spacer for sticky footer on mobile - accounts for safe area */}
+        <div className="h-28 lg:hidden" aria-hidden="true" />
       </div>
     </>
   );

@@ -55,6 +55,9 @@ export interface CartState {
   delivery_fee: number;
   tax_amount: number;
   total: number;
+  // Hydration tracking for consistent cart state
+  isHydrated: boolean;
+  lastSyncedAt: number | null;
 }
 
 export interface BusinessSettings {
@@ -137,6 +140,17 @@ interface AppStore {
   clear_cart: () => void;
   recalculate_totals: () => void;
   sync_guest_cart_to_backend: () => Promise<void>;
+  // New: Sync API cart data to local state (single source of truth)
+  sync_cart_from_api: (cartData: {
+    items: CartItem[];
+    subtotal: number;
+    discount_code: string | null;
+    discount_amount: number;
+    delivery_fee: number;
+    tax_amount: number;
+    total: number;
+  }) => void;
+  set_cart_hydrated: (hydrated: boolean) => void;
 
   // Business Settings Actions
   fetch_business_settings: () => Promise<void>;
@@ -212,6 +226,8 @@ export const useAppStore = create<AppStore>()(
         delivery_fee: 0,
         tax_amount: 0,
         total: 0,
+        isHydrated: false,
+        lastSyncedAt: null,
       },
 
       business_settings: {
@@ -465,6 +481,8 @@ export const useAppStore = create<AppStore>()(
             delivery_fee: 0,
             tax_amount: 0,
             total: 0,
+            isHydrated: true,
+            lastSyncedAt: Date.now(),
           },
           notification_state: {
             notifications: [],
@@ -681,6 +699,8 @@ export const useAppStore = create<AppStore>()(
             delivery_fee: 0,
             tax_amount: 0,
             total: 0,
+            isHydrated: true,
+            lastSyncedAt: Date.now(),
           },
         }));
       },
@@ -704,6 +724,60 @@ export const useAppStore = create<AppStore>()(
             },
           };
         });
+      },
+
+      // Sync cart data from API to local Zustand state (single source of truth)
+      sync_cart_from_api: (cartData) => {
+        set((state) => {
+          // Convert API cart items to local CartItem format
+          const items: CartItem[] = (cartData.items || []).map((apiItem: any) => ({
+            item_id: apiItem.item_id,
+            item_name: apiItem.item_name,
+            quantity: apiItem.quantity,
+            unit_price: Number(apiItem.unit_price || 0),
+            customizations: apiItem.selected_customizations 
+              ? Object.entries(apiItem.selected_customizations).map(([group_name, value]: [string, any]) => ({
+                  group_name,
+                  option_name: typeof value === 'object' ? (value.name || String(value)) : String(value),
+                  additional_price: typeof value === 'object' ? Number(value.additional_price || 0) : 0,
+                }))
+              : [],
+            line_total: Number(apiItem.line_total || 0),
+          }));
+
+          const newCartState = {
+            items,
+            subtotal: Number(cartData.subtotal || 0),
+            discount_code: cartData.discount_code || null,
+            discount_amount: Number(cartData.discount_amount || 0),
+            delivery_fee: Number(cartData.delivery_fee || 0),
+            tax_amount: Number(cartData.tax_amount || 0),
+            total: Number(cartData.total || 0),
+            isHydrated: true,
+            lastSyncedAt: Date.now(),
+          };
+
+          // Dev logging for cart sync
+          if (import.meta.env.DEV) {
+            console.log('[CART SYNC] API -> Zustand:', {
+              itemCount: items.length,
+              total: newCartState.total,
+              previousTotal: state.cart_state.total,
+              previousItemCount: state.cart_state.items.length,
+            });
+          }
+
+          return { cart_state: newCartState };
+        });
+      },
+
+      set_cart_hydrated: (hydrated: boolean) => {
+        set((state) => ({
+          cart_state: {
+            ...state.cart_state,
+            isHydrated: hydrated,
+          },
+        }));
       },
 
       sync_guest_cart_to_backend: async () => {
@@ -1172,7 +1246,11 @@ export const useAppStore = create<AppStore>()(
           },
           error_message: null, // Never persist errors
         },
-        cart_state: state.cart_state,
+        cart_state: {
+          ...state.cart_state,
+          // Mark as needing rehydration on next load (API fetch will set true)
+          isHydrated: false,
+        },
       }),
     }
   )

@@ -13,7 +13,7 @@ export interface User {
   phone: string;
   first_name: string;
   last_name: string;
-  role: 'customer' | 'staff' | 'manager' | 'admin';
+  role: 'customer' | 'staff' | 'manager' | 'admin' | 'guest';
   profile_photo_url: string | null;
   email_verified: boolean;
   status: 'active' | 'inactive' | 'suspended';
@@ -142,7 +142,7 @@ interface AppStore {
   sync_guest_cart_to_backend: () => Promise<void>;
   // New: Sync API cart data to local state (single source of truth)
   sync_cart_from_api: (cartData: {
-    items: CartItem[];
+    items: any[];
     subtotal: number;
     discount_code: string | null;
     discount_amount: number;

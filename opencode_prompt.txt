@@ -1,13 +1,35 @@
-Fix the mobile “Customize & Add” popup showing a blank white sheet. What’s happening On desktop, clicking Customize & Add opens the customization UI correctly. On mobile, the sheet/drawer opens (I see the drag handle) but the content is empty. Goals Mobile and desktop must show the same customization content (options, price, add-to-cart button). The popup must never render blank — show the content or a clear loading/error state. The popup must be mobile-friendly (scrollable content area, sticky footer action, safe-area aware) and not clash with the header or the bottom cart bar. Avoid hardcoded pixel values; use existing design tokens / responsive utilities. What to investigate (likely root cause) There are probably two different UIs: desktop uses a Dialog/Modal and mobile uses a Drawer/Sheet, and the mobile one is missing children or is gated by a condition like selectedItem && (...). The popup is opening before selectedItem is set, so the drawer renders with selectedItem = null and never updates, or the drawer is mounted without passing the selected item. Another possibility: the customizer content is there but is not visible on mobile due to layout/overflow/z-index (header overlays it, body has zero height, content clipped, etc.). Required code changes Unify the content Create a single ItemCustomizerContent component that renders the full customization UI. Render that same component inside: Desktop: Dialog Mobile: Drawer/Sheet Do NOT duplicate logic in two separate components. Fix state/open sequencing Ensure the popup does not open unless we have a valid item. Recommended pattern: Keep selectedItem in state. Compute isOpen = Boolean(selectedItem). On “Customize & Add” click: set selectedItem(item) (and only that). The open state should follow from it. On close: set selectedItem(null). Never allow empty body If popup is open but item data isn’t ready: Show a loading skeleton/spinner and a “Loading item…” label. If item fails to load: Show a friendly error state with “Close” and “Retry”. Mobile layout rules The drawer/sheet body must be scrollable for long option lists. Keep the primary action (“Add to Cart”) in a sticky footer within the sheet so it’s always reachable. Ensure safe-area padding for iOS. While the popup is open: Disable background scroll. Hide or disable the floating bottom cart bar so it doesn’t overlap the sheet. Make sure the header doesn’t overlap the sheet (z-index/stacking context fix). Close behavior Ensure the close “X” is visible and clickable on mobile. Tapping outside should close (unless you intentionally prevent it). Add debugging proof Add temporary console logs (remove after fix): When clicking Customize: log the clicked item id/name. When the sheet opens: log selectedItem. When rendering content: log that content is rendering + item id. Acceptance criteria On mobile, tapping Customize & Add always shows customization UI (or loading/error state), never blank. Works on iOS Safari + Android Chrome. No overlap issues with top navigation or bottom cart bar. Closing returns to the menu without layout glitches.
+## BUILD FAILURE - Fix Required (Attempt 1/3)
 
-When the user mentions generic pages, map them to concrete files/components by scanning for headings and routes. Examples you MUST follow:
-- If the user says "login" or "sign in", search for components containing the literal heading "Sign in to your account" and edit that file.
-- If the user says "sign up" or "register", search for "Create your account" or equivalent.
-- Always return an explicit list of changed file paths. If your first attempt doesn't change the UI, re-search by heading text and update the correct file.
+The Vite build process failed. Analyze the error output below and fix the issue.
 
-⚠️ PRIORITY INSTRUCTIONS:
-- The user's request above is the PRIMARY task. Complete it first.
-- Ignore any existing errors, warnings, or issues you detect in the project unless they directly prevent you from completing the user's requested task.
-- Do NOT automatically fix unrelated errors or refactor code unless explicitly requested.
-- Focus solely on implementing the user's request: "Fix the mobile “Customize & Add” popup showing a blank white sheet. What’s happening On desktop, clicking Customize & Add opens the customization UI correctly. On mobile, the sheet/drawer opens (I see the drag handle) but the content is empty. Goals Mobile and desktop must show the same customization content (options, price, add-to-cart button). The popup must never render blank — show the content or a clear loading/error state. The popup must be mobile-friendly (scrollable content area, sticky footer action, safe-area aware) and not clash with the header or the bottom cart bar. Avoid hardcoded pixel values; use existing design tokens / responsive utilities. What to investigate (likely root cause) There are probably two different UIs: desktop uses a Dialog/Modal and mobile uses a Drawer/Sheet, and the mobile one is missing children or is gated by a condition like selectedItem && (...). The popup is opening before selectedItem is set, so the drawer renders with selectedItem = null and never updates, or the drawer is mounted without passing the selected item. Another possibility: the customizer content is there but is not visible on mobile due to layout/overflow/z-index (header overlays it, body has zero height, content clipped, etc.). Required code changes Unify the content Create a single ItemCustomizerContent component that renders the full customization UI. Render that same component inside: Desktop: Dialog Mobile: Drawer/Sheet Do NOT duplicate logic in two separate components. Fix state/open sequencing Ensure the popup does not open unless we have a valid item. Recommended pattern: Keep selectedItem in state. Compute isOpen = Boolean(selectedItem). On “Customize & Add” click: set selectedItem(item) (and only that). The open state should follow from it. On close: set selectedItem(null). Never allow empty body If popup is open but item data isn’t ready: Show a loading skeleton/spinner and a “Loading item…” label. If item fails to load: Show a friendly error state with “Close” and “Retry”. Mobile layout rules The drawer/sheet body must be scrollable for long option lists. Keep the primary action (“Add to Cart”) in a sticky footer within the sheet so it’s always reachable. Ensure safe-area padding for iOS. While the popup is open: Disable background scroll. Hide or disable the floating bottom cart bar so it doesn’t overlap the sheet. Make sure the header doesn’t overlap the sheet (z-index/stacking context fix). Close behavior Ensure the close “X” is visible and clickable on mobile. Tapping outside should close (unless you intentionally prevent it). Add debugging proof Add temporary console logs (remove after fix): When clicking Customize: log the clicked item id/name. When the sheet opens: log selectedItem. When rendering content: log that content is rendering + item id. Acceptance criteria On mobile, tapping Customize & Add always shows customization UI (or loading/error state), never blank. Works on iOS Safari + Android Chrome. No overlap issues with top navigation or bottom cart bar. Closing returns to the menu without layout glitches."
-- Only address errors if they block the specific functionality requested by the user.
+## Build Error Output:
+```
+
+> conductor@0.0.0 build
+> vite build
+
+vite v5.4.21 building for production...
+transforming...
+
+```
+
+## Build Directory: /app/vitereact
+
+## Your Task:
+1. **Analyze the Error**: Read the error output carefully to understand what went wrong
+2. **Locate the Problem**: Find the file(s) mentioned in the error
+3. **Apply the Fix**: 
+   - Missing file/component? CREATE it with correct exports
+   - Wrong import path? FIX the import statement  
+   - Syntax error? FIX the syntax in the affected file
+   - Type error? FIX the TypeScript types
+   - Missing dependency? Check if it needs to be installed or if it's a local import issue
+4. **Verify**: After fixing, ensure all imports resolve correctly
+
+## IMPORTANT:
+- The build CANNOT succeed until this error is fixed
+- If creating a missing component, ensure exports match what's being imported (default vs named)
+- If the error mentions a specific line number, check that line in the source file
+- Run `npx tsc --noEmit` after fixing to verify no TypeScript errors remain
+
+Fix this error so the build can succeed on retry.

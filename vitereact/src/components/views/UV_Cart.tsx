@@ -717,7 +717,7 @@ const UV_Cart: React.FC = () => {
   // ===========================
 
   // Use shared totals calculation
-  const hasDiscount = cartData?.discount_code && totals.discountCents > 0;
+  const hasDiscount = !!(cartData?.discount_code && totals.discountCents > 0);
 
   // Helper function to get item name from validation error field
   const getItemNameFromField = (field: string) => {

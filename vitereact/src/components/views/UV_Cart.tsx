@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '@/store/main';
 import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
-import { ShoppingBag, Trash2, Minus, Plus, Tag, ArrowRight, AlertCircle, Loader2, X, ShoppingCart } from 'lucide-react';
+import { ShoppingBag, Trash2, Minus, Plus, Tag, ArrowRight, AlertCircle, Loader2, X, ShoppingCart, WifiOff } from 'lucide-react';
 import { CHECKOUT_PATH } from '@/lib/constants';
 import { calculateCartTotals, parseCartData, logCartTotals, getGuestCartId } from '@/utils/cartTotals';
 import OrderSummary from '@/components/checkout/OrderSummary';
@@ -79,6 +79,20 @@ const UV_Cart: React.FC = () => {
   // Global state (individual selectors to avoid infinite loops)
   const authToken = useAppStore(state => state.authentication_state.auth_token);
   
+  // Local cart state from Zustand store (for fallback when API fails)
+  const localCartItems = useAppStore(state => state.cart_state.items);
+  const localCartSubtotal = useAppStore(state => state.cart_state.subtotal);
+  const localCartDiscountCode = useAppStore(state => state.cart_state.discount_code);
+  const localCartDiscountAmount = useAppStore(state => state.cart_state.discount_amount);
+  const localCartDeliveryFee = useAppStore(state => state.cart_state.delivery_fee);
+  const localCartTaxAmount = useAppStore(state => state.cart_state.tax_amount);
+  const localCartTotal = useAppStore(state => state.cart_state.total);
+  
+  // Cart actions for local state updates
+  const updateCartQuantity = useAppStore(state => state.update_cart_quantity);
+  const removeFromCart = useAppStore(state => state.remove_from_cart);
+  const clearCart = useAppStore(state => state.clear_cart);
+  
   // Local state
   const [discountCode, setDiscountCode] = useState('');
   const [discountError, setDiscountError] = useState<string | null>(null);
@@ -90,8 +104,18 @@ const UV_Cart: React.FC = () => {
     onConfirm: () => {}
   });
   const [validationErrors, setValidationErrors] = useState<Array<{ field: string; message: string; error?: string }>>([]);
+  const [syncWarning, setSyncWarning] = useState<string | null>(null); // Warning when API sync fails
+  const [usingLocalCart, setUsingLocalCart] = useState(false); // Track if we're using local fallback
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+  
+  // Create axios instance with credentials (for guest session cookies)
+  const axiosWithCredentials = useMemo(() => {
+    return axios.create({
+      baseURL: API_BASE_URL,
+      withCredentials: true, // Send cookies for guest sessions
+    });
+  }, [API_BASE_URL]);
 
   // Get guest cart ID for tracking (initialize early for guest users)
   const guestCartId = !authToken ? getGuestCartId() : null;
@@ -108,22 +132,93 @@ const UV_Cart: React.FC = () => {
   // ===========================
 
   const {
-    data: cartData,
+    data: serverCartData,
     isLoading: isCartLoading,
     error: cartError,
     refetch: refetchCart
   } = useQuery<CartResponse>({
     queryKey: ['cart'],
     queryFn: async () => {
-      const response = await axios.get(`${API_BASE_URL}/api/cart`, {
+      const response = await axiosWithCredentials.get('/api/cart', {
         headers: authToken ? { Authorization: `Bearer ${authToken}` } : {}
       });
+      // Clear sync warning on successful fetch
+      setSyncWarning(null);
+      setUsingLocalCart(false);
       return response.data;
     },
     staleTime: 30000, // 30 seconds
     refetchOnWindowFocus: false,
-    retry: 1
+    retry: 2, // Retry twice before failing
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 3000),
   });
+  
+  // Build local cart data from Zustand store as fallback
+  const localCartData = useMemo<CartResponse | null>(() => {
+    if (localCartItems.length === 0) return null;
+    
+    return {
+      items: localCartItems.map((item, index) => ({
+        cart_item_id: item.item_id || `local_${index}`,
+        item_id: item.item_id,
+        item_name: item.item_name,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        selected_customizations: item.customizations ? 
+          item.customizations.reduce((acc, c) => ({ ...acc, [c.group_name]: { name: c.option_name, additional_price: c.additional_price } }), {}) 
+          : null,
+        line_total: item.line_total,
+        is_available: true
+      })),
+      subtotal: localCartSubtotal,
+      discount_code: localCartDiscountCode,
+      discount_amount: localCartDiscountAmount,
+      delivery_fee: localCartDeliveryFee,
+      tax_amount: localCartTaxAmount,
+      total: localCartTotal
+    };
+  }, [localCartItems, localCartSubtotal, localCartDiscountCode, localCartDiscountAmount, localCartDeliveryFee, localCartTaxAmount, localCartTotal]);
+  
+  // Use server data if available, otherwise fallback to local cart
+  const cartData = useMemo<CartResponse | null>(() => {
+    // If server data is available and no error, use it
+    if (serverCartData && !cartError) {
+      return serverCartData;
+    }
+    
+    // If there's an error but we have local cart data, use local as fallback
+    if (cartError && localCartData) {
+      // Set warning message based on error type
+      const errorMessage = (cartError as any)?.response?.data?.message || 
+                          (cartError as any)?.message || 
+                          'Unknown error';
+      const errorCode = (cartError as any)?.response?.data?.error_code || '';
+      const statusCode = (cartError as any)?.response?.status;
+      
+      // Log the error for debugging
+      console.warn('[CART] API fetch failed, using local cart:', {
+        status: statusCode,
+        error_code: errorCode,
+        message: errorMessage
+      });
+      
+      // Only show sync warning if we haven't already
+      if (!usingLocalCart) {
+        setUsingLocalCart(true);
+        setSyncWarning("We couldn't sync your cart with the server. Your items are still saved locally.");
+      }
+      
+      return localCartData;
+    }
+    
+    // If server data is available (even if there was a previous error), use it
+    if (serverCartData) {
+      return serverCartData;
+    }
+    
+    // Last resort: return local cart data if available
+    return localCartData;
+  }, [serverCartData, cartError, localCartData, usingLocalCart]);
   
   // Log cart totals in dev mode (only when cartData changes, not on every render)
   useEffect(() => {
@@ -139,20 +234,31 @@ const UV_Cart: React.FC = () => {
   // ===========================
 
   const updateItemMutation = useMutation({
-    mutationFn: async ({ cart_item_id, quantity }: { cart_item_id: string; quantity: number }) => {
+    mutationFn: async ({ cart_item_id, quantity, item_id }: { cart_item_id: string; quantity: number; item_id?: string }) => {
       setItemLoadingStates(prev => ({ ...prev, [cart_item_id]: true }));
       
-      const response = await axios.put(
-        `${API_BASE_URL}/api/cart/item/${cart_item_id}`,
-        { quantity },
-        {
-          headers: authToken ? { Authorization: `Bearer ${authToken}` } : {}
+      try {
+        const response = await axiosWithCredentials.put(
+          `/api/cart/item/${cart_item_id}`,
+          { quantity },
+          {
+            headers: authToken ? { Authorization: `Bearer ${authToken}` } : {}
+          }
+        );
+        return response.data;
+      } catch (error: any) {
+        // If server update fails, update local state as fallback
+        if (item_id && usingLocalCart) {
+          updateCartQuantity(item_id, quantity);
+          return { success: true, local: true };
         }
-      );
-      return response.data;
+        throw error;
+      }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
+    onSuccess: (data) => {
+      if (!data?.local) {
+        queryClient.invalidateQueries({ queryKey: ['cart'] });
+      }
     },
     onError: (error: any) => {
       console.error('Failed to update item quantity:', error);
@@ -172,17 +278,28 @@ const UV_Cart: React.FC = () => {
   // ===========================
 
   const removeItemMutation = useMutation({
-    mutationFn: async (cart_item_id: string) => {
-      const response = await axios.delete(
-        `${API_BASE_URL}/api/cart/item/${cart_item_id}`,
-        {
-          headers: authToken ? { Authorization: `Bearer ${authToken}` } : {}
+    mutationFn: async ({ cart_item_id, item_id }: { cart_item_id: string; item_id?: string }) => {
+      try {
+        const response = await axiosWithCredentials.delete(
+          `/api/cart/item/${cart_item_id}`,
+          {
+            headers: authToken ? { Authorization: `Bearer ${authToken}` } : {}
+          }
+        );
+        return response.data;
+      } catch (error: any) {
+        // If server delete fails, update local state as fallback
+        if (item_id && usingLocalCart) {
+          removeFromCart(item_id);
+          return { success: true, local: true };
         }
-      );
-      return response.data;
+        throw error;
+      }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
+    onSuccess: (data) => {
+      if (!data?.local) {
+        queryClient.invalidateQueries({ queryKey: ['cart'] });
+      }
     },
     onError: (error: any) => {
       console.error('Failed to remove item:', error);
@@ -200,20 +317,36 @@ const UV_Cart: React.FC = () => {
 
   const clearCartMutation = useMutation({
     mutationFn: async () => {
-      const response = await axios.delete(
-        `${API_BASE_URL}/api/cart`,
-        {
-          headers: authToken ? { Authorization: `Bearer ${authToken}` } : {}
+      try {
+        const response = await axiosWithCredentials.delete(
+          '/api/cart',
+          {
+            headers: authToken ? { Authorization: `Bearer ${authToken}` } : {}
+          }
+        );
+        return response.data;
+      } catch (error: any) {
+        // If server clear fails, clear local state as fallback
+        if (usingLocalCart) {
+          clearCart();
+          return { success: true, local: true };
         }
-      );
-      return response.data;
+        throw error;
+      }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
-      toast({
-        title: 'Success',
-        description: 'Cart cleared successfully'
-      });
+    onSuccess: (data) => {
+      if (data?.local) {
+        toast({
+          title: 'Success',
+          description: 'Cart cleared locally'
+        });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['cart'] });
+        toast({
+          title: 'Success',
+          description: 'Cart cleared successfully'
+        });
+      }
     },
     onError: (error: any) => {
       console.error('Failed to clear cart:', error);
@@ -231,8 +364,8 @@ const UV_Cart: React.FC = () => {
 
   const validateDiscountMutation = useMutation({
     mutationFn: async (payload: DiscountValidationRequest) => {
-      const response = await axios.post<DiscountValidationResponse>(
-        `${API_BASE_URL}/api/discount/validate`,
+      const response = await axiosWithCredentials.post<DiscountValidationResponse>(
+        '/api/discount/validate',
         payload,
         {
           headers: authToken ? { Authorization: `Bearer ${authToken}` } : {}
@@ -276,8 +409,8 @@ const UV_Cart: React.FC = () => {
 
   const validateCheckoutMutation = useMutation({
     mutationFn: async () => {
-      const response = await axios.post<CheckoutValidationResponse>(
-        `${API_BASE_URL}/api/checkout/validate`,
+      const response = await axiosWithCredentials.post<CheckoutValidationResponse>(
+        '/api/checkout/validate',
         { order_type: 'collection' },
         {
           headers: authToken ? { Authorization: `Bearer ${authToken}` } : {}
@@ -312,18 +445,18 @@ const UV_Cart: React.FC = () => {
   // Event Handlers
   // ===========================
 
-  const handleQuantityChange = (cart_item_id: string, newQuantity: number) => {
+  const handleQuantityChange = (cart_item_id: string, newQuantity: number, item_id?: string) => {
     if (newQuantity < 1) return;
-    updateItemMutation.mutate({ cart_item_id, quantity: newQuantity });
+    updateItemMutation.mutate({ cart_item_id, quantity: newQuantity, item_id });
   };
 
-  const handleRemoveItem = (cart_item_id: string, item_name: string) => {
+  const handleRemoveItem = (cart_item_id: string, item_name: string, item_id?: string) => {
     setConfirmDialog({
       isOpen: true,
       title: 'Remove Item',
       message: `Remove ${item_name} from cart?`,
       onConfirm: () => {
-        removeItemMutation.mutate(cart_item_id);
+        removeItemMutation.mutate({ cart_item_id, item_id });
         setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: () => {} });
       }
     });
@@ -356,7 +489,7 @@ const UV_Cart: React.FC = () => {
 
   const handleRemoveDiscount = async () => {
     try {
-      await axios.delete(`${API_BASE_URL}/api/discount/remove`, {
+      await axiosWithCredentials.delete('/api/discount/remove', {
         headers: authToken ? { Authorization: `Bearer ${authToken}` } : {}
       });
       setDiscountCode('');
@@ -425,10 +558,12 @@ const UV_Cart: React.FC = () => {
   }
 
   // ===========================
-  // Error State
+  // Error State - Only show if BOTH server AND local cart are unavailable
   // ===========================
 
-  if (cartError) {
+  // If there's an error but we have cartData (from fallback), don't show error screen
+  // The syncWarning banner will inform the user instead
+  if (cartError && !cartData) {
     return (
       <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-[#F2EFE9]">
         <div className="text-center max-w-md">
@@ -563,6 +698,36 @@ const UV_Cart: React.FC = () => {
         </div>
       )}
 
+      {/* Sync Warning Banner - Shows when using local cart due to API failure */}
+      {syncWarning && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-40 max-w-2xl w-full mx-4">
+          <div className="bg-amber-50 border-2 border-amber-300 rounded-xl shadow-lg p-4">
+            <div className="flex items-center">
+              <WifiOff className="h-5 w-5 text-amber-600 flex-shrink-0" />
+              <div className="ml-3 flex-1">
+                <p className="text-sm font-medium text-amber-900">{syncWarning}</p>
+              </div>
+              <button
+                onClick={() => {
+                  setSyncWarning(null);
+                  refetchCart();
+                }}
+                className="ml-4 px-3 py-1.5 text-sm font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors"
+              >
+                Retry Sync
+              </button>
+              <button
+                onClick={() => setSyncWarning(null)}
+                className="ml-2 text-amber-600 hover:text-amber-800 transition-colors"
+                aria-label="Dismiss"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     
       <div className="min-h-screen py-4 sm:py-6 lg:py-8 px-4 sm:px-6 lg:px-10 bg-[#F2EFE9]">
         <div className="max-w-6xl mx-auto">
@@ -624,7 +789,7 @@ const UV_Cart: React.FC = () => {
                           <div className="mt-3 sm:mt-4 flex items-center justify-between sm:justify-start gap-3">
                             <div className="flex items-center bg-[#F2EFE9] rounded-xl p-1.5">
                               <button
-                                onClick={() => handleQuantityChange(item.cart_item_id, item.quantity - 1)}
+                                onClick={() => handleQuantityChange(item.cart_item_id, item.quantity - 1, item.item_id)}
                                 disabled={item.quantity <= 1 || isUpdating}
                                 className="w-11 h-11 rounded-full bg-white border-2 border-[#E8E1D6] flex items-center justify-center text-[#2C1A16] hover:bg-white hover:border-[#2C1A16] hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm"
                                 style={{ minHeight: '44px', minWidth: '44px' }}
@@ -642,7 +807,7 @@ const UV_Cart: React.FC = () => {
                               </span>
 
                               <button
-                                onClick={() => handleQuantityChange(item.cart_item_id, item.quantity + 1)}
+                                onClick={() => handleQuantityChange(item.cart_item_id, item.quantity + 1, item.item_id)}
                                 disabled={isUpdating}
                                 className="w-11 h-11 rounded-full bg-white border-2 border-[#E8E1D6] flex items-center justify-center text-[#2C1A16] hover:bg-white hover:border-[#2C1A16] hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm"
                                 style={{ minHeight: '44px', minWidth: '44px' }}
@@ -669,7 +834,7 @@ const UV_Cart: React.FC = () => {
                       <div className="flex sm:flex-col items-center sm:items-end gap-3 w-full sm:w-auto">
                         {!isAvailable ? (
                           <button
-                            onClick={() => handleRemoveItem(item.cart_item_id, item.item_name)}
+                            onClick={() => handleRemoveItem(item.cart_item_id, item.item_name, item.item_id)}
                             disabled={removeItemMutation.isPending}
                             className="w-full sm:w-auto px-6 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-all duration-200 disabled:opacity-50 flex items-center justify-center space-x-2"
                             style={{ minHeight: '48px' }}
@@ -681,7 +846,7 @@ const UV_Cart: React.FC = () => {
                         ) : (
                           <>
                             <button
-                              onClick={() => handleRemoveItem(item.cart_item_id, item.item_name)}
+                              onClick={() => handleRemoveItem(item.cart_item_id, item.item_name, item.item_id)}
                               disabled={removeItemMutation.isPending}
                               className="text-red-600 hover:text-red-700 hover:bg-red-50 p-3 rounded-xl transition-all duration-200 disabled:opacity-50 sm:block hidden"
                               style={{ minHeight: '48px', minWidth: '48px' }}
@@ -697,7 +862,7 @@ const UV_Cart: React.FC = () => {
                             </div>
                             
                             <button
-                              onClick={() => handleRemoveItem(item.cart_item_id, item.item_name)}
+                              onClick={() => handleRemoveItem(item.cart_item_id, item.item_name, item.item_id)}
                               disabled={removeItemMutation.isPending}
                               className="sm:hidden flex items-center justify-center px-5 py-3 text-red-600 hover:text-red-700 hover:bg-red-50 font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 border-2 border-red-300"
                               style={{ minHeight: '48px' }}

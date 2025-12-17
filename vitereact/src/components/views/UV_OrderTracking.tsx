@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { 
@@ -76,7 +76,6 @@ const fetchOrderTracking = async (ticketNumber: string, trackingToken: string): 
 const UV_OrderTracking: React.FC = () => {
   const { ticketNumber } = useParams<{ ticketNumber: string }>();
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
 
   // Get tracking token from URL or localStorage
   let trackingToken = searchParams.get('token');
@@ -109,19 +108,26 @@ const UV_OrderTracking: React.FC = () => {
     queryKey: ['order-tracking', ticketNumber, trackingToken],
     queryFn: () => fetchOrderTracking(ticketNumber!, trackingToken!),
     enabled: !!ticketNumber && !!trackingToken,
-    refetchInterval: (data) => {
+    refetchInterval: (query) => {
       // Poll every 10 seconds while order is not completed/cancelled
+      const data = query.state.data;
       if (data && (data.status === 'completed' || data.status === 'cancelled')) {
-        setIsPolling(false);
         return false;
       }
       return isPolling ? 10000 : false;
     },
     staleTime: 0,
-    onSuccess: () => {
-      setLastUpdateTime(new Date());
-    },
   });
+
+  // Update last update time and polling status when data changes
+  useEffect(() => {
+    if (trackingData) {
+      setLastUpdateTime(new Date());
+      if (trackingData.status === 'completed' || trackingData.status === 'cancelled') {
+        setIsPolling(false);
+      }
+    }
+  }, [trackingData]);
 
   // Handle missing token
   if (!trackingToken) {

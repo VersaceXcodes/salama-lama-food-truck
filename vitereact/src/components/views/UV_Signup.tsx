@@ -537,9 +537,9 @@ const UV_Signup: React.FC = () => {
                   data-testid="registration-error-banner"
                   id="registration-error-banner"
                   style={{ 
-                    opacity: '1 !important', 
-                    visibility: 'visible !important',
-                    display: 'block !important',
+                    opacity: '1', 
+                    visibility: 'visible',
+                    display: 'block',
                     position: 'relative',
                     zIndex: 9999,
                     minHeight: '60px',

@@ -4,8 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '@/store/main';
 import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
-import { ShoppingBag, Trash2, Minus, Plus, Tag, ArrowRight, AlertCircle, Loader2, X, CheckCircle, ShoppingCart } from 'lucide-react';
-import { CHECKOUT_PATH, RETURN_TO_PARAM } from '@/lib/constants';
+import { ShoppingBag, Trash2, Minus, Plus, Tag, ArrowRight, AlertCircle, Loader2, X, ShoppingCart } from 'lucide-react';
+import { CHECKOUT_PATH } from '@/lib/constants';
 import { calculateCartTotals, parseCartData, logCartTotals, getGuestCartId } from '@/utils/cartTotals';
 import OrderSummary from '@/components/checkout/OrderSummary';
 

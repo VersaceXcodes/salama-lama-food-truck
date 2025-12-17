@@ -19,7 +19,12 @@ interface BusinessInfo {
   name: string;
   phone: string;
   email: string;
-  address: string;
+  address: string | {
+    line1: string;
+    line2?: string;
+    city: string;
+    postal_code: string;
+  };
   logo_url: string;
   description: string;
   mission_statement: string;

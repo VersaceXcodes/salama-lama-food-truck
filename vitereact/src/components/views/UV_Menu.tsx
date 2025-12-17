@@ -4,7 +4,6 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppStore } from '@/store/main';
 import { useToast } from '@/hooks/use-toast';
-import { ResponsiveContainer } from '@/components/ui/responsive-container';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { QuantityStepper } from '@/components/ui/quantity-stepper';
 
@@ -202,7 +201,7 @@ const UV_Menu: React.FC = () => {
       setLoadingItemId(data.item_id);
       return addItemToCart(data, authToken);
     },
-    onSuccess: (response) => {
+    onSuccess: () => {
       // Update Zustand cart state with the backend response
       if (customizationModal.item) {
         const item = customizationModal.item;
@@ -434,13 +433,6 @@ const UV_Menu: React.FC = () => {
         total_price: totalPrice,
       };
     });
-  };
-
-  const handleQuantityChange = (delta: number) => {
-    setCustomizationModal(prev => ({
-      ...prev,
-      quantity: Math.max(1, prev.quantity + delta),
-    }));
   };
 
   const handleAddToCart = () => {
@@ -1108,76 +1100,6 @@ const UV_Menu: React.FC = () => {
           ))}
         </div>
       </BottomSheet>
-
-      {/* Original Mobile Filter Panel - Keep for debugging */}
-      {false && filterPanelOpen && (
-        <div className="fixed inset-0 z-50 sm:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black bg-opacity-50"
-            onClick={() => setFilterPanelOpen(false)}
-          ></div>
-
-          {/* Panel */}
-          <div className="absolute right-0 top-0 bottom-0 w-80 max-w-full bg-white shadow-xl">
-            <div className="h-full flex flex-col">
-              {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Dietary Filters
-                </h3>
-                <button
-                  onClick={() => setFilterPanelOpen(false)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                  aria-label="Close filters"
-                >
-                  <svg className="w-6 h-6" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-                    <path d="M6 18L18 6M6 6l12 12"></path>
-                  </svg>
-                </button>
-              </div>
-
-              {/* Content */}
-              <div className="flex-1 overflow-y-auto p-6">
-                <div className="space-y-4">
-                  {dietaryOptions.map(option => (
-                    <label
-                      key={option.value}
-                      className="flex items-center space-x-3 cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={dietaryFilters.includes(option.value)}
-                        onChange={() => handleDietaryFilterToggle(option.value)}
-                        className="w-5 h-5 text-orange-600 border-gray-300 rounded focus:ring-orange-500 focus:ring-2 transition-all"
-                      />
-                      <span className="text-base font-medium text-gray-700 flex items-center space-x-2">
-                        <span className="text-xl">{option.icon}</span>
-                        <span>{option.label}</span>
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Footer */}
-              <div className="p-6 border-t border-gray-200">
-                  <button
-                    onClick={() => setFilterPanelOpen(false)}
-                    className="w-full px-6 py-3 rounded-lg font-medium transition-colors"
-                    style={{ 
-                      backgroundColor: 'var(--btn-bg)', 
-                      color: 'var(--btn-text)',
-                      minHeight: '48px'
-                    }}
-                  >
-                    Apply Filters
-                  </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Product Customization Modal - Using BottomSheet */}
       {customizationModal.is_open && (

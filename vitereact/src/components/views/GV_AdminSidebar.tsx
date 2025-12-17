@@ -10,13 +10,10 @@ import {
   Tag,
   Users,
   UserCog,
-  Calendar,
   FileText,
   BarChart3,
   Settings,
   Activity,
-  ChevronRight,
-  ChevronDown,
   Menu,
   X,
   House
@@ -24,22 +21,14 @@ import {
 
 const GV_AdminSidebar: React.FC = () => {
   const location = useLocation();
-  const [is_collapsed, setIsCollapsed] = useState(false);
+  const [is_collapsed] = useState(false);
   const [is_mobile_open, setIsMobileOpen] = useState(false);
-  const [expanded_sections, setExpandedSections] = useState<Record<string, boolean>>({
-    menu: false,
-  });
   
   // CRITICAL: Individual selectors for auth state - no object destructuring
   const currentUser = useAppStore(state => state.authentication_state.current_user);
   const isAuthenticated = useAppStore(state => state.authentication_state.authentication_status.is_authenticated);
   const businessSettings = useAppStore(state => state.business_settings);
   const logoUrl = businessSettings.business_info.logo_url || '/assets/salama-lama-logo.png';
-
-  // Verify admin role - return null if not admin
-  if (!isAuthenticated || currentUser?.role !== 'admin') {
-    return null;
-  }
 
   // Body scroll lock when mobile drawer is open
   useEffect(() => {
@@ -75,10 +64,6 @@ const GV_AdminSidebar: React.FC = () => {
     };
   }, [is_mobile_open]);
 
-  const toggleSidebar = () => {
-    setIsCollapsed(!is_collapsed);
-  };
-
   const toggleMobileDrawer = () => {
     setIsMobileOpen(!is_mobile_open);
   };
@@ -87,16 +72,14 @@ const GV_AdminSidebar: React.FC = () => {
     setIsMobileOpen(false);
   };
 
-  const toggleSection = (section: string) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
-  };
-
   const isActiveRoute = (path: string) => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
+
+  // Verify admin role - return null if not admin
+  if (!isAuthenticated || currentUser?.role !== 'admin') {
+    return null;
+  }
 
   // Navigation items structure
   const navigation = [

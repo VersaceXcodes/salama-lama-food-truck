@@ -4,8 +4,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppStore } from '@/store/main';
 import { AlertCircle, CheckCircle, Edit2, Loader2, ShoppingBag, CreditCard, MapPin, Clock, User } from 'lucide-react';
-import { RETURN_TO_PARAM } from '@/lib/constants';
-import { calculateCartTotals, parseCartData, logCartTotals, getGuestCartId } from '@/utils/cartTotals';
+import { calculateCartTotals, logCartTotals, getGuestCartId } from '@/utils/cartTotals';
 import OrderSummary from '@/components/checkout/OrderSummary';
 
 // ===========================
@@ -147,7 +146,7 @@ const UV_CheckoutReview: React.FC = () => {
   // ===========================
   
   const auth_token = useAppStore(state => state.authentication_state.auth_token);
-  const is_authenticated = useAppStore(state => state.authentication_state.authentication_status.is_authenticated);
+  // const is_authenticated = useAppStore(state => state.authentication_state.authentication_status.is_authenticated);
   // const current_user = useAppStore(state => state.authentication_state.current_user);
   const clear_cart = useAppStore(state => state.clear_cart);
 
@@ -198,7 +197,7 @@ const UV_CheckoutReview: React.FC = () => {
   // Fetch Cart Data from API
   // ===========================
 
-  const { data: cart_data, isLoading: is_loading_cart, error: cart_error } = useQuery({
+  const { data: cart_data, isLoading: is_loading_cart } = useQuery({
     queryKey: ['cart'],
     queryFn: async () => {
       try {
@@ -299,7 +298,7 @@ const UV_CheckoutReview: React.FC = () => {
   // Calculate Final Totals (API Call)
   // ===========================
 
-  const { data: calculated_pricing, isLoading: is_calculating_totals, error: pricing_error } = useQuery<CalculateTotalsResponse>({
+  const { data: calculated_pricing, isLoading: is_calculating_totals } = useQuery<CalculateTotalsResponse>({
     queryKey: ['calculate-checkout-totals', complete_order_review.order_type],
     queryFn: async () => {
       const delivery_address_id = sessionStorage.getItem('checkout_delivery_address_id');

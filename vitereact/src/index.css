@@ -809,10 +809,10 @@ p {
 		background-color: rgba(0, 0, 0, 0.75) !important;
 	}
 
-	/* Modal content containers */
-	[role="dialog"] > div,
+	/* Modal content containers - EXCLUDE mobile drawer which has its own layout */
+	[role="dialog"]:not(#mobile-drawer) > div,
 	.modal-content,
-	[class*="modal"] > div {
+	[class*="modal"]:not(#mobile-drawer) > div {
 		width: 100% !important;
 		max-width: 100vw !important;
 		margin: 0 !important;
@@ -1193,15 +1193,15 @@ button[aria-label*="quantity"]:active:not(:disabled) {
 	transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Bottom sheet style modal (mobile) */
+/* Bottom sheet style modal (mobile) - EXCLUDE mobile drawer */
 @media (max-width: 640px) {
-	[role="dialog"] {
+	[role="dialog"]:not(#mobile-drawer) {
 		border-radius: var(--radius-xl) var(--radius-xl) 0 0 !important;
 		box-shadow: var(--shadow-xl) !important;
 	}
 	
-	/* Pull handle for bottom sheets */
-	[role="dialog"]::before {
+	/* Pull handle for bottom sheets - EXCLUDE mobile drawer */
+	[role="dialog"]:not(#mobile-drawer)::before {
 		content: '';
 		position: absolute;
 		top: 0.75rem;
@@ -1215,9 +1215,9 @@ button[aria-label*="quantity"]:active:not(:disabled) {
 	}
 }
 
-/* Desktop modal */
+/* Desktop modal - EXCLUDE mobile drawer (hidden on desktop anyway) */
 @media (min-width: 641px) {
-	[role="dialog"] {
+	[role="dialog"]:not(#mobile-drawer) {
 		border-radius: var(--radius-xl) !important;
 		box-shadow: var(--shadow-xl) !important;
 	}

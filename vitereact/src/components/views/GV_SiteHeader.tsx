@@ -719,35 +719,43 @@ const GV_SiteHeader: React.FC = () => {
               paddingBottom: 'env(safe-area-inset-bottom, 0px)',
             }}
           >
-            {/* Drawer Header */}
-            <div className="sticky top-0 bg-white border-b border-[var(--border-light)] px-4 py-3 flex items-center justify-between z-10">
-              <Link 
-                to="/" 
-                onClick={closeMobileMenu}
-                className="flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-text)] rounded-lg"
-                aria-label="Salama Lama Home"
-              >
-                <img
-                  src="/logo-salama-lama.jpg"
-                  alt="Salama Lama"
-                  className="h-8 w-auto object-contain"
-                />
-              </Link>
-              <button
-                onClick={closeMobileMenu}
-                className="
-                  flex items-center justify-center 
-                  w-11 h-11 
-                  text-[var(--primary-text)] 
-                  hover:bg-[var(--primary-bg)] 
-                  rounded-xl 
-                  transition-colors
-                  focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-text)]
-                "
-                aria-label="Close menu"
-              >
-                <X className="h-6 w-6" aria-hidden="true" />
-              </button>
+            {/* Drawer Header - 3-column grid for perfect centering */}
+            <div className="sticky top-0 bg-white border-b border-[var(--border-light)] px-3 py-2.5 z-10">
+              <div className="grid grid-cols-[2.75rem_1fr_2.75rem] items-center gap-2">
+                {/* Left placeholder - matches close button width for centering */}
+                <div className="w-11 h-11" aria-hidden="true" />
+                
+                {/* Center - Logo (clickable, navigates home and closes drawer) */}
+                <Link 
+                  to="/" 
+                  onClick={closeMobileMenu}
+                  className="flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-text)] focus-visible:ring-offset-2 rounded-lg"
+                  aria-label="Salama Lama Home"
+                >
+                  <img
+                    src="/logo-salama-lama.jpg"
+                    alt="Salama Lama"
+                    className="max-h-10 w-auto object-contain"
+                  />
+                </Link>
+                
+                {/* Right - Close button */}
+                <button
+                  onClick={closeMobileMenu}
+                  className="
+                    flex items-center justify-center 
+                    w-11 h-11 
+                    text-[var(--primary-text)] 
+                    hover:bg-[var(--primary-bg)] 
+                    rounded-xl 
+                    transition-colors
+                    focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-text)]
+                  "
+                  aria-label="Close menu"
+                >
+                  <X className="h-6 w-6" aria-hidden="true" />
+                </button>
+              </div>
             </div>
             
             {/* Drawer Content */}

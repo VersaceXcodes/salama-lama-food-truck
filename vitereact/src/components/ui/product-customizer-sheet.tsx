@@ -81,7 +81,7 @@ const OptionGroup: React.FC<OptionGroupProps> = ({
   showError = false,
 }) => {
   return (
-    <div className={`bg-white rounded-2xl border overflow-hidden ${showError ? 'border-red-300' : 'border-[var(--border-light)]'}`}>
+    <div className={`bg-white rounded-2xl border overflow-hidden w-full min-w-0 ${showError ? 'border-red-300' : 'border-[var(--border-light)]'}`}>
       {/* Group Header */}
       <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-[#FAFAF8] border-b border-[var(--border-light)] flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 flex-wrap">
@@ -368,19 +368,20 @@ export const ProductCustomizerSheet: React.FC<ProductCustomizerSheetProps> = ({
         className={`
           fixed z-[9999] bg-white
           flex flex-col
+          overflow-x-hidden
           
-          /* Mobile: Bottom sheet that slides up */
-          inset-x-0 bottom-0
+          /* Mobile: Bottom sheet that slides up - full width */
+          left-0 right-0 bottom-0 w-full
           rounded-t-[24px]
           
           /* Desktop: Centered modal */
-          md:inset-auto md:left-1/2 md:top-1/2
+          md:left-1/2 md:right-auto md:top-1/2 md:bottom-auto
           md:-translate-x-1/2 md:-translate-y-1/2
           md:rounded-[20px] md:w-full md:max-w-[480px]
           
           /* Transition for smooth appearance */
           transition-transform duration-300 ease-out
-          ${isRendered ? 'translate-y-0 md:scale-100' : 'translate-y-full md:scale-95'}
+          ${isRendered ? 'translate-y-0 md:translate-y-[-50%]' : 'translate-y-full md:translate-y-[-50%] md:scale-95'}
         `}
         style={{
           // Mobile: Use dvh (dynamic viewport height) for better mobile browser support
@@ -398,7 +399,7 @@ export const ProductCustomizerSheet: React.FC<ProductCustomizerSheetProps> = ({
         </div>
 
         {/* Header - Sticky with close button */}
-        <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-[var(--border-light)] bg-white">
+        <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-[var(--border-light)] bg-white w-full">
           <h2
             id="customizer-title"
             className="text-lg font-bold text-[var(--primary-text)] truncate flex-1 pr-4"
@@ -418,17 +419,17 @@ export const ProductCustomizerSheet: React.FC<ProductCustomizerSheetProps> = ({
         {/* Scrollable Content Area */}
         <div 
           ref={contentRef}
-          className="flex-1 overflow-y-auto overscroll-contain"
+          className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain w-full min-w-0"
           style={{ 
             WebkitOverflowScrolling: 'touch',
             minHeight: '200px',
           }}
         >
-          <div className="px-4 py-4 space-y-4">
+          <div className="px-4 py-4 space-y-4 w-full min-w-0">
             {item ? (
               <>
                 {/* Product Header Card */}
-                <div className="flex gap-3 sm:gap-4 p-3 sm:p-4 bg-[#FAFAF8] rounded-2xl">
+                <div className="flex gap-3 sm:gap-4 p-3 sm:p-4 bg-[#FAFAF8] rounded-2xl w-full min-w-0">
                   {item.image_url && (
                     <img
                       src={item.image_url}
@@ -437,7 +438,7 @@ export const ProductCustomizerSheet: React.FC<ProductCustomizerSheetProps> = ({
                       loading="eager"
                     />
                   )}
-                  <div className="flex-1 min-w-0 flex flex-col justify-center">
+                  <div className="flex-1 min-w-0 flex flex-col justify-center overflow-hidden">
                     <h3 className="text-base sm:text-lg font-bold text-[var(--primary-text)] leading-tight mb-1">
                       {item.name}
                     </h3>
@@ -454,7 +455,7 @@ export const ProductCustomizerSheet: React.FC<ProductCustomizerSheetProps> = ({
 
                 {/* Customization Groups */}
                 {item.customization_groups.length > 0 ? (
-                  <div className="space-y-3">
+                  <div className="space-y-3 w-full min-w-0">
                     {item.customization_groups
                       .sort((a, b) => a.sort_order - b.sort_order)
                       .map((group) => (
@@ -481,7 +482,7 @@ export const ProductCustomizerSheet: React.FC<ProductCustomizerSheetProps> = ({
                 )}
 
                 {/* Quantity Section */}
-                <div className="bg-white rounded-2xl border border-[var(--border-light)] p-4">
+                <div className="bg-white rounded-2xl border border-[var(--border-light)] p-4 w-full min-w-0">
                   <h4 className="text-sm font-bold text-[var(--primary-text)] uppercase tracking-wide mb-4 text-center">
                     Quantity
                   </h4>
@@ -511,7 +512,7 @@ export const ProductCustomizerSheet: React.FC<ProductCustomizerSheetProps> = ({
         {/* Sticky Footer with Total and Add to Cart */}
         {item && (
           <div 
-            className="flex-shrink-0 bg-white border-t border-[var(--border-light)] px-4 py-3 sm:py-4"
+            className="flex-shrink-0 bg-white border-t border-[var(--border-light)] px-4 py-3 sm:py-4 w-full"
             style={{
               boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.08)',
             }}

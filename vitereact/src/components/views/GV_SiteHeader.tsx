@@ -703,7 +703,7 @@ const GV_SiteHeader: React.FC = () => {
             className="
               fixed top-0 left-0 bottom-0 
               w-[85vw] max-w-xs
-              bg-white 
+              bg-[var(--primary-bg)] 
               shadow-2xl 
               z-[101] 
               lg:hidden 
@@ -719,8 +719,18 @@ const GV_SiteHeader: React.FC = () => {
               paddingBottom: 'env(safe-area-inset-bottom, 0px)',
             }}
           >
+            {/* Safe area fill at top - matches brand color to cover iOS status bar area */}
+            <div 
+              className="absolute top-0 left-0 right-0 bg-[var(--primary-bg)]" 
+              style={{ 
+                height: 'env(safe-area-inset-top, 0px)',
+                marginTop: 'calc(-1 * env(safe-area-inset-top, 0px))'
+              }}
+              aria-hidden="true"
+            />
+            
             {/* Drawer Header - 3-column grid for perfect centering */}
-            <div className="sticky top-0 bg-white border-b border-[var(--border-light)] px-3 py-2.5 z-10">
+            <div className="sticky top-0 bg-[var(--primary-bg)] border-b border-[var(--border-light)] px-3 py-2.5 z-10">
               <div className="grid grid-cols-[2.75rem_1fr_2.75rem] items-center gap-2">
                 {/* Left placeholder - matches close button width for centering */}
                 <div className="w-11 h-11" aria-hidden="true" />
@@ -746,7 +756,7 @@ const GV_SiteHeader: React.FC = () => {
                     flex items-center justify-center 
                     w-11 h-11 
                     text-[var(--primary-text)] 
-                    hover:bg-[var(--primary-bg)] 
+                    hover:bg-[var(--accent-color)]/40 
                     rounded-xl 
                     transition-colors
                     focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-text)]
@@ -794,7 +804,7 @@ const GV_SiteHeader: React.FC = () => {
               
               {/* Navigation Links */}
               <nav aria-label="Mobile navigation">
-                <ul className="border border-[var(--border-light)] rounded-2xl divide-y divide-[var(--border-light)] overflow-hidden">
+                <ul className="bg-white border border-[var(--border-light)] rounded-2xl divide-y divide-[var(--border-light)] overflow-hidden">
                   {/* Home link */}
                   <li>
                     <Link

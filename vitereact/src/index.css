@@ -712,13 +712,12 @@ p {
 		flex-wrap: wrap !important;
 	}
 
-	/* Ensure modals are mobile-friendly */
-	[role="dialog"],
-	.modal,
-	[class*="modal"] {
+	/* Ensure modals are mobile-friendly - EXCLUDE product customizer sheet */
+	[role="dialog"]:not([data-product-customizer]),
+	.modal:not([data-product-customizer]),
+	[class*="modal"]:not([data-product-customizer]) {
 		max-width: 100vw !important;
 		margin: 0 !important;
-		border-radius: 0 !important;
 	}
 
 	/* Full-width inputs on mobile */
@@ -809,17 +808,13 @@ p {
 		background-color: rgba(0, 0, 0, 0.75) !important;
 	}
 
-	/* Modal content containers - EXCLUDE mobile drawer which has its own layout */
-	[role="dialog"]:not(#mobile-drawer) > div,
-	.modal-content,
-	[class*="modal"]:not(#mobile-drawer) > div {
+	/* Modal content containers - EXCLUDE mobile drawer and product customizer which have their own layout */
+	[role="dialog"]:not(#mobile-drawer):not([data-product-customizer]) > div,
+	.modal-content:not([data-product-customizer]),
+	[class*="modal"]:not(#mobile-drawer):not([data-product-customizer]) > div {
 		width: 100% !important;
 		max-width: 100vw !important;
 		margin: 0 !important;
-		min-height: 100vh !important;
-		border-radius: 0 !important;
-		max-height: 100vh !important;
-		overflow-y: auto !important;
 	}
 
 	/* Modal inner padding */
@@ -1193,15 +1188,15 @@ button[aria-label*="quantity"]:active:not(:disabled) {
 	transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Bottom sheet style modal (mobile) - EXCLUDE mobile drawer */
+/* Bottom sheet style modal (mobile) - EXCLUDE mobile drawer and product customizer */
 @media (max-width: 640px) {
-	[role="dialog"]:not(#mobile-drawer) {
+	[role="dialog"]:not(#mobile-drawer):not([data-product-customizer]) {
 		border-radius: var(--radius-xl) var(--radius-xl) 0 0 !important;
 		box-shadow: var(--shadow-xl) !important;
 	}
 	
-	/* Pull handle for bottom sheets - EXCLUDE mobile drawer */
-	[role="dialog"]:not(#mobile-drawer)::before {
+	/* Pull handle for bottom sheets - EXCLUDE mobile drawer and product customizer */
+	[role="dialog"]:not(#mobile-drawer):not([data-product-customizer])::before {
 		content: '';
 		position: absolute;
 		top: 0.75rem;
@@ -1215,9 +1210,9 @@ button[aria-label*="quantity"]:active:not(:disabled) {
 	}
 }
 
-/* Desktop modal - EXCLUDE mobile drawer (hidden on desktop anyway) */
+/* Desktop modal - EXCLUDE mobile drawer and product customizer (hidden on desktop anyway) */
 @media (min-width: 641px) {
-	[role="dialog"]:not(#mobile-drawer) {
+	[role="dialog"]:not(#mobile-drawer):not([data-product-customizer]) {
 		border-radius: var(--radius-xl) !important;
 		box-shadow: var(--shadow-xl) !important;
 	}

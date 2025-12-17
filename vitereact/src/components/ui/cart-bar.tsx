@@ -1,7 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ShoppingCart, ChevronRight, Truck, Store } from 'lucide-react';
-import { useAppStore } from '@/store/main';
 
 interface CartBarProps {
   itemCount: number;
@@ -29,7 +28,13 @@ export const CartBar: React.FC<CartBarProps> = ({
   className = '',
 }) => {
   const location = useLocation();
-  const orderType = useAppStore(state => state.checkout_state.order_type);
+  const [orderType, setOrderType] = useState<'collection' | 'delivery' | null>(null);
+  
+  // Read order type from sessionStorage
+  useEffect(() => {
+    const storedOrderType = sessionStorage.getItem('checkout_order_type') as 'collection' | 'delivery' | null;
+    setOrderType(storedOrderType);
+  }, [location.pathname]); // Re-check when route changes
   
   // Routes where cart bar should be hidden
   const hiddenRoutes = [

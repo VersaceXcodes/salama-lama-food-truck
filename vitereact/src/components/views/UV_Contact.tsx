@@ -254,45 +254,6 @@ const UV_Contact: React.FC = () => {
   };
 
   // ===========================
-  // Render Operating Hours
-  // ===========================
-
-  const render_operating_hours = () => {
-    const hours = business_contact_info?.operating_hours || business_settings.operating_hours;
-    
-    if (!hours || Object.keys(hours).length === 0) {
-      return (
-        <p className="text-gray-600">
-          Please contact us for our operating hours.
-        </p>
-      );
-    }
-
-    const days_of_week = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-    const day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-
-    return (
-      <div className="space-y-2">
-        {days_of_week.map((day, index) => {
-          const day_hours = hours[day];
-          
-          return (
-            <div key={day} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
-              <span className="font-medium text-gray-700">{day_names[index]}</span>
-              <span className="text-gray-600">
-                {day_hours && day_hours.open && day_hours.close
-                  ? `${day_hours.open} - ${day_hours.close}`
-                  : 'Closed'
-                }
-              </span>
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
-  // ===========================
   // Main Render
   // ===========================
 

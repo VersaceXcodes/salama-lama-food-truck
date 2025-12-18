@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { CheckCircle, Package, MapPin, Clock, Award, ArrowRight, AlertCircle } from 'lucide-react';
 
 // ===========================
@@ -8,7 +8,6 @@ import { CheckCircle, Package, MapPin, Clock, Award, ArrowRight, AlertCircle } f
 
 const UV_OrderConfirmation: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
 
   // Get order data from URL params (passed from checkout)
   const ticketNumber = searchParams.get('ticket');

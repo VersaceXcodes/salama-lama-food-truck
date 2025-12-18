@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAppStore } from '@/store/main';
-import { ShoppingCart, Menu, X, ChevronRight, User } from 'lucide-react';
+import { ShoppingCart, Menu, X, ChevronRight } from 'lucide-react';
 
 const GV_TopNav_Public: React.FC = () => {
   // ===========================
@@ -17,8 +17,6 @@ const GV_TopNav_Public: React.FC = () => {
   const isAuthenticated = useAppStore(state => 
     state.authentication_state.authentication_status.is_authenticated
   );
-  const businessSettings = useAppStore(state => state.business_settings);
-  const logoUrl = businessSettings.business_info.logo_url || '/assets/salama-lama-logo.png';
   
   // Derive cart item count
   const cart_item_count = cartItems?.length || 0;

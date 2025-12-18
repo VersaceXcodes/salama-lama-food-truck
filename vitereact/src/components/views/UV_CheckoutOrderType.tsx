@@ -290,31 +290,31 @@ const UV_CheckoutOrderType: React.FC = () => {
   };
 
   // ===========================
-  // Format Time Slot Display
+  // Format Time Slot Display (Moved to CollectionTimePicker)
   // ===========================
 
-  const formatTimeSlot = (isoString: string): string => {
-    const date = new Date(isoString);
-    const now = new Date();
-    const isToday = date.toDateString() === now.toDateString();
-    
-    const timeString = date.toLocaleTimeString('en-IE', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
-
-    if (isToday) {
-      return `Today ${timeString}`;
-    } else {
-      const dateString = date.toLocaleDateString('en-IE', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-      });
-      return `${dateString} ${timeString}`;
-    }
-  };
+  // const formatTimeSlot = (isoString: string): string => {
+  //   const date = new Date(isoString);
+  //   const now = new Date();
+  //   const isToday = date.toDateString() === now.toDateString();
+  //   
+  //   const timeString = date.toLocaleTimeString('en-IE', {
+  //     hour: '2-digit',
+  //     minute: '2-digit',
+  //     hour12: false,
+  //   });
+  //
+  //   if (isToday) {
+  //     return `Today ${timeString}`;
+  //   } else {
+  //     const dateString = date.toLocaleDateString('en-IE', {
+  //       weekday: 'short',
+  //       month: 'short',
+  //       day: 'numeric',
+  //     });
+  //     return `${dateString} ${timeString}`;
+  //   }
+  // };
 
   // ===========================
   // Handle Order Type Selection

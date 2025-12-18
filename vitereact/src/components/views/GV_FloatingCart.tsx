@@ -1,16 +1,14 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useAppStore } from '@/store/main';
 import { useOverlayState } from '@/hooks/use-overlay-state';
 import { CartBar } from '@/components/ui/cart-bar';
 import { ShoppingCart } from 'lucide-react';
-import { calculateCartTotals, parseCartData } from '@/utils/cartTotals';
 import axios from 'axios';
 
 const GV_FloatingCart: React.FC = () => {
   const location = useLocation();
-  const queryClient = useQueryClient();
   
   // ===========================
   // Global State Access (Zustand - Individual Selectors)

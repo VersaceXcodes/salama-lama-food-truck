@@ -3904,55 +3904,9 @@ app.get('/api/orders/history', authenticate_token, async (req, res) => {
   }
 });
 
-app.get('/api/orders/:id', authenticate_token, async (req, res) => {
-  try {
-    const order_id = req.params.id;
-    const order_res = await pool.query('SELECT * FROM orders WHERE order_id = $1 AND user_id = $2', [order_id, req.user.user_id]);
-    if (order_res.rows.length === 0) {
-      return res.status(404).json(createErrorResponse('Order not found', null, 'NOT_FOUND', req.request_id));
-    }
-    const order_row = order_res.rows[0];
-
-    const items_res = await pool.query('SELECT * FROM order_items WHERE order_id = $1 ORDER BY item_name ASC', [order_id]);
-    const status_res = await pool.query('SELECT * FROM order_status_history WHERE order_id = $1 ORDER BY changed_at ASC', [order_id]);
-
-    const order = orderSchema.parse(coerce_numbers({
-      ...order_row,
-      delivery_fee: order_row.delivery_fee === null || order_row.delivery_fee === undefined ? null : Number(order_row.delivery_fee),
-      subtotal: Number(order_row.subtotal),
-      discount_amount: Number(order_row.discount_amount),
-      tax_amount: Number(order_row.tax_amount),
-      total_amount: Number(order_row.total_amount),
-      refund_amount: order_row.refund_amount === null || order_row.refund_amount === undefined ? null : Number(order_row.refund_amount),
-    }, ['subtotal', 'discount_amount', 'tax_amount', 'total_amount', 'delivery_fee', 'refund_amount']));
-
-    return ok(res, 200, {
-      order,
-      items: items_res.rows.map((r) => ({
-        order_item_id: r.order_item_id,
-        order_id: r.order_id,
-        item_id: r.item_id,
-        item_name: r.item_name,
-        quantity: Number(r.quantity),
-        unit_price: Number(r.unit_price),
-        selected_customizations: r.selected_customizations ?? null,
-        line_total: Number(r.line_total),
-      })),
-      status_history: status_res.rows.map((r) => ({
-        history_id: r.history_id,
-        order_id: r.order_id,
-        status: r.status,
-        changed_by_user_id: r.changed_by_user_id,
-        changed_at: r.changed_at,
-        notes: r.notes ?? null,
-      })),
-    });
-  } catch (error) {
-    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
-  }
-});
-
 // Order tracking endpoint - returns simplified order data for tracking
+// IMPORTANT: This route MUST be defined before /api/orders/:id to prevent
+// the :id param from matching the literal string "track"
 /*
   Public order tracking endpoint - allows guests to track orders without login
   Requires ticket_number and tracking_token for security
@@ -4038,6 +3992,54 @@ app.get('/api/orders/track', async (req, res) => {
     });
   } catch (error) {
     console.error('Track order error:', error);
+    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+  }
+});
+
+app.get('/api/orders/:id', authenticate_token, async (req, res) => {
+  try {
+    const order_id = req.params.id;
+    const order_res = await pool.query('SELECT * FROM orders WHERE order_id = $1 AND user_id = $2', [order_id, req.user.user_id]);
+    if (order_res.rows.length === 0) {
+      return res.status(404).json(createErrorResponse('Order not found', null, 'NOT_FOUND', req.request_id));
+    }
+    const order_row = order_res.rows[0];
+
+    const items_res = await pool.query('SELECT * FROM order_items WHERE order_id = $1 ORDER BY item_name ASC', [order_id]);
+    const status_res = await pool.query('SELECT * FROM order_status_history WHERE order_id = $1 ORDER BY changed_at ASC', [order_id]);
+
+    const order = orderSchema.parse(coerce_numbers({
+      ...order_row,
+      delivery_fee: order_row.delivery_fee === null || order_row.delivery_fee === undefined ? null : Number(order_row.delivery_fee),
+      subtotal: Number(order_row.subtotal),
+      discount_amount: Number(order_row.discount_amount),
+      tax_amount: Number(order_row.tax_amount),
+      total_amount: Number(order_row.total_amount),
+      refund_amount: order_row.refund_amount === null || order_row.refund_amount === undefined ? null : Number(order_row.refund_amount),
+    }, ['subtotal', 'discount_amount', 'tax_amount', 'total_amount', 'delivery_fee', 'refund_amount']));
+
+    return ok(res, 200, {
+      order,
+      items: items_res.rows.map((r) => ({
+        order_item_id: r.order_item_id,
+        order_id: r.order_id,
+        item_id: r.item_id,
+        item_name: r.item_name,
+        quantity: Number(r.quantity),
+        unit_price: Number(r.unit_price),
+        selected_customizations: r.selected_customizations ?? null,
+        line_total: Number(r.line_total),
+      })),
+      status_history: status_res.rows.map((r) => ({
+        history_id: r.history_id,
+        order_id: r.order_id,
+        status: r.status,
+        changed_by_user_id: r.changed_by_user_id,
+        changed_at: r.changed_at,
+        notes: r.notes ?? null,
+      })),
+    });
+  } catch (error) {
     return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
   }
 });

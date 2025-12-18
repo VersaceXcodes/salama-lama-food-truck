@@ -1,103 +1,35 @@
-You are a senior UI/UX + frontend engineer. Fix the site’s TOP NAV BAR so it looks modern and is 100% mobile responsive.
+## BUILD FAILURE - Fix Required (Attempt 2/3)
 
-Problem:
-On mobile the header is broken: the logo is not centered/aligned, icons are cropped/half visible (cart), spacing is inconsistent, and the header overlaps content. See attached screenshot.
+The Vite build process failed. Analyze the error output below and fix the issue.
 
-Goals:
-1) Build a clean, modern mobile-first header that matches the existing brand (warm beige background + dark brown accents).
-2) On mobile, use a simple 3-part layout:
-   - Left: hamburger button
-   - Center: logo (clickable -> Home)
-   - Right: cart icon with badge + profile icon (or login)
-3) Nothing should be cropped. Header must never overflow horizontally. No icon should be partially visible.
-4) Responsive behavior:
-   - Mobile: icons only, centered logo, consistent padding, tap targets large enough.
-   - Tablet/Desktop: show full nav links (Menu, Catering, About, Contact, FAQs, Track Order) with logo + actions.
-   - Smoothly switch between modes at a sensible breakpoint.
-5) Sticky behavior:
-   - Header stays fixed/sticky at top while scrolling.
-   - Add proper spacing so page content is not hidden under the header.
-6) Drawer menu:
-   - Hamburger opens a real mobile drawer with nav links + login/signup + cart.
-   - Drawer should scroll if content is tall, and close on link click.
-7) Implementation constraints:
-   - Do NOT hardcode “magic” pixel numbers everywhere. Prefer existing design tokens, Tailwind utility classes, or CSS variables.
-   - Use flex/grid correctly (no absolute positioning for main layout).
-   - Ensure safe-area support on iPhone (notch) and prevent body scroll when drawer is open.
-8) Accessibility:
-   - aria-labels on buttons, keyboard navigation, focus trap in drawer, ESC closes.
-   - Cart badge announced properly.
+## Build Error Output:
+```
 
-What to do:
-- Find the current header/nav component(s) (desktop + mobile) and refactor into ONE responsive component.
-- Remove any duplicate headers rendering on mobile.
-- Fix any containers causing clipping (overflow hidden, wrong widths).
-- Ensure header uses full width, consistent padding, and aligns items using flexbox.
+> conductor@0.0.0 build
+> vite build
 
-Deliverables:
-- List files changed.
-- Provide the updated component code.
-- Provide any small CSS/Tailwind additions needed.
-- Explain briefly what caused the cropping (e.g., overflow/width constraints/duplicate headers) and how you verified on iPhone-sized screens.
+vite v5.4.21 building for production...
+transforming...
 
-Acceptance tests:
-- iPhone width: logo centered, hamburger left, cart+profile right, badge fully visible, no overlap with content.
-- Scrolling: header stays in place, content starts below it.
-- Drawer opens with links visible (not blank) and closes properly.
+```
 
-When the user mentions generic pages, map them to concrete files/components by scanning for headings and routes. Examples you MUST follow:
-- If the user says "login" or "sign in", search for components containing the literal heading "Sign in to your account" and edit that file.
-- If the user says "sign up" or "register", search for "Create your account" or equivalent.
-- Always return an explicit list of changed file paths. If your first attempt doesn't change the UI, re-search by heading text and update the correct file.
+## Build Directory: /app/vitereact
 
-⚠️ PRIORITY INSTRUCTIONS:
-- The user's request above is the PRIMARY task. Complete it first.
-- Ignore any existing errors, warnings, or issues you detect in the project unless they directly prevent you from completing the user's requested task.
-- Do NOT automatically fix unrelated errors or refactor code unless explicitly requested.
-- Focus solely on implementing the user's request: "You are a senior UI/UX + frontend engineer. Fix the site’s TOP NAV BAR so it looks modern and is 100% mobile responsive.
+## Your Task:
+1. **Analyze the Error**: Read the error output carefully to understand what went wrong
+2. **Locate the Problem**: Find the file(s) mentioned in the error
+3. **Apply the Fix**: 
+   - Missing file/component? CREATE it with correct exports
+   - Wrong import path? FIX the import statement  
+   - Syntax error? FIX the syntax in the affected file
+   - Type error? FIX the TypeScript types
+   - Missing dependency? Check if it needs to be installed or if it's a local import issue
+4. **Verify**: After fixing, ensure all imports resolve correctly
 
-Problem:
-On mobile the header is broken: the logo is not centered/aligned, icons are cropped/half visible (cart), spacing is inconsistent, and the header overlaps content. See attached screenshot.
+## IMPORTANT:
+- The build CANNOT succeed until this error is fixed
+- If creating a missing component, ensure exports match what's being imported (default vs named)
+- If the error mentions a specific line number, check that line in the source file
+- Run `npx tsc --noEmit` after fixing to verify no TypeScript errors remain
 
-Goals:
-1) Build a clean, modern mobile-first header that matches the existing brand (warm beige background + dark brown accents).
-2) On mobile, use a simple 3-part layout:
-   - Left: hamburger button
-   - Center: logo (clickable -> Home)
-   - Right: cart icon with badge + profile icon (or login)
-3) Nothing should be cropped. Header must never overflow horizontally. No icon should be partially visible.
-4) Responsive behavior:
-   - Mobile: icons only, centered logo, consistent padding, tap targets large enough.
-   - Tablet/Desktop: show full nav links (Menu, Catering, About, Contact, FAQs, Track Order) with logo + actions.
-   - Smoothly switch between modes at a sensible breakpoint.
-5) Sticky behavior:
-   - Header stays fixed/sticky at top while scrolling.
-   - Add proper spacing so page content is not hidden under the header.
-6) Drawer menu:
-   - Hamburger opens a real mobile drawer with nav links + login/signup + cart.
-   - Drawer should scroll if content is tall, and close on link click.
-7) Implementation constraints:
-   - Do NOT hardcode “magic” pixel numbers everywhere. Prefer existing design tokens, Tailwind utility classes, or CSS variables.
-   - Use flex/grid correctly (no absolute positioning for main layout).
-   - Ensure safe-area support on iPhone (notch) and prevent body scroll when drawer is open.
-8) Accessibility:
-   - aria-labels on buttons, keyboard navigation, focus trap in drawer, ESC closes.
-   - Cart badge announced properly.
-
-What to do:
-- Find the current header/nav component(s) (desktop + mobile) and refactor into ONE responsive component.
-- Remove any duplicate headers rendering on mobile.
-- Fix any containers causing clipping (overflow hidden, wrong widths).
-- Ensure header uses full width, consistent padding, and aligns items using flexbox.
-
-Deliverables:
-- List files changed.
-- Provide the updated component code.
-- Provide any small CSS/Tailwind additions needed.
-- Explain briefly what caused the cropping (e.g., overflow/width constraints/duplicate headers) and how you verified on iPhone-sized screens.
-
-Acceptance tests:
-- iPhone width: logo centered, hamburger left, cart+profile right, badge fully visible, no overlap with content.
-- Scrolling: header stays in place, content starts below it.
-- Drawer opens with links visible (not blank) and closes properly."
-- Only address errors if they block the specific functionality requested by the user.
+Fix this error so the build can succeed on retry.

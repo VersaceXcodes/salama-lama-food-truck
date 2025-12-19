@@ -78,6 +78,10 @@ import {
   pointsTransactionSchema,
   createSystemSettingInputSchema,
   systemSettingSchema,
+  contactMessageSchema,
+  createContactMessageInputSchema,
+  updateContactMessageInputSchema,
+  searchContactMessageInputSchema,
 } from './schema.js';
 
 dotenv.config();
@@ -4698,6 +4702,293 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
     return ok(res, 200, { message: 'Successfully subscribed to newsletter' });
   } catch (error) {
     if (error instanceof z.ZodError) return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+  }
+});
+
+/**
+ * CONTACT MESSAGES
+ * Public endpoint for contact form submissions
+ */
+
+// POST /api/contact - Submit a contact message (public)
+app.post('/api/contact', async (req, res) => {
+  try {
+    const input = createContactMessageInputSchema.parse(req.body);
+    
+    const message_id = gen_id('msg');
+    const created_at = now_iso();
+    const ip_address = req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || null;
+    const user_agent = req.headers['user-agent'] || null;
+    
+    await pool.query(
+      `INSERT INTO contact_messages (
+        message_id, name, email, phone, subject, message,
+        status, ip_address, user_agent, created_at, read_at, archived_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+      [
+        message_id,
+        input.name.trim(),
+        input.email.toLowerCase().trim(),
+        input.phone?.trim() || null,
+        input.subject.trim(),
+        input.message.trim(),
+        'new',
+        ip_address,
+        user_agent,
+        created_at,
+        null,
+        null,
+      ]
+    );
+    
+    // Notify admin via WebSocket
+    io.to('admin').emit('new_contact_message', {
+      event: 'new_contact_message',
+      data: {
+        message_id,
+        name: input.name.trim(),
+        email: input.email.toLowerCase().trim(),
+        subject: input.subject.trim(),
+        created_at,
+      },
+      timestamp: now_iso(),
+    });
+    
+    // Send confirmation email to customer (mocked)
+    send_email_mock({
+      to: input.email.toLowerCase().trim(),
+      subject: 'We received your message - Salama Lama',
+      body: `Hi ${input.name},\n\nThank you for contacting us! We've received your message and will get back to you within 24-48 hours.\n\nSubject: ${input.subject}\n\nBest regards,\nSalama Lama Team`,
+    }).catch(() => {});
+    
+    // Notify admin via email (mocked)
+    send_email_mock({
+      to: 'admin@coffeeshop.ie',
+      subject: `New Contact Form Submission: ${input.subject}`,
+      body: `New contact message received:\n\nFrom: ${input.name}\nEmail: ${input.email}\nPhone: ${input.phone || 'N/A'}\nSubject: ${input.subject}\n\nMessage:\n${input.message}`,
+    }).catch(() => {});
+    
+    return ok(res, 201, {
+      message: 'Message received. We\'ll get back to you soon!',
+      data: { id: message_id },
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+    }
+    console.error('Contact form submission error:', error);
+    return res.status(500).json(createErrorResponse('Failed to submit message. Please try again.', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+  }
+});
+
+// GET /api/admin/contact-messages - List contact messages (admin only)
+app.get('/api/admin/contact-messages', authenticate_token, require_role(['admin', 'staff']), async (req, res) => {
+  try {
+    const search = parse_query(searchContactMessageInputSchema, req.query);
+    
+    const where = [];
+    const params: any[] = [];
+    
+    if (search.status) {
+      params.push(search.status);
+      where.push(`status = $${params.length}`);
+    }
+    
+    if (search.q) {
+      params.push(`%${search.q}%`);
+      where.push(`(name ILIKE $${params.length} OR email ILIKE $${params.length} OR subject ILIKE $${params.length} OR message ILIKE $${params.length})`);
+    }
+    
+    const where_sql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    
+    // Get total count
+    const count_res = await pool.query(`SELECT COUNT(*)::int as count FROM contact_messages ${where_sql}`, params);
+    const total = count_res.rows[0]?.count ?? 0;
+    
+    // Get messages
+    const sort_by_map: Record<string, string> = {
+      created_at: 'created_at',
+      email: 'email',
+      subject: 'subject',
+    };
+    const sort_by = sort_by_map[search.sort_by] || 'created_at';
+    const sort_order = search.sort_order === 'asc' ? 'ASC' : 'DESC';
+    
+    params.push(search.limit);
+    params.push(search.offset);
+    
+    const messages_res = await pool.query(
+      `SELECT * FROM contact_messages ${where_sql}
+       ORDER BY ${sort_by} ${sort_order}
+       LIMIT $${params.length - 1} OFFSET $${params.length}`,
+      params
+    );
+    
+    const messages = messages_res.rows.map(row => contactMessageSchema.parse({
+      ...row,
+      phone: row.phone ?? null,
+      ip_address: row.ip_address ?? null,
+      user_agent: row.user_agent ?? null,
+      read_at: row.read_at ?? null,
+      archived_at: row.archived_at ?? null,
+    }));
+    
+    return ok(res, 200, {
+      messages,
+      total,
+      limit: search.limit,
+      offset: search.offset,
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+    }
+    console.error('Error fetching contact messages:', error);
+    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+  }
+});
+
+// GET /api/admin/contact-messages/:message_id - Get single contact message (admin only)
+app.get('/api/admin/contact-messages/:message_id', authenticate_token, require_role(['admin', 'staff']), async (req, res) => {
+  try {
+    const { message_id } = req.params;
+    
+    const result = await pool.query('SELECT * FROM contact_messages WHERE message_id = $1', [message_id]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json(createErrorResponse('Message not found', null, 'NOT_FOUND', req.request_id));
+    }
+    
+    const row = result.rows[0];
+    const message = contactMessageSchema.parse({
+      ...row,
+      phone: row.phone ?? null,
+      ip_address: row.ip_address ?? null,
+      user_agent: row.user_agent ?? null,
+      read_at: row.read_at ?? null,
+      archived_at: row.archived_at ?? null,
+    });
+    
+    // Auto-mark as read when viewed
+    if (row.status === 'new') {
+      await pool.query(
+        'UPDATE contact_messages SET status = $1, read_at = $2 WHERE message_id = $3',
+        ['read', now_iso(), message_id]
+      );
+      message.status = 'read';
+      message.read_at = now_iso();
+    }
+    
+    return ok(res, 200, { message });
+  } catch (error) {
+    console.error('Error fetching contact message:', error);
+    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+  }
+});
+
+// PATCH /api/admin/contact-messages/:message_id - Update contact message status (admin only)
+app.patch('/api/admin/contact-messages/:message_id', authenticate_token, require_role(['admin', 'staff']), async (req, res) => {
+  try {
+    const { message_id } = req.params;
+    const input = updateContactMessageInputSchema.parse({ ...req.body, message_id });
+    
+    // Check if message exists
+    const existing = await pool.query('SELECT * FROM contact_messages WHERE message_id = $1', [message_id]);
+    if (existing.rows.length === 0) {
+      return res.status(404).json(createErrorResponse('Message not found', null, 'NOT_FOUND', req.request_id));
+    }
+    
+    const updates: string[] = [];
+    const params: any[] = [];
+    
+    if (input.status === 'read') {
+      params.push('read');
+      updates.push(`status = $${params.length}`);
+      if (!existing.rows[0].read_at) {
+        params.push(now_iso());
+        updates.push(`read_at = $${params.length}`);
+      }
+    } else if (input.status === 'archived') {
+      params.push('archived');
+      updates.push(`status = $${params.length}`);
+      params.push(now_iso());
+      updates.push(`archived_at = $${params.length}`);
+    } else if (input.status === 'new') {
+      params.push('new');
+      updates.push(`status = $${params.length}`);
+    }
+    
+    params.push(message_id);
+    
+    await pool.query(
+      `UPDATE contact_messages SET ${updates.join(', ')} WHERE message_id = $${params.length}`,
+      params
+    );
+    
+    // Fetch updated message
+    const updated = await pool.query('SELECT * FROM contact_messages WHERE message_id = $1', [message_id]);
+    const row = updated.rows[0];
+    const message = contactMessageSchema.parse({
+      ...row,
+      phone: row.phone ?? null,
+      ip_address: row.ip_address ?? null,
+      user_agent: row.user_agent ?? null,
+      read_at: row.read_at ?? null,
+      archived_at: row.archived_at ?? null,
+    });
+    
+    // Log activity
+    await log_activity({
+      user_id: req.user.user_id,
+      action_type: 'update',
+      entity_type: 'contact_message',
+      entity_id: message_id,
+      description: `Updated contact message status to ${input.status}`,
+      changes: { status: { from: existing.rows[0].status, to: input.status } },
+      ip_address: req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || null,
+      user_agent: req.headers['user-agent'] || null,
+    });
+    
+    return ok(res, 200, { message });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+    }
+    console.error('Error updating contact message:', error);
+    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+  }
+});
+
+// GET /api/admin/notifications/summary - Get notification counts for admin (admin only)
+app.get('/api/admin/notifications/summary', authenticate_token, require_role(['admin', 'staff']), async (req, res) => {
+  try {
+    // Get new contact messages count
+    const contact_res = await pool.query(
+      "SELECT COUNT(*)::int as count FROM contact_messages WHERE status = 'new'"
+    );
+    const contact_new_count = contact_res.rows[0]?.count ?? 0;
+    
+    // Get new catering inquiries count
+    const catering_res = await pool.query(
+      "SELECT COUNT(*)::int as count FROM catering_inquiries WHERE status = 'new'"
+    );
+    const catering_new_count = catering_res.rows[0]?.count ?? 0;
+    
+    // Get pending orders count (orders that need attention)
+    const orders_res = await pool.query(
+      "SELECT COUNT(*)::int as count FROM orders WHERE status IN ('received', 'preparing')"
+    );
+    const orders_pending_count = orders_res.rows[0]?.count ?? 0;
+    
+    return ok(res, 200, {
+      contact_new_count,
+      catering_new_count,
+      orders_pending_count,
+      total_new: contact_new_count + catering_new_count,
+    });
+  } catch (error) {
+    console.error('Error fetching notification summary:', error);
     return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
   }
 });

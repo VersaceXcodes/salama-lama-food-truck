@@ -77,6 +77,7 @@ import UV_AdminCateringList from '@/components/views/UV_AdminCateringList';
 import UV_AdminCateringInquiryDetail from '@/components/views/UV_AdminCateringInquiryDetail';
 import UV_AdminInvoices from '@/components/views/UV_AdminInvoices';
 import UV_AdminInvoiceDetail from '@/components/views/UV_AdminInvoiceDetail';
+import UV_AdminContactMessages from '@/components/views/UV_AdminContactMessages';
 import UV_AdminAnalytics from '@/components/views/UV_AdminAnalytics';
 import UV_AdminSettings from '@/components/views/UV_AdminSettings';
 import UV_AdminActivityLogs from '@/components/views/UV_AdminActivityLogs';
@@ -557,6 +558,13 @@ const AppRoutes: React.FC = () => {
         <Route path="/admin/invoices/:invoice_id" element={
           <AdminRoute>
             <UV_AdminInvoiceDetail />
+          </AdminRoute>
+        } />
+
+        {/* Contact Messages */}
+        <Route path="/admin/messages" element={
+          <AdminRoute>
+            <UV_AdminContactMessages />
           </AdminRoute>
         } />
 

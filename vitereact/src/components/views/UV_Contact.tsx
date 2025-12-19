@@ -106,16 +106,8 @@ const UV_Contact: React.FC = () => {
 
   const submit_mutation = useMutation({
     mutationFn: async (form_data: ContactFormData) => {
-      // MISSING ENDPOINT: POST /api/contact/submit not defined in OpenAPI spec
-      // Simulating submission for now - in production, this should create a support ticket
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // In production, uncomment and use:
-      // const response = await axios.post(`${API_BASE_URL}/api/contact/submit`, form_data);
-      // return response.data;
-      
-      console.log('Contact form submitted:', form_data);
-      return { success: true, message: 'Thank you for contacting us! We\'ll get back to you soon.' };
+      const response = await axios.post(`${API_BASE_URL}/api/contact`, form_data);
+      return response.data;
     },
     onSuccess: () => {
       setFormSuccess(true);

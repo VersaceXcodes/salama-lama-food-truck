@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
 import { useAppStore } from '@/store/main';
 import {
   LayoutDashboard,
@@ -16,8 +18,18 @@ import {
   Activity,
   Menu,
   X,
-  House
+  House,
+  Mail
 } from 'lucide-react';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+
+interface NotificationSummary {
+  contact_new_count: number;
+  catering_new_count: number;
+  orders_pending_count: number;
+  total_new: number;
+}
 
 const GV_AdminSidebar: React.FC = () => {
   const location = useLocation();
@@ -27,8 +39,23 @@ const GV_AdminSidebar: React.FC = () => {
   // CRITICAL: Individual selectors for auth state - no object destructuring
   const currentUser = useAppStore(state => state.authentication_state.current_user);
   const isAuthenticated = useAppStore(state => state.authentication_state.authentication_status.is_authenticated);
+  const auth_token = useAppStore(state => state.authentication_state.auth_token);
   const businessSettings = useAppStore(state => state.business_settings);
   const logoUrl = businessSettings.business_info.logo_url || '/assets/salama-lama-logo.png';
+  
+  // Fetch notification summary with polling
+  const { data: notifications } = useQuery<NotificationSummary>({
+    queryKey: ['admin-notifications-summary'],
+    queryFn: async () => {
+      const response = await axios.get(`${API_BASE_URL}/api/admin/notifications/summary`, {
+        headers: { Authorization: `Bearer ${auth_token}` },
+      });
+      return response.data;
+    },
+    enabled: !!auth_token && isAuthenticated && currentUser?.role === 'admin',
+    staleTime: 30000, // 30 seconds
+    refetchInterval: 60000, // Poll every minute
+  });
 
   // Body scroll lock when mobile drawer is open
   useEffect(() => {
@@ -81,77 +108,97 @@ const GV_AdminSidebar: React.FC = () => {
     return null;
   }
 
-  // Navigation items structure
+  // Navigation items structure with badge counts
   const navigation = [
     {
       name: 'Home',
       path: '/',
       icon: House,
+      badge: 0,
     },
     {
       name: 'Dashboard',
       path: '/admin/dashboard',
       icon: LayoutDashboard,
+      badge: 0,
     },
     {
       name: 'Orders',
       path: '/admin/orders',
       icon: ShoppingBag,
+      badge: notifications?.orders_pending_count || 0,
     },
     {
       name: 'Menu Items',
       path: '/admin/menu',
       icon: UtensilsCrossed,
+      badge: 0,
     },
     {
       name: 'Categories',
       path: '/admin/menu/categories',
       icon: Tag,
+      badge: 0,
     },
     {
       name: 'Stock',
       path: '/admin/stock',
       icon: Package,
+      badge: 0,
     },
     {
       name: 'Delivery',
       path: '/admin/delivery',
       icon: Truck,
+      badge: 0,
     },
     {
       name: 'Discounts',
       path: '/admin/discounts',
       icon: Tag,
+      badge: 0,
     },
     {
       name: 'Customers',
       path: '/admin/customers',
       icon: Users,
+      badge: 0,
     },
     {
       name: 'Staff',
       path: '/admin/staff',
       icon: UserCog,
+      badge: 0,
     },
     {
       name: 'Invoices',
       path: '/admin/invoices',
       icon: FileText,
+      badge: 0,
+    },
+    {
+      name: 'Messages',
+      path: '/admin/messages',
+      icon: Mail,
+      badge: notifications?.contact_new_count || 0,
     },
     {
       name: 'Analytics',
       path: '/admin/analytics',
       icon: BarChart3,
+      badge: 0,
     },
     {
       name: 'Activity Logs',
       path: '/admin/activity-logs',
       icon: Activity,
+      badge: 0,
     },
     {
       name: 'Settings',
       path: '/admin/settings',
       icon: Settings,
+      badge: 0,
     },
   ];
 
@@ -254,9 +301,21 @@ const GV_AdminSidebar: React.FC = () => {
                     }`}
                     title={is_collapsed ? item.name : undefined}
                   >
-                    <item.icon className="w-5 h-5 flex-shrink-0" />
+                    <div className="relative">
+                      <item.icon className="w-5 h-5 flex-shrink-0" />
+                      {item.badge > 0 && (
+                        <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-red-500 rounded-full">
+                          {item.badge > 99 ? '99+' : item.badge}
+                        </span>
+                      )}
+                    </div>
                     {!is_collapsed && (
-                      <span className="font-medium">{item.name}</span>
+                      <span className="font-medium flex-1">{item.name}</span>
+                    )}
+                    {!is_collapsed && item.badge > 0 && (
+                      <span className="ml-auto px-2 py-0.5 text-xs font-semibold bg-red-500 text-white rounded-full">
+                        {item.badge > 99 ? '99+' : item.badge}
+                      </span>
                     )}
                   </Link>
                 </li>

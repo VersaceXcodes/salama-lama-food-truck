@@ -522,6 +522,22 @@ CREATE TABLE activity_logs (
     FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
 
+-- Contact Messages Table
+CREATE TABLE contact_messages (
+    message_id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    phone TEXT,
+    subject TEXT NOT NULL,
+    message TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'new',
+    ip_address TEXT,
+    user_agent TEXT,
+    created_at TEXT NOT NULL,
+    read_at TEXT,
+    archived_at TEXT
+);
+
 -- ============================================
 -- SEED DATA
 -- ============================================
@@ -888,3 +904,6 @@ CREATE INDEX idx_discount_codes_code ON discount_codes(code);
 CREATE INDEX idx_catering_inquiries_status ON catering_inquiries(status);
 CREATE INDEX idx_activity_logs_user_id ON activity_logs(user_id);
 CREATE INDEX idx_activity_logs_created_at ON activity_logs(created_at);
+CREATE INDEX idx_contact_messages_status_created ON contact_messages(status, created_at DESC);
+CREATE INDEX idx_contact_messages_email ON contact_messages(email);
+CREATE INDEX idx_contact_messages_created_at ON contact_messages(created_at DESC);

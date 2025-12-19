@@ -1388,3 +1388,49 @@ export type HomepageSection = z.infer<typeof homepageSectionSchema>;
 export type CreateHomepageSectionInput = z.infer<typeof createHomepageSectionInputSchema>;
 export type UpdateHomepageSectionInput = z.infer<typeof updateHomepageSectionInputSchema>;
 export type ReorderHomepageSectionsInput = z.infer<typeof reorderHomepageSectionsInputSchema>;
+
+// ============================================
+// CONTACT MESSAGES SCHEMAS
+// ============================================
+
+export const contactMessageSchema = z.object({
+  message_id: z.string(),
+  name: z.string(),
+  email: z.string(),
+  phone: z.string().nullable(),
+  subject: z.string(),
+  message: z.string(),
+  status: z.enum(['new', 'read', 'archived']),
+  ip_address: z.string().nullable(),
+  user_agent: z.string().nullable(),
+  created_at: z.string(),
+  read_at: z.string().nullable(),
+  archived_at: z.string().nullable(),
+});
+
+export const createContactMessageInputSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters').max(100),
+  email: z.string().email('Please enter a valid email address').max(255),
+  phone: z.string().max(20).nullable().optional(),
+  subject: z.string().min(3, 'Subject must be at least 3 characters').max(200),
+  message: z.string().min(10, 'Message must be at least 10 characters').max(5000),
+});
+
+export const updateContactMessageInputSchema = z.object({
+  message_id: z.string(),
+  status: z.enum(['new', 'read', 'archived']),
+});
+
+export const searchContactMessageInputSchema = z.object({
+  status: z.enum(['new', 'read', 'archived']).optional(),
+  q: z.string().optional(),
+  limit: z.number().int().positive().default(20),
+  offset: z.number().int().nonnegative().default(0),
+  sort_by: z.enum(['created_at', 'email', 'subject']).default('created_at'),
+  sort_order: z.enum(['asc', 'desc']).default('desc'),
+});
+
+export type ContactMessage = z.infer<typeof contactMessageSchema>;
+export type CreateContactMessageInput = z.infer<typeof createContactMessageInputSchema>;
+export type UpdateContactMessageInput = z.infer<typeof updateContactMessageInputSchema>;
+export type SearchContactMessageInput = z.infer<typeof searchContactMessageInputSchema>;

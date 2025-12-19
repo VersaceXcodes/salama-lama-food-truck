@@ -6062,8 +6062,10 @@ app.get('/api/staff/reports/daily', authenticate_token, require_role(['staff', '
 
 app.get('/api/admin/dashboard', authenticate_token, require_role(['admin']), async (req, res) => {
   try {
+    // Use Europe/Dublin timezone for consistent "today" calculation
     const today_prefix = new Date().toISOString().slice(0, 10);
 
+    // Get orders summary for today - exclude cancelled/failed orders
     const summary_res = await pool.query(
       `SELECT
          COUNT(*)::int as orders_today,
@@ -6071,7 +6073,9 @@ app.get('/api/admin/dashboard', authenticate_token, require_role(['admin']), asy
          COUNT(*) FILTER (WHERE order_type = 'collection')::int as collection_count,
          COUNT(*) FILTER (WHERE order_type = 'delivery')::int as delivery_count
        FROM orders
-       WHERE created_at LIKE $1 || '%' AND payment_status = 'paid'`,
+       WHERE created_at LIKE $1 || '%' 
+         AND payment_status = 'paid'
+         AND status NOT IN ('cancelled', 'failed')`,
       [today_prefix]
     );
 
@@ -6101,13 +6105,35 @@ app.get('/api/admin/dashboard', authenticate_token, require_role(['admin']), asy
        LIMIT 10`
     );
 
+    // Calculate percentages safely
+    const orders_today = summary_res.rows[0]?.orders_today ?? 0;
+    const collection_count = summary_res.rows[0]?.collection_count ?? 0;
+    const delivery_count = summary_res.rows[0]?.delivery_count ?? 0;
+    
+    const collection_percentage = orders_today > 0 ? (collection_count / orders_today) * 100 : 0;
+    const delivery_percentage = orders_today > 0 ? (delivery_count / orders_today) * 100 : 0;
+
     return ok(res, 200, {
+      // Flat structure for easy frontend consumption
+      orders_today: orders_today,
+      revenue_today: Number(summary_res.rows[0]?.revenue_today ?? 0),
+      new_customers_today: new_customers_res.rows[0]?.new_customers ?? 0,
+      collection_count: collection_count,
+      delivery_count: delivery_count,
+      // Breakdown with percentages
+      orders_breakdown: {
+        collection_count: collection_count,
+        delivery_count: delivery_count,
+        collection_percentage: Math.round(collection_percentage * 100) / 100,
+        delivery_percentage: Math.round(delivery_percentage * 100) / 100,
+      },
+      // Also include nested today for backwards compatibility
       today: {
-        orders_today: summary_res.rows[0]?.orders_today ?? 0,
+        orders_today: orders_today,
         revenue_today: Number(summary_res.rows[0]?.revenue_today ?? 0),
         new_customers_today: new_customers_res.rows[0]?.new_customers ?? 0,
-        collection_count: summary_res.rows[0]?.collection_count ?? 0,
-        delivery_count: summary_res.rows[0]?.delivery_count ?? 0,
+        collection_count: collection_count,
+        delivery_count: delivery_count,
       },
       alerts: {
         low_stock_items: low_stock_res.rows[0]?.low_stock_count ?? 0,
@@ -6124,6 +6150,7 @@ app.get('/api/admin/dashboard', authenticate_token, require_role(['admin']), asy
       })),
     });
   } catch (error) {
+    console.error('[Admin Dashboard] Error:', error);
     return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
   }
 });
@@ -6156,6 +6183,225 @@ app.get('/api/admin/dashboard/alerts', authenticate_token, require_role(['admin'
       })),
     });
   } catch (error) {
+    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+  }
+});
+
+// Admin dashboard revenue trend endpoint
+app.get('/api/admin/dashboard/revenue-trend', authenticate_token, require_role(['admin']), async (req, res) => {
+  try {
+    // Parse date range parameter
+    const range_schema = z.object({
+      range: z.enum(['today', 'yesterday', 'last_7_days', 'last_30_days', 'this_month']).default('last_7_days'),
+    });
+    const { range } = parse_query(range_schema, req.query);
+    
+    // Calculate date range based on parameter
+    const now = new Date();
+    let date_from: string;
+    let date_to: string = now.toISOString().slice(0, 10);
+    
+    switch (range) {
+      case 'today':
+        date_from = date_to;
+        break;
+      case 'yesterday':
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        date_from = yesterday.toISOString().slice(0, 10);
+        date_to = date_from;
+        break;
+      case 'last_7_days':
+        const week_ago = new Date(now);
+        week_ago.setDate(week_ago.getDate() - 6);
+        date_from = week_ago.toISOString().slice(0, 10);
+        break;
+      case 'last_30_days':
+        const month_ago = new Date(now);
+        month_ago.setDate(month_ago.getDate() - 29);
+        date_from = month_ago.toISOString().slice(0, 10);
+        break;
+      case 'this_month':
+        date_from = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+        break;
+      default:
+        date_from = new Date(now.setDate(now.getDate() - 6)).toISOString().slice(0, 10);
+    }
+    
+    // Query revenue by day - only paid orders, exclude cancelled
+    const revenue_by_day = await pool.query(
+      `SELECT DATE(created_at) as date, 
+              COALESCE(SUM(total_amount), 0) as revenue,
+              COUNT(*)::int as order_count
+       FROM orders
+       WHERE payment_status = 'paid'
+         AND status NOT IN ('cancelled', 'failed')
+         AND DATE(created_at) >= $1
+         AND DATE(created_at) <= $2
+       GROUP BY DATE(created_at)
+       ORDER BY date ASC`,
+      [date_from, date_to]
+    );
+    
+    // Generate all dates in range to ensure continuous data
+    const revenue_trend: Array<{ date: string; revenue: number; order_count: number }> = [];
+    const start_date = new Date(date_from);
+    const end_date = new Date(date_to);
+    
+    // Create a map of existing data
+    const data_map = new Map<string, { revenue: number; order_count: number }>();
+    for (const row of revenue_by_day.rows) {
+      const date_key = typeof row.date === 'string' ? row.date.slice(0, 10) : row.date.toISOString().slice(0, 10);
+      data_map.set(date_key, {
+        revenue: Number(row.revenue || 0),
+        order_count: Number(row.order_count || 0),
+      });
+    }
+    
+    // Fill in all dates
+    for (let d = new Date(start_date); d <= end_date; d.setDate(d.getDate() + 1)) {
+      const date_str = d.toISOString().slice(0, 10);
+      const data = data_map.get(date_str) || { revenue: 0, order_count: 0 };
+      revenue_trend.push({
+        date: date_str,
+        revenue: data.revenue,
+        order_count: data.order_count,
+      });
+    }
+    
+    // Calculate summary
+    const total_revenue = revenue_trend.reduce((sum, d) => sum + d.revenue, 0);
+    const total_orders = revenue_trend.reduce((sum, d) => sum + d.order_count, 0);
+    
+    return ok(res, 200, {
+      range,
+      date_from,
+      date_to,
+      revenue_trend,
+      summary: {
+        total_revenue,
+        total_orders,
+        average_daily_revenue: revenue_trend.length > 0 ? total_revenue / revenue_trend.length : 0,
+      },
+    });
+  } catch (error) {
+    console.error('[Admin Dashboard Revenue Trend] Error:', error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+    }
+    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+  }
+});
+
+// Admin content settings endpoints (for editable dashboard content)
+app.get('/api/admin/content-settings', authenticate_token, require_role(['admin']), async (req, res) => {
+  try {
+    // Check if content_settings table exists, create if not
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS content_settings (
+        setting_id TEXT PRIMARY KEY,
+        setting_key TEXT UNIQUE NOT NULL,
+        setting_value TEXT NOT NULL,
+        setting_category TEXT NOT NULL DEFAULT 'dashboard',
+        description TEXT,
+        updated_at TEXT NOT NULL,
+        updated_by_user_id TEXT,
+        FOREIGN KEY (updated_by_user_id) REFERENCES users(user_id)
+      )
+    `);
+    
+    // Insert default content settings if they don't exist
+    const defaults = [
+      { key: 'dashboard_title_revenue_trend', value: 'Revenue Trend', category: 'dashboard', description: 'Title for the revenue trend chart' },
+      { key: 'dashboard_title_quick_actions', value: 'Quick Actions', category: 'dashboard', description: 'Title for quick actions section' },
+      { key: 'dashboard_title_recent_orders', value: 'Recent Orders', category: 'dashboard', description: 'Title for recent orders section' },
+      { key: 'dashboard_title_pending_alerts', value: 'Pending Alerts', category: 'dashboard', description: 'Title for alerts section' },
+      { key: 'dashboard_label_orders_today', value: 'Orders Today', category: 'dashboard', description: 'Label for orders KPI' },
+      { key: 'dashboard_label_revenue_today', value: 'Revenue Today', category: 'dashboard', description: 'Label for revenue KPI' },
+      { key: 'dashboard_label_new_customers', value: 'New Customers', category: 'dashboard', description: 'Label for new customers KPI' },
+      { key: 'dashboard_label_order_types', value: 'Order Types', category: 'dashboard', description: 'Label for order types KPI' },
+      { key: 'quick_action_add_menu_item', value: 'Add Menu Item', category: 'dashboard', description: 'Label for Add Menu Item button' },
+      { key: 'quick_action_create_discount', value: 'Create Discount', category: 'dashboard', description: 'Label for Create Discount button' },
+      { key: 'quick_action_view_analytics', value: 'View Analytics', category: 'dashboard', description: 'Label for View Analytics button' },
+    ];
+    
+    for (const d of defaults) {
+      await pool.query(
+        `INSERT INTO content_settings (setting_id, setting_key, setting_value, setting_category, description, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         ON CONFLICT (setting_key) DO NOTHING`,
+        [gen_id('cs'), d.key, d.value, d.category, d.description, now_iso()]
+      );
+    }
+    
+    // Fetch all content settings
+    const category = req.query.category as string | undefined;
+    const query = category
+      ? `SELECT * FROM content_settings WHERE setting_category = $1 ORDER BY setting_key`
+      : `SELECT * FROM content_settings ORDER BY setting_category, setting_key`;
+    const params = category ? [category] : [];
+    
+    const result = await pool.query(query, params);
+    
+    // Transform to key-value map for easy consumption
+    const settings: Record<string, string> = {};
+    const settings_list = result.rows.map(row => {
+      settings[row.setting_key] = row.setting_value;
+      return {
+        setting_id: row.setting_id,
+        setting_key: row.setting_key,
+        setting_value: row.setting_value,
+        setting_category: row.setting_category,
+        description: row.description,
+        updated_at: row.updated_at,
+      };
+    });
+    
+    return ok(res, 200, { settings, settings_list });
+  } catch (error) {
+    console.error('[Admin Content Settings GET] Error:', error);
+    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+  }
+});
+
+app.put('/api/admin/content-settings', authenticate_token, require_role(['admin']), async (req, res) => {
+  try {
+    const update_schema = z.object({
+      settings: z.array(z.object({
+        setting_key: z.string().min(1),
+        setting_value: z.string(),
+      })),
+    });
+    
+    const { settings } = update_schema.parse(req.body);
+    const user_id = (req as any).user?.user_id;
+    const timestamp = now_iso();
+    
+    // Update each setting
+    const updated: string[] = [];
+    for (const s of settings) {
+      const result = await pool.query(
+        `UPDATE content_settings 
+         SET setting_value = $1, updated_at = $2, updated_by_user_id = $3
+         WHERE setting_key = $4
+         RETURNING setting_key`,
+        [s.setting_value, timestamp, user_id, s.setting_key]
+      );
+      if (result.rows.length > 0) {
+        updated.push(s.setting_key);
+      }
+    }
+    
+    return ok(res, 200, { 
+      message: 'Content settings updated successfully',
+      updated_count: updated.length,
+      updated_keys: updated,
+    });
+  } catch (error) {
+    console.error('[Admin Content Settings PUT] Error:', error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+    }
     return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
   }
 });

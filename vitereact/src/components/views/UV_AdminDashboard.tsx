@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppStore } from '@/store/main';
+import { useToast } from '@/components/ui/use-toast';
 
 // ===========================
 // Type Definitions
@@ -12,6 +13,8 @@ interface DashboardMetrics {
   orders_today: number;
   revenue_today: number;
   new_customers_today: number;
+  collection_count: number;
+  delivery_count: number;
   collection_percentage: number;
   delivery_percentage: number;
 }
@@ -41,6 +44,10 @@ interface ChartDataPoint {
   value: number;
 }
 
+interface ContentSettings {
+  [key: string]: string;
+}
+
 // ===========================
 // API Functions
 // ===========================
@@ -57,12 +64,32 @@ const fetchDashboardMetrics = async (
     }
   );
 
+  // Handle both flat and nested response structures
+  const data = response.data;
+  const orders_today = Number(data.orders_today ?? data.today?.orders_today ?? 0);
+  const revenue_today = Number(data.revenue_today ?? data.today?.revenue_today ?? 0);
+  const new_customers_today = Number(data.new_customers_today ?? data.today?.new_customers_today ?? 0);
+  const collection_count = Number(data.collection_count ?? data.today?.collection_count ?? data.orders_breakdown?.collection_count ?? 0);
+  const delivery_count = Number(data.delivery_count ?? data.today?.delivery_count ?? data.orders_breakdown?.delivery_count ?? 0);
+  
+  // Get percentages from response or calculate them
+  let collection_percentage = Number(data.orders_breakdown?.collection_percentage ?? 0);
+  let delivery_percentage = Number(data.orders_breakdown?.delivery_percentage ?? 0);
+  
+  // If percentages are 0 but we have counts, calculate them
+  if (collection_percentage === 0 && delivery_percentage === 0 && orders_today > 0) {
+    collection_percentage = (collection_count / orders_today) * 100;
+    delivery_percentage = (delivery_count / orders_today) * 100;
+  }
+
   return {
-    orders_today: response.data.orders_today || 0,
-    revenue_today: response.data.revenue_today || 0,
-    new_customers_today: response.data.new_customers_today || 0,
-    collection_percentage: response.data.orders_breakdown?.collection_percentage || 0,
-    delivery_percentage: response.data.orders_breakdown?.delivery_percentage || 0,
+    orders_today: isNaN(orders_today) ? 0 : orders_today,
+    revenue_today: isNaN(revenue_today) ? 0 : revenue_today,
+    new_customers_today: isNaN(new_customers_today) ? 0 : new_customers_today,
+    collection_count: isNaN(collection_count) ? 0 : collection_count,
+    delivery_count: isNaN(delivery_count) ? 0 : delivery_count,
+    collection_percentage: isNaN(collection_percentage) ? 0 : Math.round(collection_percentage * 100) / 100,
+    delivery_percentage: isNaN(delivery_percentage) ? 0 : Math.round(delivery_percentage * 100) / 100,
   };
 };
 
@@ -130,21 +157,59 @@ const fetchRevenueChartData = async (
   token: string,
   dateRange: string
 ): Promise<ChartDataPoint[]> => {
-  const response = await axios.get(
-    `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api/admin/analytics/sales`,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-      params: {
-        date_range: dateRange,
-        report_type: 'revenue_trend',
-      },
-    }
-  );
+  try {
+    // Use the new dedicated revenue-trend endpoint
+    const response = await axios.get(
+      `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api/admin/dashboard/revenue-trend`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { range: dateRange },
+      }
+    );
 
-  return (response.data.revenue_by_day || []).map((item: any) => ({
-    date: item.date,
-    value: Number(item.revenue || 0),
-  }));
+    // Handle the new endpoint response structure
+    const revenue_trend = response.data.revenue_trend || [];
+    return revenue_trend.map((item: { date: string; revenue: number }) => ({
+      date: item.date,
+      value: Number(item.revenue ?? 0),
+    }));
+  } catch (error) {
+    // Fallback to the old analytics/sales endpoint if new one fails
+    console.warn('Revenue trend endpoint failed, falling back to analytics/sales:', error);
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api/admin/analytics/sales`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { date_range: dateRange },
+        }
+      );
+      return (response.data.revenue_by_day || []).map((item: { date: string; revenue: number }) => ({
+        date: item.date,
+        value: Number(item.revenue ?? 0),
+      }));
+    } catch {
+      // Return empty array if both fail
+      return [];
+    }
+  }
+};
+
+// Fetch content settings for editable labels
+const fetchContentSettings = async (token: string): Promise<ContentSettings> => {
+  try {
+    const response = await axios.get(
+      `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api/admin/content-settings`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { category: 'dashboard' },
+      }
+    );
+    return response.data.settings || {};
+  } catch {
+    // Return empty object if fetch fails - will use defaults
+    return {};
+  }
 };
 
 const toggleDeliveryService = async (
@@ -168,17 +233,24 @@ const LineChart: React.FC<{
   data: ChartDataPoint[];
   height?: number;
   color?: string;
-}> = ({ data, height = 200, color = '#3b82f6' }) => {
+}> = ({ data, height = 280, color = '#10b981' }) => {
   const [hoveredPoint, setHoveredPoint] = React.useState<{
     index: number;
     x: number;
     y: number;
+    clientX: number;
+    clientY: number;
   } | null>(null);
+  const containerRef = React.useRef<HTMLDivElement>(null);
 
   if (data.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-400">
-        No data available
+      <div className="flex flex-col items-center justify-center h-full text-gray-400 py-12">
+        <svg className="w-16 h-16 mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        <p className="text-base font-medium">No revenue data for this period</p>
+        <p className="text-sm text-gray-400 mt-1">Revenue data will appear here once orders are completed</p>
       </div>
     );
   }
@@ -187,14 +259,15 @@ const LineChart: React.FC<{
   const minValue = Math.min(...data.map((d) => d.value), 0);
   const valueRange = maxValue - minValue || 1;
   
-  // Chart dimensions with padding for axes
-  const width = 100;
-  const paddingLeft = 15;
-  const paddingRight = 5;
-  const paddingTop = 5;
-  const paddingBottom = 10;
-  const chartWidth = width - paddingLeft - paddingRight;
-  const chartHeight = height - paddingTop - paddingBottom;
+  // Improved chart dimensions with more space for labels
+  const viewBoxWidth = 600;
+  const viewBoxHeight = height;
+  const paddingLeft = 70;
+  const paddingRight = 30;
+  const paddingTop = 30;
+  const paddingBottom = 50;
+  const chartWidth = viewBoxWidth - paddingLeft - paddingRight;
+  const chartHeight = viewBoxHeight - paddingTop - paddingBottom;
 
   // Generate Y-axis ticks (5 ticks)
   const yTicks = Array.from({ length: 5 }, (_, i) => {
@@ -202,18 +275,45 @@ const LineChart: React.FC<{
     return Math.round(value);
   });
 
-  // Calculate points
+  // Calculate points for polyline
   const points = data
     .map((point, index) => {
-      const x = (index / (data.length - 1 || 1)) * chartWidth + paddingLeft;
+      const x = data.length === 1 
+        ? paddingLeft + chartWidth / 2 
+        : (index / (data.length - 1)) * chartWidth + paddingLeft;
       const normalizedValue = (point.value - minValue) / valueRange;
       const y = paddingTop + chartHeight - (normalizedValue * chartHeight);
       return `${x},${y}`;
     })
     .join(' ');
 
-  // Format currency for tooltip
+  // Calculate gradient fill area
+  const areaPath = data.length > 0 ? (() => {
+    const firstX = data.length === 1 
+      ? paddingLeft + chartWidth / 2 
+      : paddingLeft;
+    const lastX = data.length === 1 
+      ? paddingLeft + chartWidth / 2 
+      : (data.length - 1) / (data.length - 1) * chartWidth + paddingLeft;
+    
+    let path = `M ${firstX} ${paddingTop + chartHeight}`;
+    data.forEach((point, index) => {
+      const x = data.length === 1 
+        ? paddingLeft + chartWidth / 2 
+        : (index / (data.length - 1)) * chartWidth + paddingLeft;
+      const normalizedValue = (point.value - minValue) / valueRange;
+      const y = paddingTop + chartHeight - (normalizedValue * chartHeight);
+      path += ` L ${x} ${y}`;
+    });
+    path += ` L ${lastX} ${paddingTop + chartHeight} Z`;
+    return path;
+  })() : '';
+
+  // Format currency for tooltip and axis
   const formatCurrency = (amount: number): string => {
+    if (amount >= 1000) {
+      return `€${(amount / 1000).toFixed(1)}k`;
+    }
     return new Intl.NumberFormat('en-IE', {
       style: 'currency',
       currency: 'EUR',
@@ -222,58 +322,109 @@ const LineChart: React.FC<{
     }).format(amount);
   };
 
-  // Format date for tooltip
-  const formatDate = (dateString: string): string => {
-    return new Intl.DateTimeFormat('en-IE', {
-      month: 'short',
-      day: 'numeric',
-    }).format(new Date(dateString));
+  const formatCurrencyFull = (amount: number): string => {
+    return new Intl.NumberFormat('en-IE', {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
   };
 
+  // Format date for axis and tooltip
+  const formatDate = (dateString: string): string => {
+    try {
+      return new Intl.DateTimeFormat('en-IE', {
+        month: 'short',
+        day: 'numeric',
+      }).format(new Date(dateString));
+    } catch {
+      return dateString;
+    }
+  };
+
+  const formatDateFull = (dateString: string): string => {
+    try {
+      return new Intl.DateTimeFormat('en-IE', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      }).format(new Date(dateString));
+    } catch {
+      return dateString;
+    }
+  };
+
+  // Calculate which X labels to show (max 7-10 labels)
+  const maxLabels = data.length <= 10 ? data.length : 7;
+  const labelStep = Math.ceil(data.length / maxLabels);
+
   return (
-    <div className="relative w-full h-full">
-      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full">
-        {/* Y-axis grid lines and labels */}
+    <div ref={containerRef} className="relative w-full h-full" style={{ minHeight: height }}>
+      <svg 
+        viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`} 
+        className="w-full h-full"
+        preserveAspectRatio="xMidYMid meet"
+      >
+        <defs>
+          {/* Gradient for area fill */}
+          <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor={color} stopOpacity="0.3" />
+            <stop offset="100%" stopColor={color} stopOpacity="0.05" />
+          </linearGradient>
+        </defs>
+
+        {/* Background grid */}
+        {yTicks.map((_, i) => {
+          const y = paddingTop + (chartHeight * i) / (yTicks.length - 1);
+          return (
+            <line
+              key={`grid-${i}`}
+              x1={paddingLeft}
+              y1={y}
+              x2={viewBoxWidth - paddingRight}
+              y2={y}
+              stroke="#e5e7eb"
+              strokeWidth="1"
+              strokeDasharray="4,4"
+            />
+          );
+        })}
+
+        {/* Y-axis labels */}
         {yTicks.map((tick, i) => {
           const y = paddingTop + (chartHeight * i) / (yTicks.length - 1);
           return (
-            <g key={i}>
-              {/* Grid line */}
-              <line
-                x1={paddingLeft}
-                y1={y}
-                x2={width - paddingRight}
-                y2={y}
-                stroke="#e5e7eb"
-                strokeWidth="0.5"
-                strokeDasharray="2,2"
-              />
-              {/* Y-axis label */}
-              <text
-                x={paddingLeft - 2}
-                y={y}
-                textAnchor="end"
-                alignmentBaseline="middle"
-                fontSize="3"
-                fill="#6b7280"
-              >
-                €{tick}
-              </text>
-            </g>
+            <text
+              key={`y-label-${i}`}
+              x={paddingLeft - 12}
+              y={y}
+              textAnchor="end"
+              alignmentBaseline="middle"
+              fontSize="14"
+              fontWeight="500"
+              fill="#6b7280"
+            >
+              {formatCurrency(tick)}
+            </text>
           );
         })}
 
         {/* X-axis labels */}
-        {data.length <= 7 && data.map((point, index) => {
-          const x = (index / (data.length - 1 || 1)) * chartWidth + paddingLeft;
-          const y = height - paddingBottom + 3;
+        {data.map((point, index) => {
+          if (index % labelStep !== 0 && index !== data.length - 1) return null;
+          const x = data.length === 1 
+            ? paddingLeft + chartWidth / 2 
+            : (index / (data.length - 1)) * chartWidth + paddingLeft;
           return (
             <text
-              key={index}
+              key={`x-label-${index}`}
               x={x}
-              y={y}
+              y={viewBoxHeight - paddingBottom + 25}
               textAnchor="middle"
-              fontSize="3"
+              fontSize="12"
+              fontWeight="500"
               fill="#6b7280"
             >
               {formatDate(point.date)}
@@ -281,43 +432,72 @@ const LineChart: React.FC<{
           );
         })}
 
+        {/* Area fill */}
+        {areaPath && (
+          <path
+            d={areaPath}
+            fill="url(#areaGradient)"
+          />
+        )}
+
         {/* Line */}
         <polyline
           fill="none"
           stroke={color}
-          strokeWidth="2"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
           points={points}
         />
 
         {/* Data points */}
         {data.map((point, index) => {
-          const x = (index / (data.length - 1 || 1)) * chartWidth + paddingLeft;
+          const x = data.length === 1 
+            ? paddingLeft + chartWidth / 2 
+            : (index / (data.length - 1)) * chartWidth + paddingLeft;
           const normalizedValue = (point.value - minValue) / valueRange;
           const y = paddingTop + chartHeight - (normalizedValue * chartHeight);
           const isHovered = hoveredPoint?.index === index;
           
           return (
-            <g key={index}>
+            <g key={`point-${index}`}>
               {/* Invisible larger circle for better hover detection */}
               <circle
                 cx={x}
                 cy={y}
-                r="4"
+                r="20"
                 fill="transparent"
                 style={{ cursor: 'pointer' }}
                 onMouseEnter={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  setHoveredPoint({ index, x: rect.left, y: rect.top });
+                  setHoveredPoint({ 
+                    index, 
+                    x, 
+                    y,
+                    clientX: e.clientX,
+                    clientY: e.clientY 
+                  });
                 }}
                 onMouseLeave={() => setHoveredPoint(null)}
               />
-              {/* Visible circle */}
+              {/* Outer glow on hover */}
+              {isHovered && (
+                <circle
+                  cx={x}
+                  cy={y}
+                  r="12"
+                  fill={color}
+                  opacity="0.2"
+                />
+              )}
+              {/* White border circle */}
               <circle
                 cx={x}
                 cy={y}
-                r={isHovered ? "2.5" : "2"}
-                fill={color}
-                style={{ cursor: 'pointer', transition: 'r 0.2s' }}
+                r={isHovered ? "8" : "6"}
+                fill="white"
+                stroke={color}
+                strokeWidth="3"
+                style={{ cursor: 'pointer', transition: 'all 0.2s ease' }}
               />
             </g>
           );
@@ -325,21 +505,26 @@ const LineChart: React.FC<{
       </svg>
 
       {/* Tooltip */}
-      {hoveredPoint !== null && (
+      {hoveredPoint !== null && data[hoveredPoint.index] && (
         <div
-          className="absolute z-10 px-3 py-2 text-sm bg-gray-900 text-white rounded-lg shadow-lg pointer-events-none"
+          className="absolute z-50 px-4 py-3 bg-gray-900 text-white rounded-xl shadow-2xl pointer-events-none transform -translate-x-1/2"
           style={{
-            left: `${((hoveredPoint.index / (data.length - 1 || 1)) * 100)}%`,
-            top: '-40px',
-            transform: 'translateX(-50%)',
+            left: `${((hoveredPoint.x - paddingLeft) / chartWidth) * 100}%`,
+            top: `${Math.max(10, ((hoveredPoint.y - paddingTop) / chartHeight) * 100 - 20)}%`,
+            minWidth: '140px',
           }}
         >
-          <div className="font-semibold">
-            {formatCurrency(data[hoveredPoint.index].value)}
+          <div className="text-lg font-bold text-green-400">
+            {formatCurrencyFull(data[hoveredPoint.index].value)}
           </div>
-          <div className="text-xs text-gray-300">
-            {formatDate(data[hoveredPoint.index].date)}
+          <div className="text-sm text-gray-300 mt-1">
+            {formatDateFull(data[hoveredPoint.index].date)}
           </div>
+          {/* Arrow */}
+          <div 
+            className="absolute w-3 h-3 bg-gray-900 transform rotate-45"
+            style={{ bottom: '-6px', left: 'calc(50% - 6px)' }}
+          />
         </div>
       )}
     </div>
@@ -353,6 +538,7 @@ const LineChart: React.FC<{
 const UV_AdminDashboard: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   // Zustand store - CRITICAL: Individual selectors only
   const authToken = useAppStore(state => state.authentication_state.auth_token);
@@ -366,6 +552,19 @@ const UV_AdminDashboard: React.FC = () => {
   );
   const [chartDateRange, setChartDateRange] = useState<string>('last_7_days');
   const [lastUpdatedAt, setLastUpdatedAt] = useState<string | null>(null);
+
+  // React Query - Content Settings for editable labels
+  const { data: contentSettings } = useQuery({
+    queryKey: ['admin-content-settings'],
+    queryFn: () => fetchContentSettings(authToken!),
+    enabled: !!authToken,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Helper to get content setting with fallback
+  const getLabel = (key: string, fallback: string): string => {
+    return contentSettings?.[key] || fallback;
+  };
 
   // Update URL when date range changes
   useEffect(() => {
@@ -537,14 +736,16 @@ const UV_AdminDashboard: React.FC = () => {
             <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow duration-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Orders Today</p>
+                  <p className="text-sm font-medium text-gray-600">
+                    {getLabel('dashboard_label_orders_today', 'Orders Today')}
+                  </p>
                   {metricsLoading ? (
-                    <div className="mt-2 h-8 w-20 bg-gray-200 animate-pulse rounded"></div>
+                    <div className="mt-2 h-10 w-20 bg-gradient-to-r from-gray-200 to-gray-100 animate-pulse rounded"></div>
                   ) : metricsError ? (
                     <p className="mt-2 text-sm text-red-600">Error loading</p>
                   ) : (
                     <p className="mt-2 text-4xl font-bold text-gray-900">
-                      {dashboardMetrics?.orders_today || 0}
+                      {dashboardMetrics?.orders_today ?? 0}
                     </p>
                   )}
                 </div>
@@ -560,14 +761,16 @@ const UV_AdminDashboard: React.FC = () => {
             <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow duration-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Revenue Today</p>
+                  <p className="text-sm font-medium text-gray-600">
+                    {getLabel('dashboard_label_revenue_today', 'Revenue Today')}
+                  </p>
                   {metricsLoading ? (
-                    <div className="mt-2 h-8 w-24 bg-gray-200 animate-pulse rounded"></div>
+                    <div className="mt-2 h-10 w-24 bg-gradient-to-r from-gray-200 to-gray-100 animate-pulse rounded"></div>
                   ) : metricsError ? (
                     <p className="mt-2 text-sm text-red-600">Error loading</p>
                   ) : (
                     <p className="mt-2 text-4xl font-bold text-green-600">
-                      {formatCurrency(dashboardMetrics?.revenue_today || 0)}
+                      {formatCurrency(dashboardMetrics?.revenue_today ?? 0)}
                     </p>
                   )}
                 </div>
@@ -583,14 +786,16 @@ const UV_AdminDashboard: React.FC = () => {
             <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow duration-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">New Customers</p>
+                  <p className="text-sm font-medium text-gray-600">
+                    {getLabel('dashboard_label_new_customers', 'New Customers')}
+                  </p>
                   {metricsLoading ? (
-                    <div className="mt-2 h-8 w-16 bg-gray-200 animate-pulse rounded"></div>
+                    <div className="mt-2 h-10 w-16 bg-gradient-to-r from-gray-200 to-gray-100 animate-pulse rounded"></div>
                   ) : metricsError ? (
                     <p className="mt-2 text-sm text-red-600">Error loading</p>
                   ) : (
                     <p className="mt-2 text-4xl font-bold text-gray-900">
-                      {dashboardMetrics?.new_customers_today || 0}
+                      {dashboardMetrics?.new_customers_today ?? 0}
                     </p>
                   )}
                 </div>
@@ -604,19 +809,21 @@ const UV_AdminDashboard: React.FC = () => {
 
             {/* Collection vs Delivery Card */}
             <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow duration-200">
-              <p className="text-sm font-medium text-gray-600 mb-4">Order Types</p>
+              <p className="text-sm font-medium text-gray-600 mb-4">
+                {getLabel('dashboard_label_order_types', 'Order Types')}
+              </p>
               {metricsLoading ? (
-                <div className="space-y-2">
-                  <div className="h-4 bg-gray-200 animate-pulse rounded"></div>
-                  <div className="h-4 bg-gray-200 animate-pulse rounded"></div>
+                <div className="space-y-3">
+                  <div className="h-4 bg-gradient-to-r from-gray-200 to-gray-100 animate-pulse rounded"></div>
+                  <div className="h-4 bg-gradient-to-r from-gray-200 to-gray-100 animate-pulse rounded"></div>
                 </div>
               ) : metricsError ? (
                 <p className="text-sm text-red-600">Error loading</p>
               ) : (
                 <>
-                  {dashboardMetrics?.collection_percentage === 0 && dashboardMetrics?.delivery_percentage === 0 ? (
+                  {(dashboardMetrics?.orders_today ?? 0) === 0 ? (
                     <div className="flex items-center justify-center h-20 text-center">
-                      <p className="text-xs text-gray-400 italic">No data yet today</p>
+                      <p className="text-xs text-gray-400 italic">No orders yet today</p>
                     </div>
                   ) : (
                     <div className="space-y-3">
@@ -624,13 +831,13 @@ const UV_AdminDashboard: React.FC = () => {
                         <div className="flex justify-between items-center mb-1">
                           <span className="text-xs text-gray-600">Collection</span>
                           <span className="text-xs font-semibold text-gray-900">
-                            {dashboardMetrics?.collection_percentage.toFixed(0) || 0}%
+                            {dashboardMetrics?.collection_count ?? 0} ({(dashboardMetrics?.collection_percentage ?? 0).toFixed(0)}%)
                           </span>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="w-full bg-gray-200 rounded-full h-2.5">
                           <div
-                            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${dashboardMetrics?.collection_percentage || 0}%` }}
+                            className="bg-blue-600 h-2.5 rounded-full transition-all duration-500 ease-out"
+                            style={{ width: `${Math.max(dashboardMetrics?.collection_percentage ?? 0, 0)}%` }}
                           ></div>
                         </div>
                       </div>
@@ -638,13 +845,13 @@ const UV_AdminDashboard: React.FC = () => {
                         <div className="flex justify-between items-center mb-1">
                           <span className="text-xs text-gray-600">Delivery</span>
                           <span className="text-xs font-semibold text-gray-900">
-                            {dashboardMetrics?.delivery_percentage.toFixed(0) || 0}%
+                            {dashboardMetrics?.delivery_count ?? 0} ({(dashboardMetrics?.delivery_percentage ?? 0).toFixed(0)}%)
                           </span>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="w-full bg-gray-200 rounded-full h-2.5">
                           <div
-                            className="bg-orange-600 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${dashboardMetrics?.delivery_percentage || 0}%` }}
+                            className="bg-orange-600 h-2.5 rounded-full transition-all duration-500 ease-out"
+                            style={{ width: `${Math.max(dashboardMetrics?.delivery_percentage ?? 0, 0)}%` }}
                           ></div>
                         </div>
                       </div>
@@ -664,7 +871,7 @@ const UV_AdminDashboard: React.FC = () => {
                 </svg>
                 <div className="ml-4 flex-1">
                   <h3 className="text-lg font-semibold text-yellow-800 mb-2">
-                    Pending Alerts
+                    {getLabel('dashboard_title_pending_alerts', 'Pending Alerts')}
                   </h3>
                   <div className="space-y-2">
                     {pendingAlerts.low_stock_items_count > 0 && (
@@ -700,17 +907,17 @@ const UV_AdminDashboard: React.FC = () => {
           )}
 
           {/* Charts and Recent Orders Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-            {/* Revenue Chart */}
-            <div className="lg:col-span-2 bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-              <div className="flex items-center justify-between mb-4">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
+            {/* Revenue Chart - Takes more space */}
+            <div className="xl:col-span-2 bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
                 <h2 className="text-xl font-semibold text-gray-900">
-                  Revenue Trend
+                  {getLabel('dashboard_title_revenue_trend', 'Revenue Trend')}
                 </h2>
                 <select
                   value={chartDateRange}
                   onChange={(e) => setChartDateRange(e.target.value)}
-                  className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                  className="px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white font-medium text-gray-700 cursor-pointer hover:bg-gray-50 transition-colors"
                 >
                   <option value="today">Today</option>
                   <option value="last_7_days">Last 7 Days</option>
@@ -719,16 +926,27 @@ const UV_AdminDashboard: React.FC = () => {
                 </select>
               </div>
               {chartLoading ? (
-                <div className="h-64 bg-gray-200 animate-pulse rounded"></div>
+                <div className="h-80 bg-gradient-to-r from-gray-100 to-gray-200 animate-pulse rounded-lg flex items-center justify-center">
+                  <div className="text-gray-400">Loading chart data...</div>
+                </div>
               ) : chartError ? (
-                <div className="h-64 flex items-center justify-center text-red-600">
-                  Failed to load chart data
+                <div className="h-80 flex flex-col items-center justify-center text-red-500 bg-red-50 rounded-lg">
+                  <svg className="w-12 h-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="font-medium">Failed to load chart data</p>
+                  <button 
+                    onClick={() => queryClient.invalidateQueries({ queryKey: ['admin-revenue-chart'] })}
+                    className="mt-3 px-4 py-2 text-sm text-red-600 border border-red-300 rounded-lg hover:bg-red-100 transition-colors"
+                  >
+                    Try Again
+                  </button>
                 </div>
               ) : (
-                <div className="h-64">
+                <div className="h-80 min-h-[320px]">
                   <LineChart
                     data={revenueChartData || []}
-                    height={200}
+                    height={320}
                     color="#10b981"
                   />
                 </div>
@@ -738,7 +956,7 @@ const UV_AdminDashboard: React.FC = () => {
             {/* Quick Actions */}
             <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                Quick Actions
+                {getLabel('dashboard_title_quick_actions', 'Quick Actions')}
               </h2>
               <div className="space-y-4">
                 {/* Toggle Delivery with Clear Status Label */}
@@ -775,19 +993,27 @@ const UV_AdminDashboard: React.FC = () => {
                   to="/admin/menu/item"
                   className="block w-full px-4 py-3 text-center text-sm font-semibold text-white bg-gray-900 hover:bg-gray-800 rounded-lg transition-colors duration-200 shadow-sm"
                 >
-                  Add Menu Item
+                  {getLabel('quick_action_add_menu_item', 'Add Menu Item')}
                 </Link>
                 <Link
                   to="/admin/discounts/code"
                   className="block w-full px-4 py-3 text-center text-sm font-medium text-gray-700 border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 rounded-lg transition-colors duration-200"
                 >
-                  Create Discount
+                  {getLabel('quick_action_create_discount', 'Create Discount')}
                 </Link>
                 <Link
                   to="/admin/analytics"
                   className="block w-full px-4 py-3 text-center text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200"
                 >
-                  View Analytics
+                  {getLabel('quick_action_view_analytics', 'View Analytics')}
+                </Link>
+                
+                {/* Link to Content Settings */}
+                <Link
+                  to="/admin/content"
+                  className="block w-full px-4 py-3 text-center text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200 border border-blue-200"
+                >
+                  Edit Dashboard Labels
                 </Link>
               </div>
             </div>
@@ -796,7 +1022,9 @@ const UV_AdminDashboard: React.FC = () => {
           {/* Recent Orders Table */}
           <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900">Recent Orders</h2>
+              <h2 className="text-xl font-semibold text-gray-900">
+                {getLabel('dashboard_title_recent_orders', 'Recent Orders')}
+              </h2>
               <Link
                 to="/admin/orders"
                 className="text-sm font-medium text-blue-600 hover:text-blue-700"

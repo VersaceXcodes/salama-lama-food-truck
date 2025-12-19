@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppStore } from '@/store/main';
-import { Bell, Package, ShoppingCart, User, LogOut, X } from 'lucide-react';
+import { Bell, Package, ShoppingCart, User, LogOut } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,

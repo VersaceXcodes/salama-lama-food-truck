@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { 
@@ -83,7 +83,6 @@ const fetchOrderTracking = async (ticketNumber: string): Promise<OrderTrackingDa
 
 const UV_OrderTracking: React.FC = () => {
   const { ticketNumber } = useParams<{ ticketNumber: string }>();
-  const [searchParams] = useSearchParams();
 
   const [isPolling, setIsPolling] = useState(true);
   const [lastUpdateTime, setLastUpdateTime] = useState<Date>(new Date());

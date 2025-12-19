@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppStore } from '@/store/main';
@@ -146,7 +146,6 @@ const getRelativeTime = (dateString: string): string => {
 // ===========================
 
 const UV_AdminContactMessages: React.FC = () => {
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
 
@@ -175,7 +174,6 @@ const UV_AdminContactMessages: React.FC = () => {
     data: messages_data,
     isLoading,
     isError,
-    error,
     refetch,
   } = useQuery({
     queryKey: ['admin-contact-messages', filter_status, search_query, current_page],

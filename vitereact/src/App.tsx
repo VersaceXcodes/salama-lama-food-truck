@@ -9,7 +9,6 @@ import '@/config/axios';
 // Import Global Views
 import GV_SiteHeader from '@/components/views/GV_SiteHeader';
 import GV_TopNav_Staff from '@/components/views/GV_TopNav_Staff';
-import GV_TopNav_Admin from '@/components/views/GV_TopNav_Admin';
 import GV_AdminSidebar from '@/components/views/GV_AdminSidebar';
 import GV_Footer from '@/components/views/GV_Footer';
 import GV_CookieConsent from '@/components/views/GV_CookieConsent';

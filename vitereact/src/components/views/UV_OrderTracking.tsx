@@ -58,15 +58,23 @@ interface OrderTrackingData {
 const fetchOrderTracking = async (ticketNumber: string): Promise<OrderTrackingData> => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
   
-  const response = await axios.get<{ success: boolean; data?: OrderTrackingData }>(
+  const response = await axios.get<{ success: boolean } & Partial<OrderTrackingData>>(
     `${API_BASE_URL}/api/orders/track?ticket=${encodeURIComponent(ticketNumber)}`
   );
   
-  if (!response.data.success || !response.data.data) {
+  if (!response.data.success) {
     throw new Error('Failed to fetch order tracking data');
   }
   
-  return response.data.data;
+  // The API returns the tracking data directly at the root level (not nested under 'data')
+  const { success, ...trackingData } = response.data;
+  
+  // Validate that we have the required fields
+  if (!trackingData.ticket_number || !trackingData.order_number) {
+    throw new Error('Invalid order tracking data received');
+  }
+  
+  return trackingData as OrderTrackingData;
 };
 
 // ===========================

@@ -366,23 +366,67 @@ const GV_TopNav_Customer: React.FC = () => {
               onClick={closeMobileMenu}
             ></div>
             
-            {/* Off-Canvas Mobile Drawer */}
-            <div className="fixed top-0 right-0 bottom-0 w-[85%] max-w-sm bg-[#F2EFE9] shadow-2xl z-50 md:hidden overflow-y-auto animate-slideInRight">
-              <div className="p-6">
-                {/* Close Button - Top Right Corner */}
-                <div className="flex items-center justify-end mb-8">
+            {/* Off-Canvas Mobile Drawer - Uses flex layout with fixed header and scrollable content */}
+            <div 
+              className="fixed top-0 right-0 bottom-0 w-[85%] max-w-sm bg-[#F2EFE9] shadow-2xl z-50 md:hidden flex flex-col animate-slideInRight"
+              style={{ 
+                paddingTop: 'env(safe-area-inset-top, 0px)',
+              }}
+            >
+              {/* Safe area fill at top */}
+              <div 
+                className="absolute top-0 left-0 right-0 bg-[#F2EFE9]" 
+                style={{ 
+                  height: 'env(safe-area-inset-top, 0px)',
+                  marginTop: 'calc(-1 * env(safe-area-inset-top, 0px))'
+                }}
+                aria-hidden="true"
+              />
+              
+              {/* Compact Header - Fixed height, logo + close button */}
+              <header className="flex-shrink-0 h-14 min-h-[3.5rem] max-h-14 px-4 border-b border-[#D4C5B0] bg-[#F2EFE9]">
+                <div className="flex items-center justify-between h-full">
+                  {/* Logo on left */}
+                  <Link 
+                    to="/"
+                    onClick={closeMobileMenu}
+                    className="flex items-center h-full overflow-hidden"
+                    aria-label="Salama Lama Home"
+                  >
+                    <img 
+                      src={logoUrl} 
+                      alt="Salama Lama" 
+                      className="h-8 max-h-8 w-auto object-contain"
+                      style={{ maxHeight: '32px' }}
+                      onError={(e) => { 
+                        const target = e.target as HTMLImageElement;
+                        if (target.src !== '/assets/salama-lama-logo.png') {
+                          target.src = '/assets/salama-lama-logo.png';
+                        }
+                      }}
+                    />
+                  </Link>
+                  
+                  {/* Close button on right */}
                   <button
                     onClick={closeMobileMenu}
-                    className="p-2 text-[#2E211D] hover:text-[#1a0f0d] hover:bg-[#E8E1D6] rounded-lg transition-all duration-200"
-                    style={{ minHeight: '48px', minWidth: '48px' }}
+                    className="flex items-center justify-center w-11 h-11 text-[#2E211D] hover:text-[#1a0f0d] hover:bg-[#E8E1D6] rounded-xl transition-all duration-200"
                     aria-label="Close mobile menu"
                   >
-                    <X className="h-7 w-7" strokeWidth={2.5} />
+                    <X className="h-6 w-6" strokeWidth={2.5} />
                   </button>
                 </div>
-                
+              </header>
+              
+              {/* Scrollable content area */}
+              <div 
+                className="flex-1 overflow-y-auto overscroll-contain p-6"
+                style={{ 
+                  paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.5rem)',
+                }}
+              >
                 {/* User Info */}
-                <div className="mb-8 p-5 bg-[#E8E1D6] rounded-xl" style={{ marginBottom: '16px' }}>
+                <div className="mb-6 p-5 bg-[#E8E1D6] rounded-xl">
                   <div className="flex items-center space-x-4 mb-4">
                     <div className="h-14 w-14 bg-[#2E211D] rounded-full flex items-center justify-center">
                       <User className="h-7 w-7 text-white" />
@@ -513,12 +557,27 @@ const GV_TopNav_Customer: React.FC = () => {
       
       {/* No spacer needed for sticky navbar */}
       
-      {/* Logo size consistency */}
+      {/* Logo size consistency and animations */}
       <style>{`
         nav img[alt="Salama Lama"] {
           max-height: 40px !important;
           width: auto !important;
           object-fit: contain !important;
+        }
+        
+        @keyframes slideInRight {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+        
+        .animate-slideInRight {
+          animation: slideInRight 0.3s ease-out;
         }
         
         @keyframes fadeIn {

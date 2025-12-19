@@ -655,7 +655,7 @@ const GV_SiteHeader: React.FC = () => {
             aria-hidden="true"
           />
           
-          {/* Drawer panel */}
+          {/* Drawer panel - Uses flex layout with fixed header and scrollable content */}
           <aside 
             ref={drawerRef}
             id="mobile-drawer"
@@ -666,7 +666,7 @@ const GV_SiteHeader: React.FC = () => {
               shadow-2xl 
               z-[101] 
               lg:hidden 
-              overflow-y-auto
+              flex flex-col
               overscroll-contain
               animate-slide-in-left
             "
@@ -675,7 +675,6 @@ const GV_SiteHeader: React.FC = () => {
             aria-label="Navigation menu"
             style={{ 
               paddingTop: 'env(safe-area-inset-top, 0px)',
-              paddingBottom: 'env(safe-area-inset-bottom, 0px)',
             }}
           >
             {/* Safe area fill at top - matches brand color to cover iOS status bar area */}
@@ -688,9 +687,9 @@ const GV_SiteHeader: React.FC = () => {
               aria-hidden="true"
             />
             
-            {/* Drawer Header - 3-column grid for perfect centering */}
-            <div className="sticky top-0 bg-[var(--primary-bg)] border-b border-[var(--border-light)] px-3 py-2.5 z-10">
-              <div className="grid grid-cols-[2.75rem_1fr_2.75rem] items-center gap-2">
+            {/* Drawer Header - FIXED at top, compact height (max 56px) */}
+            <header className="flex-shrink-0 bg-[var(--primary-bg)] border-b border-[var(--border-light)] px-3 h-14 min-h-[3.5rem] max-h-14">
+              <div className="grid grid-cols-[2.75rem_1fr_2.75rem] items-center gap-2 h-full">
                 {/* Left placeholder - matches close button width for centering */}
                 <div className="w-11 h-11" aria-hidden="true" />
                 
@@ -698,13 +697,14 @@ const GV_SiteHeader: React.FC = () => {
                 <Link 
                   to="/" 
                   onClick={closeMobileMenu}
-                  className="flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-text)] focus-visible:ring-offset-2 rounded-lg"
+                  className="flex items-center justify-center h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-text)] focus-visible:ring-offset-2 rounded-lg overflow-hidden"
                   aria-label="Salama Lama Home"
                 >
                   <img
                     src="/logo-salama-lama.jpg"
                     alt="Salama Lama"
-                    className="max-h-10 w-auto object-contain"
+                    className="h-8 max-h-8 w-auto object-contain"
+                    style={{ maxHeight: '32px' }}
                   />
                 </Link>
                 
@@ -725,10 +725,15 @@ const GV_SiteHeader: React.FC = () => {
                   <X className="h-6 w-6" aria-hidden="true" />
                 </button>
               </div>
-            </div>
+            </header>
             
-            {/* Drawer Content */}
-            <div className="px-4 py-5 space-y-5">
+            {/* Drawer Content - SCROLLABLE area, takes remaining height */}
+            <div 
+              className="flex-1 overflow-y-auto overscroll-contain px-4 py-5 space-y-5"
+              style={{ 
+                paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.25rem)',
+              }}
+            >
               
               {/* User Info Card (authenticated users) */}
               {isAuthenticated && (

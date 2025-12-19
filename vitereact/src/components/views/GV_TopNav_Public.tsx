@@ -308,22 +308,59 @@ const GV_TopNav_Public: React.FC = () => {
             aria-hidden="true"
           />
           
-          {/* Mobile Menu Drawer - Off-Canvas, Slides from Right */}
-          <div className="fixed top-0 right-0 bottom-0 w-[85%] max-w-sm z-[95] md:hidden shadow-2xl overflow-y-auto animate-slide-in-right bg-[#F2EFE9]">
-            <div className="px-6 py-8 space-y-8">
-              
-              {/* Close Button - Top Right Corner */}
-              <div className="flex items-center justify-end">
+          {/* Mobile Menu Drawer - Off-Canvas, Slides from Right with flex layout */}
+          <div 
+            className="fixed top-0 right-0 bottom-0 w-[85%] max-w-sm z-[95] md:hidden shadow-2xl flex flex-col animate-slide-in-right bg-[#F2EFE9]"
+            style={{ 
+              paddingTop: 'env(safe-area-inset-top, 0px)',
+            }}
+          >
+            {/* Safe area fill at top */}
+            <div 
+              className="absolute top-0 left-0 right-0 bg-[#F2EFE9]" 
+              style={{ 
+                height: 'env(safe-area-inset-top, 0px)',
+                marginTop: 'calc(-1 * env(safe-area-inset-top, 0px))'
+              }}
+              aria-hidden="true"
+            />
+            
+            {/* Compact Header - Fixed height, logo + close button */}
+            <header className="flex-shrink-0 h-14 min-h-[3.5rem] max-h-14 px-4 border-b border-[#D4C5B0] bg-[#F2EFE9]">
+              <div className="flex items-center justify-between h-full">
+                {/* Logo on left */}
+                <Link 
+                  to="/"
+                  onClick={closeMobileMenu}
+                  className="flex items-center h-full overflow-hidden"
+                  aria-label="Salama Lama Home"
+                >
+                  <img 
+                    src="/logo-salama-lama.jpg" 
+                    alt="Salama Lama" 
+                    className="h-8 max-h-8 w-auto object-contain"
+                    style={{ maxHeight: '32px' }}
+                  />
+                </Link>
+                
+                {/* Close button on right */}
                 <button
                   onClick={closeMobileMenu}
-                  className="p-2 text-[#2E211D] hover:text-[#1a0f0d] hover:bg-[#E8E1D6] rounded-lg transition-all duration-200"
-                  style={{ minHeight: '48px', minWidth: '48px' }}
+                  className="flex items-center justify-center w-11 h-11 text-[#2E211D] hover:text-[#1a0f0d] hover:bg-[#E8E1D6] rounded-xl transition-all duration-200"
                   aria-label="Close navigation menu"
                 >
-                  <X className="h-7 w-7" strokeWidth={2.5} />
+                  <X className="h-6 w-6" strokeWidth={2.5} />
                 </button>
               </div>
-              
+            </header>
+            
+            {/* Scrollable content area */}
+            <div 
+              className="flex-1 overflow-y-auto overscroll-contain px-6 py-6 space-y-6"
+              style={{ 
+                paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.5rem)',
+              }}
+            >
               {/* Mobile Navigation Links - Large 24px text in Dark Brown Serif Font */}
               <div className="space-y-4">
                 {allNavigationLinks.map((link) => (

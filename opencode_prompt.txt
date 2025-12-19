@@ -4,11 +4,10 @@ The Vite build process failed. Analyze the error output below and fix the issue.
 
 ## Build Error Output:
 ```
-
-> conductor@0.0.0 build
-> vite build
-
-vite v5.4.21 building for production...
+x Build failed in 6.25s
+error during build:
+[vite:load-fallback] Could not load /app/vitereact/src/components/ui/use-toast (imported by src/components/views/UV_AdminDashboard.tsx): ENOENT: no such file or directory, open '/app/vitereact/src/components/ui/use-toast'
+Error: Could not load /app/vitereact/src/components/ui/use-toast (imported by src/components/views/UV_AdminDashboard.tsx): ENOENT: no such file or directory, open '/app/vitereact/src/components/ui/use-toast'
 
 ```
 

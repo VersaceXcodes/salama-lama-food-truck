@@ -11,7 +11,6 @@ const UV_OrderConfirmation: React.FC = () => {
 
   // Get order data from URL params (passed from checkout)
   const ticketNumber = searchParams.get('ticket');
-  const trackingToken = searchParams.get('token');
   const orderNumber = searchParams.get('order_number');
   const orderType = searchParams.get('order_type') as 'collection' | 'delivery' | null;
   const totalAmount = searchParams.get('total');
@@ -20,16 +19,14 @@ const UV_OrderConfirmation: React.FC = () => {
 
   // Try to get data from localStorage if not in URL params
   let finalTicketNumber = ticketNumber;
-  let finalTrackingToken = trackingToken;
   let finalOrderNumber = orderNumber;
 
-  if (!finalTicketNumber || !finalTrackingToken) {
+  if (!finalTicketNumber) {
     try {
       const lastOrderStr = localStorage.getItem('lastOrder');
       if (lastOrderStr) {
         const lastOrder = JSON.parse(lastOrderStr);
         finalTicketNumber = finalTicketNumber || lastOrder.ticket_number;
-        finalTrackingToken = finalTrackingToken || lastOrder.tracking_token;
         finalOrderNumber = finalOrderNumber || lastOrder.order_number;
       }
     } catch (error) {
@@ -39,25 +36,23 @@ const UV_OrderConfirmation: React.FC = () => {
 
   // Assign final values BEFORE any hooks or early returns (to avoid TDZ errors)
   const displayTicketNumber = finalTicketNumber;
-  const displayTrackingToken = finalTrackingToken;
   const displayOrderNumber = finalOrderNumber || orderNumber;
 
   // Save tracking info to localStorage for easy access
   // This hook MUST come before any conditional returns
   useEffect(() => {
-    if (displayTicketNumber && displayTrackingToken) {
+    if (displayTicketNumber) {
       localStorage.setItem('lastOrder', JSON.stringify({
         ticket_number: displayTicketNumber,
-        tracking_token: displayTrackingToken,
         order_number: displayOrderNumber,
         created_at: new Date().toISOString(),
       }));
     }
-  }, [displayTicketNumber, displayTrackingToken, displayOrderNumber]);
+  }, [displayTicketNumber, displayOrderNumber]);
 
   // Show friendly message if still missing required data
   // This conditional return comes AFTER all hooks
-  if (!finalTicketNumber || !finalTrackingToken) {
+  if (!finalTicketNumber) {
     return (
       <div className="min-h-screen bg-[#F2EFE9] pb-20">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -87,7 +82,7 @@ const UV_OrderConfirmation: React.FC = () => {
     return `€${parseFloat(amount).toFixed(2)}`;
   };
 
-  const trackingUrl = `/track/${displayTicketNumber}?token=${displayTrackingToken}`;
+  const trackingUrl = `/track/${displayTicketNumber}`;
 
   return (
     <div className="min-h-screen bg-[#F2EFE9] pb-20">

@@ -2990,4 +2990,200 @@ export declare const searchActivityLogInputSchema: z.ZodObject<{
 export type ActivityLog = z.infer<typeof activityLogSchema>;
 export type CreateActivityLogInput = z.infer<typeof createActivityLogInputSchema>;
 export type SearchActivityLogInput = z.infer<typeof searchActivityLogInputSchema>;
+export declare const homepageSectionSchema: z.ZodObject<{
+    section_id: z.ZodString;
+    category_id: z.ZodString;
+    enabled: z.ZodBoolean;
+    sort_order: z.ZodNumber;
+    item_limit: z.ZodNumber;
+    display_mode: z.ZodEnum<["auto_popular", "auto_newest", "manual"]>;
+    selected_item_ids: z.ZodNullable<z.ZodArray<z.ZodString, "many">>;
+    created_at: z.ZodString;
+    updated_at: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    created_at?: string;
+    sort_order?: number;
+    category_id?: string;
+    updated_at?: string;
+    section_id?: string;
+    enabled?: boolean;
+    item_limit?: number;
+    display_mode?: "auto_popular" | "auto_newest" | "manual";
+    selected_item_ids?: string[];
+}, {
+    created_at?: string;
+    sort_order?: number;
+    category_id?: string;
+    updated_at?: string;
+    section_id?: string;
+    enabled?: boolean;
+    item_limit?: number;
+    display_mode?: "auto_popular" | "auto_newest" | "manual";
+    selected_item_ids?: string[];
+}>;
+export declare const createHomepageSectionInputSchema: z.ZodObject<{
+    category_id: z.ZodString;
+    enabled: z.ZodDefault<z.ZodBoolean>;
+    sort_order: z.ZodDefault<z.ZodNumber>;
+    item_limit: z.ZodDefault<z.ZodNumber>;
+    display_mode: z.ZodDefault<z.ZodEnum<["auto_popular", "auto_newest", "manual"]>>;
+    selected_item_ids: z.ZodOptional<z.ZodNullable<z.ZodArray<z.ZodString, "many">>>;
+}, "strip", z.ZodTypeAny, {
+    sort_order?: number;
+    category_id?: string;
+    enabled?: boolean;
+    item_limit?: number;
+    display_mode?: "auto_popular" | "auto_newest" | "manual";
+    selected_item_ids?: string[];
+}, {
+    sort_order?: number;
+    category_id?: string;
+    enabled?: boolean;
+    item_limit?: number;
+    display_mode?: "auto_popular" | "auto_newest" | "manual";
+    selected_item_ids?: string[];
+}>;
+export declare const updateHomepageSectionInputSchema: z.ZodObject<{
+    section_id: z.ZodString;
+    enabled: z.ZodOptional<z.ZodBoolean>;
+    sort_order: z.ZodOptional<z.ZodNumber>;
+    item_limit: z.ZodOptional<z.ZodNumber>;
+    display_mode: z.ZodOptional<z.ZodEnum<["auto_popular", "auto_newest", "manual"]>>;
+    selected_item_ids: z.ZodOptional<z.ZodNullable<z.ZodArray<z.ZodString, "many">>>;
+}, "strip", z.ZodTypeAny, {
+    sort_order?: number;
+    section_id?: string;
+    enabled?: boolean;
+    item_limit?: number;
+    display_mode?: "auto_popular" | "auto_newest" | "manual";
+    selected_item_ids?: string[];
+}, {
+    sort_order?: number;
+    section_id?: string;
+    enabled?: boolean;
+    item_limit?: number;
+    display_mode?: "auto_popular" | "auto_newest" | "manual";
+    selected_item_ids?: string[];
+}>;
+export declare const reorderHomepageSectionsInputSchema: z.ZodObject<{
+    section_orders: z.ZodArray<z.ZodObject<{
+        section_id: z.ZodString;
+        sort_order: z.ZodNumber;
+    }, "strip", z.ZodTypeAny, {
+        sort_order?: number;
+        section_id?: string;
+    }, {
+        sort_order?: number;
+        section_id?: string;
+    }>, "many">;
+}, "strip", z.ZodTypeAny, {
+    section_orders?: {
+        sort_order?: number;
+        section_id?: string;
+    }[];
+}, {
+    section_orders?: {
+        sort_order?: number;
+        section_id?: string;
+    }[];
+}>;
+export type HomepageSection = z.infer<typeof homepageSectionSchema>;
+export type CreateHomepageSectionInput = z.infer<typeof createHomepageSectionInputSchema>;
+export type UpdateHomepageSectionInput = z.infer<typeof updateHomepageSectionInputSchema>;
+export type ReorderHomepageSectionsInput = z.infer<typeof reorderHomepageSectionsInputSchema>;
+export declare const contactMessageSchema: z.ZodObject<{
+    message_id: z.ZodString;
+    name: z.ZodString;
+    email: z.ZodString;
+    phone: z.ZodNullable<z.ZodString>;
+    subject: z.ZodString;
+    message: z.ZodString;
+    status: z.ZodEnum<["new", "read", "archived"]>;
+    ip_address: z.ZodNullable<z.ZodString>;
+    user_agent: z.ZodNullable<z.ZodString>;
+    created_at: z.ZodString;
+    read_at: z.ZodNullable<z.ZodString>;
+    archived_at: z.ZodNullable<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    email?: string;
+    phone?: string;
+    status?: "new" | "read" | "archived";
+    created_at?: string;
+    message?: string;
+    name?: string;
+    ip_address?: string;
+    user_agent?: string;
+    message_id?: string;
+    subject?: string;
+    read_at?: string;
+    archived_at?: string;
+}, {
+    email?: string;
+    phone?: string;
+    status?: "new" | "read" | "archived";
+    created_at?: string;
+    message?: string;
+    name?: string;
+    ip_address?: string;
+    user_agent?: string;
+    message_id?: string;
+    subject?: string;
+    read_at?: string;
+    archived_at?: string;
+}>;
+export declare const createContactMessageInputSchema: z.ZodObject<{
+    name: z.ZodString;
+    email: z.ZodString;
+    phone: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    subject: z.ZodString;
+    message: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    email?: string;
+    phone?: string;
+    message?: string;
+    name?: string;
+    subject?: string;
+}, {
+    email?: string;
+    phone?: string;
+    message?: string;
+    name?: string;
+    subject?: string;
+}>;
+export declare const updateContactMessageInputSchema: z.ZodObject<{
+    message_id: z.ZodString;
+    status: z.ZodEnum<["new", "read", "archived"]>;
+}, "strip", z.ZodTypeAny, {
+    status?: "new" | "read" | "archived";
+    message_id?: string;
+}, {
+    status?: "new" | "read" | "archived";
+    message_id?: string;
+}>;
+export declare const searchContactMessageInputSchema: z.ZodObject<{
+    status: z.ZodOptional<z.ZodEnum<["new", "read", "archived"]>>;
+    q: z.ZodOptional<z.ZodString>;
+    limit: z.ZodDefault<z.ZodNumber>;
+    offset: z.ZodDefault<z.ZodNumber>;
+    sort_by: z.ZodDefault<z.ZodEnum<["created_at", "email", "subject"]>>;
+    sort_order: z.ZodDefault<z.ZodEnum<["asc", "desc"]>>;
+}, "strip", z.ZodTypeAny, {
+    status?: "new" | "read" | "archived";
+    limit?: number;
+    offset?: number;
+    sort_by?: "email" | "created_at" | "subject";
+    sort_order?: "asc" | "desc";
+    q?: string;
+}, {
+    status?: "new" | "read" | "archived";
+    limit?: number;
+    offset?: number;
+    sort_by?: "email" | "created_at" | "subject";
+    sort_order?: "asc" | "desc";
+    q?: string;
+}>;
+export type ContactMessage = z.infer<typeof contactMessageSchema>;
+export type CreateContactMessageInput = z.infer<typeof createContactMessageInputSchema>;
+export type UpdateContactMessageInput = z.infer<typeof updateContactMessageInputSchema>;
+export type SearchContactMessageInput = z.infer<typeof searchContactMessageInputSchema>;
 //# sourceMappingURL=schema.d.ts.map

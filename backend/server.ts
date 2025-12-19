@@ -4,7 +4,7 @@ import * as dotenv from 'dotenv';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import jwt from 'jsonwebtoken';
-import { nanoid } from 'nanoid';
+import { nanoid, customAlphabet } from 'nanoid';
 import { z } from 'zod';
 import multer from 'multer';
 import fs from 'fs';
@@ -3220,7 +3220,28 @@ const handleCheckoutCreateOrder = async (req, res) => {
       console.log(`[CHECKOUT CREATE ORDER] request_id=${req.request_id} order_id=${order_id} order_number=${order_number}`);
       
       // Generate ticket number and tracking token for guest-friendly tracking
-      const ticket_number = `SL-${String(Math.floor(Math.random() * 1000000)).padStart(6, '0')}`;
+      // Use nanoid with custom alphabet (uppercase letters + numbers) for non-guessable ticket numbers
+      const customNanoid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ', 6);
+      let ticket_number = `SL-${customNanoid()}`;
+      
+      // Ensure ticket number is unique (retry if collision - very unlikely with 36^6 combinations)
+      let ticket_exists = true;
+      let retry_count = 0;
+      while (ticket_exists && retry_count < 5) {
+        const check_res = await client.query('SELECT ticket_number FROM orders WHERE ticket_number = $1', [ticket_number]);
+        if (check_res.rows.length === 0) {
+          ticket_exists = false;
+        } else {
+          ticket_number = `SL-${customNanoid()}`;
+          retry_count++;
+        }
+      }
+      
+      if (ticket_exists) {
+        await client.query('ROLLBACK');
+        return res.status(500).json(createErrorResponse('Failed to generate unique ticket number', null, 'TICKET_GENERATION_ERROR', req.request_id));
+      }
+      
       const tracking_token = nanoid(32);
 
       let delivery_address_snapshot = null;
@@ -3913,31 +3934,38 @@ app.get('/api/orders/history', authenticate_token, async (req, res) => {
 // the :id param from matching the literal string "track"
 /*
   Public order tracking endpoint - allows guests to track orders without login
-  Requires ticket_number and tracking_token for security
+  Only requires ticket_number for tracking
 */
 app.get('/api/orders/track', async (req, res) => {
   try {
     const ticket = req.query.ticket as string;
-    const token = req.query.token as string;
 
-    if (!ticket || !token) {
-      return res.status(400).json(createErrorResponse('Ticket number and tracking token are required', null, 'MISSING_PARAMS', req.request_id));
+    // Validate input
+    if (!ticket) {
+      return res.status(400).json(createErrorResponse('Ticket number is required', null, 'MISSING_PARAMS', req.request_id));
     }
 
-    // Query by ticket_number and tracking_token
+    // Trim and uppercase the ticket number
+    const normalizedTicket = ticket.trim().toUpperCase();
+
+    if (normalizedTicket.length === 0) {
+      return res.status(400).json(createErrorResponse('Ticket number cannot be empty', null, 'INVALID_TICKET', req.request_id));
+    }
+
+    // Query by ticket_number only (no tracking_token required)
     const order_res = await pool.query(
       `SELECT order_id, order_number, ticket_number, status, order_type, 
               collection_time_slot, estimated_delivery_time, 
               created_at, updated_at, completed_at,
               subtotal, discount_amount, tax_amount, total_amount, delivery_fee
        FROM orders 
-       WHERE ticket_number = $1 AND tracking_token = $2`,
-      [ticket, token]
+       WHERE UPPER(ticket_number) = $1`,
+      [normalizedTicket]
     );
 
     if (order_res.rows.length === 0) {
       return res.status(404).json(createErrorResponse(
-        "We couldn't verify this order. Please use the tracking link from your confirmation screen.",
+        "Ticket not found",
         null,
         'ORDER_NOT_FOUND',
         req.request_id

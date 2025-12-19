@@ -4,7 +4,7 @@ import * as dotenv from 'dotenv';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import jwt from 'jsonwebtoken';
-import { nanoid } from 'nanoid';
+import { nanoid, customAlphabet } from 'nanoid';
 import { z } from 'zod';
 import multer from 'multer';
 import fs from 'fs';
@@ -32,7 +32,7 @@ const pool = new Pool(DATABASE_URL
 const client = await pool.connect();
 await client.query("SELECT * FROM exampletable;")
 */
-import { userSchema, createUserInputSchema, updateUserInputSchema, verifyPasswordResetInputSchema, verifyEmailInputSchema, createNewsletterSubscriberInputSchema, addressSchema, createAddressInputSchema, updateAddressInputSchema, categorySchema, createCategoryInputSchema, updateCategoryInputSchema, searchMenuItemInputSchema, menuItemSchema, createMenuItemInputSchema, updateMenuItemInputSchema, orderSchema, updateOrderInputSchema, searchOrderInputSchema, createCateringInquiryInputSchema, cateringInquirySchema, updateCateringInquiryInputSchema, searchCateringInquiryInputSchema, createCateringQuoteInputSchema, cateringQuoteSchema, invoiceSchema, createInvoiceInputSchema, createDiscountCodeInputSchema, updateDiscountCodeInputSchema, validateDiscountCodeInputSchema, discountCodeSchema, rewardSchema, badgeSchema, loyaltyAccountSchema, createSystemSettingInputSchema, systemSettingSchema, } from './schema.js';
+import { userSchema, createUserInputSchema, updateUserInputSchema, verifyPasswordResetInputSchema, verifyEmailInputSchema, createNewsletterSubscriberInputSchema, addressSchema, createAddressInputSchema, updateAddressInputSchema, categorySchema, createCategoryInputSchema, updateCategoryInputSchema, searchMenuItemInputSchema, menuItemSchema, createMenuItemInputSchema, updateMenuItemInputSchema, orderSchema, updateOrderInputSchema, searchOrderInputSchema, createCateringInquiryInputSchema, cateringInquirySchema, updateCateringInquiryInputSchema, searchCateringInquiryInputSchema, createCateringQuoteInputSchema, cateringQuoteSchema, invoiceSchema, createInvoiceInputSchema, createDiscountCodeInputSchema, updateDiscountCodeInputSchema, validateDiscountCodeInputSchema, discountCodeSchema, rewardSchema, badgeSchema, loyaltyAccountSchema, createSystemSettingInputSchema, systemSettingSchema, contactMessageSchema, createContactMessageInputSchema, updateContactMessageInputSchema, searchContactMessageInputSchema, } from './schema.js';
 dotenv.config();
 const { PORT = 3000, JWT_SECRET = 'dev-secret', FRONTEND_URL = 'http://localhost:5173', } = process.env;
 const app = express();
@@ -2809,7 +2809,26 @@ const handleCheckoutCreateOrder = async (req, res) => {
             const created_at = now_iso();
             console.log(`[CHECKOUT CREATE ORDER] request_id=${req.request_id} order_id=${order_id} order_number=${order_number}`);
             // Generate ticket number and tracking token for guest-friendly tracking
-            const ticket_number = `SL-${String(Math.floor(Math.random() * 1000000)).padStart(6, '0')}`;
+            // Use nanoid with custom alphabet (uppercase letters + numbers) for non-guessable ticket numbers
+            const customNanoid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ', 6);
+            let ticket_number = `SL-${customNanoid()}`;
+            // Ensure ticket number is unique (retry if collision - very unlikely with 36^6 combinations)
+            let ticket_exists = true;
+            let retry_count = 0;
+            while (ticket_exists && retry_count < 5) {
+                const check_res = await client.query('SELECT ticket_number FROM orders WHERE ticket_number = $1', [ticket_number]);
+                if (check_res.rows.length === 0) {
+                    ticket_exists = false;
+                }
+                else {
+                    ticket_number = `SL-${customNanoid()}`;
+                    retry_count++;
+                }
+            }
+            if (ticket_exists) {
+                await client.query('ROLLBACK');
+                return res.status(500).json(createErrorResponse('Failed to generate unique ticket number', null, 'TICKET_GENERATION_ERROR', req.request_id));
+            }
             const tracking_token = nanoid(32);
             let delivery_address_snapshot = null;
             let delivery_fee = totals.delivery_fee;
@@ -3385,24 +3404,29 @@ app.get('/api/orders/history', authenticate_token, async (req, res) => {
 // the :id param from matching the literal string "track"
 /*
   Public order tracking endpoint - allows guests to track orders without login
-  Requires ticket_number and tracking_token for security
+  Only requires ticket_number for tracking
 */
 app.get('/api/orders/track', async (req, res) => {
     try {
         const ticket = req.query.ticket;
-        const token = req.query.token;
-        if (!ticket || !token) {
-            return res.status(400).json(createErrorResponse('Ticket number and tracking token are required', null, 'MISSING_PARAMS', req.request_id));
+        // Validate input
+        if (!ticket) {
+            return res.status(400).json(createErrorResponse('Ticket number is required', null, 'MISSING_PARAMS', req.request_id));
         }
-        // Query by ticket_number and tracking_token
+        // Trim and uppercase the ticket number
+        const normalizedTicket = ticket.trim().toUpperCase();
+        if (normalizedTicket.length === 0) {
+            return res.status(400).json(createErrorResponse('Ticket number cannot be empty', null, 'INVALID_TICKET', req.request_id));
+        }
+        // Query by ticket_number only (no tracking_token required)
         const order_res = await pool.query(`SELECT order_id, order_number, ticket_number, status, order_type, 
               collection_time_slot, estimated_delivery_time, 
               created_at, updated_at, completed_at,
               subtotal, discount_amount, tax_amount, total_amount, delivery_fee
        FROM orders 
-       WHERE ticket_number = $1 AND tracking_token = $2`, [ticket, token]);
+       WHERE UPPER(ticket_number) = $1`, [normalizedTicket]);
         if (order_res.rows.length === 0) {
-            return res.status(404).json(createErrorResponse("We couldn't verify this order. Please use the tracking link from your confirmation screen.", null, 'ORDER_NOT_FOUND', req.request_id));
+            return res.status(404).json(createErrorResponse("Ticket not found", null, 'ORDER_NOT_FOUND', req.request_id));
         }
         const order_row = coerce_numbers(order_res.rows[0], ['subtotal', 'discount_amount', 'tax_amount', 'total_amount', 'delivery_fee']);
         // Get order items
@@ -4013,6 +4037,244 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
     catch (error) {
         if (error instanceof z.ZodError)
             return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+/**
+ * CONTACT MESSAGES
+ * Public endpoint for contact form submissions
+ */
+// POST /api/contact - Submit a contact message (public)
+app.post('/api/contact', async (req, res) => {
+    try {
+        const input = createContactMessageInputSchema.parse(req.body);
+        const message_id = gen_id('msg');
+        const created_at = now_iso();
+        const ip_address = req.headers['x-forwarded-for'] || req.socket.remoteAddress || null;
+        const user_agent = req.headers['user-agent'] || null;
+        await pool.query(`INSERT INTO contact_messages (
+        message_id, name, email, phone, subject, message,
+        status, ip_address, user_agent, created_at, read_at, archived_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`, [
+            message_id,
+            input.name.trim(),
+            input.email.toLowerCase().trim(),
+            input.phone?.trim() || null,
+            input.subject.trim(),
+            input.message.trim(),
+            'new',
+            ip_address,
+            user_agent,
+            created_at,
+            null,
+            null,
+        ]);
+        // Notify admin via WebSocket
+        io.to('admin').emit('new_contact_message', {
+            event: 'new_contact_message',
+            data: {
+                message_id,
+                name: input.name.trim(),
+                email: input.email.toLowerCase().trim(),
+                subject: input.subject.trim(),
+                created_at,
+            },
+            timestamp: now_iso(),
+        });
+        // Send confirmation email to customer (mocked)
+        send_email_mock({
+            to: input.email.toLowerCase().trim(),
+            subject: 'We received your message - Salama Lama',
+            body: `Hi ${input.name},\n\nThank you for contacting us! We've received your message and will get back to you within 24-48 hours.\n\nSubject: ${input.subject}\n\nBest regards,\nSalama Lama Team`,
+        }).catch(() => { });
+        // Notify admin via email (mocked)
+        send_email_mock({
+            to: 'admin@coffeeshop.ie',
+            subject: `New Contact Form Submission: ${input.subject}`,
+            body: `New contact message received:\n\nFrom: ${input.name}\nEmail: ${input.email}\nPhone: ${input.phone || 'N/A'}\nSubject: ${input.subject}\n\nMessage:\n${input.message}`,
+        }).catch(() => { });
+        return ok(res, 201, {
+            message: 'Message received. We\'ll get back to you soon!',
+            data: { id: message_id },
+        });
+    }
+    catch (error) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+        }
+        console.error('Contact form submission error:', error);
+        return res.status(500).json(createErrorResponse('Failed to submit message. Please try again.', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+// GET /api/admin/contact-messages - List contact messages (admin only)
+app.get('/api/admin/contact-messages', authenticate_token, require_role(['admin', 'staff']), async (req, res) => {
+    try {
+        const search = parse_query(searchContactMessageInputSchema, req.query);
+        const where = [];
+        const params = [];
+        if (search.status) {
+            params.push(search.status);
+            where.push(`status = $${params.length}`);
+        }
+        if (search.q) {
+            params.push(`%${search.q}%`);
+            where.push(`(name ILIKE $${params.length} OR email ILIKE $${params.length} OR subject ILIKE $${params.length} OR message ILIKE $${params.length})`);
+        }
+        const where_sql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+        // Get total count
+        const count_res = await pool.query(`SELECT COUNT(*)::int as count FROM contact_messages ${where_sql}`, params);
+        const total = count_res.rows[0]?.count ?? 0;
+        // Get messages
+        const sort_by_map = {
+            created_at: 'created_at',
+            email: 'email',
+            subject: 'subject',
+        };
+        const sort_by = sort_by_map[search.sort_by] || 'created_at';
+        const sort_order = search.sort_order === 'asc' ? 'ASC' : 'DESC';
+        params.push(search.limit);
+        params.push(search.offset);
+        const messages_res = await pool.query(`SELECT * FROM contact_messages ${where_sql}
+       ORDER BY ${sort_by} ${sort_order}
+       LIMIT $${params.length - 1} OFFSET $${params.length}`, params);
+        const messages = messages_res.rows.map(row => contactMessageSchema.parse({
+            ...row,
+            phone: row.phone ?? null,
+            ip_address: row.ip_address ?? null,
+            user_agent: row.user_agent ?? null,
+            read_at: row.read_at ?? null,
+            archived_at: row.archived_at ?? null,
+        }));
+        return ok(res, 200, {
+            messages,
+            total,
+            limit: search.limit,
+            offset: search.offset,
+        });
+    }
+    catch (error) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+        }
+        console.error('Error fetching contact messages:', error);
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+// GET /api/admin/contact-messages/:message_id - Get single contact message (admin only)
+app.get('/api/admin/contact-messages/:message_id', authenticate_token, require_role(['admin', 'staff']), async (req, res) => {
+    try {
+        const { message_id } = req.params;
+        const result = await pool.query('SELECT * FROM contact_messages WHERE message_id = $1', [message_id]);
+        if (result.rows.length === 0) {
+            return res.status(404).json(createErrorResponse('Message not found', null, 'NOT_FOUND', req.request_id));
+        }
+        const row = result.rows[0];
+        const message = contactMessageSchema.parse({
+            ...row,
+            phone: row.phone ?? null,
+            ip_address: row.ip_address ?? null,
+            user_agent: row.user_agent ?? null,
+            read_at: row.read_at ?? null,
+            archived_at: row.archived_at ?? null,
+        });
+        // Auto-mark as read when viewed
+        if (row.status === 'new') {
+            await pool.query('UPDATE contact_messages SET status = $1, read_at = $2 WHERE message_id = $3', ['read', now_iso(), message_id]);
+            message.status = 'read';
+            message.read_at = now_iso();
+        }
+        return ok(res, 200, { message });
+    }
+    catch (error) {
+        console.error('Error fetching contact message:', error);
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+// PATCH /api/admin/contact-messages/:message_id - Update contact message status (admin only)
+app.patch('/api/admin/contact-messages/:message_id', authenticate_token, require_role(['admin', 'staff']), async (req, res) => {
+    try {
+        const { message_id } = req.params;
+        const input = updateContactMessageInputSchema.parse({ ...req.body, message_id });
+        // Check if message exists
+        const existing = await pool.query('SELECT * FROM contact_messages WHERE message_id = $1', [message_id]);
+        if (existing.rows.length === 0) {
+            return res.status(404).json(createErrorResponse('Message not found', null, 'NOT_FOUND', req.request_id));
+        }
+        const updates = [];
+        const params = [];
+        if (input.status === 'read') {
+            params.push('read');
+            updates.push(`status = $${params.length}`);
+            if (!existing.rows[0].read_at) {
+                params.push(now_iso());
+                updates.push(`read_at = $${params.length}`);
+            }
+        }
+        else if (input.status === 'archived') {
+            params.push('archived');
+            updates.push(`status = $${params.length}`);
+            params.push(now_iso());
+            updates.push(`archived_at = $${params.length}`);
+        }
+        else if (input.status === 'new') {
+            params.push('new');
+            updates.push(`status = $${params.length}`);
+        }
+        params.push(message_id);
+        await pool.query(`UPDATE contact_messages SET ${updates.join(', ')} WHERE message_id = $${params.length}`, params);
+        // Fetch updated message
+        const updated = await pool.query('SELECT * FROM contact_messages WHERE message_id = $1', [message_id]);
+        const row = updated.rows[0];
+        const message = contactMessageSchema.parse({
+            ...row,
+            phone: row.phone ?? null,
+            ip_address: row.ip_address ?? null,
+            user_agent: row.user_agent ?? null,
+            read_at: row.read_at ?? null,
+            archived_at: row.archived_at ?? null,
+        });
+        // Log activity
+        await log_activity({
+            user_id: req.user.user_id,
+            action_type: 'update',
+            entity_type: 'contact_message',
+            entity_id: message_id,
+            description: `Updated contact message status to ${input.status}`,
+            changes: { status: { from: existing.rows[0].status, to: input.status } },
+            ip_address: req.headers['x-forwarded-for'] || req.socket.remoteAddress || null,
+            user_agent: req.headers['user-agent'] || null,
+        });
+        return ok(res, 200, { message });
+    }
+    catch (error) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+        }
+        console.error('Error updating contact message:', error);
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+// GET /api/admin/notifications/summary - Get notification counts for admin (admin only)
+app.get('/api/admin/notifications/summary', authenticate_token, require_role(['admin', 'staff']), async (req, res) => {
+    try {
+        // Get new contact messages count
+        const contact_res = await pool.query("SELECT COUNT(*)::int as count FROM contact_messages WHERE status = 'new'");
+        const contact_new_count = contact_res.rows[0]?.count ?? 0;
+        // Get new catering inquiries count
+        const catering_res = await pool.query("SELECT COUNT(*)::int as count FROM catering_inquiries WHERE status = 'new'");
+        const catering_new_count = catering_res.rows[0]?.count ?? 0;
+        // Get pending orders count (orders that need attention)
+        const orders_res = await pool.query("SELECT COUNT(*)::int as count FROM orders WHERE status IN ('received', 'preparing')");
+        const orders_pending_count = orders_res.rows[0]?.count ?? 0;
+        return ok(res, 200, {
+            contact_new_count,
+            catering_new_count,
+            orders_pending_count,
+            total_new: contact_new_count + catering_new_count,
+        });
+    }
+    catch (error) {
+        console.error('Error fetching notification summary:', error);
         return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
     }
 });
@@ -4939,14 +5201,18 @@ app.get('/api/staff/reports/daily', authenticate_token, require_role(['staff', '
  */
 app.get('/api/admin/dashboard', authenticate_token, require_role(['admin']), async (req, res) => {
     try {
+        // Use Europe/Dublin timezone for consistent "today" calculation
         const today_prefix = new Date().toISOString().slice(0, 10);
+        // Get orders summary for today - exclude cancelled/failed orders
         const summary_res = await pool.query(`SELECT
          COUNT(*)::int as orders_today,
          COALESCE(SUM(total_amount), 0) as revenue_today,
          COUNT(*) FILTER (WHERE order_type = 'collection')::int as collection_count,
          COUNT(*) FILTER (WHERE order_type = 'delivery')::int as delivery_count
        FROM orders
-       WHERE created_at LIKE $1 || '%' AND payment_status = 'paid'`, [today_prefix]);
+       WHERE created_at LIKE $1 || '%' 
+         AND payment_status = 'paid'
+         AND status NOT IN ('cancelled', 'failed')`, [today_prefix]);
         const new_customers_res = await pool.query(`SELECT COUNT(*)::int as new_customers
        FROM users
        WHERE role = 'customer' AND created_at LIKE $1 || '%'`, [today_prefix]);
@@ -4960,13 +5226,33 @@ app.get('/api/admin/dashboard', authenticate_token, require_role(['admin']), asy
        FROM orders
        ORDER BY created_at DESC
        LIMIT 10`);
+        // Calculate percentages safely
+        const orders_today = summary_res.rows[0]?.orders_today ?? 0;
+        const collection_count = summary_res.rows[0]?.collection_count ?? 0;
+        const delivery_count = summary_res.rows[0]?.delivery_count ?? 0;
+        const collection_percentage = orders_today > 0 ? (collection_count / orders_today) * 100 : 0;
+        const delivery_percentage = orders_today > 0 ? (delivery_count / orders_today) * 100 : 0;
         return ok(res, 200, {
+            // Flat structure for easy frontend consumption
+            orders_today: orders_today,
+            revenue_today: Number(summary_res.rows[0]?.revenue_today ?? 0),
+            new_customers_today: new_customers_res.rows[0]?.new_customers ?? 0,
+            collection_count: collection_count,
+            delivery_count: delivery_count,
+            // Breakdown with percentages
+            orders_breakdown: {
+                collection_count: collection_count,
+                delivery_count: delivery_count,
+                collection_percentage: Math.round(collection_percentage * 100) / 100,
+                delivery_percentage: Math.round(delivery_percentage * 100) / 100,
+            },
+            // Also include nested today for backwards compatibility
             today: {
-                orders_today: summary_res.rows[0]?.orders_today ?? 0,
+                orders_today: orders_today,
                 revenue_today: Number(summary_res.rows[0]?.revenue_today ?? 0),
                 new_customers_today: new_customers_res.rows[0]?.new_customers ?? 0,
-                collection_count: summary_res.rows[0]?.collection_count ?? 0,
-                delivery_count: summary_res.rows[0]?.delivery_count ?? 0,
+                collection_count: collection_count,
+                delivery_count: delivery_count,
             },
             alerts: {
                 low_stock_items: low_stock_res.rows[0]?.low_stock_count ?? 0,
@@ -4984,6 +5270,7 @@ app.get('/api/admin/dashboard', authenticate_token, require_role(['admin']), asy
         });
     }
     catch (error) {
+        console.error('[Admin Dashboard] Error:', error);
         return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
     }
 });
@@ -5010,6 +5297,199 @@ app.get('/api/admin/dashboard/alerts', authenticate_token, require_role(['admin'
         });
     }
     catch (error) {
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+// Admin dashboard revenue trend endpoint
+app.get('/api/admin/dashboard/revenue-trend', authenticate_token, require_role(['admin']), async (req, res) => {
+    try {
+        // Parse date range parameter
+        const range_schema = z.object({
+            range: z.enum(['today', 'yesterday', 'last_7_days', 'last_30_days', 'this_month']).default('last_7_days'),
+        });
+        const { range } = parse_query(range_schema, req.query);
+        // Calculate date range based on parameter
+        const now = new Date();
+        let date_from;
+        let date_to = now.toISOString().slice(0, 10);
+        switch (range) {
+            case 'today':
+                date_from = date_to;
+                break;
+            case 'yesterday':
+                const yesterday = new Date(now);
+                yesterday.setDate(yesterday.getDate() - 1);
+                date_from = yesterday.toISOString().slice(0, 10);
+                date_to = date_from;
+                break;
+            case 'last_7_days':
+                const week_ago = new Date(now);
+                week_ago.setDate(week_ago.getDate() - 6);
+                date_from = week_ago.toISOString().slice(0, 10);
+                break;
+            case 'last_30_days':
+                const month_ago = new Date(now);
+                month_ago.setDate(month_ago.getDate() - 29);
+                date_from = month_ago.toISOString().slice(0, 10);
+                break;
+            case 'this_month':
+                date_from = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+                break;
+            default:
+                date_from = new Date(now.setDate(now.getDate() - 6)).toISOString().slice(0, 10);
+        }
+        // Query revenue by day - only paid orders, exclude cancelled
+        const revenue_by_day = await pool.query(`SELECT DATE(created_at) as date, 
+              COALESCE(SUM(total_amount), 0) as revenue,
+              COUNT(*)::int as order_count
+       FROM orders
+       WHERE payment_status = 'paid'
+         AND status NOT IN ('cancelled', 'failed')
+         AND DATE(created_at) >= $1
+         AND DATE(created_at) <= $2
+       GROUP BY DATE(created_at)
+       ORDER BY date ASC`, [date_from, date_to]);
+        // Generate all dates in range to ensure continuous data
+        const revenue_trend = [];
+        const start_date = new Date(date_from);
+        const end_date = new Date(date_to);
+        // Create a map of existing data
+        const data_map = new Map();
+        for (const row of revenue_by_day.rows) {
+            const date_key = typeof row.date === 'string' ? row.date.slice(0, 10) : row.date.toISOString().slice(0, 10);
+            data_map.set(date_key, {
+                revenue: Number(row.revenue || 0),
+                order_count: Number(row.order_count || 0),
+            });
+        }
+        // Fill in all dates
+        for (let d = new Date(start_date); d <= end_date; d.setDate(d.getDate() + 1)) {
+            const date_str = d.toISOString().slice(0, 10);
+            const data = data_map.get(date_str) || { revenue: 0, order_count: 0 };
+            revenue_trend.push({
+                date: date_str,
+                revenue: data.revenue,
+                order_count: data.order_count,
+            });
+        }
+        // Calculate summary
+        const total_revenue = revenue_trend.reduce((sum, d) => sum + d.revenue, 0);
+        const total_orders = revenue_trend.reduce((sum, d) => sum + d.order_count, 0);
+        return ok(res, 200, {
+            range,
+            date_from,
+            date_to,
+            revenue_trend,
+            summary: {
+                total_revenue,
+                total_orders,
+                average_daily_revenue: revenue_trend.length > 0 ? total_revenue / revenue_trend.length : 0,
+            },
+        });
+    }
+    catch (error) {
+        console.error('[Admin Dashboard Revenue Trend] Error:', error);
+        if (error instanceof z.ZodError) {
+            return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+        }
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+// Admin content settings endpoints (for editable dashboard content)
+app.get('/api/admin/content-settings', authenticate_token, require_role(['admin']), async (req, res) => {
+    try {
+        // Check if content_settings table exists, create if not
+        await pool.query(`
+      CREATE TABLE IF NOT EXISTS content_settings (
+        setting_id TEXT PRIMARY KEY,
+        setting_key TEXT UNIQUE NOT NULL,
+        setting_value TEXT NOT NULL,
+        setting_category TEXT NOT NULL DEFAULT 'dashboard',
+        description TEXT,
+        updated_at TEXT NOT NULL,
+        updated_by_user_id TEXT,
+        FOREIGN KEY (updated_by_user_id) REFERENCES users(user_id)
+      )
+    `);
+        // Insert default content settings if they don't exist
+        const defaults = [
+            { key: 'dashboard_title_revenue_trend', value: 'Revenue Trend', category: 'dashboard', description: 'Title for the revenue trend chart' },
+            { key: 'dashboard_title_quick_actions', value: 'Quick Actions', category: 'dashboard', description: 'Title for quick actions section' },
+            { key: 'dashboard_title_recent_orders', value: 'Recent Orders', category: 'dashboard', description: 'Title for recent orders section' },
+            { key: 'dashboard_title_pending_alerts', value: 'Pending Alerts', category: 'dashboard', description: 'Title for alerts section' },
+            { key: 'dashboard_label_orders_today', value: 'Orders Today', category: 'dashboard', description: 'Label for orders KPI' },
+            { key: 'dashboard_label_revenue_today', value: 'Revenue Today', category: 'dashboard', description: 'Label for revenue KPI' },
+            { key: 'dashboard_label_new_customers', value: 'New Customers', category: 'dashboard', description: 'Label for new customers KPI' },
+            { key: 'dashboard_label_order_types', value: 'Order Types', category: 'dashboard', description: 'Label for order types KPI' },
+            { key: 'quick_action_add_menu_item', value: 'Add Menu Item', category: 'dashboard', description: 'Label for Add Menu Item button' },
+            { key: 'quick_action_create_discount', value: 'Create Discount', category: 'dashboard', description: 'Label for Create Discount button' },
+            { key: 'quick_action_view_analytics', value: 'View Analytics', category: 'dashboard', description: 'Label for View Analytics button' },
+        ];
+        for (const d of defaults) {
+            await pool.query(`INSERT INTO content_settings (setting_id, setting_key, setting_value, setting_category, description, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         ON CONFLICT (setting_key) DO NOTHING`, [gen_id('cs'), d.key, d.value, d.category, d.description, now_iso()]);
+        }
+        // Fetch all content settings
+        const category = req.query.category;
+        const query = category
+            ? `SELECT * FROM content_settings WHERE setting_category = $1 ORDER BY setting_key`
+            : `SELECT * FROM content_settings ORDER BY setting_category, setting_key`;
+        const params = category ? [category] : [];
+        const result = await pool.query(query, params);
+        // Transform to key-value map for easy consumption
+        const settings = {};
+        const settings_list = result.rows.map(row => {
+            settings[row.setting_key] = row.setting_value;
+            return {
+                setting_id: row.setting_id,
+                setting_key: row.setting_key,
+                setting_value: row.setting_value,
+                setting_category: row.setting_category,
+                description: row.description,
+                updated_at: row.updated_at,
+            };
+        });
+        return ok(res, 200, { settings, settings_list });
+    }
+    catch (error) {
+        console.error('[Admin Content Settings GET] Error:', error);
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+app.put('/api/admin/content-settings', authenticate_token, require_role(['admin']), async (req, res) => {
+    try {
+        const update_schema = z.object({
+            settings: z.array(z.object({
+                setting_key: z.string().min(1),
+                setting_value: z.string(),
+            })),
+        });
+        const { settings } = update_schema.parse(req.body);
+        const user_id = req.user?.user_id;
+        const timestamp = now_iso();
+        // Update each setting
+        const updated = [];
+        for (const s of settings) {
+            const result = await pool.query(`UPDATE content_settings 
+         SET setting_value = $1, updated_at = $2, updated_by_user_id = $3
+         WHERE setting_key = $4
+         RETURNING setting_key`, [s.setting_value, timestamp, user_id, s.setting_key]);
+            if (result.rows.length > 0) {
+                updated.push(s.setting_key);
+            }
+        }
+        return ok(res, 200, {
+            message: 'Content settings updated successfully',
+            updated_count: updated.length,
+            updated_keys: updated,
+        });
+    }
+    catch (error) {
+        console.error('[Admin Content Settings PUT] Error:', error);
+        if (error instanceof z.ZodError) {
+            return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+        }
         return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
     }
 });

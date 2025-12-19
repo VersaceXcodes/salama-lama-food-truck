@@ -1102,4 +1102,76 @@ export const searchActivityLogInputSchema = z.object({
     sort_by: z.enum(['created_at']).default('created_at'),
     sort_order: z.enum(['asc', 'desc']).default('desc'),
 });
+// ============================================
+// HOMEPAGE SECTIONS SCHEMAS
+// ============================================
+export const homepageSectionSchema = z.object({
+    section_id: z.string(),
+    category_id: z.string(),
+    enabled: z.boolean(),
+    sort_order: z.number().int(),
+    item_limit: z.number().int(),
+    display_mode: z.enum(['auto_popular', 'auto_newest', 'manual']),
+    selected_item_ids: z.array(z.string()).nullable(),
+    created_at: z.string(),
+    updated_at: z.string(),
+});
+export const createHomepageSectionInputSchema = z.object({
+    category_id: z.string(),
+    enabled: z.boolean().default(true),
+    sort_order: z.number().int().nonnegative().default(0),
+    item_limit: z.number().int().positive().max(20).default(6),
+    display_mode: z.enum(['auto_popular', 'auto_newest', 'manual']).default('auto_popular'),
+    selected_item_ids: z.array(z.string()).nullable().optional(),
+});
+export const updateHomepageSectionInputSchema = z.object({
+    section_id: z.string(),
+    enabled: z.boolean().optional(),
+    sort_order: z.number().int().nonnegative().optional(),
+    item_limit: z.number().int().positive().max(20).optional(),
+    display_mode: z.enum(['auto_popular', 'auto_newest', 'manual']).optional(),
+    selected_item_ids: z.array(z.string()).nullable().optional(),
+});
+export const reorderHomepageSectionsInputSchema = z.object({
+    section_orders: z.array(z.object({
+        section_id: z.string(),
+        sort_order: z.number().int().nonnegative(),
+    })),
+});
+// ============================================
+// CONTACT MESSAGES SCHEMAS
+// ============================================
+export const contactMessageSchema = z.object({
+    message_id: z.string(),
+    name: z.string(),
+    email: z.string(),
+    phone: z.string().nullable(),
+    subject: z.string(),
+    message: z.string(),
+    status: z.enum(['new', 'read', 'archived']),
+    ip_address: z.string().nullable(),
+    user_agent: z.string().nullable(),
+    created_at: z.string(),
+    read_at: z.string().nullable(),
+    archived_at: z.string().nullable(),
+});
+export const createContactMessageInputSchema = z.object({
+    name: z.string().min(2, 'Name must be at least 2 characters').max(100),
+    email: z.string().email('Please enter a valid email address').max(255),
+    phone: z.string().max(20).nullable().optional(),
+    subject: z.string().min(3, 'Subject must be at least 3 characters').max(200),
+    message: z.string().min(10, 'Message must be at least 10 characters').max(5000),
+});
+export const updateContactMessageInputSchema = z.object({
+    message_id: z.string(),
+    status: z.enum(['new', 'read', 'archived']),
+});
+export const searchContactMessageInputSchema = z.object({
+    status: z.enum(['new', 'read', 'archived']).optional(),
+    q: z.string().optional(),
+    limit: z.number().int().positive().default(20),
+    offset: z.number().int().nonnegative().default(0),
+    sort_by: z.enum(['created_at', 'email', 'subject']).default('created_at'),
+    sort_order: z.enum(['asc', 'desc']).default('desc'),
+});
 //# sourceMappingURL=schema.js.map

@@ -42,7 +42,6 @@ interface OrderTrackingData {
 
 const UV_TrackOrder: React.FC = () => {
   const [ticketNumber, setTicketNumber] = useState('');
-  const [trackingToken, setTrackingToken] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [orderData, setOrderData] = useState<OrderTrackingData | null>(null);
@@ -52,8 +51,11 @@ const UV_TrackOrder: React.FC = () => {
     setError(null);
     setOrderData(null);
 
-    if (!ticketNumber.trim() || !trackingToken.trim()) {
-      setError('Please enter both ticket number and tracking token');
+    // Trim and uppercase the ticket number
+    const normalizedTicket = ticketNumber.trim().toUpperCase();
+
+    if (!normalizedTicket) {
+      setError('Please enter your ticket number');
       return;
     }
 
@@ -62,17 +64,16 @@ const UV_TrackOrder: React.FC = () => {
     try {
       const response = await axios.get('/api/orders/track', {
         params: {
-          ticket: ticketNumber.trim(),
-          token: trackingToken.trim(),
+          ticket: normalizedTicket,
         },
       });
 
       setOrderData(response.data.data);
     } catch (err: any) {
       if (err.response?.status === 404) {
-        setError("We couldn't verify this order. Please check your ticket number and tracking token and try again.");
+        setError("Ticket not found. Please check your ticket number and try again.");
       } else if (err.response?.status === 400) {
-        setError('Both ticket number and tracking token are required');
+        setError('Please enter a valid ticket number');
       } else {
         setError('Something went wrong. Please try again later.');
       }
@@ -131,7 +132,7 @@ const UV_TrackOrder: React.FC = () => {
           <CardHeader>
             <CardTitle className="text-xl text-[#6F4E37]">Order Tracking</CardTitle>
             <CardDescription>
-              You'll find your ticket number and tracking token on your order confirmation screen.
+              Enter the ticket number from your order confirmation.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -143,29 +144,16 @@ const UV_TrackOrder: React.FC = () => {
                 <Input
                   id="ticketNumber"
                   type="text"
-                  placeholder="SL-123456"
+                  placeholder="e.g., SL-109229"
                   value={ticketNumber}
                   onChange={(e) => setTicketNumber(e.target.value)}
                   disabled={isLoading}
                   className="text-base h-12"
                   required
                 />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="trackingToken" className="text-base font-semibold">
-                  Tracking Token <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="trackingToken"
-                  type="text"
-                  placeholder="Enter your tracking token"
-                  value={trackingToken}
-                  onChange={(e) => setTrackingToken(e.target.value)}
-                  disabled={isLoading}
-                  className="text-base h-12"
-                  required
-                />
+                <p className="text-sm text-gray-600">
+                  You can find your ticket number on your order confirmation page.
+                </p>
               </div>
 
               {error && (

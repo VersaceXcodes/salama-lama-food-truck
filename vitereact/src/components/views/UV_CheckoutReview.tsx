@@ -433,7 +433,6 @@ const UV_CheckoutReview: React.FC = () => {
       // Save order to localStorage for guest tracking
       localStorage.setItem('lastOrder', JSON.stringify({
         ticket_number: data.ticket_number,
-        tracking_token: data.tracking_token,
         order_id: data.order_id,
         order_number: data.order_number,
         created_at: new Date().toISOString(),
@@ -453,10 +452,9 @@ const UV_CheckoutReview: React.FC = () => {
       sessionStorage.removeItem('checkout_card_type');
       sessionStorage.removeItem('checkout_special_instructions');
 
-      // Navigate to order confirmation with ticket and tracking data via URL params
+      // Navigate to order confirmation with ticket data via URL params (no tracking token needed)
       const params = new URLSearchParams({
         ticket: data.ticket_number || '',
-        token: data.tracking_token || '',
         order_number: data.order_number || '',
         order_type: complete_order_review.order_type || '',
         total: String(data.total_amount || 0),

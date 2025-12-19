@@ -55,11 +55,11 @@ interface OrderTrackingData {
 // API Functions
 // ===========================
 
-const fetchOrderTracking = async (ticketNumber: string, trackingToken: string): Promise<OrderTrackingData> => {
+const fetchOrderTracking = async (ticketNumber: string): Promise<OrderTrackingData> => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
   
   const response = await axios.get<{ success: boolean; data?: OrderTrackingData }>(
-    `${API_BASE_URL}/api/orders/track?ticket=${encodeURIComponent(ticketNumber)}&token=${encodeURIComponent(trackingToken)}`
+    `${API_BASE_URL}/api/orders/track?ticket=${encodeURIComponent(ticketNumber)}`
   );
   
   if (!response.data.success || !response.data.data) {
@@ -77,24 +77,6 @@ const UV_OrderTracking: React.FC = () => {
   const { ticketNumber } = useParams<{ ticketNumber: string }>();
   const [searchParams] = useSearchParams();
 
-  // Get tracking token from URL or localStorage
-  let trackingToken = searchParams.get('token');
-  
-  // If no token in URL, try to get from localStorage (for last order)
-  if (!trackingToken && ticketNumber) {
-    try {
-      const lastOrderStr = localStorage.getItem('lastOrder');
-      if (lastOrderStr) {
-        const lastOrder = JSON.parse(lastOrderStr);
-        if (lastOrder.ticket_number === ticketNumber) {
-          trackingToken = lastOrder.tracking_token;
-        }
-      }
-    } catch (error) {
-      console.error('Error reading lastOrder from localStorage:', error);
-    }
-  }
-
   const [isPolling, setIsPolling] = useState(true);
   const [lastUpdateTime, setLastUpdateTime] = useState<Date>(new Date());
 
@@ -105,9 +87,9 @@ const UV_OrderTracking: React.FC = () => {
     error,
     refetch,
   } = useQuery({
-    queryKey: ['order-tracking', ticketNumber, trackingToken],
-    queryFn: () => fetchOrderTracking(ticketNumber!, trackingToken!),
-    enabled: !!ticketNumber && !!trackingToken,
+    queryKey: ['order-tracking', ticketNumber],
+    queryFn: () => fetchOrderTracking(ticketNumber!),
+    enabled: !!ticketNumber,
     refetchInterval: (query) => {
       // Poll every 10 seconds while order is not completed/cancelled
       const data = query.state.data;
@@ -129,8 +111,8 @@ const UV_OrderTracking: React.FC = () => {
     }
   }, [trackingData]);
 
-  // Handle missing token
-  if (!trackingToken) {
+  // Handle missing ticket number
+  if (!ticketNumber) {
     return (
       <div className="min-h-screen bg-[#F2EFE9] flex items-center justify-center px-4">
         <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8 text-center">
@@ -139,14 +121,14 @@ const UV_OrderTracking: React.FC = () => {
             Tracking Link Invalid
           </h2>
           <p className="text-[#6B5B4F] mb-6">
-            We couldn't verify this order. Please use the tracking link from your confirmation screen or email.
+            Please use the tracking link from your confirmation screen or go to the Track Order page.
           </p>
           <Link
-            to="/menu"
+            to="/track-order"
             className="inline-flex items-center justify-center bg-[#D4831D] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#C07519] transition-colors"
           >
             <Home className="h-5 w-5 mr-2" />
-            Back to Menu
+            Track Order
           </Link>
         </div>
       </div>

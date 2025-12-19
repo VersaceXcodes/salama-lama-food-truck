@@ -1277,3 +1277,99 @@ span[class*="bg-green-100"]:hover {
 	background-color: rgba(242, 239, 233, 0.95) !important;
 	box-shadow: 0 2px 12px 0 rgb(44 26 22 / 0.08);
 }
+
+/* ===================================
+   ADMIN PANEL RESPONSIVE LAYOUT
+   Desktop sidebar + responsive content
+   =================================== */
+
+/* Admin layout - prevent any horizontal scroll */
+body:has([class*="admin"]) {
+	overflow-x: hidden !important;
+}
+
+/* Admin main content area - proper responsive layout */
+@media (max-width: 1023px) {
+	/* Mobile/tablet: Full width with top padding for mobile header */
+	main.flex-1.min-w-0 {
+		margin-left: 0 !important;
+		width: 100% !important;
+		max-width: 100vw !important;
+		padding-top: 3.5rem; /* 56px for mobile header */
+	}
+	
+	/* Override the admin sidebar hidden state - it's handled by JS */
+	aside[class*="fixed"][class*="left-0"][class*="bg-gray-900"]:not(.translate-x-0) {
+		transform: translateX(-100%);
+	}
+}
+
+@media (min-width: 1024px) {
+	/* Desktop: Fixed sidebar with content offset */
+	main.flex-1.min-w-0 {
+		margin-left: 16rem !important; /* 256px = w-64 */
+		width: calc(100% - 16rem) !important;
+		padding-top: 0;
+	}
+}
+
+/* Admin tables - horizontal scroll only inside container */
+.overflow-x-auto {
+	-webkit-overflow-scrolling: touch;
+	scrollbar-width: thin;
+}
+
+.overflow-x-auto::-webkit-scrollbar {
+	height: 6px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+	background-color: rgba(0, 0, 0, 0.2);
+	border-radius: 3px;
+}
+
+/* Admin mobile cards - prevent overflow */
+@media (max-width: 767px) {
+	/* Prevent grid from forcing mobile overflow in admin */
+	.md\\:hidden .divide-y > div {
+		width: 100% !important;
+		max-width: 100% !important;
+	}
+	
+	/* Admin page content - proper mobile padding */
+	.min-h-screen.bg-gray-50 {
+		padding-left: 0.75rem !important;
+		padding-right: 0.75rem !important;
+	}
+	
+	/* Admin cards with proper mobile sizing */
+	.bg-white.rounded-lg,
+	.bg-white.rounded-xl {
+		width: 100% !important;
+		max-width: 100% !important;
+	}
+}
+
+/* Admin sidebar smooth transitions */
+aside[class*="fixed"][class*="left-0"] {
+	will-change: transform;
+}
+
+/* Admin drawer overlay - prevent body scroll */
+body.sidebar-open {
+	overflow: hidden !important;
+	touch-action: none !important;
+}
+
+/* Safe area support for mobile Safari */
+@supports (padding: env(safe-area-inset-bottom)) {
+	/* Admin mobile header respects safe area */
+	header[class*="fixed"][class*="top-0"] {
+		padding-top: max(0.5rem, env(safe-area-inset-top));
+	}
+	
+	/* Admin sidebar respects safe areas */
+	aside[class*="fixed"][class*="left-0"] {
+		padding-bottom: env(safe-area-inset-bottom);
+	}
+}

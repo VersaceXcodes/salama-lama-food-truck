@@ -233,6 +233,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Determine current route context
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isStaffRoute = location.pathname.startsWith('/staff');
+  const isAdminLoginRoute = location.pathname === '/admin/login';
 
   // Routes that should show floating cart (more inclusive now - component handles hiding on checkout/admin/staff)
   const showFloatingCartPaths = ['/', '/menu', '/catering', '/dashboard', '/cart', '/about', '/contact', '/faqs', '/terms', '/privacy', '/track-order', '/orders', '/rewards', '/profile', '/addresses', '/payment-methods'];
@@ -246,34 +247,46 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Routes that should show cookie consent (public routes on first visit)
   const showCookieConsentRoutes = !isAdminRoute && !isStaffRoute && !isAuthenticated;
 
-  // Determine which top nav to show
+  // Check if we should show admin layout (not on login page)
+  const showAdminLayout = isAdminRoute && isAuthenticated && userRole === 'admin' && !isAdminLoginRoute;
+
+  // Determine which top nav to show - Admin uses sidebar's mobile header, not TopNav
   let TopNavComponent: React.FC | null = null;
-  if (isAdminRoute && isAuthenticated && userRole === 'admin') {
-    TopNavComponent = GV_TopNav_Admin;
-  } else if (isStaffRoute && isAuthenticated && (userRole === 'staff' || userRole === 'manager')) {
+  if (isStaffRoute && isAuthenticated && (userRole === 'staff' || userRole === 'manager')) {
     TopNavComponent = GV_TopNav_Staff;
   } else if (!isAdminRoute && !isStaffRoute) {
     // Use new unified SiteHeader for all public and customer routes
     TopNavComponent = GV_SiteHeader;
   }
+  // Note: Admin routes don't use GV_TopNav_Admin - sidebar handles mobile nav
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Top Navigation */}
+    <div className={`min-h-screen flex flex-col ${showAdminLayout ? 'overflow-x-hidden' : ''}`}>
+      {/* Top Navigation - Not shown for admin routes (sidebar handles it) */}
       {TopNavComponent && <TopNavComponent />}
 
-      {/* Main Content Area */}
-      <div className={`flex-1 flex ${isAdminRoute ? 'bg-gray-50' : ''}`}>
-        {/* Admin Sidebar */}
-        {isAdminRoute && isAuthenticated && userRole === 'admin' && (
+      {/* Admin Layout - Proper responsive app shell */}
+      {showAdminLayout ? (
+        <div className="flex-1 flex min-h-0 bg-gray-50">
+          {/* Admin Sidebar - handles its own mobile drawer */}
           <GV_AdminSidebar />
-        )}
 
-        {/* Main Content */}
-        <main className={`flex-1 w-full ${isAdminRoute ? 'pt-14 md:pt-0 md:ml-64' : ''}`}>
-          {children}
-        </main>
-      </div>
+          {/* Main Content - responsive padding for sidebar */}
+          <main className="flex-1 min-w-0 pt-14 lg:pt-0 lg:ml-64 overflow-x-hidden">
+            <div className="min-h-full">
+              {children}
+            </div>
+          </main>
+        </div>
+      ) : (
+        /* Non-Admin Layout */
+        <div className={`flex-1 flex ${isAdminRoute ? 'bg-gray-50' : ''}`}>
+          {/* Main Content */}
+          <main className="flex-1 w-full">
+            {children}
+          </main>
+        </div>
+      )}
 
       {/* Footer - show on public and customer routes only */}
       {!noFooterRoutes && <GV_Footer />}

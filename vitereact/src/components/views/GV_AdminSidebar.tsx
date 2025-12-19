@@ -19,7 +19,11 @@ import {
   Menu,
   X,
   House,
-  Mail
+  Mail,
+  Bell,
+  LogOut,
+  ChevronDown,
+  Search
 } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
@@ -33,13 +37,15 @@ interface NotificationSummary {
 
 const GV_AdminSidebar: React.FC = () => {
   const location = useLocation();
-  const [is_collapsed] = useState(false);
   const [is_mobile_open, setIsMobileOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   
   // CRITICAL: Individual selectors for auth state - no object destructuring
   const currentUser = useAppStore(state => state.authentication_state.current_user);
   const isAuthenticated = useAppStore(state => state.authentication_state.authentication_status.is_authenticated);
   const auth_token = useAppStore(state => state.authentication_state.auth_token);
+  const logoutUser = useAppStore(state => state.logout_user);
   const businessSettings = useAppStore(state => state.business_settings);
   const logoUrl = businessSettings.business_info.logo_url || '/assets/salama-lama-logo.png';
   
@@ -72,20 +78,23 @@ const GV_AdminSidebar: React.FC = () => {
   // Close mobile drawer on route change
   useEffect(() => {
     setIsMobileOpen(false);
+    setIsNotificationsOpen(false);
+    setIsProfileOpen(false);
   }, [location.pathname]);
 
   // Close drawer on ESC key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && is_mobile_open) {
-        closeMobileDrawer();
+      if (e.key === 'Escape') {
+        if (is_mobile_open) {
+          closeMobileDrawer();
+        }
+        setIsNotificationsOpen(false);
+        setIsProfileOpen(false);
       }
     };
     
-    if (is_mobile_open) {
-      document.addEventListener('keydown', handleEscape);
-    }
-    
+    document.addEventListener('keydown', handleEscape);
     return () => {
       document.removeEventListener('keydown', handleEscape);
     };
@@ -99,7 +108,20 @@ const GV_AdminSidebar: React.FC = () => {
     setIsMobileOpen(false);
   };
 
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+      window.location.href = '/admin/login';
+    } catch (error) {
+      console.error('Logout error:', error);
+      window.location.href = '/admin/login';
+    }
+  };
+
   const isActiveRoute = (path: string) => {
+    if (path === '/admin/dashboard') {
+      return location.pathname === path;
+    }
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
@@ -202,26 +224,31 @@ const GV_AdminSidebar: React.FC = () => {
     },
   ];
 
+  const totalNotifications = (notifications?.orders_pending_count || 0) + (notifications?.contact_new_count || 0);
+
   return (
     <>
-      {/* Mobile Top Bar - Only visible on mobile (< md) */}
-      <div 
-        className="md:hidden fixed top-0 left-0 right-0 h-14 bg-gray-900 text-white z-50 flex items-center px-4 border-b border-gray-800"
+      {/* Mobile Top Bar - Fixed header for mobile/tablet (< lg) */}
+      <header 
+        className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-gray-900 text-white z-40 flex items-center justify-between px-4 border-b border-gray-800"
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
+        {/* Left: Hamburger */}
         <button
           onClick={toggleMobileDrawer}
-          className="p-2 rounded-lg hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500"
+          className="p-2 -ml-2 rounded-lg hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500"
           aria-label="Open menu"
+          aria-expanded={is_mobile_open}
         >
           <Menu className="w-6 h-6" />
         </button>
-        <Link to="/admin/dashboard" className="flex items-center ml-4">
+
+        {/* Center: Logo */}
+        <Link to="/admin/dashboard" className="flex items-center">
           <img 
             src={logoUrl} 
             alt="Salama Lama" 
-            className="w-auto object-contain"
-            style={{ height: '28px', maxWidth: '150px' }}
+            className="h-7 w-auto object-contain"
             onError={(e) => { 
               const target = e.target as HTMLImageElement;
               if (target.src !== '/assets/salama-lama-logo.png') {
@@ -230,39 +257,156 @@ const GV_AdminSidebar: React.FC = () => {
             }}
           />
         </Link>
-      </div>
+
+        {/* Right: Notifications & Profile */}
+        <div className="flex items-center gap-1">
+          {/* Notifications */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                setIsNotificationsOpen(!isNotificationsOpen);
+                setIsProfileOpen(false);
+              }}
+              className="p-2 rounded-lg hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 relative"
+              aria-label="Notifications"
+            >
+              <Bell className="w-5 h-5" />
+              {totalNotifications > 0 && (
+                <span className="absolute top-1 right-1 flex items-center justify-center min-w-[16px] h-4 text-[10px] font-bold text-white bg-red-500 rounded-full px-1">
+                  {totalNotifications > 99 ? '99+' : totalNotifications}
+                </span>
+              )}
+            </button>
+
+            {/* Notifications Dropdown */}
+            {isNotificationsOpen && (
+              <>
+                <div 
+                  className="fixed inset-0 z-40" 
+                  onClick={() => setIsNotificationsOpen(false)}
+                />
+                <div className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 max-h-80 overflow-y-auto">
+                  <div className="px-4 py-2 border-b border-gray-200">
+                    <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
+                  </div>
+                  {totalNotifications > 0 ? (
+                    <div className="py-2">
+                      {(notifications?.orders_pending_count || 0) > 0 && (
+                        <Link
+                          to="/admin/orders?status=received"
+                          className="flex items-center px-4 py-3 hover:bg-gray-50 transition-colors"
+                          onClick={() => setIsNotificationsOpen(false)}
+                        >
+                          <div className="w-2 h-2 bg-blue-500 rounded-full mr-3" />
+                          <span className="text-sm text-gray-700">
+                            {notifications?.orders_pending_count} pending order{notifications?.orders_pending_count !== 1 ? 's' : ''}
+                          </span>
+                        </Link>
+                      )}
+                      {(notifications?.contact_new_count || 0) > 0 && (
+                        <Link
+                          to="/admin/messages"
+                          className="flex items-center px-4 py-3 hover:bg-gray-50 transition-colors"
+                          onClick={() => setIsNotificationsOpen(false)}
+                        >
+                          <div className="w-2 h-2 bg-green-500 rounded-full mr-3" />
+                          <span className="text-sm text-gray-700">
+                            {notifications?.contact_new_count} new message{notifications?.contact_new_count !== 1 ? 's' : ''}
+                          </span>
+                        </Link>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="px-4 py-6 text-center">
+                      <Bell className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                      <p className="text-sm text-gray-500">No new notifications</p>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Profile */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                setIsProfileOpen(!isProfileOpen);
+                setIsNotificationsOpen(false);
+              }}
+              className="p-2 rounded-lg hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500"
+              aria-label="Profile"
+            >
+              <div className="w-6 h-6 rounded-full bg-orange-600 flex items-center justify-center text-white text-xs font-semibold">
+                {currentUser?.first_name?.charAt(0)?.toUpperCase() || 'A'}
+              </div>
+            </button>
+
+            {/* Profile Dropdown */}
+            {isProfileOpen && (
+              <>
+                <div 
+                  className="fixed inset-0 z-40" 
+                  onClick={() => setIsProfileOpen(false)}
+                />
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                  <div className="px-4 py-2 border-b border-gray-200">
+                    <p className="text-sm font-semibold text-gray-900 truncate">
+                      {currentUser?.first_name} {currentUser?.last_name}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">{currentUser?.email}</p>
+                  </div>
+                  <Link
+                    to="/admin/settings"
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    onClick={() => setIsProfileOpen(false)}
+                  >
+                    <Settings className="w-4 h-4 mr-3 text-gray-500" />
+                    Settings
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                  >
+                    <LogOut className="w-4 h-4 mr-3" />
+                    Logout
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </header>
 
       {/* Overlay - Only visible when mobile drawer is open */}
       {is_mobile_open && (
         <div 
-          className="md:hidden fixed inset-0 bg-black/40 z-[90]"
+          className="lg:hidden fixed inset-0 bg-black/50 z-40 transition-opacity"
           onClick={closeMobileDrawer}
           aria-hidden="true"
         />
       )}
 
-      {/* Sidebar - Mobile drawer (< md) or Fixed sidebar (>= md) */}
+      {/* Sidebar - Mobile drawer (< lg) or Fixed sidebar (>= lg) */}
       <aside
         className={`
-          fixed left-0 top-0 h-screen bg-gray-900 text-white flex flex-col overflow-y-auto
-          md:z-30 md:w-64 md:translate-x-0
-          z-[100] w-[80vw] max-w-[320px] transition-transform duration-200
-          ${is_mobile_open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-          ${is_mobile_open ? 'pointer-events-auto' : 'pointer-events-none md:pointer-events-auto'}
+          fixed left-0 top-0 h-full bg-gray-900 text-white flex flex-col
+          lg:z-30 lg:w-64 lg:translate-x-0
+          z-50 w-[280px] max-w-[85vw] transition-transform duration-300 ease-in-out
+          ${is_mobile_open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
         style={{ 
           height: '100dvh',
           paddingTop: 'env(safe-area-inset-top)'
         }}
       >
-        {/* Sidebar Header - Sticky to keep close button visible */}
-        <div className="sticky top-0 z-10 flex items-center justify-between h-16 px-4 border-b border-gray-800 flex-shrink-0 bg-gray-900">
+        {/* Sidebar Header */}
+        <div className="flex items-center justify-between h-16 px-4 border-b border-gray-800 flex-shrink-0">
           <Link to="/admin/dashboard" className="flex items-center">
             <img 
               src={logoUrl} 
               alt="Salama Lama" 
-              className="w-auto object-contain"
-              style={{ height: '32px', maxWidth: '180px' }}
+              className="h-8 w-auto object-contain"
               onError={(e) => { 
                 const target = e.target as HTMLImageElement;
                 if (target.src !== '/assets/salama-lama-logo.png') {
@@ -270,13 +414,14 @@ const GV_AdminSidebar: React.FC = () => {
                 }
               }}
             />
+            <span className="ml-3 text-sm font-medium text-gray-300 hidden sm:inline">Admin</span>
           </Link>
           <button
             onClick={closeMobileDrawer}
-            className="md:hidden min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className="lg:hidden p-2 rounded-lg hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500"
             aria-label="Close menu"
           >
-            <X className="w-6 h-6" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -284,36 +429,32 @@ const GV_AdminSidebar: React.FC = () => {
         <nav className="flex-1 overflow-y-auto py-4 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
           <ul className="space-y-1 px-2">
             {navigation.map((item) => {
+              const isActive = isActiveRoute(item.path);
               return (
                 <li key={item.name}>
                   <Link
-                    to={item.path || '#'}
-                    onClick={() => {
-                      // Close mobile drawer when navigating
-                      if (is_mobile_open) {
-                        closeMobileDrawer();
-                      }
-                    }}
-                    className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 ${
-                      isActiveRoute(item.path || '')
+                    to={item.path}
+                    onClick={closeMobileDrawer}
+                    className={`
+                      flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 
+                      focus:outline-none focus:ring-2 focus:ring-orange-500
+                      ${isActive
                         ? 'bg-orange-600 text-white'
                         : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                    }`}
-                    title={is_collapsed ? item.name : undefined}
+                      }
+                    `}
                   >
-                    <div className="relative">
-                      <item.icon className="w-5 h-5 flex-shrink-0" />
+                    <div className="relative flex-shrink-0">
+                      <item.icon className="w-5 h-5" />
                       {item.badge > 0 && (
-                        <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-red-500 rounded-full">
+                        <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[16px] h-4 text-[10px] font-bold text-white bg-red-500 rounded-full px-1">
                           {item.badge > 99 ? '99+' : item.badge}
                         </span>
                       )}
                     </div>
-                    {!is_collapsed && (
-                      <span className="font-medium flex-1">{item.name}</span>
-                    )}
-                    {!is_collapsed && item.badge > 0 && (
-                      <span className="ml-auto px-2 py-0.5 text-xs font-semibold bg-red-500 text-white rounded-full">
+                    <span className="font-medium flex-1 truncate">{item.name}</span>
+                    {item.badge > 0 && (
+                      <span className="px-2 py-0.5 text-xs font-semibold bg-red-500 text-white rounded-full">
                         {item.badge > 99 ? '99+' : item.badge}
                       </span>
                     )}
@@ -325,33 +466,26 @@ const GV_AdminSidebar: React.FC = () => {
         </nav>
 
         {/* Footer - Admin Info */}
-        {!is_collapsed && (
-          <div className="border-t border-gray-800 p-4 flex-shrink-0">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-full bg-orange-600 flex items-center justify-center text-white font-semibold text-lg">
-                {currentUser?.first_name?.charAt(0)?.toUpperCase() || 'A'}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">
-                  {currentUser?.first_name} {currentUser?.last_name}
-                </p>
-                <p className="text-xs text-gray-400 truncate">Administrator</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Collapsed state - Admin avatar only */}
-        {is_collapsed && (
-          <div className="border-t border-gray-800 p-2 flex-shrink-0 flex justify-center">
-            <div 
-              className="w-10 h-10 rounded-full bg-orange-600 flex items-center justify-center text-white font-semibold text-lg"
-              title={`${currentUser?.first_name} ${currentUser?.last_name}`}
-            >
+        <div className="border-t border-gray-800 p-4 flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-orange-600 flex items-center justify-center text-white font-semibold text-lg flex-shrink-0">
               {currentUser?.first_name?.charAt(0)?.toUpperCase() || 'A'}
             </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-white truncate">
+                {currentUser?.first_name} {currentUser?.last_name}
+              </p>
+              <p className="text-xs text-gray-400 truncate">Administrator</p>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors hidden lg:block"
+              title="Logout"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
           </div>
-        )}
+        </div>
       </aside>
     </>
   );

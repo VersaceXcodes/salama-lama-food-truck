@@ -20,6 +20,13 @@ import {
   Package,
   Gift
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 // ===========================
 // Type Definitions
@@ -94,7 +101,6 @@ const GV_SiteHeader: React.FC = () => {
   // Local UI State
   // ===========================
   
-  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -103,7 +109,6 @@ const GV_SiteHeader: React.FC = () => {
   // Refs
   // ===========================
   
-  const profileDropdownRef = useRef<HTMLDivElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
   const hamburgerRef = useRef<HTMLButtonElement>(null);
   
@@ -138,14 +143,6 @@ const GV_SiteHeader: React.FC = () => {
       setIsLoggingOut(false);
     }
   }, [isGuest, logoutUser, navigate]);
-  
-  const toggleProfileDropdown = useCallback(() => {
-    setIsProfileDropdownOpen(prev => !prev);
-  }, []);
-  
-  const closeProfileDropdown = useCallback(() => {
-    setIsProfileDropdownOpen(false);
-  }, []);
   
   const openMobileMenu = useCallback(() => {
     setIsMobileMenuOpen(true);
@@ -189,8 +186,7 @@ const GV_SiteHeader: React.FC = () => {
   // Close menus on route change
   useEffect(() => {
     closeMobileMenu();
-    closeProfileDropdown();
-  }, [location.pathname, closeMobileMenu, closeProfileDropdown]);
+  }, [location.pathname, closeMobileMenu]);
   
   // Lock body scroll when drawer is open
   useEffect(() => {
@@ -206,25 +202,6 @@ const GV_SiteHeader: React.FC = () => {
       document.body.style.touchAction = '';
     };
   }, [isMobileMenuOpen]);
-  
-  // Click outside handler for profile dropdown
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        profileDropdownRef.current &&
-        !profileDropdownRef.current.contains(event.target as Node)
-      ) {
-        closeProfileDropdown();
-      }
-    };
-    
-    if (isProfileDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isProfileDropdownOpen, closeProfileDropdown]);
   
   // Click outside handler for mobile drawer (backdrop click)
   useEffect(() => {
@@ -249,15 +226,12 @@ const GV_SiteHeader: React.FC = () => {
     }
   }, [isMobileMenuOpen, closeMobileMenu]);
   
-  // Escape key handler for both dropdown and drawer
+  // Escape key handler for drawer
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         if (isMobileMenuOpen) {
           closeMobileMenu();
-        }
-        if (isProfileDropdownOpen) {
-          closeProfileDropdown();
         }
       }
     };
@@ -266,7 +240,7 @@ const GV_SiteHeader: React.FC = () => {
     return () => {
       document.removeEventListener('keydown', handleEscape);
     };
-  }, [isMobileMenuOpen, isProfileDropdownOpen, closeMobileMenu, closeProfileDropdown]);
+  }, [isMobileMenuOpen, closeMobileMenu]);
   
   // ===========================
   // Render
@@ -497,78 +471,64 @@ const GV_SiteHeader: React.FC = () => {
               
               {/* Authenticated: Account Dropdown */}
               {isAuthenticated && !isGuest && (
-                <div className="relative" ref={profileDropdownRef}>
-                  <button
-                    onClick={toggleProfileDropdown}
-                    className="
-                      flex items-center gap-2 
-                      px-4 py-2.5 
-                      text-sm font-semibold 
-                      text-[var(--primary-text)] 
-                      bg-white 
-                      border-2 border-[var(--primary-text)] 
-                      rounded-full 
-                      hover:bg-[var(--primary-bg)] 
-                      transition-all duration-200 
-                      focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2 
-                      shadow-sm 
-                      whitespace-nowrap
-                    "
-                    aria-label="Account Menu"
-                    aria-expanded={isProfileDropdownOpen}
-                    aria-haspopup="menu"
-                  >
-                    <User className="h-4 w-4" aria-hidden="true" />
-                    <span className="max-w-24 truncate">{userDisplayName}</span>
-                    <ChevronDown 
-                      className={`h-4 w-4 transition-transform duration-200 ${isProfileDropdownOpen ? 'rotate-180' : ''}`} 
-                      aria-hidden="true"
-                    />
-                  </button>
-                  
-                  {/* Dropdown Menu */}
-                  {isProfileDropdownOpen && (
-                    <div 
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
                       className="
-                        absolute right-0 mt-2 
-                        w-56 
+                        flex items-center gap-2 
+                        px-4 py-2.5 
+                        text-sm font-semibold 
+                        text-[var(--primary-text)] 
                         bg-white 
-                        rounded-xl 
-                        shadow-xl 
-                        border border-[var(--border-light)]
-                        py-2 
-                        z-50
-                        animate-scale-in
+                        border-2 border-[var(--primary-text)] 
+                        rounded-full 
+                        hover:bg-[var(--primary-bg)] 
+                        transition-all duration-200 
+                        focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2 
+                        shadow-sm 
+                        whitespace-nowrap
+                        data-[state=open]:bg-[var(--primary-bg)]
                       "
-                      role="menu"
-                      aria-orientation="vertical"
-                      aria-label="User menu"
+                      aria-label="Account Menu"
                     >
+                      <User className="h-4 w-4" aria-hidden="true" />
+                      <span className="max-w-24 truncate">{userDisplayName}</span>
+                      <ChevronDown 
+                        className="h-4 w-4 transition-transform duration-200 data-[state=open]:rotate-180" 
+                        aria-hidden="true"
+                      />
+                    </button>
+                  </DropdownMenuTrigger>
+                  
+                  <DropdownMenuContent 
+                    align="end" 
+                    sideOffset={8}
+                    className="w-56 bg-white rounded-xl shadow-xl border border-[var(--border-light)] py-2"
+                  >
+                    <DropdownMenuItem asChild>
                       <Link
                         to="/dashboard"
-                        onClick={closeProfileDropdown}
-                        className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-[var(--primary-text)] hover:bg-[var(--primary-bg)] transition-colors"
-                        role="menuitem"
+                        className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-[var(--primary-text)] hover:bg-[var(--primary-bg)] transition-colors cursor-pointer"
                       >
                         <Home className="h-4 w-4" aria-hidden="true" />
                         <span>Dashboard</span>
                       </Link>
-                      
+                    </DropdownMenuItem>
+                    
+                    <DropdownMenuItem asChild>
                       <Link
                         to="/orders"
-                        onClick={closeProfileDropdown}
-                        className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-[var(--primary-text)] hover:bg-[var(--primary-bg)] transition-colors"
-                        role="menuitem"
+                        className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-[var(--primary-text)] hover:bg-[var(--primary-bg)] transition-colors cursor-pointer"
                       >
                         <Package className="h-4 w-4" aria-hidden="true" />
                         <span>My Orders</span>
                       </Link>
-                      
+                    </DropdownMenuItem>
+                    
+                    <DropdownMenuItem asChild>
                       <Link
                         to="/rewards"
-                        onClick={closeProfileDropdown}
-                        className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-[var(--primary-text)] hover:bg-[var(--primary-bg)] transition-colors"
-                        role="menuitem"
+                        className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-[var(--primary-text)] hover:bg-[var(--primary-bg)] transition-colors cursor-pointer"
                       >
                         <Gift className="h-4 w-4" aria-hidden="true" />
                         <span>Rewards</span>
@@ -578,31 +538,30 @@ const GV_SiteHeader: React.FC = () => {
                           </span>
                         )}
                       </Link>
-                      
+                    </DropdownMenuItem>
+                    
+                    <DropdownMenuItem asChild>
                       <Link
                         to="/profile"
-                        onClick={closeProfileDropdown}
-                        className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-[var(--primary-text)] hover:bg-[var(--primary-bg)] transition-colors"
-                        role="menuitem"
+                        className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-[var(--primary-text)] hover:bg-[var(--primary-bg)] transition-colors cursor-pointer"
                       >
                         <User className="h-4 w-4" aria-hidden="true" />
                         <span>Profile</span>
                       </Link>
-                      
-                      <div className="border-t border-[var(--border-light)] my-2" role="separator" />
-                      
-                      <button
-                        onClick={handleLogout}
-                        disabled={isLoggingOut}
-                        className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors w-full disabled:opacity-50 disabled:cursor-not-allowed"
-                        role="menuitem"
-                      >
-                        <LogOut className="h-4 w-4" aria-hidden="true" />
-                        <span>{isLoggingOut ? 'Signing Out...' : 'Logout'}</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
+                    </DropdownMenuItem>
+                    
+                    <DropdownMenuSeparator className="my-2 bg-[var(--border-light)]" />
+                    
+                    <DropdownMenuItem
+                      onClick={handleLogout}
+                      disabled={isLoggingOut}
+                      className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <LogOut className="h-4 w-4" aria-hidden="true" />
+                      <span>{isLoggingOut ? 'Signing Out...' : 'Logout'}</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
               
               {/* Guest user - Show Continue button */}
@@ -1053,11 +1012,6 @@ const GV_SiteHeader: React.FC = () => {
         
         .animate-fade-in {
           animation: fade-in 0.2s ease-out;
-        }
-        
-        /* Ensure header never causes horizontal scroll */
-        .site-header {
-          overflow-x: hidden;
         }
       `}</style>
     </>

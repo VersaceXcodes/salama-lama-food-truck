@@ -4,6 +4,14 @@ import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppStore } from '@/store/main';
 import { Search, Bell, User, LogOut, Settings, ChevronDown, Menu, X, House } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 // ===========================
 // Type Definitions
@@ -51,16 +59,12 @@ const GV_TopNav_Admin: React.FC = () => {
   // ===========================
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // ===========================
   // Refs for Click Outside Detection
   // ===========================
   const searchRef = useRef<HTMLDivElement>(null);
-  const notificationsRef = useRef<HTMLDivElement>(null);
-  const profileRef = useRef<HTMLDivElement>(null);
 
   // ===========================
   // Router Navigation
@@ -152,16 +156,6 @@ const GV_TopNav_Admin: React.FC = () => {
       // Close search dropdown if click outside
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setIsSearchOpen(false);
-      }
-
-      // Close notifications dropdown if click outside
-      if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
-        setIsNotificationsOpen(false);
-      }
-
-      // Close profile dropdown if click outside
-      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
-        setIsProfileOpen(false);
       }
     };
 
@@ -272,24 +266,28 @@ const GV_TopNav_Admin: React.FC = () => {
                 =========================== */}
             <div className="flex items-center space-x-2 md:space-x-4">
               {/* Notifications - Hidden on Mobile */}
-              <div className="hidden md:block relative" ref={notificationsRef}>
-                <button
-                  onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                  className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  aria-label="Notifications"
-                  style={{ minHeight: '48px', minWidth: '48px' }}
-                >
-                  <Bell className="h-6 w-6" />
-                  {notificationsData && notificationsData.notification_count > 0 && (
-                    <span className="absolute top-1 right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full min-w-[20px]">
-                      {notificationsData.notification_count}
-                    </span>
-                  )}
-                </button>
+              <div className="hidden md:block">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 data-[state=open]:bg-gray-100"
+                      aria-label="Notifications"
+                      style={{ minHeight: '48px', minWidth: '48px' }}
+                    >
+                      <Bell className="h-6 w-6" />
+                      {notificationsData && notificationsData.notification_count > 0 && (
+                        <span className="absolute top-1 right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full min-w-[20px]">
+                          {notificationsData.notification_count}
+                        </span>
+                      )}
+                    </button>
+                  </DropdownMenuTrigger>
 
-                {/* Notifications Dropdown */}
-                {isNotificationsOpen && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                  <DropdownMenuContent 
+                    align="end" 
+                    sideOffset={8}
+                    className="w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-0"
+                  >
                     <div className="px-4 py-2 border-b border-gray-200 flex items-center justify-between">
                       <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
                       {notificationsData && notificationsData.notification_count > 0 && (
@@ -345,15 +343,12 @@ const GV_TopNav_Admin: React.FC = () => {
                             </div>
                           ))}
                           <div className="px-4 py-2 border-t border-gray-200">
-                            <button
-                              onClick={() => {
-                                setIsNotificationsOpen(false);
-                                navigate('/admin/dashboard');
-                              }}
-                              className="text-sm text-orange-600 hover:text-orange-700 font-medium w-full text-center"
+                            <Link
+                              to="/admin/dashboard"
+                              className="text-sm text-orange-600 hover:text-orange-700 font-medium w-full text-center block"
                             >
                               View Dashboard
-                            </button>
+                            </Link>
                           </div>
                         </>
                       ) : (
@@ -364,62 +359,65 @@ const GV_TopNav_Admin: React.FC = () => {
                         </div>
                       )}
                     </div>
-                  </div>
-                )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
               {/* Admin Profile Dropdown - Hidden on Mobile */}
-              <div className="hidden md:block relative" ref={profileRef}>
-                <button
-                  onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="flex items-center space-x-2 p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  style={{ minHeight: '48px' }}
-                >
-                  <div className="flex items-center justify-center w-8 h-8 bg-orange-100 rounded-full">
-                    <User className="h-5 w-5 text-orange-600" />
-                  </div>
-                  <span className="text-sm font-medium hidden sm:inline-block">
-                    {adminFirstName}
-                  </span>
-                  <ChevronDown
-                    className={`h-4 w-4 text-gray-500 transition-transform ${
-                      isProfileOpen ? 'transform rotate-180' : ''
-                    }`}
-                  />
-                </button>
+              <div className="hidden md:block">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className="flex items-center space-x-2 p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 data-[state=open]:bg-gray-100"
+                      style={{ minHeight: '48px' }}
+                    >
+                      <div className="flex items-center justify-center w-8 h-8 bg-orange-100 rounded-full">
+                        <User className="h-5 w-5 text-orange-600" />
+                      </div>
+                      <span className="text-sm font-medium hidden sm:inline-block">
+                        {adminFirstName}
+                      </span>
+                      <ChevronDown className="h-4 w-4 text-gray-500 transition-transform data-[state=open]:rotate-180" />
+                    </button>
+                  </DropdownMenuTrigger>
 
-                {/* Profile Dropdown Menu */}
-                {isProfileOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                    <div className="px-4 py-2 border-b border-gray-200">
+                  <DropdownMenuContent 
+                    align="end" 
+                    sideOffset={8}
+                    className="w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-0"
+                  >
+                    <DropdownMenuLabel className="px-4 py-2 border-b border-gray-200">
                       <p className="text-sm font-semibold text-gray-900">
                         {currentUser?.first_name} {currentUser?.last_name}
                       </p>
-                      <p className="text-xs text-gray-500">{currentUser?.email}</p>
-                    </div>
+                      <p className="text-xs text-gray-500 font-normal">{currentUser?.email}</p>
+                    </DropdownMenuLabel>
 
                     <div className="py-1">
-                      <Link
-                        to="/admin/settings"
-                        onClick={() => setIsProfileOpen(false)}
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                      >
-                        <Settings className="h-4 w-4 mr-3 text-gray-500" />
-                        Admin Settings
-                      </Link>
+                      <DropdownMenuItem asChild>
+                        <Link
+                          to="/admin/settings"
+                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+                        >
+                          <Settings className="h-4 w-4 mr-3 text-gray-500" />
+                          Admin Settings
+                        </Link>
+                      </DropdownMenuItem>
                     </div>
 
-                    <div className="border-t border-gray-200 py-1">
-                      <button
+                    <DropdownMenuSeparator className="bg-gray-200" />
+
+                    <div className="py-1">
+                      <DropdownMenuItem
                         onClick={handleLogout}
-                        className="flex items-center w-full px-4 py-2 text-sm text-red-700 hover:bg-red-50 transition-colors"
+                        className="flex items-center w-full px-4 py-2 text-sm text-red-700 hover:bg-red-50 transition-colors cursor-pointer"
                       >
                         <LogOut className="h-4 w-4 mr-3 text-red-600" />
                         Logout
-                      </button>
+                      </DropdownMenuItem>
                     </div>
-                  </div>
-                )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
               {/* Mobile Menu Button - Only on Mobile */}

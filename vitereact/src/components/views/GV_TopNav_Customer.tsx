@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
@@ -18,6 +18,13 @@ import {
   Utensils,
   Gift
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 // ===========================
 // Type Definitions
@@ -77,15 +84,8 @@ const GV_TopNav_Customer: React.FC = () => {
   // Local UI State
   // ===========================
   
-  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  
-  // ===========================
-  // Refs for Click Outside Detection
-  // ===========================
-  
-  const profileDropdownRef = useRef<HTMLDivElement>(null);
   
   // ===========================
   // React Query - Loyalty Points
@@ -117,14 +117,6 @@ const GV_TopNav_Customer: React.FC = () => {
     }
   };
   
-  const toggleProfileDropdown = () => {
-    setIsProfileDropdownOpen(!isProfileDropdownOpen);
-  };
-  
-  const closeProfileDropdown = () => {
-    setIsProfileDropdownOpen(false);
-  };
-  
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
@@ -134,36 +126,12 @@ const GV_TopNav_Customer: React.FC = () => {
   };
   
   // ===========================
-  // Click Outside Handler
-  // ===========================
-  
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        profileDropdownRef.current &&
-        !profileDropdownRef.current.contains(event.target as Node)
-      ) {
-        closeProfileDropdown();
-      }
-    };
-    
-    if (isProfileDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isProfileDropdownOpen]);
-  
-  // ===========================
   // Escape Key Handler
   // ===========================
   
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        closeProfileDropdown();
         closeMobileMenu();
       }
     };
@@ -304,78 +272,86 @@ const GV_TopNav_Customer: React.FC = () => {
               </Link>
               
               {/* Profile Dropdown (Desktop) */}
-              <div className="hidden md:block relative" ref={profileDropdownRef}>
-                <button
-                  onClick={toggleProfileDropdown}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 shadow-sm"
-                  aria-label="User profile menu"
-                  aria-expanded={isProfileDropdownOpen}
-                >
-                  <User className="h-4 w-4" />
-                  <span>{userDisplayName}</span>
-                  <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isProfileDropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
-                
-                {/* Dropdown Menu */}
-                {isProfileDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50 animate-fadeIn">
-                    <Link
-                      to="/dashboard"
-                      onClick={closeProfileDropdown}
-                      className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors"
-                    >
-                      <Home className="h-4 w-4" />
-                      <span>Dashboard</span>
-                    </Link>
-                    
-                    <Link
-                      to="/profile"
-                      onClick={closeProfileDropdown}
-                      className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors"
+              <div className="hidden md:block">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 shadow-sm data-[state=open]:bg-gray-50"
+                      aria-label="User profile menu"
                     >
                       <User className="h-4 w-4" />
-                      <span>My Profile</span>
-                    </Link>
+                      <span>{userDisplayName}</span>
+                      <ChevronDown className="h-4 w-4 transition-transform duration-200 data-[state=open]:rotate-180" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  
+                  <DropdownMenuContent 
+                    align="end" 
+                    sideOffset={8}
+                    className="w-56 bg-white rounded-lg shadow-xl border border-gray-200 py-2"
+                  >
+                    <DropdownMenuItem asChild>
+                      <Link
+                        to="/dashboard"
+                        className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors cursor-pointer"
+                      >
+                        <Home className="h-4 w-4" />
+                        <span>Dashboard</span>
+                      </Link>
+                    </DropdownMenuItem>
                     
-                    <Link
-                      to="/orders"
-                      onClick={closeProfileDropdown}
-                      className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors"
-                    >
-                      <Package className="h-4 w-4" />
-                      <span>My Orders</span>
-                    </Link>
+                    <DropdownMenuItem asChild>
+                      <Link
+                        to="/profile"
+                        className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors cursor-pointer"
+                      >
+                        <User className="h-4 w-4" />
+                        <span>My Profile</span>
+                      </Link>
+                    </DropdownMenuItem>
                     
-                    <Link
-                      to="/addresses"
-                      onClick={closeProfileDropdown}
-                      className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors"
-                    >
-                      <MapPin className="h-4 w-4" />
-                      <span>Saved Addresses</span>
-                    </Link>
+                    <DropdownMenuItem asChild>
+                      <Link
+                        to="/orders"
+                        className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors cursor-pointer"
+                      >
+                        <Package className="h-4 w-4" />
+                        <span>My Orders</span>
+                      </Link>
+                    </DropdownMenuItem>
                     
-                    <Link
-                      to="/payment-methods"
-                      onClick={closeProfileDropdown}
-                      className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors"
-                    >
-                      <CreditCard className="h-4 w-4" />
-                      <span>Payment Methods</span>
-                    </Link>
+                    <DropdownMenuItem asChild>
+                      <Link
+                        to="/addresses"
+                        className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors cursor-pointer"
+                      >
+                        <MapPin className="h-4 w-4" />
+                        <span>Saved Addresses</span>
+                      </Link>
+                    </DropdownMenuItem>
                     
-                    <div className="border-t border-gray-200 my-2"></div>
+                    <DropdownMenuItem asChild>
+                      <Link
+                        to="/payment-methods"
+                        className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors cursor-pointer"
+                      >
+                        <CreditCard className="h-4 w-4" />
+                        <span>Payment Methods</span>
+                      </Link>
+                    </DropdownMenuItem>
                     
-                    <button
+                    <DropdownMenuSeparator className="my-2 bg-gray-200" />
+                    
+                    <DropdownMenuItem
                       onClick={handleLogout}
                       disabled={isLoggingOut}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <LogOut className="h-4 w-4" />
                       <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
-                    </button>
-                  </div>
-                )}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           </div>

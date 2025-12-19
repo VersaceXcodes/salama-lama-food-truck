@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,6 +42,7 @@ interface OrderTrackingData {
 }
 
 const UV_TrackOrder: React.FC = () => {
+  const navigate = useNavigate();
   const [ticketNumber, setTicketNumber] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +51,6 @@ const UV_TrackOrder: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setOrderData(null);
 
     // Trim and uppercase the ticket number
     const normalizedTicket = ticketNumber.trim().toUpperCase();
@@ -62,13 +63,17 @@ const UV_TrackOrder: React.FC = () => {
     setIsLoading(true);
 
     try {
+      // Verify the ticket exists before navigating
       const response = await axios.get('/api/orders/track', {
         params: {
           ticket: normalizedTicket,
         },
       });
 
-      setOrderData(response.data.data);
+      // If successful, navigate to the tracking page
+      if (response.data.data) {
+        navigate(`/track/${normalizedTicket}`);
+      }
     } catch (err: any) {
       if (err.response?.status === 404) {
         setError("Ticket not found. Please check your ticket number and try again.");
@@ -78,7 +83,6 @@ const UV_TrackOrder: React.FC = () => {
         setError('Something went wrong. Please try again later.');
       }
       console.error('Track order error:', err);
-    } finally {
       setIsLoading(false);
     }
   };

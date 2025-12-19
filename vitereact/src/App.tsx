@@ -261,19 +261,19 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Note: Admin routes don't use GV_TopNav_Admin - sidebar handles mobile nav
 
   return (
-    <div className={`min-h-screen flex flex-col ${showAdminLayout ? 'overflow-x-hidden' : ''}`}>
+    <div className={`min-h-screen flex flex-col ${showAdminLayout ? 'overflow-hidden max-w-full' : ''}`}>
       {/* Top Navigation - Not shown for admin routes (sidebar handles it) */}
       {TopNavComponent && <TopNavComponent />}
 
       {/* Admin Layout - Proper responsive app shell */}
       {showAdminLayout ? (
-        <div className="flex-1 flex min-h-0 bg-gray-50">
+        <div className="admin-app-shell flex-1 flex flex-col lg:flex-row min-h-0 bg-gray-50 overflow-hidden">
           {/* Admin Sidebar - handles its own mobile drawer */}
           <GV_AdminSidebar />
 
-          {/* Main Content - responsive padding for sidebar */}
-          <main className="flex-1 min-w-0 pt-14 lg:pt-0 lg:ml-64 overflow-x-hidden">
-            <div className="min-h-full">
+          {/* Main Content Area - responsive for all screen sizes */}
+          <main className="admin-main-content flex-1 min-w-0 w-full pt-14 lg:pt-0 lg:ml-64 overflow-y-auto overflow-x-hidden">
+            <div className="min-h-full w-full max-w-full">
               {children}
             </div>
           </main>

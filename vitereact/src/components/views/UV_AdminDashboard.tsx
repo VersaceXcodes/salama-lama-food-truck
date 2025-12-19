@@ -670,40 +670,41 @@ const UV_AdminDashboard: React.FC = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 w-full max-w-full overflow-x-hidden">
         {/* Header Section */}
-        <div className="bg-white border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-                <p className="mt-1 text-sm text-gray-600">
+        <div className="bg-white border-b border-gray-200 w-full">
+          <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 py-4 sm:py-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+              <div className="min-w-0">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 truncate">Dashboard</h1>
+                <p className="mt-1 text-xs sm:text-sm text-gray-600 truncate">
                   Welcome back, {currentUser?.first_name} {currentUser?.last_name}
                 </p>
               </div>
               
-              <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+              <div className="flex flex-row items-center gap-2 sm:gap-4 flex-shrink-0">
                 {/* Date Range Selector */}
                 <select
                   value={selectedDateRange}
                   onChange={(e) => setSelectedDateRange(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+                  className="px-2 sm:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-xs sm:text-sm flex-shrink-0"
                 >
                   <option value="today">Today</option>
                   <option value="yesterday">Yesterday</option>
-                  <option value="last_7_days">Last 7 Days</option>
-                  <option value="last_30_days">Last 30 Days</option>
-                  <option value="this_month">This Month</option>
+                  <option value="last_7_days">7 Days</option>
+                  <option value="last_30_days">30 Days</option>
+                  <option value="this_month">Month</option>
                 </select>
 
                 {/* Refresh Button */}
                 <button
                   onClick={handleRefresh}
                   disabled={isLoading}
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                  className="inline-flex items-center justify-center p-2 sm:px-4 sm:py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex-shrink-0"
+                  aria-label="Refresh"
                 >
                   <svg
-                    className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`}
+                    className={`w-4 h-4 sm:mr-2 ${isLoading ? 'animate-spin' : ''}`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -715,7 +716,7 @@ const UV_AdminDashboard: React.FC = () => {
                       d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                     />
                   </svg>
-                  Refresh
+                  <span className="hidden sm:inline">Refresh</span>
                 </button>
               </div>
             </div>
@@ -729,28 +730,28 @@ const UV_AdminDashboard: React.FC = () => {
         </div>
 
         {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 py-4 sm:py-6 lg:py-8 overflow-hidden">
           {/* Metrics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
             {/* Orders Today Card */}
-            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow duration-200">
+            <div className="bg-white rounded-lg sm:rounded-xl shadow-sm sm:shadow-lg border border-gray-100 p-3 sm:p-4 lg:p-6 hover:shadow-xl transition-shadow duration-200">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">
-                    {getLabel('dashboard_label_orders_today', 'Orders Today')}
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
+                    {getLabel('dashboard_label_orders_today', 'Orders')}
                   </p>
                   {metricsLoading ? (
-                    <div className="mt-2 h-10 w-20 bg-gradient-to-r from-gray-200 to-gray-100 animate-pulse rounded"></div>
+                    <div className="mt-1 sm:mt-2 h-8 sm:h-10 w-16 sm:w-20 bg-gradient-to-r from-gray-200 to-gray-100 animate-pulse rounded"></div>
                   ) : metricsError ? (
-                    <p className="mt-2 text-sm text-red-600">Error loading</p>
+                    <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-red-600">Error</p>
                   ) : (
-                    <p className="mt-2 text-4xl font-bold text-gray-900">
+                    <p className="mt-1 sm:mt-2 text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">
                       {dashboardMetrics?.orders_today ?? 0}
                     </p>
                   )}
                 </div>
-                <div className="p-3 bg-blue-100 rounded-lg">
-                  <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-2 sm:p-3 bg-blue-100 rounded-lg flex-shrink-0">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                   </svg>
                 </div>
@@ -758,24 +759,24 @@ const UV_AdminDashboard: React.FC = () => {
             </div>
 
             {/* Revenue Today Card */}
-            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow duration-200">
+            <div className="bg-white rounded-lg sm:rounded-xl shadow-sm sm:shadow-lg border border-gray-100 p-3 sm:p-4 lg:p-6 hover:shadow-xl transition-shadow duration-200">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">
-                    {getLabel('dashboard_label_revenue_today', 'Revenue Today')}
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
+                    {getLabel('dashboard_label_revenue_today', 'Revenue')}
                   </p>
                   {metricsLoading ? (
-                    <div className="mt-2 h-10 w-24 bg-gradient-to-r from-gray-200 to-gray-100 animate-pulse rounded"></div>
+                    <div className="mt-1 sm:mt-2 h-8 sm:h-10 w-16 sm:w-24 bg-gradient-to-r from-gray-200 to-gray-100 animate-pulse rounded"></div>
                   ) : metricsError ? (
-                    <p className="mt-2 text-sm text-red-600">Error loading</p>
+                    <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-red-600">Error</p>
                   ) : (
-                    <p className="mt-2 text-4xl font-bold text-green-600">
+                    <p className="mt-1 sm:mt-2 text-xl sm:text-2xl lg:text-4xl font-bold text-green-600 truncate">
                       {formatCurrency(dashboardMetrics?.revenue_today ?? 0)}
                     </p>
                   )}
                 </div>
-                <div className="p-3 bg-green-100 rounded-lg">
-                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-2 sm:p-3 bg-green-100 rounded-lg flex-shrink-0">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
@@ -783,24 +784,24 @@ const UV_AdminDashboard: React.FC = () => {
             </div>
 
             {/* New Customers Card */}
-            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow duration-200">
+            <div className="bg-white rounded-lg sm:rounded-xl shadow-sm sm:shadow-lg border border-gray-100 p-3 sm:p-4 lg:p-6 hover:shadow-xl transition-shadow duration-200">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
                     {getLabel('dashboard_label_new_customers', 'New Customers')}
                   </p>
                   {metricsLoading ? (
-                    <div className="mt-2 h-10 w-16 bg-gradient-to-r from-gray-200 to-gray-100 animate-pulse rounded"></div>
+                    <div className="mt-1 sm:mt-2 h-8 sm:h-10 w-12 sm:w-16 bg-gradient-to-r from-gray-200 to-gray-100 animate-pulse rounded"></div>
                   ) : metricsError ? (
-                    <p className="mt-2 text-sm text-red-600">Error loading</p>
+                    <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-red-600">Error</p>
                   ) : (
-                    <p className="mt-2 text-4xl font-bold text-gray-900">
+                    <p className="mt-1 sm:mt-2 text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">
                       {dashboardMetrics?.new_customers_today ?? 0}
                     </p>
                   )}
                 </div>
-                <div className="p-3 bg-purple-100 rounded-lg">
-                  <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-2 sm:p-3 bg-purple-100 rounded-lg flex-shrink-0">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                 </div>
@@ -808,8 +809,8 @@ const UV_AdminDashboard: React.FC = () => {
             </div>
 
             {/* Collection vs Delivery Card */}
-            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow duration-200">
-              <p className="text-sm font-medium text-gray-600 mb-4">
+            <div className="bg-white rounded-lg sm:rounded-xl shadow-sm sm:shadow-lg border border-gray-100 p-3 sm:p-4 lg:p-6 hover:shadow-xl transition-shadow duration-200">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 mb-2 sm:mb-4">
                 {getLabel('dashboard_label_order_types', 'Order Types')}
               </p>
               {metricsLoading ? (
@@ -864,7 +865,7 @@ const UV_AdminDashboard: React.FC = () => {
 
           {/* Alerts Section */}
           {(pendingAlerts && (pendingAlerts.low_stock_items_count > 0 || pendingAlerts.new_catering_inquiries_count > 0)) && (
-            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-6 mb-8 rounded-lg">
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 sm:p-4 lg:p-6 mb-4 sm:mb-6 lg:mb-8 rounded-lg">
               <div className="flex items-start">
                 <svg className="w-6 h-6 text-yellow-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -907,22 +908,22 @@ const UV_AdminDashboard: React.FC = () => {
           )}
 
           {/* Charts and Recent Orders Grid */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8">
             {/* Revenue Chart - Takes more space */}
-            <div className="xl:col-span-2 bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
-                <h2 className="text-xl font-semibold text-gray-900">
+            <div className="xl:col-span-2 bg-white rounded-lg sm:rounded-xl shadow-sm sm:shadow-lg border border-gray-100 p-3 sm:p-4 lg:p-6">
+              <div className="flex flex-row items-center justify-between mb-3 sm:mb-4 lg:mb-6 gap-2 sm:gap-4">
+                <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-900 truncate">
                   {getLabel('dashboard_title_revenue_trend', 'Revenue Trend')}
                 </h2>
                 <select
                   value={chartDateRange}
                   onChange={(e) => setChartDateRange(e.target.value)}
-                  className="px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white font-medium text-gray-700 cursor-pointer hover:bg-gray-50 transition-colors"
+                  className="px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white font-medium text-gray-700 cursor-pointer hover:bg-gray-50 transition-colors flex-shrink-0"
                 >
                   <option value="today">Today</option>
-                  <option value="last_7_days">Last 7 Days</option>
-                  <option value="last_30_days">Last 30 Days</option>
-                  <option value="this_month">This Month</option>
+                  <option value="last_7_days">7 Days</option>
+                  <option value="last_30_days">30 Days</option>
+                  <option value="this_month">Month</option>
                 </select>
               </div>
               {chartLoading ? (
@@ -954,11 +955,11 @@ const UV_AdminDashboard: React.FC = () => {
             </div>
 
             {/* Quick Actions */}
-            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            <div className="bg-white rounded-lg sm:rounded-xl shadow-sm sm:shadow-lg border border-gray-100 p-3 sm:p-4 lg:p-6">
+              <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">
                 {getLabel('dashboard_title_quick_actions', 'Quick Actions')}
               </h2>
-              <div className="space-y-4">
+              <div className="space-y-2 sm:space-y-4">
                 {/* Toggle Delivery with Clear Status Label */}
                 <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                   <div className="flex items-center justify-between mb-2">
@@ -1020,19 +1021,19 @@ const UV_AdminDashboard: React.FC = () => {
           </div>
 
           {/* Recent Orders Table */}
-          <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900">
+          <div className="bg-white rounded-lg sm:rounded-xl shadow-sm sm:shadow-lg border border-gray-100 overflow-hidden w-full max-w-full">
+            <div className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 border-b border-gray-200 flex items-center justify-between">
+              <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-900">
                 {getLabel('dashboard_title_recent_orders', 'Recent Orders')}
               </h2>
               <Link
                 to="/admin/orders"
-                className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                className="text-xs sm:text-sm font-medium text-blue-600 hover:text-blue-700 flex-shrink-0"
               >
                 View All →
               </Link>
             </div>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto w-full">
               {ordersLoading ? (
                 <div className="p-6 space-y-3">
                   {[1, 2, 3, 4, 5].map((i) => (

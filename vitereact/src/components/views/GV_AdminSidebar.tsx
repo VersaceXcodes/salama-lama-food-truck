@@ -230,7 +230,7 @@ const GV_AdminSidebar: React.FC = () => {
     <>
       {/* Mobile Top Bar - Fixed header for mobile/tablet (< lg) */}
       <header 
-        className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-gray-900 text-white z-40 flex items-center justify-between px-4 border-b border-gray-800"
+        className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-gray-900 text-white z-50 flex items-center justify-between px-3 sm:px-4 border-b border-gray-800"
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
         {/* Left: Hamburger */}
@@ -381,7 +381,7 @@ const GV_AdminSidebar: React.FC = () => {
       {/* Overlay - Only visible when mobile drawer is open */}
       {is_mobile_open && (
         <div 
-          className="lg:hidden fixed inset-0 bg-black/50 z-40 transition-opacity"
+          className="lg:hidden fixed inset-0 bg-black/60 z-[55] transition-opacity backdrop-blur-sm"
           onClick={closeMobileDrawer}
           aria-hidden="true"
         />
@@ -392,7 +392,7 @@ const GV_AdminSidebar: React.FC = () => {
         className={`
           fixed left-0 top-0 h-full bg-gray-900 text-white flex flex-col
           lg:z-30 lg:w-64 lg:translate-x-0
-          z-50 w-[280px] max-w-[85vw] transition-transform duration-300 ease-in-out
+          z-[60] w-[280px] max-w-[85vw] transition-transform duration-300 ease-in-out
           ${is_mobile_open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
         style={{ 

@@ -521,8 +521,8 @@ const UV_AdminOrders: React.FC = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-gray-50 py-4 sm:py-6 lg:py-8 px-3 sm:px-4 lg:px-6 xl:px-8">
-        <div className="max-w-7xl mx-auto">
+      <div className="min-h-screen bg-gray-50 py-4 sm:py-6 lg:py-8 px-3 sm:px-4 lg:px-6 xl:px-8 w-full max-w-full overflow-x-hidden">
+        <div className="w-full max-w-7xl mx-auto overflow-hidden">
           {/* Header - Responsive */}
           <div className="mb-4 sm:mb-6 lg:mb-8">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4">
@@ -814,10 +814,10 @@ const UV_AdminOrders: React.FC = () => {
           )}
 
           {/* Orders - Desktop Table / Mobile Cards */}
-          <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-100 overflow-hidden w-full max-w-full">
             
             {/* Desktop Table View - Hidden on mobile */}
-            <div className="hidden md:block overflow-x-auto">
+            <div className="hidden md:block overflow-x-auto w-full">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>

@@ -1342,3 +1342,49 @@ export const searchActivityLogInputSchema = z.object({
 export type ActivityLog = z.infer<typeof activityLogSchema>;
 export type CreateActivityLogInput = z.infer<typeof createActivityLogInputSchema>;
 export type SearchActivityLogInput = z.infer<typeof searchActivityLogInputSchema>;
+
+// ============================================
+// HOMEPAGE SECTIONS SCHEMAS
+// ============================================
+
+export const homepageSectionSchema = z.object({
+  section_id: z.string(),
+  category_id: z.string(),
+  enabled: z.boolean(),
+  sort_order: z.number().int(),
+  item_limit: z.number().int(),
+  display_mode: z.enum(['auto_popular', 'auto_newest', 'manual']),
+  selected_item_ids: z.array(z.string()).nullable(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+export const createHomepageSectionInputSchema = z.object({
+  category_id: z.string(),
+  enabled: z.boolean().default(true),
+  sort_order: z.number().int().nonnegative().default(0),
+  item_limit: z.number().int().positive().max(20).default(6),
+  display_mode: z.enum(['auto_popular', 'auto_newest', 'manual']).default('auto_popular'),
+  selected_item_ids: z.array(z.string()).nullable().optional(),
+});
+
+export const updateHomepageSectionInputSchema = z.object({
+  section_id: z.string(),
+  enabled: z.boolean().optional(),
+  sort_order: z.number().int().nonnegative().optional(),
+  item_limit: z.number().int().positive().max(20).optional(),
+  display_mode: z.enum(['auto_popular', 'auto_newest', 'manual']).optional(),
+  selected_item_ids: z.array(z.string()).nullable().optional(),
+});
+
+export const reorderHomepageSectionsInputSchema = z.object({
+  section_orders: z.array(z.object({
+    section_id: z.string(),
+    sort_order: z.number().int().nonnegative(),
+  })),
+});
+
+export type HomepageSection = z.infer<typeof homepageSectionSchema>;
+export type CreateHomepageSectionInput = z.infer<typeof createHomepageSectionInputSchema>;
+export type UpdateHomepageSectionInput = z.infer<typeof updateHomepageSectionInputSchema>;
+export type ReorderHomepageSectionsInput = z.infer<typeof reorderHomepageSectionsInputSchema>;

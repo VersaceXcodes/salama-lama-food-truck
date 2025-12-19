@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
@@ -21,10 +21,11 @@ import {
   House,
   Mail,
   Bell,
-  LogOut,
-  ChevronDown,
-  Search
+  LogOut
 } from 'lucide-react';
+
+// Fallback logo path - served from public_assets directory
+const LOGO_FALLBACK_PATH = '/logo.png';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
@@ -34,6 +35,83 @@ interface NotificationSummary {
   orders_pending_count: number;
   total_new: number;
 }
+
+// Stable logo component with fallback - memoized to prevent re-renders
+const SidebarLogo = memo(({ 
+  logoUrl, 
+  className = "h-8 w-auto object-contain",
+  showLabel = true 
+}: { 
+  logoUrl: string | null | undefined; 
+  className?: string;
+  showLabel?: boolean;
+}) => {
+  const [hasError, setHasError] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Determine the effective logo URL - use fallback for invalid paths
+  const effectiveLogoUrl = useMemo(() => {
+    if (!logoUrl || logoUrl === '/assets/salama-lama-logo.png' || logoUrl.includes('undefined')) {
+      return LOGO_FALLBACK_PATH;
+    }
+    return logoUrl;
+  }, [logoUrl]);
+
+  // Reset error state when URL changes
+  useEffect(() => {
+    setHasError(false);
+    setIsLoaded(false);
+  }, [effectiveLogoUrl]);
+
+  const handleError = useCallback(() => {
+    setHasError(true);
+    setIsLoaded(true);
+  }, []);
+
+  const handleLoad = useCallback(() => {
+    setIsLoaded(true);
+  }, []);
+
+  // Brand initials fallback component
+  const BrandFallback = () => (
+    <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg text-white font-bold text-sm shadow-sm flex-shrink-0">
+      SL
+    </div>
+  );
+
+  return (
+    <div className="flex items-center gap-3 min-h-[32px]">
+      {/* Fixed-size container to prevent layout shift */}
+      <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+        {hasError ? (
+          <BrandFallback />
+        ) : (
+          <>
+            {/* Placeholder while loading - same size as logo */}
+            {!isLoaded && (
+              <div className="w-8 h-8 bg-gray-700 rounded animate-pulse" />
+            )}
+            <img 
+              src={effectiveLogoUrl}
+              alt="Salama Lama" 
+              className={`${className} ${isLoaded ? 'opacity-100' : 'opacity-0 absolute'}`}
+              style={{ maxHeight: '32px' }}
+              onError={handleError}
+              onLoad={handleLoad}
+              loading="eager"
+              decoding="async"
+            />
+          </>
+        )}
+      </div>
+      {showLabel && (
+        <span className="text-sm font-medium text-gray-300 hidden sm:inline whitespace-nowrap">Admin</span>
+      )}
+    </div>
+  );
+});
+
+SidebarLogo.displayName = 'SidebarLogo';
 
 const GV_AdminSidebar: React.FC = () => {
   const location = useLocation();
@@ -46,8 +124,8 @@ const GV_AdminSidebar: React.FC = () => {
   const isAuthenticated = useAppStore(state => state.authentication_state.authentication_status.is_authenticated);
   const auth_token = useAppStore(state => state.authentication_state.auth_token);
   const logoutUser = useAppStore(state => state.logout_user);
-  const businessSettings = useAppStore(state => state.business_settings);
-  const logoUrl = businessSettings.business_info.logo_url || '/assets/salama-lama-logo.png';
+  // Memoize logo URL to prevent unnecessary re-renders
+  const logoUrl = useAppStore(state => state.business_settings?.business_info?.logo_url);
   
   // Fetch notification summary with polling
   const { data: notifications } = useQuery<NotificationSummary>({
@@ -245,17 +323,7 @@ const GV_AdminSidebar: React.FC = () => {
 
         {/* Center: Logo */}
         <Link to="/admin/dashboard" className="flex items-center">
-          <img 
-            src={logoUrl} 
-            alt="Salama Lama" 
-            className="h-7 w-auto object-contain"
-            onError={(e) => { 
-              const target = e.target as HTMLImageElement;
-              if (target.src !== '/assets/salama-lama-logo.png') {
-                target.src = '/assets/salama-lama-logo.png';
-              }
-            }}
-          />
+          <SidebarLogo logoUrl={logoUrl} className="h-7 w-auto object-contain" showLabel={false} />
         </Link>
 
         {/* Right: Notifications & Profile */}
@@ -400,21 +468,10 @@ const GV_AdminSidebar: React.FC = () => {
           paddingTop: 'env(safe-area-inset-top)'
         }}
       >
-        {/* Sidebar Header */}
+        {/* Sidebar Header - Fixed height with consistent padding */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-gray-800 flex-shrink-0">
           <Link to="/admin/dashboard" className="flex items-center">
-            <img 
-              src={logoUrl} 
-              alt="Salama Lama" 
-              className="h-8 w-auto object-contain"
-              onError={(e) => { 
-                const target = e.target as HTMLImageElement;
-                if (target.src !== '/assets/salama-lama-logo.png') {
-                  target.src = '/assets/salama-lama-logo.png';
-                }
-              }}
-            />
-            <span className="ml-3 text-sm font-medium text-gray-300 hidden sm:inline">Admin</span>
+            <SidebarLogo logoUrl={logoUrl} showLabel={true} />
           </Link>
           <button
             onClick={closeMobileDrawer}

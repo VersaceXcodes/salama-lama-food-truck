@@ -3133,14 +3133,23 @@ const handleCheckoutCreateOrder = async (req, res) => {
     
     console.log(`[CHECKOUT CREATE ORDER] request_id=${req.request_id} is_authenticated=${is_authenticated} auth_user_id=${auth_user_id} discount_code=${body.discount_code || cart.discount_code || 'none'}`);
     
-    // For authenticated users, validate that the user exists in the database
+    // For authenticated users, validate that the user exists in the database and is active
     if (is_authenticated) {
-      const user_check = await pool.query('SELECT user_id FROM users WHERE user_id = $1', [auth_user_id]);
+      const user_check = await pool.query('SELECT user_id, status FROM users WHERE user_id = $1', [auth_user_id]);
       if (user_check.rows.length === 0) {
         return res.status(401).json(createErrorResponse(
           'User account not found. Please log in again.',
           null,
           'USER_NOT_FOUND',
+          req.request_id
+        ));
+      }
+      // Check if user account is suspended
+      if (user_check.rows[0].status !== 'active') {
+        return res.status(403).json(createErrorResponse(
+          'Your account has been suspended. You cannot place orders. Please contact support for assistance.',
+          null,
+          'ACCOUNT_SUSPENDED',
           req.request_id
         ));
       }
@@ -8071,6 +8080,67 @@ app.put('/api/admin/customers/:id/points', authenticate_token, require_role(['ad
     });
   } catch (error) {
     if (error instanceof z.ZodError) return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+    return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+  }
+});
+
+// Admin customer status update (suspend/activate)
+app.put('/api/admin/customers/:id/status', authenticate_token, require_role(['admin']), async (req, res) => {
+  try {
+    const user_id = req.params.id;
+    const body = z.object({
+      status: z.enum(['active', 'suspended']),
+      reason: z.string().min(1).max(500),
+    }).parse(req.body);
+
+    // Verify customer exists and is a customer role
+    const user_res = await pool.query('SELECT user_id, first_name, last_name, email, status FROM users WHERE user_id = $1 AND role = $2', [user_id, 'customer']);
+    if (user_res.rows.length === 0) {
+      return res.status(404).json(createErrorResponse('Customer not found', null, 'NOT_FOUND', req.request_id));
+    }
+
+    const customer = user_res.rows[0];
+    const previous_status = customer.status;
+
+    // If already at requested status, return success (idempotent)
+    if (previous_status === body.status) {
+      return ok(res, 200, { 
+        message: `Account is already ${body.status}`,
+        status: body.status,
+        user_id: user_id,
+      });
+    }
+
+    // Update status
+    await pool.query('UPDATE users SET status = $1 WHERE user_id = $2', [body.status, user_id]);
+
+    const customer_name = `${customer.first_name} ${customer.last_name}`;
+
+    // Log activity
+    await log_activity({
+      user_id: req.user.user_id,
+      action_type: 'update',
+      entity_type: 'user',
+      entity_id: user_id,
+      description: `${body.status === 'suspended' ? 'Suspended' : 'Activated'} customer account: ${customer_name}`,
+      changes: { 
+        previous_status,
+        new_status: body.status,
+        reason: body.reason,
+      },
+      ip_address: req.ip,
+      user_agent: req.headers['user-agent'],
+    });
+
+    return ok(res, 200, { 
+      message: `Account ${body.status === 'suspended' ? 'suspended' : 'activated'} successfully`,
+      status: body.status,
+      user_id: user_id,
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+    }
     return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
   }
 });

@@ -3,6 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppStore } from '@/store/main';
+import { useToast } from '@/hooks/use-toast';
 import { 
   User, 
   Mail, 
@@ -21,7 +22,8 @@ import {
   Clock,
   DollarSign,
   Gift,
-  Users
+  Users,
+  Loader2
 } from 'lucide-react';
 
 // ===========================
@@ -117,6 +119,7 @@ const UV_AdminCustomerProfile: React.FC = () => {
   const { customer_id } = useParams<{ customer_id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   // Global state - CRITICAL: Individual selectors
   const auth_token = useAppStore(state => state.authentication_state.auth_token);
@@ -130,6 +133,7 @@ const UV_AdminCustomerProfile: React.FC = () => {
   const [show_status_modal, set_show_status_modal] = useState(false);
   const [selected_action, set_selected_action] = useState<'suspend' | 'activate' | null>(null);
   const [status_change_reason, set_status_change_reason] = useState('');
+  const [status_error, set_status_error] = useState<string | null>(null);
   const [show_delete_modal, set_show_delete_modal] = useState(false);
   const [delete_confirmation_text, set_delete_confirmation_text] = useState('');
 
@@ -241,12 +245,41 @@ const UV_AdminCustomerProfile: React.FC = () => {
       return response.data;
     },
     onSuccess: (data) => {
+      // Update local cache immediately
       queryClient.setQueryData(['admin', 'customer', customer_id], (old_data: CustomerData | undefined) => 
         old_data ? { ...old_data, user: { ...old_data.user, status: data.status } } : old_data
       );
+      // Also invalidate to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: ['admin', 'customer', customer_id] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'customers'] });
+      
+      // Close modal and reset state
       set_show_status_modal(false);
       set_selected_action(null);
       set_status_change_reason('');
+      set_status_error(null);
+      
+      // Show success toast
+      toast({
+        title: data.status === 'suspended' ? 'Account Suspended' : 'Account Activated',
+        description: data.status === 'suspended' 
+          ? 'The customer account has been suspended. They will no longer be able to log in or place orders.'
+          : 'The customer account has been activated. They can now log in and place orders.',
+        variant: data.status === 'suspended' ? 'destructive' : 'default',
+      });
+    },
+    onError: (error: unknown) => {
+      console.error('Status update error:', error);
+      let errorMessage = 'Failed to update account status. Please try again.';
+      if (axios.isAxiosError(error) && error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      set_status_error(errorMessage);
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+      });
     },
   });
 
@@ -322,6 +355,8 @@ const UV_AdminCustomerProfile: React.FC = () => {
   const open_status_modal = (action: 'suspend' | 'activate') => {
     set_selected_action(action);
     set_show_status_modal(true);
+    set_status_error(null);
+    set_status_change_reason('');
   };
 
   // ===========================
@@ -980,8 +1015,10 @@ const UV_AdminCustomerProfile: React.FC = () => {
                   set_show_status_modal(false);
                   set_selected_action(null);
                   set_status_change_reason('');
+                  set_status_error(null);
                 }}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                disabled={update_status_mutation.isPending}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
               >
                 <X className="w-5 h-5 text-gray-500" />
               </button>
@@ -1002,14 +1039,31 @@ const UV_AdminCustomerProfile: React.FC = () => {
                 </div>
               </div>
 
+              {/* Error message display */}
+              {status_error && (
+                <div className="rounded-lg p-4 bg-red-50 border border-red-200">
+                  <div className="flex items-start">
+                    <AlertTriangle className="w-5 h-5 mt-0.5 mr-3 text-red-600" />
+                    <div>
+                      <p className="text-sm font-medium text-red-900">Error</p>
+                      <p className="text-sm text-red-700">{status_error}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Reason (required)</label>
                 <textarea
                   value={status_change_reason}
-                  onChange={(e) => set_status_change_reason(e.target.value)}
+                  onChange={(e) => {
+                    set_status_change_reason(e.target.value);
+                    set_status_error(null); // Clear error when user types
+                  }}
                   placeholder="Enter reason for status change..."
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  disabled={update_status_mutation.isPending}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
@@ -1020,21 +1074,30 @@ const UV_AdminCustomerProfile: React.FC = () => {
                   set_show_status_modal(false);
                   set_selected_action(null);
                   set_status_change_reason('');
+                  set_status_error(null);
                 }}
-                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                disabled={update_status_mutation.isPending}
+                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 onClick={handle_status_change}
                 disabled={!status_change_reason.trim() || update_status_mutation.isPending}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                className={`px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center ${
                   selected_action === 'suspend'
                     ? 'bg-red-600 text-white hover:bg-red-700'
                     : 'bg-green-600 text-white hover:bg-green-700'
                 }`}
               >
-                {update_status_mutation.isPending ? 'Processing...' : `Confirm ${selected_action === 'suspend' ? 'Suspend' : 'Activate'}`}
+                {update_status_mutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  `Confirm ${selected_action === 'suspend' ? 'Suspend' : 'Activate'}`
+                )}
               </button>
             </div>
           </div>

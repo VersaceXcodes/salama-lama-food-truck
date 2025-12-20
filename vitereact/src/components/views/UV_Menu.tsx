@@ -585,32 +585,32 @@ const UV_Menu: React.FC = () => {
 
   return (
     <>
-      {/* Page Header */}
+      {/* Page Header - Optimized for Mobile */}
       <div style={{ backgroundColor: 'var(--primary-bg)', paddingTop: 'env(safe-area-inset-top)' }} className="border-b border-[#D4C5B0]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 py-4 sm:py-6 lg:py-8">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight" style={{ color: 'var(--primary-text)' }}>
+        <div className="max-w-6xl mx-auto px-5 sm:px-6 lg:px-10 py-5 sm:py-6 lg:py-8">
+          <h1 className="text-[28px] sm:text-3xl lg:text-4xl font-bold leading-tight tracking-tight" style={{ color: 'var(--primary-text)' }}>
             Our Menu
           </h1>
-          <p className="mt-1 sm:mt-2 text-sm sm:text-base lg:text-lg leading-relaxed" style={{ color: '#4A3B32' }}>
+          <p className="mt-2 text-[15px] sm:text-base lg:text-lg leading-relaxed" style={{ color: '#4A3B32', opacity: '0.9' }}>
             Discover our delicious selection of authentic dishes
           </p>
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Main Content - Optimized Mobile Spacing */}
       <div 
-        className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8 lg:py-12" 
+        className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 py-5 sm:py-8 lg:py-12" 
         style={{ 
           backgroundColor: 'var(--primary-bg)',
-          paddingBottom: 'calc(96px + env(safe-area-inset-bottom) + 12px)'
+          paddingBottom: 'calc(96px + env(safe-area-inset-bottom) + 16px)'
         }}
       >
         {/* Compact Search & Filter Controls */}
-        <div className="mb-6 space-y-3">
-          {/* Search Input - Full Width */}
+        <div className="mb-5 space-y-3 sm:space-y-4">
+          {/* Search Input - Full Width - Mobile Optimized */}
           <div className="relative">
             <svg
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[var(--primary-text)] opacity-40"
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[var(--primary-text)] opacity-40"
               fill="none"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -625,14 +625,15 @@ const UV_Menu: React.FC = () => {
               placeholder="Search menu..."
               value={searchQuery}
               onChange={handleSearchChange}
-              className="w-full pl-10 pr-10 py-3 text-base bg-white border-2 border-[var(--border-light)] rounded-[var(--radius-btn)] text-[var(--primary-text)] placeholder:text-[var(--primary-text)]/40 focus:border-[var(--primary-text)] focus:ring-2 focus:ring-[var(--primary-text)]/10 focus:outline-none transition-colors"
-              style={{ minHeight: 'var(--tap-target-comfortable)' }}
+              className="w-full pl-11 pr-11 py-3.5 text-[15px] bg-white border-2 border-[var(--border-light)] rounded-[14px] text-[var(--primary-text)] placeholder:text-[var(--primary-text)]/40 focus:border-[var(--primary-text)] focus:ring-2 focus:ring-[var(--primary-text)]/10 focus:outline-none transition-colors active:border-[var(--primary-text)]"
+              style={{ minHeight: '50px', fontSize: '16px' }}
             />
             {searchQuery && (
               <button
                 onClick={handleClearSearch}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--primary-text)] opacity-40 hover:opacity-100 transition-opacity p-1"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--primary-text)] opacity-40 hover:opacity-100 active:opacity-100 transition-opacity p-2"
                 aria-label="Clear search"
+                style={{ minWidth: '44px', minHeight: '44px' }}
               >
                 <svg className="w-5 h-5" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" viewBox="0 0 24 24" stroke="currentColor">
                   <path d="M6 18L18 6M6 6l12 12"></path>
@@ -641,20 +642,20 @@ const UV_Menu: React.FC = () => {
             )}
           </div>
 
-          {/* Filter and Sort Row - 2 Column Grid */}
+          {/* Filter and Sort Row - 2 Column Grid - Mobile Optimized */}
           <div className="grid grid-cols-2 gap-3">
             {/* Mobile Filter Button */}
             <button
               onClick={() => setFilterPanelOpen(true)}
-              className="relative flex items-center justify-center gap-2 px-4 py-3 bg-white border-2 border-[var(--border-light)] rounded-[var(--radius-btn)] text-[var(--primary-text)] font-medium hover:border-[var(--primary-text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-text)]/10 transition-colors sm:hidden"
-              style={{ minHeight: 'var(--tap-target-comfortable)' }}
+              className="relative flex items-center justify-center gap-2 px-4 py-3.5 bg-white border-2 border-[var(--border-light)] rounded-[14px] text-[var(--primary-text)] font-semibold hover:border-[var(--primary-text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-text)]/10 active:border-[var(--primary-text)] active:bg-[var(--primary-bg)] transition-colors sm:hidden"
+              style={{ minHeight: '50px' }}
             >
               <svg className="w-5 h-5" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
                 <path d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
               </svg>
-              <span>Filters</span>
+              <span className="text-[15px]">Filters</span>
               {dietaryFilters.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-[var(--btn-bg)] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                <span className="absolute -top-1.5 -right-1.5 bg-[var(--btn-bg)] text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center shadow-md">
                   {dietaryFilters.length}
                 </span>
               )}
@@ -664,9 +665,10 @@ const UV_Menu: React.FC = () => {
             <select
               value={sortOption}
               onChange={handleSortChange}
-              className="px-4 py-3 bg-white border-2 border-[var(--border-light)] rounded-[var(--radius-btn)] text-[var(--primary-text)] font-medium focus:border-[var(--primary-text)] focus:ring-2 focus:ring-[var(--primary-text)]/10 focus:outline-none transition-colors appearance-none bg-[length:1.25rem] bg-[position:right_0.75rem_center] bg-no-repeat pr-10"
+              className="px-4 py-3.5 bg-white border-2 border-[var(--border-light)] rounded-[14px] text-[var(--primary-text)] font-semibold focus:border-[var(--primary-text)] focus:ring-2 focus:ring-[var(--primary-text)]/10 focus:outline-none active:border-[var(--primary-text)] transition-colors appearance-none bg-[length:1.25rem] bg-[position:right_1rem_center] bg-no-repeat pr-11"
               style={{ 
-                minHeight: 'var(--tap-target-comfortable)',
+                minHeight: '50px',
+                fontSize: '15px',
                 backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%232C1A16' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`
               }}
             >
@@ -677,18 +679,19 @@ const UV_Menu: React.FC = () => {
             </select>
           </div>
 
-          {/* Active Filters Display */}
+          {/* Active Filters Display - Mobile Optimized */}
           {(activeCategory || dietaryFilters.length > 0) && (
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm font-medium text-gray-700">Active filters:</span>
+              <span className="text-[13px] font-semibold text-gray-700">Active filters:</span>
               
               {activeCategory && (
-                <span className="inline-flex items-center px-3 py-1.5 bg-orange-100 text-orange-800 text-sm font-medium rounded-full">
+                <span className="inline-flex items-center gap-2 px-3 py-2 bg-orange-100 text-orange-800 text-[13px] font-semibold rounded-full">
                   {categories.find(c => c.category_id === activeCategory)?.name || activeCategory}
                   <button
                     onClick={() => handleCategoryChange(null)}
-                    className="ml-2 text-orange-600 hover:text-orange-800"
+                    className="text-orange-600 hover:text-orange-800 active:text-orange-900 p-0.5"
                     aria-label="Remove category filter"
+                    style={{ minWidth: '20px', minHeight: '20px' }}
                   >
                     <svg className="w-4 h-4" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
                       <path d="M6 18L18 6M6 6l12 12"></path>
@@ -700,13 +703,14 @@ const UV_Menu: React.FC = () => {
               {dietaryFilters.map(filter => (
                 <span
                   key={filter}
-                  className="inline-flex items-center px-3 py-1.5 bg-green-100 text-green-800 text-sm font-medium rounded-full"
+                  className="inline-flex items-center gap-2 px-3 py-2 bg-green-100 text-green-800 text-[13px] font-semibold rounded-full"
                 >
                   {dietaryOptions.find(d => d.value === filter)?.label || filter}
                   <button
                     onClick={() => handleDietaryFilterToggle(filter)}
-                    className="ml-2 text-green-600 hover:text-green-800"
+                    className="text-green-600 hover:text-green-800 active:text-green-900 p-0.5"
                     aria-label={`Remove ${filter} filter`}
+                    style={{ minWidth: '20px', minHeight: '20px' }}
                   >
                     <svg className="w-4 h-4" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
                       <path d="M6 18L18 6M6 6l12 12"></path>
@@ -717,7 +721,8 @@ const UV_Menu: React.FC = () => {
 
               <button
                 onClick={handleClearFilters}
-                className="text-sm text-orange-600 hover:text-orange-700 font-medium underline"
+                className="text-[13px] text-orange-600 hover:text-orange-700 active:text-orange-800 font-semibold underline px-2 py-2"
+                style={{ minHeight: '32px' }}
               >
                 Clear all
               </button>
@@ -725,11 +730,11 @@ const UV_Menu: React.FC = () => {
           )}
         </div>
 
-        {/* Category Selection - Responsive */}
-        <div className="mb-6">
+        {/* Category Selection - Responsive - Mobile Optimized */}
+        <div className="mb-5 sm:mb-6">
           {/* Mobile Dropdown (< 768px) */}
           <div className="block md:hidden">
-            <label htmlFor="categorySelect" className="block text-sm font-medium text-[var(--primary-text)] mb-2">
+            <label htmlFor="categorySelect" className="block text-[13px] font-bold text-[var(--primary-text)] mb-2 uppercase tracking-wide">
               Category
             </label>
             <select
@@ -739,10 +744,11 @@ const UV_Menu: React.FC = () => {
                 handleCategoryChange(e.target.value || null);
                 setFilterPanelOpen(false);
               }}
-              className="w-full px-4 py-3 bg-white border-2 border-[#D4C5B0] text-[var(--primary-text)] font-medium focus:border-[var(--primary-text)] focus:ring-2 focus:ring-[var(--primary-text)]/10 focus:outline-none transition-colors appearance-none bg-[length:1.25rem] bg-[position:right_0.75rem_center] bg-no-repeat pr-10"
+              className="w-full px-4 py-3.5 bg-white border-2 border-[#D4C5B0] text-[var(--primary-text)] font-semibold focus:border-[var(--primary-text)] focus:ring-2 focus:ring-[var(--primary-text)]/10 focus:outline-none active:border-[var(--primary-text)] transition-colors appearance-none bg-[length:1.25rem] bg-[position:right_1rem_center] bg-no-repeat pr-11"
               style={{ 
-                height: '44px',
-                borderRadius: '12px',
+                minHeight: '50px',
+                borderRadius: '14px',
+                fontSize: '15px',
                 backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%232C1A16' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`
               }}
             >
@@ -761,7 +767,7 @@ const UV_Menu: React.FC = () => {
               <button
                 onClick={() => handleCategoryChange(null)}
                 className={`
-                  inline-flex items-center justify-center px-4 rounded-full text-sm font-semibold whitespace-nowrap
+                  inline-flex items-center justify-center px-5 rounded-full text-sm font-semibold whitespace-nowrap
                   transition-all duration-200 flex-shrink-0
                   ${activeCategory === null
                     ? 'bg-[#2C1A16] text-white shadow-md'
@@ -778,7 +784,7 @@ const UV_Menu: React.FC = () => {
                   key={category.category_id}
                   onClick={() => handleCategoryChange(category.category_id)}
                   className={`
-                    inline-flex items-center justify-center px-4 rounded-full text-sm font-semibold whitespace-nowrap
+                    inline-flex items-center justify-center px-5 rounded-full text-sm font-semibold whitespace-nowrap
                     transition-all duration-200 flex-shrink-0
                     ${activeCategory === category.category_id
                       ? 'bg-[#2C1A16] text-white shadow-md'
@@ -828,77 +834,77 @@ const UV_Menu: React.FC = () => {
           {/* Menu Items Grid */}
           <div className="flex-1">
             {itemsLoading ? (
-              // Loading Skeleton
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              // Loading Skeleton - Mobile Optimized
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6">
                 {[...Array(6)].map((_, index) => (
                   <div
                     key={index}
-                    className="bg-white rounded-xl border border-gray-200 overflow-hidden animate-pulse"
+                    className="bg-white rounded-2xl border-2 border-gray-200 overflow-hidden animate-pulse"
                   >
-                    <div className="h-48 bg-gray-200"></div>
-                    <div className="p-6 space-y-3">
-                      <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-                      <div className="h-4 bg-gray-200 rounded w-full"></div>
-                      <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-                      <div className="h-10 bg-gray-200 rounded"></div>
+                    <div className="h-56 bg-gray-200"></div>
+                    <div className="p-4 sm:p-5 space-y-3">
+                      <div className="h-5 bg-gray-200 rounded-lg w-3/4"></div>
+                      <div className="h-4 bg-gray-200 rounded-lg w-full"></div>
+                      <div className="h-4 bg-gray-200 rounded-lg w-2/3"></div>
+                      <div className="h-[52px] bg-gray-200 rounded-[14px] mt-4"></div>
                     </div>
                   </div>
                 ))}
               </div>
             ) : itemsError ? (
-              // Error State
-              <div className="text-center py-12">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
-                  <svg className="w-8 h-8 text-red-600" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+              // Error State - Mobile Optimized
+              <div className="text-center py-12 px-4">
+                <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-red-100 rounded-full mb-4">
+                  <svg className="w-8 h-8 sm:w-10 sm:h-10 text-red-600" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
                     <path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-[18px] sm:text-lg font-bold text-gray-900 mb-2">
                   Failed to load menu items
                 </h3>
-                <p className="text-gray-600 mb-6">
+                <p className="text-[14px] sm:text-base text-gray-600 mb-6 max-w-md mx-auto leading-relaxed">
                   Please try again later or contact support if the problem persists.
                 </p>
                   <button
                     onClick={() => window.location.reload()}
-                    className="px-6 py-3 rounded-lg font-medium transition-colors"
+                    className="px-8 py-4 rounded-[14px] font-bold text-[15px] transition-colors active:scale-95"
                     style={{ 
                       backgroundColor: 'var(--btn-bg)', 
                       color: 'var(--btn-text)',
-                      minHeight: '48px'
+                      minHeight: '52px'
                     }}
                   >
                     Retry
                   </button>
               </div>
             ) : menuItems.length === 0 ? (
-              // Empty State
-              <div className="text-center py-12">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
-                  <svg className="w-8 h-8 text-gray-400" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+              // Empty State - Mobile Optimized
+              <div className="text-center py-12 px-4">
+                <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-full mb-4">
+                  <svg className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
                     <path d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-[18px] sm:text-lg font-bold text-gray-900 mb-2">
                   No menu items found
                 </h3>
-                <p className="text-gray-600 mb-6">
+                <p className="text-[14px] sm:text-base text-gray-600 mb-6 max-w-md mx-auto leading-relaxed">
                   Try adjusting your filters or search terms
                 </p>
                   <button
                     onClick={handleClearFilters}
-                    className="px-6 py-3 rounded-lg font-medium transition-colors"
+                    className="px-8 py-4 rounded-[14px] font-bold text-[15px] transition-colors active:scale-95"
                     style={{ 
                       backgroundColor: 'var(--btn-bg)', 
                       color: 'var(--btn-text)',
-                      minHeight: '48px'
+                      minHeight: '52px'
                     }}
                   >
                     Clear all filters
                   </button>
               </div>
             ) : (
-              // Mobile-First Product Grid: 1 col mobile, 2 cols tablet, 3 cols desktop
+              // Mobile-First Product Grid: 1 col mobile, 2 cols tablet, 3 cols desktop - Optimized
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6">
                 {menuItems.map(item => {
                   const stockStatus = getStockStatus(item);
@@ -908,13 +914,13 @@ const UV_Menu: React.FC = () => {
                   return (
                     <div
                       key={item.item_id}
-                      className={`bg-white overflow-hidden transition-all duration-200 border border-[var(--border-light)] hover:shadow-soft-lg hover:-translate-y-1 ${
+                      className={`bg-white overflow-hidden transition-all duration-200 border-2 border-[var(--border-light)] hover:shadow-soft-lg hover:border-[var(--primary-text)]/20 sm:hover:-translate-y-1 ${
                         isOutOfStock ? 'opacity-60' : ''
                       }`}
-                      style={{ borderRadius: 'var(--radius-card)' }}
+                      style={{ borderRadius: '16px' }}
                     >
-                      {/* Item Image - 16:9 aspect ratio for consistency */}
-                      <div className="relative w-full bg-gray-50" style={{ aspectRatio: '16/9' }}>
+                      {/* Item Image - 4:3 aspect ratio for better mobile display */}
+                      <div className="relative w-full bg-gray-50" style={{ aspectRatio: '4/3' }}>
                         <img
                           src={item.image_url || ''}
                           alt={item.name}
@@ -922,34 +928,34 @@ const UV_Menu: React.FC = () => {
                           loading="lazy"
                         />
                         
-                        {/* Badges */}
-                        <div className="absolute top-3 right-3 flex flex-col gap-2">
+                        {/* Badges - Mobile Optimized */}
+                        <div className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 flex flex-col gap-1.5 sm:gap-2">
                           {item.is_limited_edition && (
-                            <span className="px-3 py-1.5 bg-purple-600 text-white text-xs font-bold rounded-full shadow-md backdrop-blur-sm">
+                            <span className="px-2.5 py-1.5 bg-purple-600 text-white text-[11px] sm:text-xs font-bold rounded-full shadow-lg backdrop-blur-sm">
                               Limited Edition
                             </span>
                           )}
                           {isOutOfStock && (
-                            <span className="px-3 py-1.5 bg-red-600 text-white text-xs font-bold rounded-full shadow-md backdrop-blur-sm">
+                            <span className="px-2.5 py-1.5 bg-red-600 text-white text-[11px] sm:text-xs font-bold rounded-full shadow-lg backdrop-blur-sm">
                               Sold Out
                             </span>
                           )}
                           {isLowStock && !isOutOfStock && (
-                            <span className="px-3 py-1.5 bg-orange-500 text-white text-xs font-bold rounded-full shadow-md backdrop-blur-sm">
+                            <span className="px-2.5 py-1.5 bg-orange-500 text-white text-[11px] sm:text-xs font-bold rounded-full shadow-lg backdrop-blur-sm">
                               Only {item.current_stock} left
                             </span>
                           )}
                         </div>
 
-                        {/* Dietary Tags */}
+                        {/* Dietary Tags - Mobile Optimized */}
                         {item.dietary_tags && item.dietary_tags.length > 0 && (
-                          <div className="absolute bottom-3 left-3 flex gap-1.5">
+                          <div className="absolute bottom-2.5 left-2.5 sm:bottom-3 sm:left-3 flex gap-1.5">
                             {item.dietary_tags.map(tag => {
                               const option = dietaryOptions.find(d => d.value === tag);
                               return option ? (
                                 <span
                                   key={tag}
-                                  className="w-9 h-9 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center text-lg shadow-md border border-gray-100"
+                                  className="w-8 h-8 sm:w-9 sm:h-9 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center text-base sm:text-lg shadow-lg border border-gray-100"
                                   title={option.label}
                                 >
                                   {option.icon}
@@ -960,40 +966,40 @@ const UV_Menu: React.FC = () => {
                         )}
                       </div>
 
-                      {/* Item Details */}
-                      <div className="p-5 sm:p-6">
-                        <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 leading-tight">
+                      {/* Item Details - Mobile Optimized */}
+                      <div className="p-4 sm:p-5">
+                        <h3 className="text-[17px] sm:text-lg font-bold text-gray-900 mb-2 leading-tight">
                           {item.name}
                         </h3>
                         
                         {item.description && (
-                          <p className="text-gray-600 text-sm mb-4 line-clamp-2 leading-relaxed">
+                          <p className="text-gray-600 text-[14px] sm:text-sm mb-3.5 line-clamp-2 leading-relaxed">
                             {item.description}
                           </p>
                         )}
 
-                        <div className="flex items-center justify-between mb-4">
-                          <span className="text-2xl font-bold text-[#2C1A16]" style={{ letterSpacing: '-0.01em' }}>
+                        <div className="flex items-center justify-between mb-3.5">
+                          <span className="text-[22px] sm:text-2xl font-bold text-[#2C1A16]" style={{ letterSpacing: '-0.01em' }}>
                             €{Number(item.price).toFixed(2)}
                           </span>
 
                           {item.customization_groups.length > 0 && (
-                            <span className="px-2.5 py-1 bg-[#F2EFE9] text-[#2C1A16] text-xs font-semibold rounded-full border border-[#D4C5B0]">
+                            <span className="px-2.5 py-1 bg-[#F2EFE9] text-[#2C1A16] text-[11px] sm:text-xs font-bold rounded-full border border-[#D4C5B0]">
                               Customizable
                             </span>
                           )}
                         </div>
 
-                        {/* Add to Cart Button */}
+                        {/* Add to Cart Button - Mobile Optimized */}
                         <button
                           onClick={() => handleQuickAddToCart(item)}
                           disabled={isOutOfStock || loadingItemId === item.item_id}
-                          className={`w-full px-5 py-3.5 rounded-xl font-bold text-base transition-all duration-200 flex items-center justify-center add-to-cart-btn ${
+                          className={`w-full px-5 py-4 rounded-[14px] font-bold text-[15px] transition-all duration-200 flex items-center justify-center add-to-cart-btn ${
                             isOutOfStock
                               ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                               : loadingItemId === item.item_id
                               ? 'opacity-75 cursor-wait'
-                              : 'hover:shadow-lg hover:-translate-y-0.5'
+                              : 'active:scale-[0.98] sm:hover:shadow-lg sm:hover:-translate-y-0.5'
                           }`}
                           style={!isOutOfStock ? { 
                             backgroundColor: 'var(--btn-bg)', 

@@ -6099,10 +6099,46 @@ app.get('/api/staff/reports/daily', authenticate_token, require_role(['staff', '
 
 app.get('/api/admin/dashboard', authenticate_token, require_role(['admin']), async (req, res) => {
   try {
-    // Use Europe/Dublin timezone for consistent "today" calculation
-    const today_prefix = new Date().toISOString().slice(0, 10);
+    // Parse date range parameter
+    const range_schema = z.object({
+      date_range: z.enum(['today', 'yesterday', 'last_7_days', 'last_30_days', 'this_month']).default('today'),
+    });
+    const { date_range } = parse_query(range_schema, req.query);
+    
+    // Calculate date range based on parameter
+    const now = new Date();
+    let date_from: string;
+    let date_to: string = now.toISOString().slice(0, 10);
+    
+    switch (date_range) {
+      case 'today':
+        date_from = date_to;
+        break;
+      case 'yesterday':
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        date_from = yesterday.toISOString().slice(0, 10);
+        date_to = date_from;
+        break;
+      case 'last_7_days':
+        const week_ago = new Date(now);
+        week_ago.setDate(week_ago.getDate() - 6);
+        date_from = week_ago.toISOString().slice(0, 10);
+        break;
+      case 'last_30_days':
+        const month_ago = new Date(now);
+        month_ago.setDate(month_ago.getDate() - 29);
+        date_from = month_ago.toISOString().slice(0, 10);
+        break;
+      case 'this_month':
+        date_from = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+        break;
+      default:
+        date_from = date_to;
+    }
 
-    // Get orders summary for today - exclude cancelled/failed orders
+    // Get orders summary for the date range
+    // Include all orders except cancelled/failed (matches the Recent Orders table logic)
     const summary_res = await pool.query(
       `SELECT
          COUNT(*)::int as orders_today,
@@ -6110,17 +6146,19 @@ app.get('/api/admin/dashboard', authenticate_token, require_role(['admin']), asy
          COUNT(*) FILTER (WHERE order_type = 'collection')::int as collection_count,
          COUNT(*) FILTER (WHERE order_type = 'delivery')::int as delivery_count
        FROM orders
-       WHERE created_at LIKE $1 || '%' 
-         AND payment_status = 'paid'
+       WHERE DATE(created_at) >= $1
+         AND DATE(created_at) <= $2
          AND status NOT IN ('cancelled', 'failed')`,
-      [today_prefix]
+      [date_from, date_to]
     );
 
     const new_customers_res = await pool.query(
       `SELECT COUNT(*)::int as new_customers
        FROM users
-       WHERE role = 'customer' AND created_at LIKE $1 || '%'`,
-      [today_prefix]
+       WHERE role = 'customer' 
+         AND DATE(created_at) >= $1
+         AND DATE(created_at) <= $2`,
+      [date_from, date_to]
     );
 
     const low_stock_res = await pool.query(

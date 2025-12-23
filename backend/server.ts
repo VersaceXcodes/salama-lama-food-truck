@@ -8470,8 +8470,11 @@ app.get('/api/admin/invoices', authenticate_token, require_role(['admin']), asyn
     const q_schema = z.object({ limit: z.number().int().positive().default(20), offset: z.number().int().nonnegative().default(0) });
     const q = parse_query(q_schema, req.query);
     const rows = await pool.query('SELECT * FROM invoices ORDER BY created_at DESC LIMIT $1 OFFSET $2', [q.limit, q.offset]);
-    return ok(res, 200, {
-      invoices: rows.rows.map((r) => invoiceSchema.parse({
+    
+    // Use safeParse to prevent one bad row from crashing the entire request
+    const invoices: z.infer<typeof invoiceSchema>[] = [];
+    for (const r of rows.rows) {
+      const invoiceData = {
         ...coerce_numbers(r, ['subtotal', 'discount_amount', 'delivery_fee', 'tax_amount', 'grand_total']),
         subtotal: Number(r.subtotal),
         discount_amount: Number(r.discount_amount),
@@ -8488,7 +8491,18 @@ app.get('/api/admin/invoices', authenticate_token, require_role(['admin']), asyn
         notes: r.notes ?? null,
         order_id: r.order_id ?? null,
         catering_inquiry_id: r.catering_inquiry_id ?? null,
-      })),
+        user_id: r.user_id ?? null,
+      };
+      const result = invoiceSchema.safeParse(invoiceData);
+      if (result.success) {
+        invoices.push(result.data);
+      } else {
+        console.error(`[${req.request_id}] Failed to parse invoice row invoice_id=${r.invoice_id}:`, result.error.issues);
+      }
+    }
+    
+    return ok(res, 200, {
+      invoices,
       limit: q.limit,
       offset: q.offset,
     });
@@ -8521,6 +8535,7 @@ app.get('/api/admin/invoices/:id', authenticate_token, require_role(['admin']), 
         notes: r.notes ?? null,
         order_id: r.order_id ?? null,
         catering_inquiry_id: r.catering_inquiry_id ?? null,
+        user_id: r.user_id ?? null,
       }),
     });
   } catch (error) {

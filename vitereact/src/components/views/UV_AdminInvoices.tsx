@@ -13,7 +13,7 @@ interface Invoice {
   invoice_number: string;
   order_id: string | null;
   catering_inquiry_id: string | null;
-  user_id: string;
+  user_id: string | null;
   customer_name: string;
   customer_email: string;
   customer_phone: string;
@@ -47,7 +47,7 @@ interface InvoicesResponse {
 }
 
 interface CreateInvoiceData {
-  user_id: string;
+  user_id: string | null;
   customer_name: string;
   customer_email: string;
   customer_phone: string;
@@ -636,8 +636,15 @@ const UV_AdminInvoices: React.FC = () => {
                             </Link>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="text-sm font-medium text-gray-900">{invoice.customer_name}</div>
-                            <div className="text-sm text-gray-500">{invoice.customer_email}</div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {invoice.customer_name || 'Unknown customer'}
+                              {!invoice.user_id && (
+                                <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                                  Guest
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-sm text-gray-500">{invoice.customer_email || '-'}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {formatDate(invoice.issue_date)}

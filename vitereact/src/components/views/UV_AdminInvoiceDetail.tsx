@@ -37,7 +37,7 @@ interface InvoiceDetail {
   invoice_number: string;
   order_id: string | null;
   catering_inquiry_id: string | null;
-  user_id: string;
+  user_id: string | null;
   customer_name: string;
   customer_email: string;
   customer_phone: string;
@@ -467,12 +467,23 @@ const UV_AdminInvoiceDetail: React.FC = () => {
                       <div className="space-y-3">
                         <div>
                           <p className="text-sm text-gray-600">Customer Name</p>
-                          <button
-                            onClick={handle_navigate_to_customer}
-                            className="text-lg font-semibold text-blue-600 hover:text-blue-700"
-                          >
-                            {invoice_detail.customer_name}
-                          </button>
+                          {invoice_detail.user_id ? (
+                            <button
+                              onClick={handle_navigate_to_customer}
+                              className="text-lg font-semibold text-blue-600 hover:text-blue-700"
+                            >
+                              {invoice_detail.customer_name || 'Unknown customer'}
+                            </button>
+                          ) : (
+                            <div className="flex items-center">
+                              <span className="text-lg font-semibold text-gray-900">
+                                {invoice_detail.customer_name || 'Unknown customer'}
+                              </span>
+                              <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                                Guest
+                              </span>
+                            </div>
+                          )}
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

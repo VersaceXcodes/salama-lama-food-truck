@@ -353,38 +353,7 @@ const GV_SiteHeader: React.FC = () => {
                 )}
               </Link>
               
-              {/* Account Icon */}
-              {isAuthenticated ? (
-                <div 
-                  className="
-                    flex items-center justify-center 
-                    w-9 h-9 
-                    bg-[var(--primary-text)] 
-                    rounded-full 
-                    flex-shrink-0
-                  "
-                  aria-label={`Logged in as ${userDisplayName}`}
-                >
-                  <User className="h-4 w-4 text-[var(--btn-text)]" aria-hidden="true" />
-                </div>
-              ) : (
-                <Link
-                  to="/login"
-                  className="
-                    flex items-center justify-center 
-                    w-11 h-11 
-                    text-[var(--primary-text)] 
-                    hover:bg-[var(--accent-color)]/30
-                    transition-colors duration-200 
-                    focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-text)] focus-visible:ring-offset-2 
-                    rounded-xl
-                    active:scale-95
-                  "
-                  aria-label="Log In"
-                >
-                  <User className="h-5 w-5" aria-hidden="true" />
-                </Link>
-              )}
+{/* Account Icon - Hidden on mobile, use hamburger menu for login/signup instead */}
             </div>
           </div>
           

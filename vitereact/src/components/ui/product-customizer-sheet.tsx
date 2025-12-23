@@ -81,9 +81,9 @@ const OptionGroup: React.FC<OptionGroupProps> = ({
   showError = false,
 }) => {
   return (
-    <div className={`bg-white rounded-2xl border overflow-hidden w-full min-w-0 ${showError ? 'border-red-300' : 'border-[var(--border-light)]'}`}>
+    <div className={`bg-white rounded-2xl border overflow-hidden w-full min-w-0 box-border ${showError ? 'border-red-300' : 'border-[var(--border-light)]'}`}>
       {/* Group Header */}
-      <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-[#FAFAF8] border-b border-[var(--border-light)] flex items-center justify-between gap-2">
+      <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-[#FAFAF8] border-b border-[var(--border-light)] flex items-center justify-between gap-2 w-full box-border">
         <div className="flex items-center gap-2 flex-wrap">
           <h4 className="text-xs sm:text-sm font-bold text-[var(--primary-text)] uppercase tracking-wide">
             {group.name}
@@ -100,7 +100,7 @@ const OptionGroup: React.FC<OptionGroupProps> = ({
       </div>
 
       {/* Options List */}
-      <div className="divide-y divide-[var(--border-light)]">
+      <div className="divide-y divide-[var(--border-light)] w-full">
         {group.options
           .sort((a, b) => a.sort_order - b.sort_order)
           .map((option) => {
@@ -108,12 +108,12 @@ const OptionGroup: React.FC<OptionGroupProps> = ({
             (c) => c.group_id === group.group_id && c.option_id === option.option_id
           );
 
-          return (
+            return (
             <label
               key={option.option_id}
               className={`
                 flex items-center gap-3 px-3 sm:px-4 py-3 sm:py-3.5 cursor-pointer 
-                transition-colors duration-150 touch-manipulation
+                transition-colors duration-150 touch-manipulation w-full box-border
                 active:bg-[var(--primary-bg)]
                 ${isSelected ? 'bg-[var(--primary-bg)]' : 'hover:bg-[#FAFAF8]'}
               `}
@@ -148,7 +148,7 @@ const OptionGroup: React.FC<OptionGroupProps> = ({
               />
 
               {/* Option Label */}
-              <span className={`flex-1 text-sm sm:text-base leading-tight ${isSelected ? 'font-semibold text-[var(--primary-text)]' : 'text-[var(--primary-text)]'}`}>
+              <span className={`flex-1 min-w-0 text-sm sm:text-base leading-tight ${isSelected ? 'font-semibold text-[var(--primary-text)]' : 'text-[var(--primary-text)]'}`}>
                 {option.name}
               </span>
 
@@ -368,10 +368,10 @@ export const ProductCustomizerSheet: React.FC<ProductCustomizerSheetProps> = ({
         className={`
           fixed z-[9999] bg-white
           flex flex-col
-          overflow-x-hidden
+          overflow-hidden
           
-          /* Mobile: Bottom sheet that slides up - full width */
-          left-0 right-0 bottom-0 w-full
+          /* Mobile: Bottom sheet that slides up - full width, no horizontal overflow */
+          left-0 right-0 bottom-0 w-full max-w-full
           rounded-t-[24px]
           
           /* Desktop: Centered modal */
@@ -385,9 +385,8 @@ export const ProductCustomizerSheet: React.FC<ProductCustomizerSheetProps> = ({
         `}
         style={{
           // Mobile: Use dvh (dynamic viewport height) for better mobile browser support
+          // Account for safe areas - don't add paddingBottom here since footer handles it
           maxHeight: 'min(92dvh, 92vh)',
-          // Safe area padding for iPhone notch/home indicator
-          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         }}
         role="dialog"
         aria-modal="true"
@@ -399,7 +398,7 @@ export const ProductCustomizerSheet: React.FC<ProductCustomizerSheetProps> = ({
         </div>
 
         {/* Header - Sticky with close button */}
-        <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-[var(--border-light)] bg-white w-full">
+        <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-[var(--border-light)] bg-white w-full box-border">
           <h2
             id="customizer-title"
             className="text-lg font-bold text-[var(--primary-text)] truncate flex-1 pr-4"
@@ -422,14 +421,16 @@ export const ProductCustomizerSheet: React.FC<ProductCustomizerSheetProps> = ({
           className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain w-full min-w-0"
           style={{ 
             WebkitOverflowScrolling: 'touch',
-            minHeight: '200px',
+            // Allow content to grow and shrink, ensuring it fits within available space
+            flexBasis: '0%',
+            minHeight: '0',
           }}
         >
-          <div className="px-4 py-4 space-y-4 w-full min-w-0">
+          <div className="px-4 py-4 space-y-4 w-full min-w-0 box-border">
             {item ? (
               <>
                 {/* Product Header Card */}
-                <div className="flex gap-3 sm:gap-4 p-3 sm:p-4 bg-[#FAFAF8] rounded-2xl w-full min-w-0">
+                <div className="flex gap-3 sm:gap-4 p-3 sm:p-4 bg-[#FAFAF8] rounded-2xl w-full min-w-0 box-border">
                   {item.image_url && (
                     <img
                       src={item.image_url}
@@ -438,7 +439,7 @@ export const ProductCustomizerSheet: React.FC<ProductCustomizerSheetProps> = ({
                       loading="eager"
                     />
                   )}
-                  <div className="flex-1 min-w-0 flex flex-col justify-center overflow-hidden">
+                  <div className="flex-1 min-w-0 flex flex-col justify-center overflow-hidden box-border">
                     <h3 className="text-base sm:text-lg font-bold text-[var(--primary-text)] leading-tight mb-1">
                       {item.name}
                     </h3>
@@ -455,7 +456,7 @@ export const ProductCustomizerSheet: React.FC<ProductCustomizerSheetProps> = ({
 
                 {/* Customization Groups */}
                 {item.customization_groups.length > 0 ? (
-                  <div className="space-y-3 w-full min-w-0">
+                  <div className="space-y-3 w-full min-w-0 box-border">
                     {item.customization_groups
                       .sort((a, b) => a.sort_order - b.sort_order)
                       .map((group) => (
@@ -482,7 +483,7 @@ export const ProductCustomizerSheet: React.FC<ProductCustomizerSheetProps> = ({
                 )}
 
                 {/* Quantity Section */}
-                <div className="bg-white rounded-2xl border border-[var(--border-light)] p-4 w-full min-w-0">
+                <div className="bg-white rounded-2xl border border-[var(--border-light)] p-4 w-full min-w-0 box-border">
                   <h4 className="text-sm font-bold text-[var(--primary-text)] uppercase tracking-wide mb-4 text-center">
                     Quantity
                   </h4>
@@ -512,9 +513,11 @@ export const ProductCustomizerSheet: React.FC<ProductCustomizerSheetProps> = ({
         {/* Sticky Footer with Total and Add to Cart */}
         {item && (
           <div 
-            className="flex-shrink-0 bg-white border-t border-[var(--border-light)] px-4 py-3 sm:py-4 w-full"
+            className="flex-shrink-0 bg-white border-t border-[var(--border-light)] px-4 py-3 sm:py-4 w-full box-border"
             style={{
               boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.08)',
+              // Ensure footer stays above iOS home indicator
+              paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 0px))',
             }}
           >
             {/* Total Row */}
@@ -573,16 +576,15 @@ export const ProductCustomizerSheet: React.FC<ProductCustomizerSheetProps> = ({
 
       {/* Keyframe animations injected into page */}
       <style>{`
-        /* Ensure the sheet is above everything */
+        /* Ensure the sheet is above everything and properly contained */
         [data-product-customizer] {
           isolation: isolate;
+          contain: layout style paint;
         }
         
-        /* Prevent body scroll when sheet is open */
-        body:has([data-product-customizer]) {
-          overflow: hidden !important;
-          position: fixed !important;
-          width: 100% !important;
+        /* Ensure all children respect box-sizing */
+        [data-product-customizer] * {
+          box-sizing: border-box;
         }
         
         /* Custom scrollbar for content area */
@@ -610,6 +612,14 @@ export const ProductCustomizerSheet: React.FC<ProductCustomizerSheetProps> = ({
         @media (prefers-reduced-motion: reduce) {
           [data-product-customizer] {
             transition: none;
+          }
+        }
+        
+        /* Mobile-specific fixes for iOS Safari */
+        @supports (-webkit-touch-callout: none) {
+          [data-product-customizer] {
+            /* Prevent rubber-band scrolling on the modal itself */
+            overscroll-behavior: contain;
           }
         }
       `}</style>

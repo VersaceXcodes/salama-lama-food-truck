@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppStore } from '@/store/main';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Building2, 
   Calendar, 
@@ -144,7 +145,7 @@ const generateQuote = async (
     additional_fees: QuoteFee[] | null;
   },
   auth_token: string
-): Promise<CateringQuote> => {
+): Promise<{ quote_id: string; quote_number: string; quote_pdf_url: string | null }> => {
   // Calculate totals
   const subtotal = quote_data.line_items.reduce((sum, item) => sum + item.total, 0);
   const additional_total = quote_data.additional_fees?.reduce((sum, fee) => sum + fee.amount, 0) || 0;
@@ -152,7 +153,7 @@ const generateQuote = async (
   const grand_total = subtotal + additional_total + tax_amount;
 
   const response = await axios.post(
-    `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api/admin/catering/inquiries/${inquiry_id}/quotes`,
+    `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api/admin/catering/inquiries/${inquiry_id}/quote`,
     {
       ...quote_data,
       subtotal,
@@ -189,6 +190,8 @@ const sendQuoteToCustomer = async (quote_id: string, auth_token: string): Promis
 const UV_AdminCateringInquiryDetail: React.FC = () => {
   const { inquiry_id } = useParams<{ inquiry_id: string }>();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   // Zustand store - CRITICAL: Individual selectors only
   const auth_token = useAppStore(state => state.authentication_state.auth_token);
@@ -235,6 +238,20 @@ const UV_AdminCateringInquiryDetail: React.FC = () => {
       updateInquiryStatus(inquiry_id!, data, auth_token!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'catering', 'inquiry', inquiry_id] });
+      toast({
+        title: 'Changes Saved',
+        description: 'Inquiry status and notes have been updated successfully.',
+        variant: 'default',
+      });
+    },
+    onError: (error: any) => {
+      console.error('Failed to update inquiry:', error);
+      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to update inquiry';
+      toast({
+        title: 'Failed to Save Changes',
+        description: errorMessage,
+        variant: 'destructive',
+      });
     },
   });
 
@@ -244,7 +261,7 @@ const UV_AdminCateringInquiryDetail: React.FC = () => {
       line_items: QuoteLineItem[];
       additional_fees: QuoteFee[] | null;
     }) => generateQuote(inquiry_id!, data, auth_token!),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'catering', 'inquiry', inquiry_id] });
       set_show_quote_form(false);
       set_quote_form_data({
@@ -256,6 +273,27 @@ const UV_AdminCateringInquiryDetail: React.FC = () => {
         valid_until: '',
         terms: null,
       });
+      
+      // Show success toast
+      toast({
+        title: 'Quote Generated Successfully',
+        description: `Quote ${data.quote_number} has been created and the inquiry has been marked as quoted.`,
+        variant: 'default',
+      });
+      
+      // Scroll to top to see the quote
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+    onError: (error: any) => {
+      console.error('Failed to generate quote:', error);
+      
+      // Show error toast with detailed message
+      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to generate quote';
+      toast({
+        title: 'Failed to Generate Quote',
+        description: errorMessage,
+        variant: 'destructive',
+      });
     },
   });
 
@@ -264,6 +302,20 @@ const UV_AdminCateringInquiryDetail: React.FC = () => {
     mutationFn: (quote_id: string) => sendQuoteToCustomer(quote_id, auth_token!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'catering', 'inquiry', inquiry_id] });
+      toast({
+        title: 'Quote Sent',
+        description: 'Quote has been sent to the customer via email.',
+        variant: 'default',
+      });
+    },
+    onError: (error: any) => {
+      console.error('Failed to send quote:', error);
+      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to send quote';
+      toast({
+        title: 'Failed to Send Quote',
+        description: errorMessage,
+        variant: 'destructive',
+      });
     },
   });
 
@@ -355,12 +407,46 @@ const UV_AdminCateringInquiryDetail: React.FC = () => {
   const handle_generate_quote = () => {
     // Validate form
     if (quote_form_data.line_items.length === 0) {
-      alert('Please add at least one line item');
+      toast({
+        title: 'Validation Error',
+        description: 'Please add at least one line item to the quote.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate line items
+    const invalidItems = quote_form_data.line_items.filter(
+      item => !item.item.trim() || item.quantity <= 0 || item.unit_price <= 0
+    );
+    if (invalidItems.length > 0) {
+      toast({
+        title: 'Validation Error',
+        description: 'All line items must have a name, quantity greater than 0, and a unit price greater than 0.',
+        variant: 'destructive',
+      });
       return;
     }
 
     if (!quote_form_data.valid_until) {
-      alert('Please set a valid until date');
+      toast({
+        title: 'Validation Error',
+        description: 'Please set a valid until date for the quote.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate valid_until is in the future
+    const validUntilDate = new Date(quote_form_data.valid_until);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (validUntilDate < today) {
+      toast({
+        title: 'Validation Error',
+        description: 'Valid until date must be today or in the future.',
+        variant: 'destructive',
+      });
       return;
     }
 

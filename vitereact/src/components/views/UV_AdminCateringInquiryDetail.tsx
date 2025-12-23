@@ -146,28 +146,80 @@ const generateQuote = async (
   },
   auth_token: string
 ): Promise<{ quote_id: string; quote_number: string; quote_pdf_url: string | null }> => {
-  // Calculate totals
-  const subtotal = quote_data.line_items.reduce((sum, item) => sum + item.total, 0);
-  const additional_total = quote_data.additional_fees?.reduce((sum, fee) => sum + fee.amount, 0) || 0;
+  // Validate line items
+  if (!quote_data.line_items || quote_data.line_items.length === 0) {
+    throw new Error('Quote must have at least one line item');
+  }
+
+  // Ensure all line items have valid numeric values
+  const validated_line_items = quote_data.line_items.map(item => ({
+    item: String(item.item || ''),
+    quantity: Number(item.quantity) || 0,
+    unit_price: Number(item.unit_price) || 0,
+    total: Number(item.total) || 0,
+  }));
+
+  // Validate additional fees if present
+  const validated_additional_fees = quote_data.additional_fees?.length
+    ? quote_data.additional_fees.map(fee => ({
+        name: String(fee.name || ''),
+        amount: Number(fee.amount) || 0,
+      }))
+    : null;
+
+  // Calculate totals with proper type conversion
+  const subtotal = validated_line_items.reduce((sum, item) => sum + Number(item.total), 0);
+  const additional_total = validated_additional_fees?.reduce((sum, fee) => sum + Number(fee.amount), 0) || 0;
   const tax_amount = (subtotal + additional_total) * 0.23; // VAT 23%
   const grand_total = subtotal + additional_total + tax_amount;
 
-  const response = await axios.post(
-    `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api/admin/catering/inquiries/${inquiry_id}/quote`,
-    {
-      ...quote_data,
-      subtotal,
-      tax_amount,
-      grand_total,
+  // Ensure valid_until is a proper ISO date string
+  const valid_until = quote_data.valid_until || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+  const url = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api/admin/catering/inquiries/${inquiry_id}/quote`;
+  const payload = {
+    line_items: validated_line_items,
+    additional_fees: validated_additional_fees,
+    subtotal: Number(subtotal.toFixed(2)),
+    tax_amount: Number(tax_amount.toFixed(2)),
+    grand_total: Number(grand_total.toFixed(2)),
+    valid_until,
+    terms: quote_data.terms || null,
+  };
+
+  // DEBUG: Log request details
+  console.log('🔵 Generate Quote Request:', {
+    url,
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${auth_token?.substring(0, 20)}...`,
+      'Content-Type': 'application/json',
     },
-    {
+    payload,
+  });
+
+  try {
+    const response = await axios.post(url, payload, {
       headers: {
         Authorization: `Bearer ${auth_token}`,
         'Content-Type': 'application/json',
       },
-    }
-  );
-  return response.data;
+      timeout: 30000, // 30 second timeout
+    });
+    
+    console.log('✅ Generate Quote Response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    // Enhanced error logging
+    console.error('❌ Generate Quote Error:', {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      headers: error.response?.headers,
+    });
+    throw error;
+  }
 };
 
 const sendQuoteToCustomer = async (quote_id: string, auth_token: string): Promise<{ sent_at: string }> => {
@@ -209,6 +261,7 @@ const UV_AdminCateringInquiryDetail: React.FC = () => {
     valid_until: '',
     terms: null,
   });
+  const [last_error_debug_info, set_last_error_debug_info] = useState<string | null>(null);
 
   // React Query - Fetch inquiry detail
   const {
@@ -285,14 +338,91 @@ const UV_AdminCateringInquiryDetail: React.FC = () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
     onError: (error: any) => {
-      console.error('Failed to generate quote:', error);
+      console.error('❌ Failed to generate quote - Full error:', error);
+      console.error('❌ Error response:', error?.response);
+      console.error('❌ Error request:', error?.request);
+      
+      // Extract detailed error information
+      const status = error?.response?.status || 'Unknown';
+      const statusText = error?.response?.statusText || '';
+      const responseData = error?.response?.data;
+      const responseHeaders = error?.response?.headers;
+      const cfRay = responseHeaders?.['cf-ray'] || responseHeaders?.['CF-RAY'];
+      const isCloudflare = cfRay || (typeof responseData === 'string' && responseData.includes('cloudflare'));
+      
+      // Create comprehensive debug info
+      const debugText = `Generate Quote Error - Debug Information
+═══════════════════════════════════════════════════════════════
+
+Request Details:
+- URL: ${error?.config?.url || 'N/A'}
+- Method: ${error?.config?.method?.toUpperCase() || 'N/A'}
+- Timestamp: ${new Date().toISOString()}
+
+Response Details:
+- Status: ${status} ${statusText}
+- Cloudflare Detected: ${isCloudflare ? 'Yes' : 'No'}
+- CF-Ray ID: ${cfRay || 'N/A'}
+- Response Type: ${typeof responseData}
+
+Error Details:
+- Error Message: ${error?.message || 'N/A'}
+- Error Code: ${error?.code || 'N/A'}
+
+Response Body (first 1000 chars):
+${typeof responseData === 'string' ? responseData.substring(0, 1000) : JSON.stringify(responseData, null, 2)?.substring(0, 1000) || 'N/A'}
+
+Headers:
+${JSON.stringify(responseHeaders, null, 2) || 'N/A'}
+
+═══════════════════════════════════════════════════════════════
+To resolve this issue:
+${status === 530 || status === '530' ? `
+1. Verify the backend server is running and accessible
+2. Check Cloudflare DNS settings (if using Cloudflare)
+3. Verify SSL/TLS certificates are valid
+4. Check firewall rules and origin IP settings
+5. Review backend server logs for errors
+` : `
+1. Check the error message above
+2. Verify the request payload is valid
+3. Check backend server logs
+4. Ensure authentication token is valid
+`}`;
+      
+      // Store debug info for copy button
+      set_last_error_debug_info(debugText);
+      console.error('🐛 Full Debug Info:', debugText);
+      
+      // Determine error message
+      let errorMessage = '';
+      let errorTitle = 'Failed to Generate Quote';
+      
+      if (status === 530 || status === '530') {
+        if (isCloudflare) {
+          errorTitle = 'Connection Error (530)';
+          errorMessage = `Cloudflare cannot reach the backend server. Possible causes:\n\n` +
+            `• Backend server is down or unreachable\n` +
+            `• DNS misconfiguration\n` +
+            `• SSL/TLS certificate issues\n` +
+            `• Origin IP address changed\n\n` +
+            `CF-Ray: ${cfRay || 'N/A'}\n\n` +
+            `Click "Copy Debug Info" below to get detailed diagnostic information.`;
+        } else {
+          errorTitle = 'Server Error (530)';
+          errorMessage = `The server returned an unexpected 530 error. This is not a standard HTTP status code.\n\n` +
+            `Click "Copy Debug Info" below for more details.`;
+        }
+      } else {
+        errorMessage = error?.response?.data?.message || error?.message || `HTTP ${status}: ${statusText || 'Unknown error'}`;
+      }
       
       // Show error toast with detailed message
-      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to generate quote';
       toast({
-        title: 'Failed to Generate Quote',
+        title: errorTitle,
         description: errorMessage,
         variant: 'destructive',
+        duration: 15000, // Show for 15 seconds
       });
     },
   });
@@ -1065,38 +1195,73 @@ const UV_AdminCateringInquiryDetail: React.FC = () => {
                       </div>
 
                       {/* Actions */}
-                      <div className="flex justify-end space-x-3">
-                        <button
-                          onClick={() => {
-                            set_show_quote_form(false);
-                            set_quote_form_data({
-                              line_items: [],
-                              subtotal: 0,
-                              additional_fees: [],
-                              tax_amount: 0,
-                              grand_total: 0,
-                              valid_until: '',
-                              terms: null,
-                            });
-                          }}
-                          className="px-6 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={handle_generate_quote}
-                          disabled={generate_quote_mutation.isPending}
-                          className="inline-flex items-center px-6 py-2 bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {generate_quote_mutation.isPending ? (
-                            <>
-                              <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                              Generating...
-                            </>
-                          ) : (
-                            'Generate Quote'
-                          )}
-                        </button>
+                      <div className="space-y-3">
+                        <div className="flex justify-end space-x-3">
+                          <button
+                            onClick={() => {
+                              set_show_quote_form(false);
+                              set_quote_form_data({
+                                line_items: [],
+                                subtotal: 0,
+                                additional_fees: [],
+                                tax_amount: 0,
+                                grand_total: 0,
+                                valid_until: '',
+                                terms: null,
+                              });
+                              set_last_error_debug_info(null); // Clear error on cancel
+                            }}
+                            className="px-6 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={handle_generate_quote}
+                            disabled={generate_quote_mutation.isPending}
+                            className="inline-flex items-center px-6 py-2 bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {generate_quote_mutation.isPending ? (
+                              <>
+                                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                                Generating...
+                              </>
+                            ) : (
+                              'Generate Quote'
+                            )}
+                          </button>
+                        </div>
+
+                        {/* Debug Info Button - Shows after error */}
+                        {last_error_debug_info && (
+                          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-red-800 mb-1">
+                                  An error occurred while generating the quote
+                                </p>
+                                <p className="text-xs text-red-600">
+                                  Click the button to copy diagnostic information for debugging
+                                </p>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(last_error_debug_info);
+                                  toast({
+                                    title: 'Debug Info Copied',
+                                    description: 'Diagnostic information has been copied to your clipboard.',
+                                    variant: 'default',
+                                  });
+                                }}
+                                className="ml-4 inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
+                              >
+                                <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                                Copy Debug Info
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}

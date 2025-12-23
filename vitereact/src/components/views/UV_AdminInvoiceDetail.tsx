@@ -99,7 +99,40 @@ const updateInvoice = async (
       },
     }
   );
-  return response.data;
+  // Backend returns { invoice: {...} }
+  return response.data.invoice || response.data;
+};
+
+const downloadInvoicePdf = async (
+  invoice_id: string,
+  invoice_number: string,
+  auth_token: string
+): Promise<void> => {
+  const response = await fetch(
+    `${API_BASE_URL}/api/admin/invoices/${invoice_id}/pdf`,
+    {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${auth_token}`,
+      },
+      credentials: 'include',
+    }
+  );
+  
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `Failed to download PDF: ${response.status}`);
+  }
+  
+  const blob = await response.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${invoice_number}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(a);
 };
 
 const sendInvoiceEmail = async (invoice_id: string, auth_token: string): Promise<void> => {
@@ -218,11 +251,30 @@ const UV_AdminInvoiceDetail: React.FC = () => {
     update_invoice_mutation.mutate(payload);
   };
 
-  const handle_download_pdf = () => {
-    if (invoice_detail?.invoice_pdf_url) {
-      window.open(invoice_detail.invoice_pdf_url, '_blank');
-    } else {
-      set_error_message('Invoice PDF not available');
+  const [pdf_downloading, set_pdf_downloading] = useState(false);
+
+  const handle_download_pdf = async () => {
+    if (!invoice_detail || !auth_token) {
+      set_error_message('Unable to download PDF');
+      return;
+    }
+    
+    set_pdf_downloading(true);
+    try {
+      await downloadInvoicePdf(invoice_detail.invoice_id, invoice_detail.invoice_number, auth_token);
+      add_notification({
+        type: 'success',
+        message: 'Invoice PDF downloaded successfully',
+      });
+    } catch (error: any) {
+      const message = error.message || 'Failed to download invoice PDF';
+      set_error_message(message);
+      add_notification({
+        type: 'error',
+        message,
+      });
+    } finally {
+      set_pdf_downloading(false);
     }
   };
 
@@ -400,11 +452,20 @@ const UV_AdminInvoiceDetail: React.FC = () => {
                   <div className="mt-4 lg:mt-0 flex flex-wrap gap-3">
                     <button
                       onClick={handle_download_pdf}
-                      disabled={!invoice_detail.invoice_pdf_url}
+                      disabled={pdf_downloading}
                       className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <Download className="w-5 h-5 mr-2" />
-                      Download PDF
+                      {pdf_downloading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-700 mr-2"></div>
+                          Downloading...
+                        </>
+                      ) : (
+                        <>
+                          <Download className="w-5 h-5 mr-2" />
+                          Download PDF
+                        </>
+                      )}
                     </button>
 
                     <button

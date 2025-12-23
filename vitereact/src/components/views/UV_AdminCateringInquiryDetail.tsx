@@ -114,7 +114,9 @@ const fetchInquiryDetail = async (inquiry_id: string, auth_token: string): Promi
       },
     }
   );
-  return response.data;
+  // Backend returns { inquiry: {...}, quotes: [...] } - merge them
+  const { inquiry, quotes } = response.data;
+  return { ...inquiry, quotes };
 };
 
 const updateInquiryStatus = async (

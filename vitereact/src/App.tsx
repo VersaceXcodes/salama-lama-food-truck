@@ -557,7 +557,12 @@ const AppRoutes: React.FC = () => {
         } />
         <Route path="/admin/catering/:inquiry_id" element={
           <AdminRoute>
-            <UV_AdminCateringInquiryDetail />
+            <ErrorBoundary 
+              fallbackRoute="/admin/catering" 
+              fallbackMessage="We encountered an error loading this catering inquiry. Please try again or return to the inquiries list."
+            >
+              <UV_AdminCateringInquiryDetail />
+            </ErrorBoundary>
           </AdminRoute>
         } />
 

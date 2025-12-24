@@ -12,6 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 // ===========================
 // Types & Interfaces
@@ -117,6 +118,8 @@ const GV_TopNav_Staff: React.FC = () => {
   // ===========================
   const notificationCount = notifications.length;
   const staffName = currentUser?.first_name || 'Staff';
+  const staffInitials = staffName.charAt(0).toUpperCase();
+  const avatarUrl = currentUser?.avatar_url || null;
 
   // ===========================
   // Event Handlers
@@ -154,7 +157,7 @@ const GV_TopNav_Staff: React.FC = () => {
   return (
     <>
       {/* Sticky Navigation Bar */}
-      <nav className="sticky top-0 left-0 right-0 bg-gradient-to-r from-orange-600 to-orange-700 shadow-lg z-50 transition-all duration-200">
+      <nav className="sticky top-0 left-0 right-0 bg-white border-b border-gray-200 shadow-sm z-50 transition-all duration-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="h-16 flex items-center justify-between">
             {/* Left Section: Logo + Main Navigation */}
@@ -169,22 +172,21 @@ const GV_TopNav_Staff: React.FC = () => {
                   src={logoUrl} 
                   alt="Salama Lama" 
                   className="h-8 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
-                  style={{ filter: 'brightness(0) invert(1)' }}
                   onError={(e) => { 
                     const target = e.target as HTMLImageElement;
-                    if (target.src !== '/assets/salama-lama-logo.png') {
-                      target.src = '/assets/salama-lama-logo.png';
+                    if (target.src !== '/logo.png') {
+                      target.src = '/logo.png';
                     }
                   }}
                 />
-                <span className="hidden sm:inline text-white font-bold text-base">Staff</span>
+                <span className="hidden sm:inline text-gray-900 font-bold text-base">Staff</span>
               </Link>
 
               {/* Main Navigation Links */}
               <div className="hidden md:flex items-center space-x-2">
                 <Link
                   to="/staff/orders"
-                  className="flex items-center space-x-2 px-4 py-2 rounded-lg text-white font-medium hover:bg-orange-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-orange-600"
+                  className="flex items-center space-x-2 px-4 py-2 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
                   aria-label="View Orders"
                 >
                   <ShoppingCart className="h-5 w-5" />
@@ -193,7 +195,7 @@ const GV_TopNav_Staff: React.FC = () => {
 
                 <Link
                   to="/staff/stock"
-                  className="flex items-center space-x-2 px-4 py-2 rounded-lg text-white font-medium hover:bg-orange-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-orange-600"
+                  className="flex items-center space-x-2 px-4 py-2 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
                   aria-label="View Stock"
                 >
                   <Package className="h-5 w-5" />
@@ -208,12 +210,12 @@ const GV_TopNav_Staff: React.FC = () => {
               <DropdownMenu onOpenChange={(open) => open && refetchNotifications()}>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className="relative p-2 rounded-lg text-white hover:bg-orange-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-orange-600 data-[state=open]:bg-orange-800"
+                    className="relative p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300 data-[state=open]:bg-gray-100"
                     aria-label="Notifications"
                   >
                     <Bell className="h-6 w-6" />
                     {notificationCount > 0 && (
-                      <span className="absolute top-0 right-0 flex items-center justify-center h-5 w-5 text-xs font-bold text-white bg-red-600 rounded-full border-2 border-orange-700">
+                      <span className="absolute top-0 right-0 flex items-center justify-center h-5 w-5 text-xs font-bold text-white bg-red-600 rounded-full border-2 border-white">
                         {notificationCount > 9 ? '9+' : notificationCount}
                       </span>
                     )}
@@ -292,7 +294,7 @@ const GV_TopNav_Staff: React.FC = () => {
                       <DropdownMenuItem asChild>
                         <Link
                           to="/staff/dashboard"
-                          className="text-sm text-orange-600 hover:text-orange-700 font-medium focus:outline-none focus:underline"
+                          className="text-sm text-gray-900 hover:text-gray-700 font-medium focus:outline-none focus:underline"
                         >
                           View Dashboard
                         </Link>
@@ -306,11 +308,19 @@ const GV_TopNav_Staff: React.FC = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className="flex items-center space-x-2 px-3 py-2 rounded-lg text-white hover:bg-orange-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-orange-600 data-[state=open]:bg-orange-800"
+                    className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300 data-[state=open]:bg-gray-100"
                     aria-label="Staff Profile Menu"
                   >
-                    <User className="h-5 w-5" />
-                    <span className="hidden sm:inline font-medium">{staffName}</span>
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage 
+                        src={avatarUrl || undefined} 
+                        alt={staffName}
+                      />
+                      <AvatarFallback className="bg-gray-200 text-gray-700 font-semibold text-sm">
+                        {staffInitials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="hidden sm:inline font-medium text-gray-900">{staffName}</span>
                   </button>
                 </DropdownMenuTrigger>
 
@@ -366,11 +376,11 @@ const GV_TopNav_Staff: React.FC = () => {
           </div>
 
           {/* Mobile Navigation Links */}
-          <div className="md:hidden border-t border-orange-800 py-2">
+          <div className="md:hidden border-t border-gray-200 py-2">
             <div className="flex items-center space-x-2">
               <Link
                 to="/staff/orders"
-                className="flex items-center space-x-2 px-3 py-2 rounded-lg text-white text-sm font-medium hover:bg-orange-800 transition-all duration-200"
+                className="flex items-center space-x-2 px-3 py-2 rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-100 transition-all duration-200"
               >
                 <ShoppingCart className="h-4 w-4" />
                 <span>Orders</span>
@@ -378,7 +388,7 @@ const GV_TopNav_Staff: React.FC = () => {
 
               <Link
                 to="/staff/stock"
-                className="flex items-center space-x-2 px-3 py-2 rounded-lg text-white text-sm font-medium hover:bg-orange-800 transition-all duration-200"
+                className="flex items-center space-x-2 px-3 py-2 rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-100 transition-all duration-200"
               >
                 <Package className="h-4 w-4" />
                 <span>Stock</span>

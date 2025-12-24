@@ -22,6 +22,8 @@ interface CartItem {
   selected_customizations: Record<string, any> | null;
   line_total: number;
   is_available?: boolean;
+  is_builder_item?: boolean;
+  builder_selections?: any;
 }
 
 /* interface PricingSummary {
@@ -560,7 +562,26 @@ const UV_Cart: React.FC = () => {
   // Render Helpers
   // ===========================
 
-  const renderCustomizations = (customizations: Record<string, any> | null) => {
+  const renderCustomizations = (customizations: Record<string, any> | null, isBuilderItem?: boolean, builderSelections?: any) => {
+    // For builder items, render the builder selections in a structured way
+    if (isBuilderItem && builderSelections && Array.isArray(builderSelections)) {
+      return (
+        <div className="mt-2 space-y-1">
+          {builderSelections.map((selection: any, index: number) => {
+            if (!selection.items || selection.items.length === 0) return null;
+            return (
+              <div key={index} className="text-sm">
+                <span className="text-gray-500 text-xs uppercase tracking-wide">{selection.step_name}:</span>
+                <span className="ml-1 text-gray-700">
+                  {selection.items.map((item: any) => item.name).join(', ')}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
     if (!customizations || Object.keys(customizations).length === 0) {
       return null;
     }
@@ -872,7 +893,7 @@ const UV_Cart: React.FC = () => {
                             {item.item_name}
                           </h3>
                           {/* Customizations */}
-                          {renderCustomizations(item.selected_customizations)}
+                          {renderCustomizations(item.selected_customizations, item.is_builder_item, item.builder_selections)}
                           {/* Unit Price */}
                           {isAvailable && (
                             <p className="mt-1 text-sm text-gray-500">

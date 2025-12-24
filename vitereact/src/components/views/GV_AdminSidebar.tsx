@@ -21,7 +21,8 @@ import {
   House,
   Mail,
   Bell,
-  LogOut
+  LogOut,
+  Layers
 } from 'lucide-react';
 
 // Fallback logo path - served from public_assets directory
@@ -238,6 +239,12 @@ const GV_AdminSidebar: React.FC = () => {
       name: 'Categories',
       path: '/admin/menu/categories',
       icon: Tag,
+      badge: 0,
+    },
+    {
+      name: 'Menu Builder',
+      path: '/admin/menu/builder',
+      icon: Layers,
       badge: 0,
     },
     {

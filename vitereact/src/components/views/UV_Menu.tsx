@@ -6,6 +6,7 @@ import { useAppStore } from '@/store/main';
 import { useToast } from '@/hooks/use-toast';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { ProductCustomizerSheet } from '@/components/ui/product-customizer-sheet';
+import { ProductBuilderSheet, BuilderStep, BuilderSelection } from '@/components/ui/product-builder-sheet';
 
 // ===========================
 // Type Definitions
@@ -89,6 +90,49 @@ const fetchCategories = async () => {
   return response.data;
 };
 
+// Fetch builder config to determine which categories trigger the builder
+const fetchBuilderConfig = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/menu/builder-config`);
+    return response.data;
+  } catch (error) {
+    // If builder config doesn't exist, return empty config
+    return { config: null, builder_category_ids: [] };
+  }
+};
+
+// Fetch builder steps with items
+const fetchBuilderSteps = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/menu/builder-steps`);
+    return response.data;
+  } catch (error) {
+    return { steps: [] };
+  }
+};
+
+// Add builder item to cart
+const addBuilderItemToCart = async (data: {
+  item_id: string;
+  quantity: number;
+  builder_selections: any;
+}, authToken: string | null) => {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  
+  if (authToken) {
+    headers['Authorization'] = `Bearer ${authToken}`;
+  }
+
+  const response = await axios.post(
+    `${API_BASE_URL}/api/cart/builder`,
+    data,
+    { headers }
+  );
+  return response.data;
+};
+
 const addItemToCart = async (data: {
   item_id: string;
   quantity: number;
@@ -152,6 +196,15 @@ const UV_Menu: React.FC = () => {
     quantity: 1,
   });
 
+  // Builder modal state
+  const [builderModal, setBuilderModal] = useState<{
+    is_open: boolean;
+    item: MenuItem | null;
+  }>({
+    is_open: false,
+    item: null,
+  });
+
   // React Query: Fetch Categories
   const { data: categoriesData } = useQuery({
     queryKey: ['categories'],
@@ -162,6 +215,37 @@ const UV_Menu: React.FC = () => {
   const categories: Category[] = useMemo(() => {
     return categoriesData?.categories || [];
   }, [categoriesData]);
+
+  // React Query: Fetch Builder Config
+  const { data: builderConfigData } = useQuery({
+    queryKey: ['builder-config'],
+    queryFn: fetchBuilderConfig,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+  });
+
+  const builderCategoryIds: string[] = useMemo(() => {
+    return builderConfigData?.config?.builder_category_ids || [];
+  }, [builderConfigData]);
+
+  const builderEnabled = builderConfigData?.config?.enabled ?? false;
+  const includeBaseItemPrice = builderConfigData?.config?.include_base_item_price ?? false;
+
+  // React Query: Fetch Builder Steps (only when builder modal is open)
+  const { data: builderStepsData, isLoading: builderStepsLoading } = useQuery({
+    queryKey: ['builder-steps'],
+    queryFn: fetchBuilderSteps,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: builderModal.is_open, // Only fetch when modal is open
+  });
+
+  const builderSteps: BuilderStep[] = useMemo(() => {
+    return builderStepsData?.steps || [];
+  }, [builderStepsData]);
+
+  // Check if an item should use the builder flow
+  const isBuilderItem = (item: MenuItem): boolean => {
+    return builderEnabled && builderCategoryIds.includes(item.category_id);
+  };
 
   // React Query: Fetch Menu Items
   const { data: menuItemsData, isLoading: itemsLoading, error: itemsError } = useQuery({
@@ -247,6 +331,70 @@ const UV_Menu: React.FC = () => {
         variant: 'destructive',
         title: 'Error',
         description: error.response?.data?.message || 'Failed to add item to cart'
+      });
+    },
+  });
+
+  // React Query: Add Builder Item to Cart Mutation
+  const addBuilderToCartMutation = useMutation({
+    mutationFn: (data: { item_id: string; quantity: number; builder_selections: any }) => {
+      if (builderModal.item) {
+        setLoadingItemId(builderModal.item.item_id);
+      }
+      return addBuilderItemToCart(data, authToken);
+    },
+    onSuccess: (_response, variables) => {
+      // Generate display name from selections
+      const selections = variables.selections as BuilderSelection[];
+      const base = selections.find(s => s.step_key === 'base')?.items[0]?.name;
+      const protein = selections.find(s => s.step_key === 'protein')?.items[0]?.name;
+      const itemName = builderModal.item?.name || 'Custom Item';
+      const displayName = base && protein ? `${itemName} - ${base} + ${protein}` : itemName;
+
+      // Update Zustand cart state
+      if (builderModal.item) {
+        const cartItem = {
+          item_id: builderModal.item.item_id,
+          item_name: displayName,
+          quantity: variables.quantity,
+          unit_price: variables.builder_unit_price,
+          customizations: selections.flatMap(sel => 
+            sel.items.map(item => ({
+              group_name: sel.step_name,
+              option_name: item.name,
+              additional_price: item.price,
+            }))
+          ),
+          line_total: variables.builder_unit_price * variables.quantity,
+          is_builder_item: true,
+        };
+        addToCartAction(cartItem);
+      }
+
+      // Clear loading state
+      setLoadingItemId(null);
+
+      // Close builder modal
+      setBuilderModal({
+        is_open: false,
+        item: null,
+      });
+
+      // Show success notification
+      toast({
+        title: 'Success',
+        description: 'Custom item added to cart!'
+      });
+    },
+    onError: (error: any) => {
+      // Clear loading state
+      setLoadingItemId(null);
+      
+      // Show error notification
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to add custom item to cart'
       });
     },
   });
@@ -377,6 +525,82 @@ const UV_Menu: React.FC = () => {
     });
   };
 
+  // Builder modal handlers
+  const handleOpenBuilderModal = (item: MenuItem) => {
+    if (!item) {
+      console.error('[Builder] Error: Item is null or undefined');
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Unable to load builder. Please try again.'
+      });
+      return;
+    }
+
+    setBuilderModal({
+      is_open: true,
+      item,
+    });
+  };
+
+  const handleCloseBuilderModal = () => {
+    setBuilderModal({
+      is_open: false,
+      item: null,
+    });
+  };
+
+  const handleBuilderAddToCart = (selections: BuilderSelection[], totalPrice: number, quantity: number) => {
+    if (!builderModal.item) return;
+
+    // Transform selections to backend format
+    const baseSelection = selections.find(s => s.step_key === 'base')?.items[0];
+    const proteinSelection = selections.find(s => s.step_key === 'protein')?.items[0];
+    const sauceSelection = selections.find(s => s.step_key === 'sauce')?.items[0];
+    const toppingSelections = selections.find(s => s.step_key === 'toppings')?.items || [];
+
+    if (!baseSelection || !proteinSelection || !sauceSelection) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Please complete all required selections'
+      });
+      return;
+    }
+
+    // Build the backend-expected format
+    const builderSelections = {
+      base: {
+        item_id: baseSelection.item_id,
+        name: baseSelection.name,
+        price: baseSelection.price
+      },
+      protein: {
+        item_id: proteinSelection.item_id,
+        name: proteinSelection.name,
+        price: proteinSelection.price
+      },
+      sauce: {
+        item_id: sauceSelection.item_id,
+        name: sauceSelection.name,
+        price: sauceSelection.price
+      },
+      toppings: toppingSelections.map(t => ({
+        item_id: t.item_id,
+        name: t.name,
+        price: t.price
+      }))
+    };
+
+    // Call backend API with proper format
+    addBuilderToCartMutation.mutate({
+      base_item_id: builderModal.item.item_id,
+      quantity,
+      selections: builderSelections,
+      builder_unit_price: totalPrice,
+    });
+  };
+
   const handleCustomizationChange = (
     groupId: string,
     groupName: string,
@@ -480,6 +704,12 @@ const UV_Menu: React.FC = () => {
   };
 
   const handleQuickAddToCart = (item: MenuItem) => {
+    // Check if this item should use the builder flow (Subs/Wraps categories)
+    if (isBuilderItem(item)) {
+      handleOpenBuilderModal(item);
+      return;
+    }
+
     // Check if item has ANY customization groups (not just required ones)
     // If it has customizations, show the sheet so user can see all options
     if (item.customization_groups.length > 0) {
@@ -1019,6 +1249,8 @@ const UV_Menu: React.FC = () => {
                             </>
                           ) : isOutOfStock ? (
                             'Out of Stock'
+                          ) : isBuilderItem(item) ? (
+                            'Build Your Own'
                           ) : item.customization_groups.length > 0 ? (
                             'Customize & Add'
                           ) : (
@@ -1098,6 +1330,18 @@ const UV_Menu: React.FC = () => {
         }))}
         onAddToCart={handleAddToCart}
         isLoading={addToCartMutation.isPending}
+      />
+
+      {/* Product Builder Modal - For Subs/Wraps categories */}
+      <ProductBuilderSheet
+        isOpen={builderModal.is_open}
+        onClose={handleCloseBuilderModal}
+        productName={builderModal.item?.name || 'Custom Item'}
+        productImageUrl={builderModal.item?.image_url}
+        basePrice={includeBaseItemPrice ? Number(builderModal.item?.price || 0) : 0}
+        steps={builderSteps}
+        onAddToCart={handleBuilderAddToCart}
+        isLoading={addBuilderToCartMutation.isPending || builderStepsLoading}
       />
     </>
   );

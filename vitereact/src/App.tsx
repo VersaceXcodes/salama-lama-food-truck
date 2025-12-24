@@ -80,6 +80,7 @@ import UV_AdminContactMessages from '@/components/views/UV_AdminContactMessages'
 import UV_AdminAnalytics from '@/components/views/UV_AdminAnalytics';
 import UV_AdminSettings from '@/components/views/UV_AdminSettings';
 import UV_AdminActivityLogs from '@/components/views/UV_AdminActivityLogs';
+import UV_AdminMenuBuilderSettings from '@/components/views/UV_AdminMenuBuilderSettings';
 
 // ===========================
 // React Query Setup
@@ -474,6 +475,11 @@ const AppRoutes: React.FC = () => {
         <Route path="/admin/menu/categories" element={
           <AdminRoute>
             <UV_AdminCategoryManagement />
+          </AdminRoute>
+        } />
+        <Route path="/admin/menu/builder" element={
+          <AdminRoute>
+            <UV_AdminMenuBuilderSettings />
           </AdminRoute>
         } />
 

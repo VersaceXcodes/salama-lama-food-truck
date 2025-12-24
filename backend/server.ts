@@ -6963,9 +6963,11 @@ app.get('/api/menu/builder-steps', async (req, res) => {
           item_id: item.item_id,
           name: item.name,
           description: item.description,
-          price: item.override_price !== null ? Number(item.override_price) : Number(item.price),
+          price: Number(item.price),
+          override_price: item.override_price !== null ? Number(item.override_price) : null,
           image_url: item.image_url,
           sort_order: item.sort_order,
+          is_active: item.is_active,
         });
       }
     }

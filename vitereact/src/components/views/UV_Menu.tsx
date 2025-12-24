@@ -231,16 +231,24 @@ const UV_Menu: React.FC = () => {
   const includeBaseItemPrice = builderConfigData?.config?.include_base_item_price ?? false;
 
   // React Query: Fetch Builder Steps (only when builder modal is open)
-  const { data: builderStepsData, isLoading: builderStepsLoading } = useQuery({
+  const { data: builderStepsData, isLoading: builderStepsLoading, error: builderStepsError } = useQuery({
     queryKey: ['builder-steps'],
     queryFn: fetchBuilderSteps,
     staleTime: 5 * 60 * 1000, // 5 minutes
     enabled: builderModal.is_open, // Only fetch when modal is open
+    retry: 2, // Retry failed requests twice
   });
 
   const builderSteps: BuilderStep[] = useMemo(() => {
     return builderStepsData?.steps || [];
   }, [builderStepsData]);
+
+  // Log errors for debugging
+  useEffect(() => {
+    if (builderStepsError) {
+      console.error('Failed to load builder steps:', builderStepsError);
+    }
+  }, [builderStepsError]);
 
   // Check if an item should use the builder flow
   const isBuilderItem = (item: MenuItem): boolean => {

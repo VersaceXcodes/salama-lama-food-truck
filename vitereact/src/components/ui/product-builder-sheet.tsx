@@ -135,10 +135,10 @@ const StepContent: React.FC<StepContentProps> = ({
     <div className="space-y-3">
       {/* Step Header */}
       <div className="text-center mb-4">
-        <h3 className="text-lg sm:text-xl font-bold text-[var(--primary-text)]">
+        <h3 id={`step-${step.step_id}-title`} className="text-lg sm:text-xl font-bold text-[var(--primary-text)]">
           {step.step_name}
         </h3>
-        <p className="text-sm text-[var(--primary-text)]/60 mt-1">
+        <p id={`step-${step.step_id}-description`} className="text-sm text-[var(--primary-text)]/60 mt-1">
           {step.step_type === 'single' 
             ? 'Select one option'
             : step.max_selections
@@ -160,11 +160,37 @@ const StepContent: React.FC<StepContentProps> = ({
       )}
 
       {/* Options Grid */}
-      <div className="grid grid-cols-1 gap-2">
-        {step.items
-          .filter(item => item.is_active)
-          .sort((a, b) => a.sort_order - b.sort_order)
-          .map((item) => {
+      <div 
+        className="grid grid-cols-1 gap-2" 
+        role={step.step_type === 'single' ? 'radiogroup' : 'group'}
+        aria-labelledby={`step-${step.step_id}-title`}
+        aria-describedby={`step-${step.step_id}-description`}
+        aria-required={step.is_required}
+      >
+        {(() => {
+          const activeItems = step.items
+            .filter(item => item.is_active)
+            .sort((a, b) => a.sort_order - b.sort_order);
+          
+          // Show empty state if no active items
+          if (activeItems.length === 0) {
+            console.warn(`No active items for step: ${step.step_name} (${step.step_key})`);
+            return (
+              <div className="bg-amber-50 border-2 border-amber-200 rounded-xl px-4 py-6 text-center">
+                <div className="mb-3">
+                  <svg className="w-12 h-12 mx-auto text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <h4 className="font-bold text-amber-900 mb-2">No Options Available</h4>
+                <p className="text-sm text-amber-700">
+                  No {step.step_key} options have been configured yet. Please contact support or try again later.
+                </p>
+              </div>
+            );
+          }
+
+          return activeItems.map((item) => {
             const isSelected = selectedItemIds.has(item.item_id);
             const price = getEffectivePrice(item);
 
@@ -172,6 +198,9 @@ const StepContent: React.FC<StepContentProps> = ({
               <button
                 key={item.step_item_id}
                 onClick={() => onSelectionChange(item)}
+                role={step.step_type === 'single' ? 'radio' : 'checkbox'}
+                aria-checked={isSelected}
+                aria-label={`${item.name}${item.description ? `, ${item.description}` : ''}${price > 0 ? `, plus €${price.toFixed(2)}` : ', included'}`}
                 className={`
                   w-full flex items-center gap-3 p-3 sm:p-4 rounded-xl border-2 transition-all duration-150
                   text-left touch-manipulation
@@ -231,7 +260,8 @@ const StepContent: React.FC<StepContentProps> = ({
                 )}
               </button>
             );
-          })}
+          });
+        })()}
       </div>
     </div>
   );
@@ -652,7 +682,36 @@ export const ProductBuilderSheet: React.FC<ProductBuilderSheetProps> = ({
           }}
         >
           <div className="px-4 py-4">
-            {isReviewStep ? (
+            {isLoading && steps.length === 0 ? (
+              // Loading state
+              <div className="space-y-4">
+                <div className="flex flex-col items-center justify-center py-12">
+                  <Loader2 className="w-12 h-12 text-[var(--btn-bg)] animate-spin mb-4" />
+                  <p className="text-sm text-[var(--primary-text)]/70 font-medium">Loading customization options...</p>
+                </div>
+              </div>
+            ) : steps.length === 0 ? (
+              // Error state - no steps available
+              <div className="space-y-4">
+                <div className="bg-red-50 border-2 border-red-200 rounded-xl px-4 py-6 text-center">
+                  <div className="mb-3">
+                    <svg className="w-12 h-12 mx-auto text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h4 className="font-bold text-red-900 mb-2">Configuration Error</h4>
+                  <p className="text-sm text-red-700 mb-4">
+                    This item's customization options are not configured. Please contact support.
+                  </p>
+                  <button
+                    onClick={onClose}
+                    className="px-6 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            ) : isReviewStep ? (
               <ReviewStep
                 productName={productName}
                 basePrice={basePrice}

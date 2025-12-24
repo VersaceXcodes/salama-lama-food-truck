@@ -386,11 +386,13 @@ function require_role(allowed_roles) {
 }
 /**
  * Permission guard for staff/admin fine-grained permissions stored in users.staff_permissions JSONB.
+ * Admin and manager roles have all permissions by default.
  */
 function require_permission(permission_key) {
     return async (req, res, next) => {
         const role = req.user?.role;
-        if (role === 'admin')
+        // Admin and manager have all permissions
+        if (role === 'admin' || role === 'manager')
             return next();
         if (role !== 'staff') {
             return res.status(403).json(createErrorResponse('Insufficient permissions', null, 'AUTH_FORBIDDEN', req.request_id));
@@ -5031,7 +5033,7 @@ app.get('/api/staff/orders/:id', authenticate_token, require_role(['staff', 'adm
         return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
     }
 });
-app.put('/api/staff/orders/:id/status', authenticate_token, require_role(['staff', 'admin']), require_permission('manage_orders'), async (req, res) => {
+app.put('/api/staff/orders/:id/status', authenticate_token, require_role(['staff', 'manager', 'admin']), require_permission('manage_orders'), async (req, res) => {
     try {
         const order_id = req.params.id;
         const input = updateOrderInputSchema.parse({ ...req.body, order_id });
@@ -7306,8 +7308,10 @@ app.get('/api/admin/invoices', authenticate_token, require_role(['admin']), asyn
         const q_schema = z.object({ limit: z.number().int().positive().default(20), offset: z.number().int().nonnegative().default(0) });
         const q = parse_query(q_schema, req.query);
         const rows = await pool.query('SELECT * FROM invoices ORDER BY created_at DESC LIMIT $1 OFFSET $2', [q.limit, q.offset]);
-        return ok(res, 200, {
-            invoices: rows.rows.map((r) => invoiceSchema.parse({
+        // Use safeParse to prevent one bad row from crashing the entire request
+        const invoices = [];
+        for (const r of rows.rows) {
+            const invoiceData = {
                 ...coerce_numbers(r, ['subtotal', 'discount_amount', 'delivery_fee', 'tax_amount', 'grand_total']),
                 subtotal: Number(r.subtotal),
                 discount_amount: Number(r.discount_amount),
@@ -7324,7 +7328,18 @@ app.get('/api/admin/invoices', authenticate_token, require_role(['admin']), asyn
                 notes: r.notes ?? null,
                 order_id: r.order_id ?? null,
                 catering_inquiry_id: r.catering_inquiry_id ?? null,
-            })),
+                user_id: r.user_id ?? null,
+            };
+            const result = invoiceSchema.safeParse(invoiceData);
+            if (result.success) {
+                invoices.push(result.data);
+            }
+            else {
+                console.error(`[${req.request_id}] Failed to parse invoice row invoice_id=${r.invoice_id}:`, result.error.issues);
+            }
+        }
+        return ok(res, 200, {
+            invoices,
             limit: q.limit,
             offset: q.offset,
         });
@@ -7358,6 +7373,7 @@ app.get('/api/admin/invoices/:id', authenticate_token, require_role(['admin']), 
                 notes: r.notes ?? null,
                 order_id: r.order_id ?? null,
                 catering_inquiry_id: r.catering_inquiry_id ?? null,
+                user_id: r.user_id ?? null,
             }),
         });
     }
@@ -7553,6 +7569,150 @@ app.post('/api/admin/invoices/:id/send', authenticate_token, require_role(['admi
         return ok(res, 200, { message: 'Invoice sent successfully', invoice_pdf_url: pdf_url });
     }
     catch (error) {
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+// Update invoice (payment status, notes)
+app.put('/api/admin/invoices/:id', authenticate_token, require_role(['admin']), async (req, res) => {
+    try {
+        const invoice_id = req.params.id;
+        // Check invoice exists
+        const existing = await pool.query('SELECT * FROM invoices WHERE invoice_id = $1', [invoice_id]);
+        if (existing.rows.length === 0) {
+            return res.status(404).json(createErrorResponse('Invoice not found', null, 'NOT_FOUND', req.request_id));
+        }
+        // Validate input
+        const updateSchema = z.object({
+            payment_status: z.enum(['pending', 'paid', 'overdue', 'cancelled']).optional(),
+            notes: z.string().nullable().optional(),
+        });
+        const input = updateSchema.parse(req.body);
+        // Build update query
+        const updates = [];
+        const values = [];
+        let paramIndex = 1;
+        if (input.payment_status !== undefined) {
+            updates.push(`payment_status = $${paramIndex++}`);
+            values.push(input.payment_status);
+            // If marking as paid and not already paid, set paid_at
+            if (input.payment_status === 'paid' && existing.rows[0].payment_status !== 'paid') {
+                updates.push(`paid_at = $${paramIndex++}`);
+                values.push(now_iso());
+            }
+        }
+        if (input.notes !== undefined) {
+            updates.push(`notes = $${paramIndex++}`);
+            values.push(input.notes);
+        }
+        if (updates.length === 0) {
+            // Nothing to update, return current invoice
+            const r = existing.rows[0];
+            return ok(res, 200, {
+                invoice: invoiceSchema.parse({
+                    ...coerce_numbers(r, ['subtotal', 'discount_amount', 'delivery_fee', 'tax_amount', 'grand_total']),
+                    subtotal: Number(r.subtotal),
+                    discount_amount: Number(r.discount_amount),
+                    delivery_fee: r.delivery_fee === null || r.delivery_fee === undefined ? null : Number(r.delivery_fee),
+                    tax_amount: Number(r.tax_amount),
+                    grand_total: Number(r.grand_total),
+                    line_items: r.line_items ?? [],
+                    customer_address: r.customer_address ?? null,
+                    payment_method: r.payment_method ?? null,
+                    sumup_transaction_id: r.sumup_transaction_id ?? null,
+                    due_date: r.due_date ?? null,
+                    paid_at: r.paid_at ?? null,
+                    invoice_pdf_url: r.invoice_pdf_url ?? null,
+                    notes: r.notes ?? null,
+                    order_id: r.order_id ?? null,
+                    catering_inquiry_id: r.catering_inquiry_id ?? null,
+                    user_id: r.user_id ?? null,
+                }),
+            });
+        }
+        // Add updated_at
+        updates.push(`updated_at = $${paramIndex++}`);
+        values.push(now_iso());
+        // Add invoice_id as the final param
+        values.push(invoice_id);
+        const query = `UPDATE invoices SET ${updates.join(', ')} WHERE invoice_id = $${paramIndex} RETURNING *`;
+        const result = await pool.query(query, values);
+        const r = result.rows[0];
+        // Log activity
+        await log_activity({
+            user_id: req.user.user_id,
+            action_type: 'update',
+            entity_type: 'invoice',
+            entity_id: invoice_id,
+            description: `Updated invoice ${r.invoice_number}`,
+            changes: input,
+            ip_address: req.ip,
+            user_agent: req.headers['user-agent'] || null,
+        });
+        return ok(res, 200, {
+            invoice: invoiceSchema.parse({
+                ...coerce_numbers(r, ['subtotal', 'discount_amount', 'delivery_fee', 'tax_amount', 'grand_total']),
+                subtotal: Number(r.subtotal),
+                discount_amount: Number(r.discount_amount),
+                delivery_fee: r.delivery_fee === null || r.delivery_fee === undefined ? null : Number(r.delivery_fee),
+                tax_amount: Number(r.tax_amount),
+                grand_total: Number(r.grand_total),
+                line_items: r.line_items ?? [],
+                customer_address: r.customer_address ?? null,
+                payment_method: r.payment_method ?? null,
+                sumup_transaction_id: r.sumup_transaction_id ?? null,
+                due_date: r.due_date ?? null,
+                paid_at: r.paid_at ?? null,
+                invoice_pdf_url: r.invoice_pdf_url ?? null,
+                notes: r.notes ?? null,
+                order_id: r.order_id ?? null,
+                catering_inquiry_id: r.catering_inquiry_id ?? null,
+                user_id: r.user_id ?? null,
+            }),
+        });
+    }
+    catch (error) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+        }
+        console.error(`[${req.request_id}] Error updating invoice:`, error);
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+// Download invoice PDF (authenticated)
+app.get('/api/admin/invoices/:id/pdf', authenticate_token, require_role(['admin']), async (req, res) => {
+    try {
+        const invoice_id = req.params.id;
+        // Get invoice
+        const invoice_res = await pool.query('SELECT invoice_id, invoice_number, invoice_pdf_url FROM invoices WHERE invoice_id = $1', [invoice_id]);
+        if (invoice_res.rows.length === 0) {
+            return res.status(404).json(createErrorResponse('Invoice not found', null, 'NOT_FOUND', req.request_id));
+        }
+        const invoice = invoice_res.rows[0];
+        let pdf_url = invoice.invoice_pdf_url;
+        // Generate PDF if not exists
+        if (!pdf_url) {
+            pdf_url = await generate_invoice_pdf({ invoice_id });
+        }
+        // pdf_url is like /storage/invoices/INV-xxxx.pdf
+        // The actual file is at backend/storage/invoices/INV-xxxx.pdf
+        const file_path = path.join(__dirname, '..', pdf_url);
+        // Check file exists
+        if (!fs.existsSync(file_path)) {
+            // Try to regenerate
+            pdf_url = await generate_invoice_pdf({ invoice_id });
+            const new_file_path = path.join(__dirname, '..', pdf_url);
+            if (!fs.existsSync(new_file_path)) {
+                return res.status(404).json(createErrorResponse('Invoice PDF file not found', null, 'NOT_FOUND', req.request_id));
+            }
+        }
+        const file_name = `${invoice.invoice_number}.pdf`;
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${file_name}"`);
+        const file_stream = fs.createReadStream(file_path);
+        file_stream.pipe(res);
+    }
+    catch (error) {
+        console.error(`[${req.request_id}] Error downloading invoice PDF:`, error);
         return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
     }
 });

@@ -459,11 +459,13 @@ function require_role(allowed_roles) {
 
 /**
  * Permission guard for staff/admin fine-grained permissions stored in users.staff_permissions JSONB.
+ * Admin and manager roles have all permissions by default.
  */
 function require_permission(permission_key) {
   return async (req, res, next) => {
     const role = req.user?.role;
-    if (role === 'admin') return next();
+    // Admin and manager have all permissions
+    if (role === 'admin' || role === 'manager') return next();
     if (role !== 'staff') {
       return res.status(403).json(createErrorResponse('Insufficient permissions', null, 'AUTH_FORBIDDEN', req.request_id));
     }
@@ -5897,7 +5899,7 @@ app.get('/api/staff/orders/:id', authenticate_token, require_role(['staff', 'adm
   }
 });
 
-app.put('/api/staff/orders/:id/status', authenticate_token, require_role(['staff', 'admin']), require_permission('manage_orders'), async (req, res) => {
+app.put('/api/staff/orders/:id/status', authenticate_token, require_role(['staff', 'manager', 'admin']), require_permission('manage_orders'), async (req, res) => {
   try {
     const order_id = req.params.id;
     const input = updateOrderInputSchema.parse({ ...req.body, order_id });

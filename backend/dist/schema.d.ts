@@ -2620,7 +2620,7 @@ export declare const invoiceSchema: z.ZodObject<{
     invoice_number: z.ZodString;
     order_id: z.ZodNullable<z.ZodString>;
     catering_inquiry_id: z.ZodNullable<z.ZodString>;
-    user_id: z.ZodString;
+    user_id: z.ZodNullable<z.ZodString>;
     customer_name: z.ZodString;
     customer_email: z.ZodString;
     customer_phone: z.ZodString;
@@ -2697,7 +2697,7 @@ export declare const invoiceSchema: z.ZodObject<{
 export declare const createInvoiceInputSchema: z.ZodObject<{
     order_id: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     catering_inquiry_id: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-    user_id: z.ZodString;
+    user_id: z.ZodNullable<z.ZodString>;
     customer_name: z.ZodString;
     customer_email: z.ZodString;
     customer_phone: z.ZodString;

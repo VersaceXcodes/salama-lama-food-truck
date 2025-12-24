@@ -3655,4 +3655,150 @@ describe('Integration: Admin Business Management', () => {
         expect(usageResponse.body.total_uses).toBeGreaterThanOrEqual(1);
     });
 });
+// ============================================
+// ADMIN INVOICES TESTS - NULL USER_ID REGRESSION
+// ============================================
+describe('Admin Invoices - Null user_id handling', () => {
+    it('GET /api/admin/invoices should return 200 with invoices including null user_id', async () => {
+        const adminToken = generateToken('admin_test_001', 'admin');
+        // Create an invoice with null user_id (guest order scenario)
+        await testDB.query(`
+      INSERT INTO invoices (
+        invoice_id, invoice_number, order_id, catering_inquiry_id, user_id,
+        customer_name, customer_email, customer_phone, customer_address,
+        line_items, subtotal, discount_amount, delivery_fee, tax_amount, grand_total,
+        payment_status, payment_method, sumup_transaction_id, issue_date,
+        due_date, paid_at, invoice_pdf_url, notes, created_at, updated_at
+      ) VALUES (
+        'inv_null_user_001',
+        'INV-NULL-001',
+        NULL,
+        NULL,
+        NULL,
+        'Guest Customer',
+        'guest@example.com',
+        '+353871234567',
+        '123 Guest Street, Dublin',
+        '[{"item": "Test Item", "quantity": 2, "unit_price": 10.00, "total": 20.00}]'::jsonb,
+        20.00,
+        0,
+        3.50,
+        5.41,
+        28.91,
+        'paid',
+        'card',
+        'txn_guest_123',
+        '2024-12-01T10:00:00Z',
+        NULL,
+        '2024-12-01T10:05:00Z',
+        NULL,
+        'Guest order invoice',
+        NOW(),
+        NOW()
+      )
+    `);
+        // Create another invoice with valid user_id for comparison
+        await testDB.query(`
+      INSERT INTO invoices (
+        invoice_id, invoice_number, order_id, catering_inquiry_id, user_id,
+        customer_name, customer_email, customer_phone, customer_address,
+        line_items, subtotal, discount_amount, delivery_fee, tax_amount, grand_total,
+        payment_status, payment_method, sumup_transaction_id, issue_date,
+        due_date, paid_at, invoice_pdf_url, notes, created_at, updated_at
+      ) VALUES (
+        'inv_with_user_001',
+        'INV-USER-001',
+        NULL,
+        NULL,
+        'admin_test_001',
+        'Admin User',
+        'admin@test.com',
+        '+353871111111',
+        '456 Admin Street, Dublin',
+        '[{"item": "Test Item", "quantity": 1, "unit_price": 15.00, "total": 15.00}]'::jsonb,
+        15.00,
+        0,
+        0,
+        3.45,
+        18.45,
+        'paid',
+        'card',
+        'txn_admin_456',
+        '2024-12-02T10:00:00Z',
+        NULL,
+        '2024-12-02T10:05:00Z',
+        NULL,
+        'Admin order invoice',
+        NOW(),
+        NOW()
+      )
+    `);
+        const response = await request(app)
+            .get('/api/admin/invoices')
+            .query({ limit: 20, offset: 0 })
+            .set('Authorization', `Bearer ${adminToken}`);
+        expect(response.status).toBe(200);
+        expect(response.body.invoices).toBeDefined();
+        expect(Array.isArray(response.body.invoices)).toBe(true);
+        expect(response.body.invoices.length).toBeGreaterThanOrEqual(2);
+        // Find the null user_id invoice
+        const nullUserInvoice = response.body.invoices.find((inv) => inv.invoice_id === 'inv_null_user_001');
+        expect(nullUserInvoice).toBeDefined();
+        expect(nullUserInvoice.user_id).toBeNull();
+        expect(nullUserInvoice.customer_name).toBe('Guest Customer');
+        expect(nullUserInvoice.customer_email).toBe('guest@example.com');
+        // Find the invoice with user_id
+        const withUserInvoice = response.body.invoices.find((inv) => inv.invoice_id === 'inv_with_user_001');
+        expect(withUserInvoice).toBeDefined();
+        expect(withUserInvoice.user_id).toBe('admin_test_001');
+    });
+    it('GET /api/admin/invoices/:id should return 200 for invoice with null user_id', async () => {
+        const adminToken = generateToken('admin_test_001', 'admin');
+        // Create an invoice with null user_id
+        await testDB.query(`
+      INSERT INTO invoices (
+        invoice_id, invoice_number, order_id, catering_inquiry_id, user_id,
+        customer_name, customer_email, customer_phone, customer_address,
+        line_items, subtotal, discount_amount, delivery_fee, tax_amount, grand_total,
+        payment_status, payment_method, sumup_transaction_id, issue_date,
+        due_date, paid_at, invoice_pdf_url, notes, created_at, updated_at
+      ) VALUES (
+        'inv_null_user_detail_001',
+        'INV-NULL-DETAIL-001',
+        NULL,
+        NULL,
+        NULL,
+        'Guest Detail Customer',
+        'guest.detail@example.com',
+        '+353871234568',
+        '789 Guest Avenue, Dublin',
+        '[{"item": "Detail Item", "quantity": 3, "unit_price": 8.00, "total": 24.00}]'::jsonb,
+        24.00,
+        2.00,
+        0,
+        5.06,
+        27.06,
+        'pending',
+        NULL,
+        NULL,
+        '2024-12-03T10:00:00Z',
+        '2024-12-10T10:00:00Z',
+        NULL,
+        NULL,
+        'Unpaid guest invoice',
+        NOW(),
+        NOW()
+      )
+    `);
+        const response = await request(app)
+            .get('/api/admin/invoices/inv_null_user_detail_001')
+            .set('Authorization', `Bearer ${adminToken}`);
+        expect(response.status).toBe(200);
+        expect(response.body.invoice).toBeDefined();
+        expect(response.body.invoice.invoice_id).toBe('inv_null_user_detail_001');
+        expect(response.body.invoice.user_id).toBeNull();
+        expect(response.body.invoice.customer_name).toBe('Guest Detail Customer');
+        expect(response.body.invoice.payment_status).toBe('pending');
+    });
+});
 //# sourceMappingURL=server.test.js.map

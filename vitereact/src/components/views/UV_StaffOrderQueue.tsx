@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppStore } from '@/store/main';
+import { toast } from '@/hooks/use-toast';
 import { 
   ClipboardList, 
   Clock, 
@@ -307,7 +308,6 @@ const UV_StaffOrderQueue: React.FC = () => {
   const currentUser = useAppStore(state => state.authentication_state.current_user);
   const socketConnected = useAppStore(state => state.websocket_state.connected);
   const subscribeToStaffEvents = useAppStore(state => state.subscribe_to_staff_events);
-  const addNotification = useAppStore(state => state.add_notification);
 
   // Local state
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
@@ -355,10 +355,13 @@ const UV_StaffOrderQueue: React.FC = () => {
   const updateStatusMutation = useMutation({
     mutationFn: (payload: UpdateOrderStatusPayload) => updateOrderStatus(authToken!, payload),
     onMutate: async (payload) => {
+      // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['staff', 'orders'] });
       
+      // Snapshot the previous value for rollback
       const previousData = queryClient.getQueryData(['staff', 'orders', filterOptions]);
       
+      // Optimistically update to the new value
       queryClient.setQueryData(['staff', 'orders', filterOptions], (old: any) => {
         if (!old) return old;
         return {
@@ -371,26 +374,60 @@ const UV_StaffOrderQueue: React.FC = () => {
 
       return { previousData };
     },
-    onError: (err, _payload, context) => {
+    onError: (err, payload, context) => {
+      // Rollback to previous data
       if (context?.previousData) {
         queryClient.setQueryData(['staff', 'orders', filterOptions], context.previousData);
       }
-      addNotification({
-        type: 'error',
-        message: `Failed to update order status: ${err instanceof Error ? err.message : 'Unknown error'}`,
+      
+      // Extract error message
+      const errorMessage = axios.isAxiosError(err) 
+        ? err.response?.data?.message || err.message 
+        : err instanceof Error 
+        ? err.message 
+        : 'Unknown error';
+      
+      console.error('[Order Status Update] Error:', {
+        orderId: payload.order_id,
+        targetStatus: payload.status,
+        error: errorMessage,
+        fullError: err,
+      });
+      
+      // Show error toast
+      toast({
+        variant: 'destructive',
+        title: 'Failed to update order status',
+        description: errorMessage,
       });
     },
     onSuccess: (data, payload) => {
+      // Invalidate and refetch to ensure consistency
       queryClient.invalidateQueries({ queryKey: ['staff', 'orders'] });
-      addNotification({
-        type: 'success',
-        message: `Order #${data.order_number} status updated to ${getStatusLabel(payload.status)}`,
+      
+      console.log('[Order Status Update] Success:', {
+        orderId: data.order_id,
+        orderNumber: data.order_number,
+        newStatus: payload.status,
+      });
+      
+      // Show success toast
+      toast({
+        title: 'Order status updated',
+        description: `Order #${data.order_number} moved to ${getStatusLabel(payload.status)}`,
       });
     },
   });
 
   // Handle status update
   const handleStatusUpdate = (order: Order, newStatus: Order['status']) => {
+    console.log('[Order Status Update] Initiating update:', {
+      orderId: order.order_id,
+      orderNumber: order.order_number,
+      currentStatus: order.status,
+      targetStatus: newStatus,
+    });
+    
     updateStatusMutation.mutate({
       order_id: order.order_id,
       status: newStatus,
@@ -415,13 +452,13 @@ const UV_StaffOrderQueue: React.FC = () => {
     //   if (notificationSettings.audio_enabled && !isMuted) {
     //     playNotificationSound();
     //   }
-    //   addNotification({ type: 'new_order', message: 'New order received!' });
+    //   toast({ title: 'New order received!' });
     // };
     
     return () => {
       // Cleanup
     };
-  }, [queryClient, notificationSettings, addNotification]);
+  }, [queryClient, notificationSettings]);
 
   // Update URL params when filters change
   useEffect(() => {

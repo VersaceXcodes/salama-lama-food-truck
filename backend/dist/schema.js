@@ -976,7 +976,7 @@ export const invoiceSchema = z.object({
     invoice_number: z.string(),
     order_id: z.string().nullable(),
     catering_inquiry_id: z.string().nullable(),
-    user_id: z.string(),
+    user_id: z.string().nullable(),
     customer_name: z.string(),
     customer_email: z.string(),
     customer_phone: z.string(),
@@ -1001,7 +1001,7 @@ export const invoiceSchema = z.object({
 export const createInvoiceInputSchema = z.object({
     order_id: z.string().nullable().optional(),
     catering_inquiry_id: z.string().nullable().optional(),
-    user_id: z.string(),
+    user_id: z.string().nullable(),
     customer_name: z.string().min(1).max(100),
     customer_email: z.string().email().max(255),
     customer_phone: z.string().min(10).max(20),

@@ -18,6 +18,16 @@ import {
   ChevronRight,
   Tag,
 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogBody,
+  DialogTitle,
+  DialogDescription,
+  DialogSection,
+} from '@/components/ui/dialog';
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -819,423 +829,466 @@ const UV_AdminMenuBuilderSettings: React.FC = () => {
       </div>
 
       {/* Step Form Modal */}
-      {step_form_open && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900">
-                {editing_step ? 'Edit Builder Step' : 'Create Builder Step'}
-              </h2>
+      <Dialog open={step_form_open} onOpenChange={(open) => {
+        if (!open) {
+          set_step_form_open(false);
+          set_editing_step(null);
+          reset_step_form();
+        }
+      }}>
+        <DialogContent className="max-w-[900px]">
+          <DialogHeader>
+            <DialogTitle>
+              {editing_step ? 'Edit Builder Step' : 'Create Builder Step'}
+            </DialogTitle>
+            <DialogDescription>
+              Configure a step in the menu builder workflow (e.g., Base, Protein, Toppings, Sauce)
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handle_step_form_submit}>
+            <DialogBody className="space-y-6">
+              {/* Step Details Section */}
+              <DialogSection title="Step Details" description="Basic information about this builder step">
+                <div className="space-y-4">
+                  {/* Step Name */}
+                  <div>
+                    <label htmlFor="step_name" className="block text-sm font-semibold text-gray-900 mb-2">
+                      Step Name <span className="text-red-600">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="step_name"
+                      required
+                      value={step_form_data.step_name}
+                      onChange={(e) =>
+                        set_step_form_data((prev) => ({ ...prev, step_name: e.target.value }))
+                      }
+                      placeholder="e.g., Choose Your Base"
+                      className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
+                    />
+                    <p className="text-xs text-gray-500 mt-2">Customer-facing name displayed in the builder</p>
+                  </div>
+
+                  {/* Step Key */}
+                  <div>
+                    <label htmlFor="step_key" className="block text-sm font-semibold text-gray-900 mb-2">
+                      Step Key <span className="text-red-600">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="step_key"
+                      required
+                      value={step_form_data.step_key}
+                      onChange={(e) =>
+                        set_step_form_data((prev) => ({
+                          ...prev,
+                          step_key: e.target.value.toLowerCase().replace(/\s+/g, '_'),
+                        }))
+                      }
+                      placeholder="e.g., base, protein, toppings"
+                      className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
+                    />
+                    <p className="text-xs text-gray-500 mt-2">Internal identifier (lowercase, underscores only)</p>
+                  </div>
+                </div>
+              </DialogSection>
+
+              {/* Selection Rules Section */}
+              <DialogSection title="Selection Rules" description="Configure how customers can select items in this step">
+                <div className="space-y-4">
+                  {/* Step Type */}
+                  <div>
+                    <label htmlFor="step_type" className="block text-sm font-semibold text-gray-900 mb-2">
+                      Selection Type <span className="text-red-600">*</span>
+                    </label>
+                    <select
+                      id="step_type"
+                      required
+                      value={step_form_data.step_type}
+                      onChange={(e) =>
+                        set_step_form_data((prev) => ({
+                          ...prev,
+                          step_type: e.target.value as 'single' | 'multiple',
+                          max_selections: e.target.value === 'single' ? 1 : prev.max_selections,
+                        }))
+                      }
+                      className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
+                    >
+                      <option value="single">Single Selection (choose one)</option>
+                      <option value="multiple">Multiple Selection (choose many)</option>
+                    </select>
+                  </div>
+
+                  {/* Min/Max Selections for Multiple */}
+                  {step_form_data.step_type === 'multiple' && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label
+                          htmlFor="min_selections"
+                          className="block text-sm font-semibold text-gray-900 mb-2"
+                        >
+                          Min Selections
+                        </label>
+                        <input
+                          type="number"
+                          id="min_selections"
+                          value={step_form_data.min_selections}
+                          onChange={(e) =>
+                            set_step_form_data((prev) => ({
+                              ...prev,
+                              min_selections: Number(e.target.value),
+                            }))
+                          }
+                          min="0"
+                          className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
+                        />
+                        <p className="text-xs text-gray-500 mt-2">Minimum items required</p>
+                      </div>
+                      <div>
+                        <label
+                          htmlFor="max_selections"
+                          className="block text-sm font-semibold text-gray-900 mb-2"
+                        >
+                          Max Selections
+                        </label>
+                        <input
+                          type="number"
+                          id="max_selections"
+                          value={step_form_data.max_selections || ''}
+                          onChange={(e) =>
+                            set_step_form_data((prev) => ({
+                              ...prev,
+                              max_selections: e.target.value ? Number(e.target.value) : null,
+                            }))
+                          }
+                          min="1"
+                          placeholder="Unlimited"
+                          className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
+                        />
+                        <p className="text-xs text-gray-500 mt-2">Maximum items allowed (blank for unlimited)</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Required Toggle */}
+                  <div className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <input
+                      type="checkbox"
+                      id="is_required"
+                      checked={step_form_data.is_required}
+                      onChange={(e) =>
+                        set_step_form_data((prev) => ({ ...prev, is_required: e.target.checked }))
+                      }
+                      className="h-5 w-5 text-orange-600 focus:ring-orange-500 border-gray-300 rounded mt-0.5"
+                    />
+                    <div className="flex-1">
+                      <label htmlFor="is_required" className="block text-sm font-semibold text-gray-900 cursor-pointer">
+                        Required Step
+                      </label>
+                      <p className="text-xs text-gray-600 mt-1">
+                        Customer must make a selection to continue
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </DialogSection>
+
+              {/* Display Order Section */}
+              <DialogSection title="Display Order">
+                <div>
+                  <label htmlFor="sort_order" className="block text-sm font-semibold text-gray-900 mb-2">
+                    Sort Order
+                  </label>
+                  <input
+                    type="number"
+                    id="sort_order"
+                    value={step_form_data.sort_order}
+                    onChange={(e) =>
+                      set_step_form_data((prev) => ({ ...prev, sort_order: Number(e.target.value) }))
+                    }
+                    min="0"
+                    className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
+                  />
+                  <p className="text-xs text-gray-500 mt-2">Lower numbers appear first in the builder flow</p>
+                </div>
+              </DialogSection>
+            </DialogBody>
+
+            <DialogFooter>
               <button
+                type="button"
                 onClick={() => {
                   set_step_form_open(false);
                   set_editing_step(null);
                   reset_step_form();
                 }}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="w-full sm:w-auto px-5 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors"
               >
-                <X className="h-6 w-6" />
+                Cancel
               </button>
-            </div>
-
-            <form onSubmit={handle_step_form_submit} className="p-6 space-y-4">
-              {/* Step Name */}
-              <div>
-                <label htmlFor="step_name" className="block text-sm font-medium text-gray-700 mb-2">
-                  Step Name <span className="text-red-600">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="step_name"
-                  required
-                  value={step_form_data.step_name}
-                  onChange={(e) =>
-                    set_step_form_data((prev) => ({ ...prev, step_name: e.target.value }))
-                  }
-                  placeholder="e.g., Choose Your Base"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                />
-              </div>
-
-              {/* Step Key */}
-              <div>
-                <label htmlFor="step_key" className="block text-sm font-medium text-gray-700 mb-2">
-                  Step Key <span className="text-red-600">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="step_key"
-                  required
-                  value={step_form_data.step_key}
-                  onChange={(e) =>
-                    set_step_form_data((prev) => ({
-                      ...prev,
-                      step_key: e.target.value.toLowerCase().replace(/\s+/g, '_'),
-                    }))
-                  }
-                  placeholder="e.g., base, protein, toppings"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                />
-                <p className="text-xs text-gray-500 mt-1">Used for data storage (lowercase, no spaces)</p>
-              </div>
-
-              {/* Step Type */}
-              <div>
-                <label htmlFor="step_type" className="block text-sm font-medium text-gray-700 mb-2">
-                  Selection Type <span className="text-red-600">*</span>
-                </label>
-                <select
-                  id="step_type"
-                  required
-                  value={step_form_data.step_type}
-                  onChange={(e) =>
-                    set_step_form_data((prev) => ({
-                      ...prev,
-                      step_type: e.target.value as 'single' | 'multiple',
-                      max_selections: e.target.value === 'single' ? 1 : prev.max_selections,
-                    }))
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                >
-                  <option value="single">Single Selection (choose one)</option>
-                  <option value="multiple">Multiple Selection (choose many)</option>
-                </select>
-              </div>
-
-              {/* Min/Max Selections for Multiple */}
-              {step_form_data.step_type === 'multiple' && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label
-                      htmlFor="min_selections"
-                      className="block text-sm font-medium text-gray-700 mb-2"
-                    >
-                      Min Selections
-                    </label>
-                    <input
-                      type="number"
-                      id="min_selections"
-                      value={step_form_data.min_selections}
-                      onChange={(e) =>
-                        set_step_form_data((prev) => ({
-                          ...prev,
-                          min_selections: Number(e.target.value),
-                        }))
-                      }
-                      min="0"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="max_selections"
-                      className="block text-sm font-medium text-gray-700 mb-2"
-                    >
-                      Max Selections
-                    </label>
-                    <input
-                      type="number"
-                      id="max_selections"
-                      value={step_form_data.max_selections || ''}
-                      onChange={(e) =>
-                        set_step_form_data((prev) => ({
-                          ...prev,
-                          max_selections: e.target.value ? Number(e.target.value) : null,
-                        }))
-                      }
-                      min="1"
-                      placeholder="Unlimited"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Sort Order */}
-              <div>
-                <label htmlFor="sort_order" className="block text-sm font-medium text-gray-700 mb-2">
-                  Sort Order
-                </label>
-                <input
-                  type="number"
-                  id="sort_order"
-                  value={step_form_data.sort_order}
-                  onChange={(e) =>
-                    set_step_form_data((prev) => ({ ...prev, sort_order: Number(e.target.value) }))
-                  }
-                  min="0"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                />
-              </div>
-
-              {/* Required Toggle */}
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="is_required"
-                  checked={step_form_data.is_required}
-                  onChange={(e) =>
-                    set_step_form_data((prev) => ({ ...prev, is_required: e.target.checked }))
-                  }
-                  className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
-                />
-                <label htmlFor="is_required" className="ml-2 text-sm font-medium text-gray-700">
-                  Required step (customer must make a selection)
-                </label>
-              </div>
-
-              {/* Form Actions */}
-              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
-                <button
-                  type="button"
-                  onClick={() => {
-                    set_step_form_open(false);
-                    set_editing_step(null);
-                    reset_step_form();
-                  }}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg font-medium hover:bg-gray-200 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={create_step_mutation.isPending}
-                  className="px-6 py-2 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {create_step_mutation.isPending ? (
-                    <span className="flex items-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Saving...
-                    </span>
-                  ) : (
-                    <span className="flex items-center">
-                      <Save className="h-4 w-4 mr-2" />
-                      {editing_step ? 'Update Step' : 'Create Step'}
-                    </span>
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+              <button
+                type="submit"
+                disabled={create_step_mutation.isPending}
+                className="w-full sm:w-auto px-6 py-2.5 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {create_step_mutation.isPending ? (
+                  <span className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Saving...
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-center">
+                    <Save className="h-4 w-4 mr-2" />
+                    {editing_step ? 'Update Step' : 'Create Step'}
+                  </span>
+                )}
+              </button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Step Item Form Modal */}
-      {step_item_form_open && selected_step_for_item && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900">
-                Add Item to "{selected_step_for_item.step_name}"
-              </h2>
+      <Dialog open={step_item_form_open} onOpenChange={(open) => {
+        if (!open) {
+          set_step_item_form_open(false);
+          set_selected_step_for_item(null);
+          reset_step_item_form();
+        }
+      }}>
+        <DialogContent className="max-w-[900px]">
+          <DialogHeader>
+            <DialogTitle>
+              Add Item to "{selected_step_for_item?.step_name}"
+            </DialogTitle>
+            <DialogDescription>
+              Select a menu item and configure how it appears in this builder step
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handle_step_item_form_submit}>
+            <DialogBody className="space-y-6">
+              {/* Item Details Section */}
+              <DialogSection title="Item Selection" description="Choose which menu item to add to this step">
+                <div>
+                  <label htmlFor="item_id" className="block text-sm font-semibold text-gray-900 mb-2">
+                    Menu Item <span className="text-red-600">*</span>
+                  </label>
+                  <select
+                    id="item_id"
+                    required
+                    value={step_item_form_data.item_id}
+                    onChange={(e) =>
+                      set_step_item_form_data((prev) => ({ ...prev, item_id: e.target.value }))
+                    }
+                    className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
+                  >
+                    <option value="">-- Select an item --</option>
+                    {selected_step_for_item && get_available_items(selected_step_for_item).map((item) => (
+                      <option key={item.item_id} value={item.item_id}>
+                        {item.name} - €{Number(item.price).toFixed(2)}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Only active items not already in this step are shown
+                  </p>
+                </div>
+              </DialogSection>
+
+              {/* Display & Pricing Section */}
+              <DialogSection title="Display & Pricing" description="Configure price and display order">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Override Price */}
+                  <div>
+                    <label
+                      htmlFor="override_price"
+                      className="block text-sm font-semibold text-gray-900 mb-2"
+                    >
+                      Override Price (€)
+                    </label>
+                    <input
+                      type="number"
+                      id="override_price"
+                      value={step_item_form_data.override_price}
+                      onChange={(e) =>
+                        set_step_item_form_data((prev) => ({ ...prev, override_price: e.target.value }))
+                      }
+                      placeholder="Leave empty for default"
+                      step="0.01"
+                      min="0"
+                      className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
+                    />
+                    <p className="text-xs text-gray-500 mt-2">
+                      Set a custom price for this builder step
+                    </p>
+                  </div>
+
+                  {/* Sort Order */}
+                  <div>
+                    <label htmlFor="item_sort_order" className="block text-sm font-semibold text-gray-900 mb-2">
+                      Sort Order
+                    </label>
+                    <input
+                      type="number"
+                      id="item_sort_order"
+                      value={step_item_form_data.sort_order}
+                      onChange={(e) =>
+                        set_step_item_form_data((prev) => ({ ...prev, sort_order: Number(e.target.value) }))
+                      }
+                      min="0"
+                      className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
+                    />
+                    <p className="text-xs text-gray-500 mt-2">
+                      Lower numbers appear first
+                    </p>
+                  </div>
+                </div>
+              </DialogSection>
+
+              {/* Availability Section */}
+              <DialogSection title="Availability">
+                <div className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <input
+                    type="checkbox"
+                    id="item_is_active"
+                    checked={step_item_form_data.is_active}
+                    onChange={(e) =>
+                      set_step_item_form_data((prev) => ({ ...prev, is_active: e.target.checked }))
+                    }
+                    className="h-5 w-5 text-orange-600 focus:ring-orange-500 border-gray-300 rounded mt-0.5"
+                  />
+                  <div className="flex-1">
+                    <label htmlFor="item_is_active" className="block text-sm font-semibold text-gray-900 cursor-pointer">
+                      Active in Builder
+                    </label>
+                    <p className="text-xs text-gray-600 mt-1">
+                      When enabled, customers will see this item as an option in the builder
+                    </p>
+                  </div>
+                </div>
+              </DialogSection>
+            </DialogBody>
+
+            <DialogFooter>
               <button
+                type="button"
                 onClick={() => {
                   set_step_item_form_open(false);
                   set_selected_step_for_item(null);
                   reset_step_item_form();
                 }}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="w-full sm:w-auto px-5 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors"
               >
-                <X className="h-6 w-6" />
+                Cancel
               </button>
-            </div>
-
-            <form onSubmit={handle_step_item_form_submit} className="p-6 space-y-4">
-              {/* Item Selection */}
-              <div>
-                <label htmlFor="item_id" className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Menu Item <span className="text-red-600">*</span>
-                </label>
-                <select
-                  id="item_id"
-                  required
-                  value={step_item_form_data.item_id}
-                  onChange={(e) =>
-                    set_step_item_form_data((prev) => ({ ...prev, item_id: e.target.value }))
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                >
-                  <option value="">-- Select an item --</option>
-                  {get_available_items(selected_step_for_item).map((item) => (
-                    <option key={item.item_id} value={item.item_id}>
-                      {item.name} - €{Number(item.price).toFixed(2)}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-xs text-gray-500 mt-1">
-                  Only active items not already in this step are shown
-                </p>
-              </div>
-
-              {/* Override Price */}
-              <div>
-                <label
-                  htmlFor="override_price"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Override Price (€)
-                </label>
-                <input
-                  type="number"
-                  id="override_price"
-                  value={step_item_form_data.override_price}
-                  onChange={(e) =>
-                    set_step_item_form_data((prev) => ({ ...prev, override_price: e.target.value }))
-                  }
-                  placeholder="Leave empty to use item's original price"
-                  step="0.01"
-                  min="0"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Set a different price for this item when used in the builder
-                </p>
-              </div>
-
-              {/* Sort Order */}
-              <div>
-                <label htmlFor="item_sort_order" className="block text-sm font-medium text-gray-700 mb-2">
-                  Sort Order
-                </label>
-                <input
-                  type="number"
-                  id="item_sort_order"
-                  value={step_item_form_data.sort_order}
-                  onChange={(e) =>
-                    set_step_item_form_data((prev) => ({ ...prev, sort_order: Number(e.target.value) }))
-                  }
-                  min="0"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                />
-              </div>
-
-              {/* Active Toggle */}
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="item_is_active"
-                  checked={step_item_form_data.is_active}
-                  onChange={(e) =>
-                    set_step_item_form_data((prev) => ({ ...prev, is_active: e.target.checked }))
-                  }
-                  className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
-                />
-                <label htmlFor="item_is_active" className="ml-2 text-sm font-medium text-gray-700">
-                  Active (visible to customers)
-                </label>
-              </div>
-
-              {/* Form Actions */}
-              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
-                <button
-                  type="button"
-                  onClick={() => {
-                    set_step_item_form_open(false);
-                    set_selected_step_for_item(null);
-                    reset_step_item_form();
-                  }}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg font-medium hover:bg-gray-200 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={create_step_item_mutation.isPending || !step_item_form_data.item_id}
-                  className="px-6 py-2 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {create_step_item_mutation.isPending ? (
-                    <span className="flex items-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Adding...
-                    </span>
-                  ) : (
-                    <span className="flex items-center">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Item
-                    </span>
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+              <button
+                type="submit"
+                disabled={create_step_item_mutation.isPending || !step_item_form_data.item_id}
+                className="w-full sm:w-auto px-6 py-2.5 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {create_step_item_mutation.isPending ? (
+                  <span className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Adding...
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-center">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Item
+                  </span>
+                )}
+              </button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Step Confirmation Modal */}
-      {delete_confirm_step_id && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
-            <div className="flex items-center mb-4">
-              <AlertCircle className="h-6 w-6 text-red-600 mr-3" />
-              <h2 className="text-xl font-semibold text-gray-900">Delete Builder Step</h2>
+      <Dialog open={!!delete_confirm_step_id} onOpenChange={(open) => {
+        if (!open) set_delete_confirm_step_id(null);
+      }}>
+        <DialogContent className="max-w-[500px]">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-red-100 rounded-lg">
+                <AlertCircle className="h-6 w-6 text-red-600" />
+              </div>
+              <DialogTitle>Delete Builder Step</DialogTitle>
             </div>
-            <p className="text-gray-600 mb-6">
+            <DialogDescription>
               Are you sure you want to delete this step? All items assigned to it will also be removed.
               This action cannot be undone.
-            </p>
-            <div className="flex items-center justify-end space-x-3">
-              <button
-                onClick={() => set_delete_confirm_step_id(null)}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg font-medium hover:bg-gray-200 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => handle_delete_step(delete_confirm_step_id)}
-                disabled={delete_step_mutation.isPending}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {delete_step_mutation.isPending ? (
-                  <span className="flex items-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Deleting...
-                  </span>
-                ) : (
-                  'Delete Step'
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <button
+              onClick={() => set_delete_confirm_step_id(null)}
+              className="w-full sm:w-auto px-5 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => delete_confirm_step_id && handle_delete_step(delete_confirm_step_id)}
+              disabled={delete_step_mutation.isPending}
+              className="w-full sm:w-auto px-6 py-2.5 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {delete_step_mutation.isPending ? (
+                <span className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Deleting...
+                </span>
+              ) : (
+                'Delete Step'
+              )}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Step Item Confirmation Modal */}
-      {delete_confirm_step_item && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
-            <div className="flex items-center mb-4">
-              <AlertCircle className="h-6 w-6 text-red-600 mr-3" />
-              <h2 className="text-xl font-semibold text-gray-900">Remove Item from Step</h2>
+      <Dialog open={!!delete_confirm_step_item} onOpenChange={(open) => {
+        if (!open) set_delete_confirm_step_item(null);
+      }}>
+        <DialogContent className="max-w-[500px]">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-red-100 rounded-lg">
+                <AlertCircle className="h-6 w-6 text-red-600" />
+              </div>
+              <DialogTitle>Remove Item from Step</DialogTitle>
             </div>
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to remove this item from the step? The menu item itself will not be
-              deleted.
-            </p>
-            <div className="flex items-center justify-end space-x-3">
-              <button
-                onClick={() => set_delete_confirm_step_item(null)}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg font-medium hover:bg-gray-200 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => handle_delete_step_item(delete_confirm_step_item.step_item_id)}
-                disabled={delete_step_item_mutation.isPending}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {delete_step_item_mutation.isPending ? (
-                  <span className="flex items-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Removing...
-                  </span>
-                ) : (
-                  'Remove Item'
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            <DialogDescription>
+              Are you sure you want to remove this item from the step? The menu item itself will not be deleted.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <button
+              onClick={() => set_delete_confirm_step_item(null)}
+              className="w-full sm:w-auto px-5 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => delete_confirm_step_item && handle_delete_step_item(delete_confirm_step_item.step_item_id)}
+              disabled={delete_step_item_mutation.isPending}
+              className="w-full sm:w-auto px-6 py-2.5 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {delete_step_item_mutation.isPending ? (
+                <span className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Removing...
+                </span>
+              ) : (
+                'Remove Item'
+              )}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

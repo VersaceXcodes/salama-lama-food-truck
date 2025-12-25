@@ -623,10 +623,10 @@ export const ProductBuilderSheet: React.FC<ProductBuilderSheetProps> = ({
           fixed z-[9999] bg-white flex flex-col overflow-hidden
           
           /* Mobile: Full-height bottom sheet */
-          left-0 right-0 bottom-0 w-full max-w-full rounded-t-[24px]
+          inset-x-0 bottom-0 w-full max-w-full rounded-t-[24px]
           
           /* Desktop: Centered modal */
-          md:left-1/2 md:right-auto md:top-1/2 md:bottom-auto
+          md:left-1/2 md:right-auto md:top-1/2 md:bottom-auto md:inset-x-auto
           md:-translate-x-1/2 md:-translate-y-1/2
           md:rounded-[20px] md:w-full md:max-w-[520px]
           
@@ -634,7 +634,7 @@ export const ProductBuilderSheet: React.FC<ProductBuilderSheetProps> = ({
           ${isRendered ? 'translate-y-0 md:translate-y-[-50%]' : 'translate-y-full md:translate-y-[-50%] md:scale-95'}
         `}
         style={{
-          maxHeight: 'min(95dvh, 95vh)',
+          maxHeight: '100dvh',
           height: 'auto',
         }}
         role="dialog"
@@ -677,8 +677,10 @@ export const ProductBuilderSheet: React.FC<ProductBuilderSheetProps> = ({
           className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain"
           style={{
             WebkitOverflowScrolling: 'touch',
+            overscrollBehavior: 'contain',
             flexBasis: '0%',
             minHeight: '200px',
+            maxHeight: '100%',
           }}
         >
           <div className="px-4 py-4">
@@ -732,10 +734,11 @@ export const ProductBuilderSheet: React.FC<ProductBuilderSheetProps> = ({
 
         {/* Footer with Navigation */}
         <div
-          className="flex-shrink-0 bg-white border-t border-[var(--border-light)] px-4 py-3"
+          className="flex-shrink-0 bg-white border-t border-[var(--border-light)] px-4 py-3 sticky bottom-0 z-10"
           style={{
             boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.08)',
-            paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0px))',
+            paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))',
+            touchAction: 'manipulation',
           }}
         >
           {/* Running Total (only show on non-review steps) */}
@@ -753,7 +756,8 @@ export const ProductBuilderSheet: React.FC<ProductBuilderSheetProps> = ({
                 onClick={handleBack}
                 type="button"
                 className="flex-1 py-3.5 rounded-xl font-bold text-[var(--primary-text)] border-2 border-[var(--primary-text)] flex items-center justify-center gap-2 active:scale-[0.98] transition-all touch-manipulation"
-                style={{ minHeight: '52px' }}
+                style={{ minHeight: '52px', pointerEvents: 'auto', touchAction: 'manipulation' }}
+                aria-label="Go back to previous step"
               >
                 <ChevronLeft className="w-5 h-5" />
                 Back
@@ -792,7 +796,8 @@ export const ProductBuilderSheet: React.FC<ProductBuilderSheetProps> = ({
                 onClick={handleNext}
                 type="button"
                 className="flex-1 py-3.5 rounded-xl font-bold text-white bg-[var(--btn-bg)] flex items-center justify-center gap-2 active:scale-[0.98] hover:bg-[#1A0F0D] transition-all touch-manipulation"
-                style={{ minHeight: '52px' }}
+                style={{ minHeight: '52px', pointerEvents: 'auto', touchAction: 'manipulation' }}
+                aria-label="Continue to next step"
               >
                 Next
                 <ChevronRight className="w-5 h-5" />
@@ -807,10 +812,31 @@ export const ProductBuilderSheet: React.FC<ProductBuilderSheetProps> = ({
         [data-product-builder] {
           isolation: isolate;
           contain: layout style paint;
+          overscroll-behavior: contain;
         }
         
         [data-product-builder] * {
           box-sizing: border-box;
+        }
+        
+        /* Ensure proper height calculation on mobile */
+        @media (max-width: 768px) {
+          [data-product-builder] {
+            max-height: 100dvh !important;
+            max-height: 100vh !important;
+          }
+        }
+        
+        /* Desktop: constrain height */
+        @media (min-width: 769px) {
+          [data-product-builder] {
+            max-height: min(90vh, 90dvh) !important;
+          }
+        }
+        
+        [data-product-builder] .overflow-y-auto {
+          -webkit-overflow-scrolling: touch;
+          overscroll-behavior: contain;
         }
         
         [data-product-builder] .overflow-y-auto::-webkit-scrollbar {
@@ -824,6 +850,22 @@ export const ProductBuilderSheet: React.FC<ProductBuilderSheetProps> = ({
         [data-product-builder] .overflow-y-auto::-webkit-scrollbar-thumb {
           background: rgba(0, 0, 0, 0.2);
           border-radius: 4px;
+        }
+        
+        /* Ensure footer is always visible and tappable */
+        [data-product-builder] > div:last-of-type {
+          position: sticky;
+          bottom: 0;
+          z-index: 10;
+          background: white;
+          pointer-events: auto;
+        }
+        
+        /* Prevent any transform issues on iOS */
+        [data-product-builder],
+        [data-product-builder] > * {
+          transform: translateZ(0);
+          -webkit-transform: translateZ(0);
         }
       `}</style>
     </>

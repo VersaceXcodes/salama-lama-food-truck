@@ -163,7 +163,7 @@ const StepContent: React.FC<StepContentProps> = ({
 
       {/* Options Grid */}
       <div 
-        className="grid grid-cols-1 gap-2" 
+        className="grid grid-cols-1 gap-2 w-full max-w-full" 
         role={step.step_type === 'single' ? 'radiogroup' : 'group'}
         aria-labelledby={`step-${step.step_id}-title`}
         aria-describedby={`step-${step.step_id}-description`}
@@ -204,8 +204,8 @@ const StepContent: React.FC<StepContentProps> = ({
                 aria-checked={isSelected}
                 aria-label={`${item.name}${item.description ? `, ${item.description}` : ''}${price > 0 ? `, plus €${price.toFixed(2)}` : ', included'}`}
                 className={`
-                  w-full flex items-center gap-3 p-3 sm:p-4 rounded-xl border-2 transition-all duration-150
-                  text-left touch-manipulation
+                  w-full max-w-full flex items-center gap-3 p-3 sm:p-4 rounded-xl border-2 transition-all duration-150
+                  text-left touch-manipulation overflow-hidden
                   ${isSelected
                     ? 'border-[var(--btn-bg)] bg-[var(--primary-bg)]'
                     : 'border-[var(--border-light)] bg-white hover:border-[var(--primary-text)]/30'
@@ -237,26 +237,26 @@ const StepContent: React.FC<StepContentProps> = ({
                   />
                 )}
 
-                {/* Item Details */}
-                <div className="flex-1 min-w-0">
-                  <span className={`block text-sm sm:text-base font-semibold ${isSelected ? 'text-[var(--primary-text)]' : 'text-[var(--primary-text)]'}`}>
+                {/* Item Details - CRITICAL: min-w-0 allows text to shrink and wrap properly */}
+                <div className="flex-1 min-w-0 overflow-hidden">
+                  <span className={`block text-sm sm:text-base font-semibold leading-snug ${isSelected ? 'text-[var(--primary-text)]' : 'text-[var(--primary-text)]'}`}>
                     {item.name}
                   </span>
                   {item.description && (
-                    <span className="block text-xs sm:text-sm text-[var(--primary-text)]/60 line-clamp-1 mt-0.5">
+                    <span className="block text-xs sm:text-sm text-[var(--primary-text)]/60 line-clamp-1 mt-0.5 leading-tight">
                       {item.description}
                     </span>
                   )}
                 </div>
 
-                {/* Price */}
+                {/* Price - CRITICAL: whitespace-nowrap ensures price stays on one line */}
                 {price > 0 && (
-                  <span className={`flex-shrink-0 text-sm sm:text-base font-bold ${isSelected ? 'text-[var(--btn-bg)]' : 'text-[var(--primary-text)]/70'}`}>
+                  <span className={`flex-shrink-0 text-sm sm:text-base font-bold whitespace-nowrap ${isSelected ? 'text-[var(--btn-bg)]' : 'text-[var(--primary-text)]/70'}`}>
                     +€{price.toFixed(2)}
                   </span>
                 )}
                 {price === 0 && (
-                  <span className="flex-shrink-0 text-xs sm:text-sm text-green-600 font-semibold">
+                  <span className="flex-shrink-0 text-xs sm:text-sm text-green-600 font-semibold whitespace-nowrap">
                     Included
                   </span>
                 )}
@@ -639,8 +639,8 @@ export const ProductBuilderSheet: React.FC<ProductBuilderSheetProps> = ({
         className={`
           fixed z-[9999] bg-white flex flex-col
           
-          /* Mobile: Full-height bottom sheet */
-          inset-x-0 bottom-0 w-full max-w-full rounded-t-[24px]
+          /* Mobile: Full-height bottom sheet - CRITICAL: no horizontal overflow */
+          inset-x-0 bottom-0 w-screen max-w-full rounded-t-[24px]
           
           /* Desktop: Centered modal */
           md:left-1/2 md:right-auto md:top-1/2 md:bottom-auto md:inset-x-auto
@@ -652,10 +652,12 @@ export const ProductBuilderSheet: React.FC<ProductBuilderSheetProps> = ({
         `}
         style={{
           /* iOS Safari safe viewport height with fallback */
-          height: '95dvh',
-          maxHeight: 'calc(100dvh - env(safe-area-inset-top, 0px))',
-          /* Prevent any overflow issues */
+          height: '92dvh',
+          maxHeight: 'calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))',
+          /* Prevent any overflow issues - CRITICAL for mobile */
           overflow: 'hidden',
+          /* Mobile: ensure no horizontal scroll */
+          maxWidth: '100vw',
         }}
         role="dialog"
         aria-modal="true"
@@ -667,19 +669,19 @@ export const ProductBuilderSheet: React.FC<ProductBuilderSheetProps> = ({
         </div>
 
         {/* Header */}
-        <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-[var(--border-light)] bg-white">
-          <div className="flex-1 min-w-0">
-            <h2 id="builder-title" className="text-lg font-bold text-[var(--primary-text)] truncate">
-              Build Your {productName}
+        <div className="flex-shrink-0 flex items-center justify-between gap-2 px-4 py-3 border-b border-[var(--border-light)] bg-white">
+          <div className="flex-1 min-w-0 flex items-baseline gap-2">
+            <h2 id="builder-title" className="text-base sm:text-lg font-bold text-[var(--primary-text)] truncate flex-shrink-0">
+              {productName}
             </h2>
-            <p className="text-xs text-[var(--primary-text)]/60">
+            <span className="text-xs text-[var(--primary-text)]/60 whitespace-nowrap flex-shrink-0">
               Step {currentStep + 1} of {totalSteps}
-            </p>
+            </span>
           </div>
           <button
             onClick={onClose}
             type="button"
-            className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full hover:bg-[var(--primary-bg)] active:bg-[var(--primary-bg)] transition-colors touch-manipulation ml-2"
+            className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full hover:bg-[var(--primary-bg)] active:bg-[var(--primary-bg)] transition-colors touch-manipulation"
             aria-label="Close"
           >
             <X className="w-5 h-5 text-[var(--primary-text)]" />
@@ -810,10 +812,10 @@ export const ProductBuilderSheet: React.FC<ProductBuilderSheetProps> = ({
 
         {/* Footer with Navigation */}
         <div
-          className="flex-shrink-0 bg-white border-t border-[var(--border-light)] px-4 py-3 sticky bottom-0 z-10"
+          className="flex-shrink-0 bg-white/95 backdrop-blur-sm border-t border-[var(--border-light)] px-4 py-3 sticky bottom-0 z-10"
           style={{
             boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.08)',
-            paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))',
+            paddingBottom: 'max(0.75rem, calc(0.75rem + env(safe-area-inset-bottom, 0px)))',
             touchAction: 'manipulation',
           }}
         >
@@ -910,12 +912,15 @@ export const ProductBuilderSheet: React.FC<ProductBuilderSheetProps> = ({
         @media (max-width: 768px) {
           [data-product-builder] {
             /* Use dvh for dynamic viewport on iOS Safari */
-            height: 95dvh !important;
-            max-height: calc(100dvh - env(safe-area-inset-top, 0px)) !important;
+            height: 92dvh !important;
+            max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
             /* Fallback for older browsers */
             max-height: calc(100vh - env(safe-area-inset-top, 0px));
             /* Prevent iOS address bar resize issues */
             min-height: 400px;
+            /* CRITICAL: prevent horizontal overflow */
+            max-width: 100vw !important;
+            width: 100vw !important;
           }
         }
         

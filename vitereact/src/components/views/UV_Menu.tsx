@@ -231,7 +231,7 @@ const UV_Menu: React.FC = () => {
   const includeBaseItemPrice = builderConfigData?.config?.include_base_item_price ?? false;
 
   // React Query: Fetch Builder Steps (only when builder modal is open)
-  const { data: builderStepsData, isLoading: builderStepsLoading, error: builderStepsError } = useQuery({
+  const { data: builderStepsData, isLoading: builderStepsLoading, error: builderStepsError, refetch: refetchBuilderSteps } = useQuery({
     queryKey: ['builder-steps'],
     queryFn: fetchBuilderSteps,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -1350,6 +1350,8 @@ const UV_Menu: React.FC = () => {
         steps={builderSteps}
         onAddToCart={handleBuilderAddToCart}
         isLoading={addBuilderToCartMutation.isPending || builderStepsLoading}
+        error={builderStepsError ? (builderStepsError as Error).message || 'Failed to load customization options' : null}
+        onRetry={() => refetchBuilderSteps()}
       />
     </>
   );

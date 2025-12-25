@@ -50,6 +50,8 @@ interface ProductBuilderSheetProps {
   steps: BuilderStep[];
   onAddToCart: (selections: BuilderSelection[], totalPrice: number, quantity: number) => void;
   isLoading?: boolean;
+  error?: string | null;
+  onRetry?: () => void;
 }
 
 // ===========================
@@ -414,6 +416,8 @@ export const ProductBuilderSheet: React.FC<ProductBuilderSheetProps> = ({
   steps,
   onAddToCart,
   isLoading = false,
+  error = null,
+  onRetry,
 }) => {
   const { openOverlay, closeOverlay } = useOverlayState();
   const [currentStep, setCurrentStep] = useState(0);
@@ -455,11 +459,22 @@ export const ProductBuilderSheet: React.FC<ProductBuilderSheetProps> = ({
     }
   }, [isOpen]);
 
-  // Handle body scroll lock
+  // Handle body scroll lock and iOS Safari viewport height fix
   useEffect(() => {
     if (isOpen) {
       openOverlay('builder');
       const scrollY = window.scrollY;
+      
+      // iOS Safari viewport height fix
+      const setVh = () => {
+        const vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+      };
+      setVh();
+      window.addEventListener('resize', setVh);
+      window.addEventListener('orientationchange', setVh);
+      
+      // Lock body scroll
       document.body.style.overflow = 'hidden';
       document.body.style.position = 'fixed';
       document.body.style.top = `-${scrollY}px`;
@@ -468,6 +483,8 @@ export const ProductBuilderSheet: React.FC<ProductBuilderSheetProps> = ({
 
       return () => {
         closeOverlay();
+        window.removeEventListener('resize', setVh);
+        window.removeEventListener('orientationchange', setVh);
         document.body.style.overflow = '';
         document.body.style.position = '';
         document.body.style.top = '';
@@ -620,7 +637,7 @@ export const ProductBuilderSheet: React.FC<ProductBuilderSheetProps> = ({
       <div
         data-product-builder="true"
         className={`
-          fixed z-[9999] bg-white flex flex-col overflow-hidden
+          fixed z-[9999] bg-white flex flex-col
           
           /* Mobile: Full-height bottom sheet */
           inset-x-0 bottom-0 w-full max-w-full rounded-t-[24px]
@@ -634,8 +651,11 @@ export const ProductBuilderSheet: React.FC<ProductBuilderSheetProps> = ({
           ${isRendered ? 'translate-y-0 md:translate-y-[-50%]' : 'translate-y-full md:translate-y-[-50%] md:scale-95'}
         `}
         style={{
-          maxHeight: '100dvh',
-          height: 'auto',
+          /* iOS Safari safe viewport height with fallback */
+          height: '95dvh',
+          maxHeight: 'calc(100dvh - env(safe-area-inset-top, 0px))',
+          /* Prevent any overflow issues */
+          overflow: 'hidden',
         }}
         role="dialog"
         aria-modal="true"
@@ -678,22 +698,37 @@ export const ProductBuilderSheet: React.FC<ProductBuilderSheetProps> = ({
           style={{
             WebkitOverflowScrolling: 'touch',
             overscrollBehavior: 'contain',
+            /* Critical: flex-1 with min-height ensures content is visible */
+            flexGrow: 1,
+            flexShrink: 1,
             flexBasis: '0%',
-            minHeight: '200px',
-            maxHeight: '100%',
+            minHeight: '150px',
+            /* Allow scroll within this container */
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
-          <div className="px-4 py-4">
+          <div className="px-4 py-4 flex-1">
             {isLoading && steps.length === 0 ? (
-              // Loading state
+              // Loading state with skeleton placeholders
               <div className="space-y-4">
-                <div className="flex flex-col items-center justify-center py-12">
-                  <Loader2 className="w-12 h-12 text-[var(--btn-bg)] animate-spin mb-4" />
+                <div className="flex flex-col items-center justify-center py-8">
+                  <Loader2 className="w-10 h-10 text-[var(--btn-bg)] animate-spin mb-4" />
                   <p className="text-sm text-[var(--primary-text)]/70 font-medium">Loading customization options...</p>
                 </div>
+                {/* Skeleton placeholders for options */}
+                <div className="space-y-3">
+                  <div className="h-6 bg-gray-200 rounded animate-pulse w-2/3 mx-auto" />
+                  <div className="h-4 bg-gray-200 rounded animate-pulse w-1/2 mx-auto" />
+                  <div className="space-y-2 mt-4">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="h-16 bg-gray-100 rounded-xl animate-pulse border border-gray-200" />
+                    ))}
+                  </div>
+                </div>
               </div>
-            ) : steps.length === 0 ? (
-              // Error state - no steps available
+            ) : error ? (
+              // Error state with retry button
               <div className="space-y-4">
                 <div className="bg-red-50 border-2 border-red-200 rounded-xl px-4 py-6 text-center">
                   <div className="mb-3">
@@ -701,16 +736,57 @@ export const ProductBuilderSheet: React.FC<ProductBuilderSheetProps> = ({
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                  <h4 className="font-bold text-red-900 mb-2">Configuration Error</h4>
+                  <h4 className="font-bold text-red-900 mb-2">We couldn't load options</h4>
                   <p className="text-sm text-red-700 mb-4">
-                    This item's customization options are not configured. Please contact support.
+                    {error || "Something went wrong. Please try again."}
                   </p>
-                  <button
-                    onClick={onClose}
-                    className="px-6 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors"
-                  >
-                    Close
-                  </button>
+                  <div className="flex gap-3 justify-center">
+                    {onRetry && (
+                      <button
+                        onClick={onRetry}
+                        className="px-6 py-2 bg-[var(--btn-bg)] text-white rounded-lg font-semibold hover:opacity-90 transition-colors"
+                      >
+                        Retry
+                      </button>
+                    )}
+                    <button
+                      onClick={onClose}
+                      className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : steps.length === 0 ? (
+              // Empty state - no steps configured
+              <div className="space-y-4">
+                <div className="bg-amber-50 border-2 border-amber-200 rounded-xl px-4 py-6 text-center">
+                  <div className="mb-3">
+                    <svg className="w-12 h-12 mx-auto text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  </div>
+                  <h4 className="font-bold text-amber-900 mb-2">No Options Available</h4>
+                  <p className="text-sm text-amber-700 mb-4">
+                    This item's customization options are not configured yet. Please contact support or try again later.
+                  </p>
+                  <div className="flex gap-3 justify-center">
+                    {onRetry && (
+                      <button
+                        onClick={onRetry}
+                        className="px-6 py-2 bg-[var(--btn-bg)] text-white rounded-lg font-semibold hover:opacity-90 transition-colors"
+                      >
+                        Retry
+                      </button>
+                    )}
+                    <button
+                      onClick={onClose}
+                      className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+                    >
+                      Close
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : isReviewStep ? (
@@ -809,34 +885,55 @@ export const ProductBuilderSheet: React.FC<ProductBuilderSheetProps> = ({
 
       {/* Styles */}
       <style>{`
+        /* iOS Safari viewport height fix */
+        :root {
+          --vh: 1vh;
+        }
+        
         [data-product-builder] {
           isolation: isolate;
           contain: layout style paint;
           overscroll-behavior: contain;
+          /* Force GPU acceleration for smoother animations */
+          transform: translateZ(0);
+          -webkit-transform: translateZ(0);
+          /* Ensure flex layout works correctly */
+          display: flex !important;
+          flex-direction: column !important;
         }
         
         [data-product-builder] * {
           box-sizing: border-box;
         }
         
-        /* Ensure proper height calculation on mobile */
+        /* Mobile: Full viewport height with safe areas */
         @media (max-width: 768px) {
           [data-product-builder] {
-            max-height: 100dvh !important;
-            max-height: 100vh !important;
+            /* Use dvh for dynamic viewport on iOS Safari */
+            height: 95dvh !important;
+            max-height: calc(100dvh - env(safe-area-inset-top, 0px)) !important;
+            /* Fallback for older browsers */
+            max-height: calc(100vh - env(safe-area-inset-top, 0px));
+            /* Prevent iOS address bar resize issues */
+            min-height: 400px;
           }
         }
         
         /* Desktop: constrain height */
         @media (min-width: 769px) {
           [data-product-builder] {
+            height: auto !important;
             max-height: min(90vh, 90dvh) !important;
           }
         }
         
+        /* Scrollable content area - CRITICAL for mobile */
         [data-product-builder] .overflow-y-auto {
           -webkit-overflow-scrolling: touch;
           overscroll-behavior: contain;
+          /* Ensure this takes available space */
+          flex: 1 1 0% !important;
+          min-height: 0 !important; /* Critical for flex children to scroll */
         }
         
         [data-product-builder] .overflow-y-auto::-webkit-scrollbar {
@@ -852,20 +949,32 @@ export const ProductBuilderSheet: React.FC<ProductBuilderSheetProps> = ({
           border-radius: 4px;
         }
         
-        /* Ensure footer is always visible and tappable */
-        [data-product-builder] > div:last-of-type {
-          position: sticky;
-          bottom: 0;
+        /* Header - fixed at top */
+        [data-product-builder] > .flex-shrink-0:first-of-type {
+          flex-shrink: 0 !important;
+        }
+        
+        /* Footer - always visible at bottom */
+        [data-product-builder] > .flex-shrink-0:last-of-type {
+          flex-shrink: 0 !important;
+          position: relative;
           z-index: 10;
           background: white;
           pointer-events: auto;
         }
         
-        /* Prevent any transform issues on iOS */
-        [data-product-builder],
+        /* Ensure all direct children respect flex layout */
         [data-product-builder] > * {
           transform: translateZ(0);
           -webkit-transform: translateZ(0);
+          flex-shrink: 0;
+        }
+        
+        /* The scrollable content area should be the only one that grows */
+        [data-product-builder] > .flex-1 {
+          flex: 1 1 0% !important;
+          min-height: 0 !important;
+          overflow-y: auto !important;
         }
       `}</style>
     </>

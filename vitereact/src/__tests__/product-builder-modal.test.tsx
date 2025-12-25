@@ -498,4 +498,206 @@ describe('ProductBuilderSheet - Mobile Modal Flow', () => {
     expect(firstStepOptions).toBeInTheDocument();
     expect(firstStepOptions).toHaveAttribute('aria-required', 'true');
   });
+
+  // =============================================
+  // MOBILE VIEWPORT VISIBILITY TESTS
+  // Test that step content is visible on mobile
+  // =============================================
+
+  it('shows step content visible on mobile viewport (not blank)', async () => {
+    // Ensure mobile viewport
+    Object.defineProperty(window, 'innerWidth', { value: 375, writable: true });
+    Object.defineProperty(window, 'innerHeight', { value: 812, writable: true });
+
+    render(
+      <ProductBuilderSheet
+        isOpen={true}
+        onClose={mockOnClose}
+        productName="Test Sandwich"
+        basePrice={5.0}
+        steps={mockSteps}
+        onAddToCart={mockOnAddToCart}
+      />
+    );
+
+    await waitFor(() => {
+      // Modal header should be visible
+      expect(screen.getByText('Build Your Test Sandwich')).toBeInTheDocument();
+      expect(screen.getByText('Step 1 of 4')).toBeInTheDocument();
+    });
+
+    // Step title should be visible (not blank)
+    const stepTitle = screen.getByText('Choose Your Base');
+    expect(stepTitle).toBeInTheDocument();
+    expect(stepTitle).toBeVisible();
+
+    // Step description should be visible
+    const stepDescription = screen.getByText('Select one option');
+    expect(stepDescription).toBeInTheDocument();
+    expect(stepDescription).toBeVisible();
+
+    // Options should be visible (not blank)
+    const whiteBreadOption = screen.getByRole('radio', { name: /white bread/i });
+    expect(whiteBreadOption).toBeInTheDocument();
+    expect(whiteBreadOption).toBeVisible();
+
+    const wheatBreadOption = screen.getByRole('radio', { name: /wheat bread/i });
+    expect(wheatBreadOption).toBeInTheDocument();
+    expect(wheatBreadOption).toBeVisible();
+
+    // Next button should be visible and clickable
+    const nextButton = screen.getByRole('button', { name: /next/i });
+    expect(nextButton).toBeInTheDocument();
+    expect(nextButton).toBeVisible();
+
+    // Running total should be visible
+    expect(screen.getByText('Running total')).toBeInTheDocument();
+  });
+
+  it('Next button is clickable after selecting an option on mobile', async () => {
+    const user = userEvent.setup();
+
+    // Ensure mobile viewport
+    Object.defineProperty(window, 'innerWidth', { value: 390, writable: true });
+    Object.defineProperty(window, 'innerHeight', { value: 844, writable: true });
+
+    render(
+      <ProductBuilderSheet
+        isOpen={true}
+        onClose={mockOnClose}
+        productName="Test Sandwich"
+        basePrice={5.0}
+        steps={mockSteps}
+        onAddToCart={mockOnAddToCart}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Choose Your Base')).toBeInTheDocument();
+    });
+
+    // Select an option
+    const whiteBreadOption = screen.getByRole('radio', { name: /white bread/i });
+    await user.click(whiteBreadOption);
+
+    // Verify selection
+    await waitFor(() => {
+      expect(whiteBreadOption).toHaveAttribute('aria-checked', 'true');
+    });
+
+    // Click Next button
+    const nextButton = screen.getByRole('button', { name: /next/i });
+    await user.click(nextButton);
+
+    // Should advance to next step
+    await waitFor(() => {
+      expect(screen.getByText('Choose Your Protein')).toBeInTheDocument();
+      expect(screen.getByText('Step 2 of 4')).toBeInTheDocument();
+    });
+  });
+
+  // =============================================
+  // LOADING AND ERROR STATE TESTS
+  // =============================================
+
+  it('shows loading state with skeleton placeholders', async () => {
+    render(
+      <ProductBuilderSheet
+        isOpen={true}
+        onClose={mockOnClose}
+        productName="Test Sandwich"
+        basePrice={5.0}
+        steps={[]} // Empty steps indicates loading
+        onAddToCart={mockOnAddToCart}
+        isLoading={true}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Build Your Test Sandwich')).toBeInTheDocument();
+    });
+
+    // Should show loading message
+    expect(screen.getByText('Loading customization options...')).toBeInTheDocument();
+  });
+
+  it('shows error state with retry button', async () => {
+    const mockRetry = vi.fn();
+
+    render(
+      <ProductBuilderSheet
+        isOpen={true}
+        onClose={mockOnClose}
+        productName="Test Sandwich"
+        basePrice={5.0}
+        steps={[]}
+        onAddToCart={mockOnAddToCart}
+        error="Network error occurred"
+        onRetry={mockRetry}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Build Your Test Sandwich')).toBeInTheDocument();
+    });
+
+    // Should show error message
+    expect(screen.getByText("We couldn't load options")).toBeInTheDocument();
+    expect(screen.getByText('Network error occurred')).toBeInTheDocument();
+
+    // Retry button should be visible
+    const retryButton = screen.getByRole('button', { name: /retry/i });
+    expect(retryButton).toBeInTheDocument();
+    expect(retryButton).toBeVisible();
+  });
+
+  it('calls onRetry when retry button is clicked', async () => {
+    const user = userEvent.setup();
+    const mockRetry = vi.fn();
+
+    render(
+      <ProductBuilderSheet
+        isOpen={true}
+        onClose={mockOnClose}
+        productName="Test Sandwich"
+        basePrice={5.0}
+        steps={[]}
+        onAddToCart={mockOnAddToCart}
+        error="Failed to load"
+        onRetry={mockRetry}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("We couldn't load options")).toBeInTheDocument();
+    });
+
+    // Click retry button
+    const retryButton = screen.getByRole('button', { name: /retry/i });
+    await user.click(retryButton);
+
+    // Verify onRetry was called
+    expect(mockRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows empty state when no steps configured', async () => {
+    render(
+      <ProductBuilderSheet
+        isOpen={true}
+        onClose={mockOnClose}
+        productName="Test Sandwich"
+        basePrice={5.0}
+        steps={[]}
+        onAddToCart={mockOnAddToCart}
+        isLoading={false}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Build Your Test Sandwich')).toBeInTheDocument();
+    });
+
+    // Should show empty state message
+    expect(screen.getByText('No Options Available')).toBeInTheDocument();
+  });
 });

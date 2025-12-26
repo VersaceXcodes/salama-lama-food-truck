@@ -1,30 +1,29 @@
-## BUILD FAILURE - Fix Required (Attempt 2/3)
+This is a mobile UI rendering issue only. Desktop layout works correctly. On mobile devices, especially iOS Safari, the modal used for the “build your own” flow renders incorrectly.
 
-The Vite build process failed. Analyze the error output below and fix the issue.
+Inside the modal, content overflows the screen width. Option cards extend past the right edge, text and prices are clipped, and horizontal scrolling appears. The header with the step indicator overlaps the modal content instead of pushing it down. The bottom action button does not account for mobile safe-area insets and sits too close to the device edge.
 
-## Build Error Output:
-```
-sh: 1: vite: not found
+Fix this using a strict mobile-first approach. All modal containers and child elements must fit within the viewport width at all times. Remove fixed widths, min-widths, or layout assumptions that cause overflow on small screens. Use flexible layouts that wrap correctly and align text and price elements without absolute positioning.
 
-```
+Prevent horizontal scrolling entirely. Ensure the modal header occupies its own vertical space and never overlaps content. Ensure the bottom action area respects mobile safe-areas, especially on iPhones.
 
-## Build Directory: /app/vitereact
+Only adjust layout, spacing, overflow handling, and CSS behavior for mobile Safari compatibility. Do not change data, logic, or backend behavior. The final result should be a clean, fully responsive mobile modal where all content is visible and usable on small screens.
 
-## Your Task:
-1. **Analyze the Error**: Read the error output carefully to understand what went wrong
-2. **Locate the Problem**: Find the file(s) mentioned in the error
-3. **Apply the Fix**: 
-   - Missing file/component? CREATE it with correct exports
-   - Wrong import path? FIX the import statement  
-   - Syntax error? FIX the syntax in the affected file
-   - Type error? FIX the TypeScript types
-   - Missing dependency? Check if it needs to be installed or if it's a local import issue
-4. **Verify**: After fixing, ensure all imports resolve correctly
+When the user mentions generic pages, map them to concrete files/components by scanning for headings and routes. Examples you MUST follow:
+- If the user says "login" or "sign in", search for components containing the literal heading "Sign in to your account" and edit that file.
+- If the user says "sign up" or "register", search for "Create your account" or equivalent.
+- Always return an explicit list of changed file paths. If your first attempt doesn't change the UI, re-search by heading text and update the correct file.
 
-## IMPORTANT:
-- The build CANNOT succeed until this error is fixed
-- If creating a missing component, ensure exports match what's being imported (default vs named)
-- If the error mentions a specific line number, check that line in the source file
-- Run `npx tsc --noEmit` after fixing to verify no TypeScript errors remain
+⚠️ PRIORITY INSTRUCTIONS:
+- The user's request above is the PRIMARY task. Complete it first.
+- Ignore any existing errors, warnings, or issues you detect in the project unless they directly prevent you from completing the user's requested task.
+- Do NOT automatically fix unrelated errors or refactor code unless explicitly requested.
+- Focus solely on implementing the user's request: "This is a mobile UI rendering issue only. Desktop layout works correctly. On mobile devices, especially iOS Safari, the modal used for the “build your own” flow renders incorrectly.
 
-Fix this error so the build can succeed on retry.
+Inside the modal, content overflows the screen width. Option cards extend past the right edge, text and prices are clipped, and horizontal scrolling appears. The header with the step indicator overlaps the modal content instead of pushing it down. The bottom action button does not account for mobile safe-area insets and sits too close to the device edge.
+
+Fix this using a strict mobile-first approach. All modal containers and child elements must fit within the viewport width at all times. Remove fixed widths, min-widths, or layout assumptions that cause overflow on small screens. Use flexible layouts that wrap correctly and align text and price elements without absolute positioning.
+
+Prevent horizontal scrolling entirely. Ensure the modal header occupies its own vertical space and never overlaps content. Ensure the bottom action area respects mobile safe-areas, especially on iPhones.
+
+Only adjust layout, spacing, overflow handling, and CSS behavior for mobile Safari compatibility. Do not change data, logic, or backend behavior. The final result should be a clean, fully responsive mobile modal where all content is visible and usable on small screens."
+- Only address errors if they block the specific functionality requested by the user.

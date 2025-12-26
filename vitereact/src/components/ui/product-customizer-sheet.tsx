@@ -513,11 +513,13 @@ export const ProductCustomizerSheet: React.FC<ProductCustomizerSheetProps> = ({
         {/* Sticky Footer with Total and Add to Cart */}
         {item && (
           <div 
-            className="flex-shrink-0 bg-white border-t border-[var(--border-light)] px-4 py-3 sm:py-4 w-full box-border"
+            className="flex-shrink-0 bg-white border-t border-[var(--border-light)] px-3 sm:px-4 py-3 sm:py-4 w-full box-border"
             style={{
               boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.08)',
               // Ensure footer stays above iOS home indicator
-              paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 0px))',
+              paddingBottom: 'max(12px, calc(12px + env(safe-area-inset-bottom, 0px)))',
+              paddingLeft: 'max(12px, env(safe-area-inset-left, 12px))',
+              paddingRight: 'max(12px, env(safe-area-inset-right, 12px))',
             }}
           >
             {/* Total Row */}
@@ -580,11 +582,31 @@ export const ProductCustomizerSheet: React.FC<ProductCustomizerSheetProps> = ({
         [data-product-customizer] {
           isolation: isolate;
           contain: layout style paint;
+          /* CRITICAL: Prevent ALL horizontal overflow */
+          overflow-x: hidden !important;
+          box-sizing: border-box !important;
         }
         
         /* Ensure all children respect box-sizing */
-        [data-product-customizer] * {
-          box-sizing: border-box;
+        [data-product-customizer] *,
+        [data-product-customizer] *::before,
+        [data-product-customizer] *::after {
+          box-sizing: border-box !important;
+        }
+        
+        /* Mobile: Full viewport width with safe areas */
+        @media (max-width: 768px) {
+          [data-product-customizer] {
+            max-width: 100% !important;
+            width: 100% !important;
+            left: 0 !important;
+            right: 0 !important;
+          }
+          
+          /* Ensure body doesn't scroll horizontally when modal is open */
+          body:has([data-product-customizer]) {
+            overflow-x: hidden !important;
+          }
         }
         
         /* Custom scrollbar for content area */
@@ -599,6 +621,12 @@ export const ProductCustomizerSheet: React.FC<ProductCustomizerSheetProps> = ({
         [data-product-customizer] .overflow-y-auto::-webkit-scrollbar-thumb {
           background: rgba(0, 0, 0, 0.2);
           border-radius: 4px;
+        }
+        
+        /* Scrollable content area - prevent horizontal overflow */
+        [data-product-customizer] .overflow-y-auto {
+          overflow-x: hidden !important;
+          max-width: 100% !important;
         }
         
         /* Smooth transitions */
@@ -620,6 +648,13 @@ export const ProductCustomizerSheet: React.FC<ProductCustomizerSheetProps> = ({
           [data-product-customizer] {
             /* Prevent rubber-band scrolling on the modal itself */
             overscroll-behavior: contain;
+          }
+        }
+        
+        /* Safe area support for notched devices */
+        @supports (padding-bottom: env(safe-area-inset-bottom)) {
+          [data-product-customizer] > .flex-shrink-0:last-of-type {
+            padding-bottom: max(16px, calc(16px + env(safe-area-inset-bottom)));
           }
         }
       `}</style>

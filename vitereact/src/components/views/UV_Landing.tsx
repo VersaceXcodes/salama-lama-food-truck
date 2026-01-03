@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppStore } from '@/store/main';
-import { Star, MapPin, Phone, Clock, ChevronRight, Check, AlertCircle, Loader2 } from 'lucide-react';
+import { Star, MapPin, Phone, Clock, ChevronRight, Check, AlertCircle, Loader2, Navigation, ExternalLink } from 'lucide-react';
 
 // ===========================
 // Type Definitions
@@ -458,73 +458,110 @@ const UV_Landing: React.FC = () => {
         </section>
       )}
 
-      {/* Location & Schedule Section */}
+      {/* Location & Schedule Section - Enhanced Interactive Map */}
       {!business_loading && business_info && (
-        <section className="py-16 lg:py-24 bg-white">
+        <section className="py-16 lg:py-24 bg-gradient-to-br from-gray-50 via-white to-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
               <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
                 Find Us
               </h2>
               <p className="text-lg text-gray-600">
-                Come visit us at our location
+                Visit us at Serla House, Hibernian Industrial Estate
               </p>
             </div>
 
-            <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
-              {/* Map */}
-              <div className="rounded-xl overflow-hidden shadow-lg border border-gray-200 h-[400px]">
-                <iframe
-                  src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${encodeURIComponent(`${business_info.address.line1}, ${business_info.address.city}, ${business_info.address.postal_code}`)}`}
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0 }}
-                  allowFullScreen
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  title="Salama Lama Location"
-                ></iframe>
+            <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+              {/* Interactive Map - Enhanced */}
+              <div className="relative group">
+                <div className="absolute -inset-1 bg-gradient-to-r from-orange-400 to-orange-600 rounded-3xl opacity-20 group-hover:opacity-30 blur-xl transition-all duration-300"></div>
+                <div className="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-orange-100 h-[450px] lg:h-[550px]">
+                  <iframe
+                    src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${encodeURIComponent('Serla House, Hibernian Industrial Estate, Greenhills Road, Tallaght, Dublin 24, D24 NX22, Ireland')}&zoom=15&maptype=roadmap`}
+                    width="100%"
+                    height="100%"
+                    style={{ 
+                      border: 0,
+                      filter: 'brightness(100%) contrast(105%) saturate(110%)'
+                    }}
+                    allowFullScreen
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    title="Salama Lama Location - Serla House, Tallaght"
+                  ></iframe>
+                  
+                  {/* Floating Map Overlay Badge */}
+                  <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg px-4 py-2 border border-orange-100">
+                    <div className="flex items-center space-x-2">
+                      <MapPin className="w-5 h-5 text-orange-600" />
+                      <span className="text-sm font-semibold text-gray-900">We're Here!</span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              {/* Info */}
+              {/* Address and Action Buttons */}
               <div className="space-y-6">
-                <div className="bg-gray-50 rounded-xl p-6">
+                {/* Address Card - Enhanced */}
+                <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl p-6 lg:p-8 shadow-lg border border-gray-200 hover:shadow-xl transition-shadow duration-300">
                   <div className="flex items-start space-x-4">
-                    <MapPin className="w-6 h-6 text-orange-600 flex-shrink-0 mt-1" />
-                    <div>
-                      <h3 className="font-semibold text-gray-900 mb-2">Address</h3>
-                      <p className="text-gray-600">
-                        {business_info.address.line1}
-                        {business_info.address.line2 && <><br />{business_info.address.line2}</>}
-                        <br />
-                        {business_info.address.city}, {business_info.address.postal_code}
+                    <div className="flex-shrink-0 w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                      <MapPin className="w-6 h-6 text-orange-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold text-gray-900 mb-3">Our Location</h3>
+                      <p className="text-gray-700 leading-relaxed text-base">
+                        <span className="font-semibold">Serla House</span><br />
+                        Hibernian Industrial Estate<br />
+                        Greenhills Road<br />
+                        Tallaght, Dublin 24<br />
+                        <span className="font-semibold">D24 NX22</span>, Ireland
                       </p>
-                      <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${business_info.address.line1}, ${business_info.address.city}, ${business_info.address.postal_code}`)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center text-orange-600 font-medium mt-2 hover:text-orange-700 transition-colors"
-                      >
-                        Get Directions
-                        <ChevronRight className="ml-1 w-4 h-4" />
-                      </a>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-gray-50 rounded-xl p-6">
+                {/* Action Buttons - Modern & Accessible */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Open in Google Maps */}
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('Serla House, Hibernian Industrial Estate, Greenhills Road, Tallaght, Dublin 24, D24 NX22, Ireland')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex items-center justify-center space-x-3 px-6 py-4 bg-orange-600 text-white font-semibold rounded-xl shadow-lg hover:bg-orange-700 hover:shadow-xl hover:scale-105 transition-all duration-200"
+                  >
+                    <ExternalLink className="w-5 h-5 group-hover:rotate-12 transition-transform duration-200" />
+                    <span>Open in Maps</span>
+                  </a>
+
+                  {/* Get Directions */}
+                  <a
+                    href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent('Serla House, Hibernian Industrial Estate, Greenhills Road, Tallaght, Dublin 24, D24 NX22, Ireland')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex items-center justify-center space-x-3 px-6 py-4 bg-white text-orange-600 font-semibold rounded-xl border-2 border-orange-600 shadow-md hover:bg-orange-50 hover:shadow-lg hover:scale-105 transition-all duration-200"
+                  >
+                    <Navigation className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
+                    <span>Get Directions</span>
+                  </a>
+                </div>
+
+                {/* Operating Hours */}
+                <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl p-6 lg:p-8 shadow-lg border border-gray-200">
                   <div className="flex items-start space-x-4">
-                    <Clock className="w-6 h-6 text-orange-600 flex-shrink-0 mt-1" />
+                    <div className="flex-shrink-0 w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                      <Clock className="w-6 h-6 text-orange-600" />
+                    </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900 mb-2">
+                      <h3 className="text-xl font-bold text-gray-900 mb-3">
                         Operating Hours
                       </h3>
                       {Object.keys(business_info.operating_hours).length > 0 ? (
-                        <div className="space-y-1">
+                        <div className="space-y-2">
                           {Object.entries(business_info.operating_hours).map(([day, hours]: [string, any]) => (
-                            <div key={day} className="flex justify-between text-sm">
-                              <span className="text-gray-600 capitalize">{day}:</span>
-                              <span className="text-gray-900 font-medium">
+                            <div key={day} className="flex justify-between items-center text-sm">
+                              <span className="text-gray-700 font-medium capitalize">{day}</span>
+                              <span className="text-gray-900 font-semibold">
                                 {hours.open} - {hours.close}
                               </span>
                             </div>
@@ -537,27 +574,32 @@ const UV_Landing: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="bg-gray-50 rounded-xl p-6">
+                {/* Contact Info */}
+                <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl p-6 lg:p-8 shadow-lg border border-gray-200">
                   <div className="flex items-start space-x-4">
-                    <Phone className="w-6 h-6 text-orange-600 flex-shrink-0 mt-1" />
-                    <div>
-                      <h3 className="font-semibold text-gray-900 mb-2">Contact</h3>
-                      {business_info.phone && (
-                        <a
-                          href={`tel:${business_info.phone}`}
-                          className="text-gray-600 hover:text-orange-600 transition-colors block mb-1"
-                        >
-                          {business_info.phone}
-                        </a>
-                      )}
-                      {business_info.email && (
-                        <a
-                          href={`mailto:${business_info.email}`}
-                          className="text-gray-600 hover:text-orange-600 transition-colors block"
-                        >
-                          {business_info.email}
-                        </a>
-                      )}
+                    <div className="flex-shrink-0 w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                      <Phone className="w-6 h-6 text-orange-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold text-gray-900 mb-3">Contact Us</h3>
+                      <div className="space-y-2">
+                        {business_info.phone && (
+                          <a
+                            href={`tel:${business_info.phone}`}
+                            className="text-gray-700 hover:text-orange-600 transition-colors block font-medium"
+                          >
+                            {business_info.phone}
+                          </a>
+                        )}
+                        {business_info.email && (
+                          <a
+                            href={`mailto:${business_info.email}`}
+                            className="text-gray-700 hover:text-orange-600 transition-colors block font-medium"
+                          >
+                            {business_info.email}
+                          </a>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

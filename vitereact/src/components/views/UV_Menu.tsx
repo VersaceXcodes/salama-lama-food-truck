@@ -345,7 +345,7 @@ const UV_Menu: React.FC = () => {
 
   // React Query: Add Builder Item to Cart Mutation
   const addBuilderToCartMutation = useMutation({
-    mutationFn: (data: { item_id: string; quantity: number; builder_selections: any }) => {
+    mutationFn: (data: { item_id: string; quantity: number; builder_selections: any; builder_unit_price: number }) => {
       if (builderModal.item) {
         setLoadingItemId(builderModal.item.item_id);
       }
@@ -353,9 +353,9 @@ const UV_Menu: React.FC = () => {
     },
     onSuccess: (_response, variables) => {
       // Generate display name from selections
-      const selections = variables.selections as BuilderSelection[];
-      const base = selections.find(s => s.step_key === 'base')?.items[0]?.name;
-      const protein = selections.find(s => s.step_key === 'protein')?.items[0]?.name;
+      const selections = variables.builder_selections;
+      const base = selections.base?.name;
+      const protein = selections.protein?.name;
       const itemName = builderModal.item?.name || 'Custom Item';
       const displayName = base && protein ? `${itemName} - ${base} + ${protein}` : itemName;
 
@@ -366,13 +366,7 @@ const UV_Menu: React.FC = () => {
           item_name: displayName,
           quantity: variables.quantity,
           unit_price: variables.builder_unit_price,
-          customizations: selections.flatMap(sel => 
-            sel.items.map(item => ({
-              group_name: sel.step_name,
-              option_name: item.name,
-              additional_price: item.price,
-            }))
-          ),
+          customizations: [], // Builder items have structure flattened or handled differently in cart display
           line_total: variables.builder_unit_price * variables.quantity,
           is_builder_item: true,
         };
@@ -602,9 +596,9 @@ const UV_Menu: React.FC = () => {
 
     // Call backend API with proper format
     addBuilderToCartMutation.mutate({
-      base_item_id: builderModal.item.item_id,
+      item_id: builderModal.item.item_id,
       quantity,
-      selections: builderSelections,
+      builder_selections: builderSelections,
       builder_unit_price: totalPrice,
     });
   };

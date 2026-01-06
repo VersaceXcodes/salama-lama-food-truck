@@ -119,7 +119,7 @@ const GV_TopNav_Staff: React.FC = () => {
   const notificationCount = notifications.length;
   const staffName = currentUser?.first_name || 'Staff';
   const staffInitials = staffName.charAt(0).toUpperCase();
-  const avatarUrl = currentUser?.avatar_url || null;
+  const avatarUrl = currentUser?.profile_photo_url || null;
 
   // ===========================
   // Event Handlers

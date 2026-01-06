@@ -604,9 +604,9 @@ export const ProductCustomizerSheet: React.FC<ProductCustomizerSheetProps> = ({
           }
           
           /* Ensure body doesn't scroll horizontally when modal is open */
-          body:has([data-product-customizer]) {
+          /* body:has([data-product-customizer]) {
             overflow-x: hidden !important;
-          }
+          } */
         }
         
         /* Custom scrollbar for content area */

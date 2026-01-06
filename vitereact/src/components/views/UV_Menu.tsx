@@ -95,7 +95,7 @@ const fetchBuilderConfig = async () => {
   try {
     const response = await axios.get(`${API_BASE_URL}/api/menu/builder-config`);
     return response.data;
-  } catch (error) {
+  } catch (_error) {
     // If builder config doesn't exist, return empty config
     return { config: null, builder_category_ids: [] };
   }
@@ -106,7 +106,7 @@ const fetchBuilderSteps = async () => {
   try {
     const response = await axios.get(`${API_BASE_URL}/api/menu/builder-steps`);
     return response.data;
-  } catch (error) {
+  } catch (_error) {
     return { steps: [] };
   }
 };
@@ -441,7 +441,7 @@ const UV_Menu: React.FC = () => {
         }
       }
     }
-  }, [authToken]);
+  }, [authToken, addToCartMutation, toast]);
 
   // Handlers
   const handleCategoryChange = (categoryId: string | null) => {

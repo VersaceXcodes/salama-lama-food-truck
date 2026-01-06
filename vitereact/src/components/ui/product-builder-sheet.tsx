@@ -938,9 +938,9 @@ export const ProductBuilderSheet: React.FC<ProductBuilderSheetProps> = ({
           }
           
           /* Ensure body doesn't scroll horizontally when modal is open */
-          body:has([data-product-builder]) {
+          /* body:has([data-product-builder]) {
             overflow-x: hidden !important;
-          }
+          } */
         }
         
         /* Desktop: constrain height */

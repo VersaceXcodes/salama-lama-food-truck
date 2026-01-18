@@ -41,7 +41,6 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			"@": path.resolve(__dirname, "./src"),
-			"@schema": path.resolve(__dirname, "../backend/schema.ts"),
 		},
 	},
 	publicDir: "public_assets",

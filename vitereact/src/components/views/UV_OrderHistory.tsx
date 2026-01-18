@@ -16,7 +16,7 @@ import {
   Truck,
   ShoppingBag,
   Clock,
-  CheckCircle2,
+  CheckCircle,
   XCircle,
   AlertCircle
 } from 'lucide-react';
@@ -165,7 +165,7 @@ const getStatusBadgeClasses = (status: Order['status']): string => {
 const getStatusIcon = (status: Order['status']) => {
   switch (status) {
     case 'completed':
-      return <CheckCircle2 className="w-4 h-4 mr-1" />;
+      return <CheckCircle className="w-4 h-4 mr-1" />;
     case 'cancelled':
       return <XCircle className="w-4 h-4 mr-1" />;
     case 'preparing':

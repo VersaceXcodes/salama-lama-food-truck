@@ -10676,7 +10676,7 @@ app.post('/api/admin/menu/builder-steps', authenticate_token, require_role(['adm
          VALUES ($1, false, '[]'::jsonb, false, $2, $3)`,
         [config_id, ts, ts]
       );
-      config_res = { rows: [{ config_id }] };
+      config_res = { rows: [{ config_id }] } as any;
     }
     
     const config_id = config_res.rows[0].config_id;

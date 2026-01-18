@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, Package, Clock, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+import { Loader2, Package, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 
 interface OrderItem {
   item_name: string;
@@ -90,10 +90,10 @@ const UV_TrackOrder: React.FC = () => {
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: React.ReactNode }> = {
       pending: { label: 'Pending', variant: 'secondary', icon: <Clock className="h-4 w-4" /> },
-      accepted: { label: 'Accepted', variant: 'default', icon: <CheckCircle2 className="h-4 w-4" /> },
+      accepted: { label: 'Accepted', variant: 'default', icon: <CheckCircle className="h-4 w-4" /> },
       preparing: { label: 'Preparing', variant: 'default', icon: <Package className="h-4 w-4" /> },
-      ready: { label: 'Ready', variant: 'default', icon: <CheckCircle2 className="h-4 w-4" /> },
-      completed: { label: 'Completed', variant: 'outline', icon: <CheckCircle2 className="h-4 w-4" /> },
+      ready: { label: 'Ready', variant: 'default', icon: <CheckCircle className="h-4 w-4" /> },
+      completed: { label: 'Completed', variant: 'outline', icon: <CheckCircle className="h-4 w-4" /> },
       cancelled: { label: 'Cancelled', variant: 'destructive', icon: <XCircle className="h-4 w-4" /> },
     };
 

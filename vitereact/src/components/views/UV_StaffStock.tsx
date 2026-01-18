@@ -6,7 +6,7 @@ import { useAppStore } from '@/store/main';
 import { 
   Package, 
   AlertTriangle, 
-  CheckCircle2, 
+  CheckCircle, 
   XCircle, 
   Filter, 
   RefreshCw,
@@ -423,7 +423,7 @@ const UV_StaffStock: React.FC = () => {
       case 'ok':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-            <CheckCircle2 className="w-3.5 h-3.5" />
+            <CheckCircle className="w-3.5 h-3.5" />
             In Stock
           </span>
         );
@@ -604,7 +604,7 @@ const UV_StaffStock: React.FC = () => {
                     </p>
                   </div>
                   <div className="p-3 bg-green-100 rounded-lg">
-                    <CheckCircle2 className="w-6 h-6 text-green-600" />
+                    <CheckCircle className="w-6 h-6 text-green-600" />
                   </div>
                 </div>
               </div>

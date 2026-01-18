@@ -5905,6 +5905,497 @@ app.delete('/api/admin/menu/categories/:id', authenticate_token, require_role(['
         return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
     }
 });
+// ============================================
+// MENU BUILDER ENDPOINTS (Public)
+// ============================================
+/**
+ * Get builder configuration (public).
+ * Returns whether builder is enabled and which category IDs trigger it.
+ */
+app.get('/api/menu/builder-config', async (req, res) => {
+    try {
+        const config_res = await pool.query('SELECT * FROM builder_config LIMIT 1');
+        if (config_res.rows.length === 0) {
+            return ok(res, 200, {
+                config: {
+                    enabled: false,
+                    builder_category_ids: [],
+                    include_base_item_price: false,
+                },
+            });
+        }
+        const config = config_res.rows[0];
+        return ok(res, 200, {
+            config: {
+                config_id: config.config_id,
+                enabled: config.enabled,
+                builder_category_ids: config.builder_category_ids || [],
+                include_base_item_price: config.include_base_item_price,
+            },
+        });
+    }
+    catch (error) {
+        console.error('get builder config error', error);
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+/**
+ * Get builder steps with their items (public).
+ * Returns all builder steps and their selectable items.
+ */
+app.get('/api/menu/builder-steps', async (req, res) => {
+    try {
+        // Get builder config first
+        const config_res = await pool.query('SELECT * FROM builder_config LIMIT 1');
+        if (config_res.rows.length === 0 || !config_res.rows[0].enabled) {
+            return ok(res, 200, { steps: [], config: null });
+        }
+        const config = config_res.rows[0];
+        // Get all steps
+        const steps_res = await pool.query(`SELECT * FROM builder_steps WHERE config_id = $1 ORDER BY sort_order ASC`, [config.config_id]);
+        // Get all step items with menu item details
+        const step_ids = steps_res.rows.map((s) => s.step_id);
+        let step_items_map = new Map();
+        if (step_ids.length > 0) {
+            const items_res = await pool.query(`SELECT bsi.*, mi.name, mi.description, mi.price, mi.image_url, mi.is_active
+         FROM builder_step_items bsi
+         JOIN menu_items mi ON bsi.item_id = mi.item_id
+         WHERE bsi.step_id = ANY($1) AND bsi.is_active = true AND mi.is_active = true
+         ORDER BY bsi.sort_order ASC`, [step_ids]);
+            for (const item of items_res.rows) {
+                if (!step_items_map.has(item.step_id)) {
+                    step_items_map.set(item.step_id, []);
+                }
+                step_items_map.get(item.step_id).push({
+                    step_item_id: item.step_item_id,
+                    item_id: item.item_id,
+                    name: item.name,
+                    description: item.description,
+                    price: Number(item.price),
+                    override_price: item.override_price !== null ? Number(item.override_price) : null,
+                    image_url: item.image_url,
+                    sort_order: item.sort_order,
+                    is_active: item.is_active,
+                });
+            }
+        }
+        const steps = steps_res.rows.map((step) => ({
+            step_id: step.step_id,
+            step_name: step.step_name,
+            step_key: step.step_key,
+            step_type: step.step_type,
+            is_required: step.is_required,
+            min_selections: step.min_selections,
+            max_selections: step.max_selections,
+            sort_order: step.sort_order,
+            items: step_items_map.get(step.step_id) || [],
+        }));
+        return ok(res, 200, {
+            config: {
+                config_id: config.config_id,
+                enabled: config.enabled,
+                builder_category_ids: config.builder_category_ids || [],
+                include_base_item_price: config.include_base_item_price,
+            },
+            steps,
+        });
+    }
+    catch (error) {
+        console.error('get builder steps error', error);
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+// ============================================
+// MENU BUILDER ENDPOINTS (Admin)
+// ============================================
+/**
+ * Get builder configuration (admin).
+ */
+app.get('/api/admin/menu/builder-config', authenticate_token, require_role(['admin']), async (req, res) => {
+    try {
+        const config_res = await pool.query('SELECT * FROM builder_config LIMIT 1');
+        if (config_res.rows.length === 0) {
+            return ok(res, 200, {
+                config: null,
+            });
+        }
+        const config = config_res.rows[0];
+        // Get steps count
+        const steps_res = await pool.query('SELECT COUNT(*)::int as count FROM builder_steps WHERE config_id = $1', [config.config_id]);
+        return ok(res, 200, {
+            config: {
+                config_id: config.config_id,
+                enabled: config.enabled,
+                builder_category_ids: config.builder_category_ids || [],
+                include_base_item_price: config.include_base_item_price,
+                created_at: config.created_at,
+                updated_at: config.updated_at,
+                steps_count: steps_res.rows[0]?.count || 0,
+            },
+        });
+    }
+    catch (error) {
+        console.error('admin get builder config error', error);
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+/**
+ * Update builder configuration (admin).
+ */
+app.put('/api/admin/menu/builder-config', authenticate_token, require_role(['admin']), async (req, res) => {
+    try {
+        const update_schema = z.object({
+            enabled: z.boolean().optional(),
+            builder_category_ids: z.array(z.string()).optional(),
+            include_base_item_price: z.boolean().optional(),
+        });
+        const input = update_schema.parse(req.body);
+        await with_client(async (client) => {
+            await client.query('BEGIN');
+            // Check if config exists
+            const existing = await client.query('SELECT config_id FROM builder_config LIMIT 1');
+            if (existing.rows.length === 0) {
+                // Create new config
+                const config_id = gen_id('bc');
+                await client.query(`INSERT INTO builder_config (config_id, enabled, builder_category_ids, include_base_item_price, created_at, updated_at)
+           VALUES ($1, $2, $3::jsonb, $4, $5, $6)`, [
+                    config_id,
+                    input.enabled ?? true,
+                    JSON.stringify(input.builder_category_ids ?? []),
+                    input.include_base_item_price ?? false,
+                    now_iso(),
+                    now_iso(),
+                ]);
+                await client.query('COMMIT');
+                return ok(res, 201, { message: 'Builder config created', config_id });
+            }
+            // Update existing config
+            const config_id = existing.rows[0].config_id;
+            const updates = [];
+            const params = [];
+            if (input.enabled !== undefined) {
+                params.push(input.enabled);
+                updates.push(`enabled = $${params.length}`);
+            }
+            if (input.builder_category_ids !== undefined) {
+                params.push(JSON.stringify(input.builder_category_ids));
+                updates.push(`builder_category_ids = $${params.length}::jsonb`);
+            }
+            if (input.include_base_item_price !== undefined) {
+                params.push(input.include_base_item_price);
+                updates.push(`include_base_item_price = $${params.length}`);
+            }
+            if (updates.length > 0) {
+                params.push(now_iso());
+                updates.push(`updated_at = $${params.length}`);
+                params.push(config_id);
+                await client.query(`UPDATE builder_config SET ${updates.join(', ')} WHERE config_id = $${params.length}`, params);
+            }
+            await client.query('COMMIT');
+            // Log activity
+            await log_activity({
+                user_id: req.user.user_id,
+                action_type: 'update',
+                entity_type: 'builder_config',
+                entity_id: config_id,
+                description: 'Updated menu builder configuration',
+                changes: input,
+                ip_address: req.ip,
+                user_agent: req.headers['user-agent'],
+            });
+            return ok(res, 200, { message: 'Builder config updated', config_id });
+        });
+    }
+    catch (error) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+        }
+        console.error('admin update builder config error', error);
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+/**
+ * Get all builder steps with items (admin).
+ */
+app.get('/api/admin/menu/builder-steps', authenticate_token, require_role(['admin']), async (req, res) => {
+    try {
+        // Get config
+        const config_res = await pool.query('SELECT config_id FROM builder_config LIMIT 1');
+        if (config_res.rows.length === 0) {
+            return ok(res, 200, { steps: [] });
+        }
+        const config_id = config_res.rows[0].config_id;
+        // Get all steps
+        const steps_res = await pool.query(`SELECT * FROM builder_steps WHERE config_id = $1 ORDER BY sort_order ASC`, [config_id]);
+        // Get all step items
+        const step_ids = steps_res.rows.map((s) => s.step_id);
+        let step_items_map = new Map();
+        if (step_ids.length > 0) {
+            const items_res = await pool.query(`SELECT bsi.*, mi.name, mi.description, mi.price, mi.image_url, mi.is_active as item_is_active
+         FROM builder_step_items bsi
+         JOIN menu_items mi ON bsi.item_id = mi.item_id
+         WHERE bsi.step_id = ANY($1)
+         ORDER BY bsi.sort_order ASC`, [step_ids]);
+            for (const item of items_res.rows) {
+                if (!step_items_map.has(item.step_id)) {
+                    step_items_map.set(item.step_id, []);
+                }
+                step_items_map.get(item.step_id).push({
+                    step_item_id: item.step_item_id,
+                    item_id: item.item_id,
+                    name: item.name,
+                    description: item.description,
+                    original_price: Number(item.price),
+                    override_price: item.override_price !== null ? Number(item.override_price) : null,
+                    effective_price: item.override_price !== null ? Number(item.override_price) : Number(item.price),
+                    image_url: item.image_url,
+                    sort_order: item.sort_order,
+                    is_active: item.is_active,
+                    item_is_active: item.item_is_active,
+                });
+            }
+        }
+        const steps = steps_res.rows.map((step) => ({
+            step_id: step.step_id,
+            config_id: step.config_id,
+            step_name: step.step_name,
+            step_key: step.step_key,
+            step_type: step.step_type,
+            is_required: step.is_required,
+            min_selections: step.min_selections,
+            max_selections: step.max_selections,
+            sort_order: step.sort_order,
+            created_at: step.created_at,
+            items: step_items_map.get(step.step_id) || [],
+        }));
+        return ok(res, 200, { steps });
+    }
+    catch (error) {
+        console.error('admin get builder steps error', error);
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+/**
+ * Create or update a builder step (admin).
+ */
+app.post('/api/admin/menu/builder-steps', authenticate_token, require_role(['admin']), async (req, res) => {
+    try {
+        const step_schema = z.object({
+            step_id: z.string().optional(), // If provided, update existing
+            step_name: z.string().min(1).max(100),
+            step_key: z.string().min(1).max(50),
+            step_type: z.enum(['single', 'multiple']),
+            is_required: z.boolean(),
+            min_selections: z.number().int().nonnegative(),
+            max_selections: z.number().int().positive().nullable(),
+            sort_order: z.number().int().nonnegative(),
+        });
+        const input = step_schema.parse(req.body);
+        await with_client(async (client) => {
+            await client.query('BEGIN');
+            // Get or create config
+            let config_res = await client.query('SELECT config_id FROM builder_config LIMIT 1');
+            let config_id;
+            if (config_res.rows.length === 0) {
+                config_id = gen_id('bc');
+                await client.query(`INSERT INTO builder_config (config_id, enabled, builder_category_ids, include_base_item_price, created_at, updated_at)
+           VALUES ($1, true, '[]'::jsonb, false, $2, $3)`, [config_id, now_iso(), now_iso()]);
+            }
+            else {
+                config_id = config_res.rows[0].config_id;
+            }
+            if (input.step_id) {
+                // Update existing step
+                await client.query(`UPDATE builder_steps SET
+            step_name = $1, step_key = $2, step_type = $3, is_required = $4,
+            min_selections = $5, max_selections = $6, sort_order = $7
+           WHERE step_id = $8`, [
+                    input.step_name,
+                    input.step_key,
+                    input.step_type,
+                    input.is_required,
+                    input.min_selections,
+                    input.max_selections,
+                    input.sort_order,
+                    input.step_id,
+                ]);
+                await client.query('COMMIT');
+                return ok(res, 200, { message: 'Builder step updated', step_id: input.step_id });
+            }
+            else {
+                // Create new step
+                const step_id = gen_id('bs');
+                await client.query(`INSERT INTO builder_steps (step_id, config_id, step_name, step_key, step_type, is_required, min_selections, max_selections, sort_order, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`, [
+                    step_id,
+                    config_id,
+                    input.step_name,
+                    input.step_key,
+                    input.step_type,
+                    input.is_required,
+                    input.min_selections,
+                    input.max_selections,
+                    input.sort_order,
+                    now_iso(),
+                ]);
+                await client.query('COMMIT');
+                return ok(res, 201, { message: 'Builder step created', step_id });
+            }
+        });
+    }
+    catch (error) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+        }
+        console.error('admin create/update builder step error', error);
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+/**
+ * Delete a builder step (admin).
+ */
+app.delete('/api/admin/menu/builder-steps/:stepId', authenticate_token, require_role(['admin']), async (req, res) => {
+    try {
+        const step_id = req.params.stepId;
+        const del = await pool.query('DELETE FROM builder_steps WHERE step_id = $1 RETURNING step_id', [step_id]);
+        if (del.rows.length === 0) {
+            return res.status(404).json(createErrorResponse('Step not found', null, 'NOT_FOUND', req.request_id));
+        }
+        return ok(res, 200, { message: 'Builder step deleted', step_id });
+    }
+    catch (error) {
+        console.error('admin delete builder step error', error);
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+/**
+ * Add or update a step item (admin).
+ */
+app.post('/api/admin/menu/builder-step-items', authenticate_token, require_role(['admin']), async (req, res) => {
+    try {
+        const item_schema = z.object({
+            step_item_id: z.string().optional(), // If provided, update existing
+            step_id: z.string(),
+            item_id: z.string(),
+            override_price: z.number().nonnegative().nullable().optional(),
+            sort_order: z.number().int().nonnegative(),
+            is_active: z.boolean().default(true),
+        });
+        const input = item_schema.parse(req.body);
+        await with_client(async (client) => {
+            await client.query('BEGIN');
+            // Verify step exists
+            const step_res = await client.query('SELECT step_id FROM builder_steps WHERE step_id = $1', [input.step_id]);
+            if (step_res.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return res.status(404).json(createErrorResponse('Step not found', null, 'NOT_FOUND', req.request_id));
+            }
+            // Verify menu item exists
+            const item_res = await client.query('SELECT item_id FROM menu_items WHERE item_id = $1', [input.item_id]);
+            if (item_res.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return res.status(404).json(createErrorResponse('Menu item not found', null, 'NOT_FOUND', req.request_id));
+            }
+            if (input.step_item_id) {
+                // Update existing
+                await client.query(`UPDATE builder_step_items SET
+            step_id = $1, item_id = $2, override_price = $3, sort_order = $4, is_active = $5
+           WHERE step_item_id = $6`, [input.step_id, input.item_id, input.override_price ?? null, input.sort_order, input.is_active, input.step_item_id]);
+                await client.query('COMMIT');
+                return ok(res, 200, { message: 'Step item updated', step_item_id: input.step_item_id });
+            }
+            else {
+                // Check for duplicate
+                const dup_res = await client.query('SELECT step_item_id FROM builder_step_items WHERE step_id = $1 AND item_id = $2', [input.step_id, input.item_id]);
+                if (dup_res.rows.length > 0) {
+                    await client.query('ROLLBACK');
+                    return res.status(409).json(createErrorResponse('Item already exists in this step', null, 'DUPLICATE_ENTRY', req.request_id));
+                }
+                // Create new
+                const step_item_id = gen_id('bsi');
+                await client.query(`INSERT INTO builder_step_items (step_item_id, step_id, item_id, override_price, sort_order, is_active, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`, [step_item_id, input.step_id, input.item_id, input.override_price ?? null, input.sort_order, input.is_active, now_iso()]);
+                await client.query('COMMIT');
+                return ok(res, 201, { message: 'Step item created', step_item_id });
+            }
+        });
+    }
+    catch (error) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+        }
+        console.error('admin create/update step item error', error);
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+/**
+ * Delete a step item (admin).
+ */
+app.delete('/api/admin/menu/builder-step-items/:stepItemId', authenticate_token, require_role(['admin']), async (req, res) => {
+    try {
+        const step_item_id = req.params.stepItemId;
+        const del = await pool.query('DELETE FROM builder_step_items WHERE step_item_id = $1 RETURNING step_item_id', [step_item_id]);
+        if (del.rows.length === 0) {
+            return res.status(404).json(createErrorResponse('Step item not found', null, 'NOT_FOUND', req.request_id));
+        }
+        return ok(res, 200, { message: 'Step item deleted', step_item_id });
+    }
+    catch (error) {
+        console.error('admin delete step item error', error);
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+/**
+ * Bulk update step items for a step (admin).
+ * Useful for reordering or toggling active state.
+ */
+app.put('/api/admin/menu/builder-steps/:stepId/items', authenticate_token, require_role(['admin']), async (req, res) => {
+    try {
+        const step_id = req.params.stepId;
+        const items_schema = z.object({
+            items: z.array(z.object({
+                step_item_id: z.string(),
+                sort_order: z.number().int().nonnegative().optional(),
+                is_active: z.boolean().optional(),
+                override_price: z.number().nonnegative().nullable().optional(),
+            })),
+        });
+        const { items } = items_schema.parse(req.body);
+        await with_client(async (client) => {
+            await client.query('BEGIN');
+            for (const item of items) {
+                const updates = [];
+                const params = [];
+                if (item.sort_order !== undefined) {
+                    params.push(item.sort_order);
+                    updates.push(`sort_order = $${params.length}`);
+                }
+                if (item.is_active !== undefined) {
+                    params.push(item.is_active);
+                    updates.push(`is_active = $${params.length}`);
+                }
+                if (item.override_price !== undefined) {
+                    params.push(item.override_price);
+                    updates.push(`override_price = $${params.length}`);
+                }
+                if (updates.length > 0) {
+                    params.push(item.step_item_id);
+                    params.push(step_id);
+                    await client.query(`UPDATE builder_step_items SET ${updates.join(', ')} WHERE step_item_id = $${params.length - 1} AND step_id = $${params.length}`, params);
+                }
+            }
+            await client.query('COMMIT');
+            return ok(res, 200, { message: 'Step items updated', count: items.length });
+        });
+    }
+    catch (error) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+        }
+        console.error('admin bulk update step items error', error);
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
 // Admin stock overview
 app.get('/api/admin/stock', authenticate_token, require_role(['admin']), async (req, res) => {
     try {
@@ -8329,6 +8820,525 @@ app.post('/api/admin/upload/image', authenticate_token, require_role(['admin']),
         return ok(res, 201, { url });
     }
     catch (error) {
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+// ============================================================================
+// MENU BUILDER API ENDPOINTS
+// ============================================================================
+// Schema for builder cart add input
+const builder_cart_add_input_schema = z.object({
+    item_id: z.string(), // The original sub/wrap item being ordered
+    quantity: z.number().int().positive().default(1),
+    builder_selections: z.object({
+        base: z.object({
+            item_id: z.string(),
+            name: z.string(),
+            price: z.number()
+        }),
+        protein: z.object({
+            item_id: z.string(),
+            name: z.string(),
+            price: z.number()
+        }),
+        toppings: z.array(z.object({
+            item_id: z.string(),
+            name: z.string(),
+            price: z.number()
+        })).default([]),
+        sauce: z.object({
+            item_id: z.string(),
+            name: z.string(),
+            price: z.number()
+        })
+    })
+});
+// GET /api/menu/builder-config - Public endpoint to fetch builder configuration
+app.get('/api/menu/builder-config', async (req, res) => {
+    try {
+        const config_res = await pool.query('SELECT * FROM builder_config LIMIT 1');
+        if (config_res.rows.length === 0) {
+            return ok(res, 200, { config: null, enabled: false });
+        }
+        const config = config_res.rows[0];
+        return ok(res, 200, {
+            config: {
+                config_id: config.config_id,
+                enabled: config.enabled,
+                builder_category_ids: config.builder_category_ids || [],
+                include_base_item_price: config.include_base_item_price,
+            }
+        });
+    }
+    catch (error) {
+        console.error('Error fetching builder config:', error);
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+// GET /api/menu/builder-steps - Public endpoint to fetch builder steps with items
+app.get('/api/menu/builder-steps', async (req, res) => {
+    try {
+        // Get builder config first
+        const config_res = await pool.query('SELECT * FROM builder_config LIMIT 1');
+        if (config_res.rows.length === 0 || !config_res.rows[0].enabled) {
+            return ok(res, 200, { steps: [], enabled: false });
+        }
+        const config_id = config_res.rows[0].config_id;
+        // Get steps
+        const steps_res = await pool.query(`SELECT * FROM builder_steps WHERE config_id = $1 ORDER BY sort_order ASC`, [config_id]);
+        if (steps_res.rows.length === 0) {
+            return ok(res, 200, { steps: [], enabled: true });
+        }
+        const step_ids = steps_res.rows.map(s => s.step_id);
+        // Get step items with menu item details
+        const items_res = await pool.query(`SELECT bsi.*, mi.name, mi.description, mi.price as original_price, mi.image_url, mi.is_active as item_is_active
+       FROM builder_step_items bsi
+       JOIN menu_items mi ON bsi.item_id = mi.item_id
+       WHERE bsi.step_id = ANY($1) AND bsi.is_active = true AND mi.is_active = true
+       ORDER BY bsi.sort_order ASC`, [step_ids]);
+        // Group items by step
+        const items_by_step = new Map();
+        for (const item of items_res.rows) {
+            if (!items_by_step.has(item.step_id)) {
+                items_by_step.set(item.step_id, []);
+            }
+            items_by_step.get(item.step_id).push({
+                step_item_id: item.step_item_id,
+                item_id: item.item_id,
+                name: item.name,
+                description: item.description ?? null,
+                original_price: Number(item.original_price),
+                override_price: item.override_price !== null ? Number(item.override_price) : null,
+                effective_price: item.override_price !== null ? Number(item.override_price) : Number(item.original_price),
+                image_url: item.image_url ?? null,
+                sort_order: item.sort_order,
+                is_active: item.is_active,
+            });
+        }
+        // Build steps response
+        const steps = steps_res.rows.map(step => ({
+            step_id: step.step_id,
+            step_name: step.step_name,
+            step_key: step.step_key,
+            step_type: step.step_type,
+            is_required: step.is_required,
+            min_selections: step.min_selections,
+            max_selections: step.max_selections,
+            sort_order: step.sort_order,
+            items: items_by_step.get(step.step_id) || [],
+        }));
+        return ok(res, 200, { steps, enabled: true });
+    }
+    catch (error) {
+        console.error('Error fetching builder steps:', error);
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+// POST /api/cart/builder - Add a builder item to cart
+app.post('/api/cart/builder', authenticate_token_optional, async (req, res) => {
+    try {
+        const body = builder_cart_add_input_schema.parse(req.body);
+        // Get builder config
+        const config_res = await pool.query('SELECT * FROM builder_config LIMIT 1');
+        if (config_res.rows.length === 0 || !config_res.rows[0].enabled) {
+            return res.status(400).json(createErrorResponse('Builder is not enabled', null, 'BUILDER_DISABLED', req.request_id));
+        }
+        const config = config_res.rows[0];
+        // Validate the original item exists and is in a builder category
+        const item_res = await pool.query('SELECT item_id, name, price, category_id, is_active FROM menu_items WHERE item_id = $1', [body.item_id]);
+        if (item_res.rows.length === 0 || !item_res.rows[0].is_active) {
+            return res.status(400).json(createErrorResponse('Item not found or inactive', null, 'ITEM_NOT_FOUND', req.request_id));
+        }
+        const original_item = item_res.rows[0];
+        const builder_category_ids = config.builder_category_ids || [];
+        if (!builder_category_ids.includes(original_item.category_id)) {
+            return res.status(400).json(createErrorResponse('Item is not a builder item', null, 'NOT_BUILDER_ITEM', req.request_id));
+        }
+        // Validate required selections exist
+        const { builder_selections } = body;
+        if (!builder_selections.base || !builder_selections.base.item_id) {
+            return res.status(400).json(createErrorResponse('Base selection is required', null, 'BASE_REQUIRED', req.request_id));
+        }
+        if (!builder_selections.protein || !builder_selections.protein.item_id) {
+            return res.status(400).json(createErrorResponse('Protein selection is required', null, 'PROTEIN_REQUIRED', req.request_id));
+        }
+        if (!builder_selections.sauce || !builder_selections.sauce.item_id) {
+            return res.status(400).json(createErrorResponse('Sauce selection is required', null, 'SAUCE_REQUIRED', req.request_id));
+        }
+        // Calculate total price
+        let total_price = 0;
+        // Optionally include base item price
+        if (config.include_base_item_price) {
+            total_price += Number(original_item.price);
+        }
+        // Add selection prices
+        total_price += Number(builder_selections.base.price);
+        total_price += Number(builder_selections.protein.price);
+        total_price += Number(builder_selections.sauce.price);
+        for (const topping of builder_selections.toppings) {
+            total_price += Number(topping.price);
+        }
+        // Round to 2 decimal places
+        total_price = Number(total_price.toFixed(2));
+        // Create cart item with builder metadata
+        const cart_id = get_cart_identifier(req);
+        const cart = read_cart_sync(cart_id);
+        // Prevent cart from becoming too large
+        if (cart.items.length >= 50) {
+            return res.status(400).json(createErrorResponse('Cart is full. Please remove some items before adding more.', null, 'CART_FULL', req.request_id));
+        }
+        const cart_item_id = gen_id('cart');
+        // Create display name
+        const display_name = `${original_item.name} - ${builder_selections.base.name} + ${builder_selections.protein.name}`;
+        // Store builder item in cart
+        cart.items.push({
+            cart_item_id,
+            item_id: body.item_id,
+            quantity: body.quantity,
+            is_builder_item: true,
+            builder_display_name: display_name,
+            builder_selections: builder_selections,
+            builder_unit_price: total_price,
+            selected_customizations: null, // Not using standard customizations
+            added_at: now_iso(),
+        });
+        write_cart_sync(cart_id, cart);
+        // Compute totals
+        const totals = await compute_cart_totals({
+            user_id: req.user?.user_id || cart_id,
+            cart,
+            order_type: 'collection',
+            delivery_address_id: null,
+            discount_code: cart.discount_code,
+        });
+        return ok(res, 200, {
+            items: totals.items,
+            subtotal: totals.subtotal,
+            discount_code: totals.discount_code,
+            discount_amount: totals.discount_amount,
+            delivery_fee: totals.delivery_fee,
+            tax_amount: totals.tax_amount,
+            total: totals.total,
+            validation_errors: totals.validation_errors,
+            added_item: {
+                cart_item_id,
+                display_name,
+                unit_price: total_price,
+                quantity: body.quantity,
+            }
+        });
+    }
+    catch (error) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+        }
+        console.error('Error adding builder item to cart:', error);
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+// ============================================================================
+// ADMIN BUILDER CONFIG ENDPOINTS
+// ============================================================================
+// GET /api/admin/menu/builder-config - Admin endpoint to fetch builder configuration
+app.get('/api/admin/menu/builder-config', authenticate_token, require_role(['admin']), async (req, res) => {
+    try {
+        const config_res = await pool.query('SELECT * FROM builder_config LIMIT 1');
+        if (config_res.rows.length === 0) {
+            // Return null config - admin can create one
+            return ok(res, 200, { config: null });
+        }
+        const config = config_res.rows[0];
+        // Count steps
+        const steps_count_res = await pool.query('SELECT COUNT(*)::int as count FROM builder_steps WHERE config_id = $1', [config.config_id]);
+        return ok(res, 200, {
+            config: {
+                config_id: config.config_id,
+                enabled: config.enabled,
+                builder_category_ids: config.builder_category_ids || [],
+                include_base_item_price: config.include_base_item_price,
+                created_at: config.created_at,
+                updated_at: config.updated_at,
+                steps_count: steps_count_res.rows[0]?.count ?? 0,
+            }
+        });
+    }
+    catch (error) {
+        console.error('Error fetching admin builder config:', error);
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+// PUT /api/admin/menu/builder-config - Admin endpoint to update builder configuration
+app.put('/api/admin/menu/builder-config', authenticate_token, require_role(['admin']), async (req, res) => {
+    try {
+        const schema = z.object({
+            enabled: z.boolean().optional(),
+            builder_category_ids: z.array(z.string()).optional(),
+            include_base_item_price: z.boolean().optional(),
+        });
+        const input = schema.parse(req.body);
+        const ts = now_iso();
+        // Check if config exists
+        const existing = await pool.query('SELECT config_id FROM builder_config LIMIT 1');
+        if (existing.rows.length === 0) {
+            // Create new config
+            const config_id = gen_id('builder_config');
+            await pool.query(`INSERT INTO builder_config (config_id, enabled, builder_category_ids, include_base_item_price, created_at, updated_at)
+         VALUES ($1, $2, $3::jsonb, $4, $5, $6)`, [
+                config_id,
+                input.enabled ?? false,
+                JSON.stringify(input.builder_category_ids ?? []),
+                input.include_base_item_price ?? false,
+                ts,
+                ts
+            ]);
+            return ok(res, 201, { message: 'Builder configuration created', config_id });
+        }
+        // Update existing config
+        const config_id = existing.rows[0].config_id;
+        const updates = [];
+        const params = [];
+        if (input.enabled !== undefined) {
+            params.push(input.enabled);
+            updates.push(`enabled = $${params.length}`);
+        }
+        if (input.builder_category_ids !== undefined) {
+            params.push(JSON.stringify(input.builder_category_ids));
+            updates.push(`builder_category_ids = $${params.length}::jsonb`);
+        }
+        if (input.include_base_item_price !== undefined) {
+            params.push(input.include_base_item_price);
+            updates.push(`include_base_item_price = $${params.length}`);
+        }
+        params.push(ts);
+        updates.push(`updated_at = $${params.length}`);
+        params.push(config_id);
+        await pool.query(`UPDATE builder_config SET ${updates.join(', ')} WHERE config_id = $${params.length}`, params);
+        // Log activity
+        await log_activity({
+            user_id: req.user.user_id,
+            action_type: 'update',
+            entity_type: 'builder_config',
+            entity_id: config_id,
+            description: 'Updated builder configuration',
+            changes: input,
+            ip_address: req.headers['x-forwarded-for'] || req.socket.remoteAddress || null,
+            user_agent: req.headers['user-agent'] || null,
+        });
+        return ok(res, 200, { message: 'Builder configuration updated' });
+    }
+    catch (error) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+        }
+        console.error('Error updating builder config:', error);
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+// GET /api/admin/menu/builder-steps - Admin endpoint to fetch builder steps
+app.get('/api/admin/menu/builder-steps', authenticate_token, require_role(['admin']), async (req, res) => {
+    try {
+        // Get config
+        const config_res = await pool.query('SELECT config_id FROM builder_config LIMIT 1');
+        if (config_res.rows.length === 0) {
+            return ok(res, 200, { steps: [] });
+        }
+        const config_id = config_res.rows[0].config_id;
+        // Get steps
+        const steps_res = await pool.query(`SELECT * FROM builder_steps WHERE config_id = $1 ORDER BY sort_order ASC`, [config_id]);
+        if (steps_res.rows.length === 0) {
+            return ok(res, 200, { steps: [] });
+        }
+        const step_ids = steps_res.rows.map(s => s.step_id);
+        // Get step items with menu item details
+        const items_res = await pool.query(`SELECT bsi.*, mi.name, mi.description, mi.price as original_price, mi.image_url, mi.is_active as item_is_active
+       FROM builder_step_items bsi
+       JOIN menu_items mi ON bsi.item_id = mi.item_id
+       WHERE bsi.step_id = ANY($1)
+       ORDER BY bsi.sort_order ASC`, [step_ids]);
+        // Group items by step
+        const items_by_step = new Map();
+        for (const item of items_res.rows) {
+            if (!items_by_step.has(item.step_id)) {
+                items_by_step.set(item.step_id, []);
+            }
+            items_by_step.get(item.step_id).push({
+                step_item_id: item.step_item_id,
+                item_id: item.item_id,
+                name: item.name,
+                description: item.description ?? null,
+                original_price: Number(item.original_price),
+                override_price: item.override_price !== null ? Number(item.override_price) : null,
+                effective_price: item.override_price !== null ? Number(item.override_price) : Number(item.original_price),
+                image_url: item.image_url ?? null,
+                sort_order: item.sort_order,
+                is_active: item.is_active,
+                item_is_active: item.item_is_active,
+            });
+        }
+        // Build steps response
+        const steps = steps_res.rows.map(step => ({
+            step_id: step.step_id,
+            config_id: step.config_id,
+            step_name: step.step_name,
+            step_key: step.step_key,
+            step_type: step.step_type,
+            is_required: step.is_required,
+            min_selections: step.min_selections,
+            max_selections: step.max_selections,
+            sort_order: step.sort_order,
+            created_at: step.created_at,
+            items: items_by_step.get(step.step_id) || [],
+        }));
+        return ok(res, 200, { steps });
+    }
+    catch (error) {
+        console.error('Error fetching builder steps:', error);
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+// POST /api/admin/menu/builder-steps - Admin endpoint to create/update a builder step
+app.post('/api/admin/menu/builder-steps', authenticate_token, require_role(['admin']), async (req, res) => {
+    try {
+        const schema = z.object({
+            step_id: z.string().optional(),
+            step_name: z.string().min(1),
+            step_key: z.string().min(1),
+            step_type: z.enum(['single', 'multiple']),
+            is_required: z.boolean(),
+            min_selections: z.number().int().nonnegative(),
+            max_selections: z.number().int().positive().nullable(),
+            sort_order: z.number().int().nonnegative(),
+        });
+        const input = schema.parse(req.body);
+        const ts = now_iso();
+        // Get or create config
+        let config_res = await pool.query('SELECT config_id FROM builder_config LIMIT 1');
+        if (config_res.rows.length === 0) {
+            // Create config first
+            const config_id = gen_id('builder_config');
+            await pool.query(`INSERT INTO builder_config (config_id, enabled, builder_category_ids, include_base_item_price, created_at, updated_at)
+         VALUES ($1, false, '[]'::jsonb, false, $2, $3)`, [config_id, ts, ts]);
+            config_res = { rows: [{ config_id }] };
+        }
+        const config_id = config_res.rows[0].config_id;
+        if (input.step_id) {
+            // Update existing step
+            await pool.query(`UPDATE builder_steps SET
+           step_name = $1,
+           step_key = $2,
+           step_type = $3,
+           is_required = $4,
+           min_selections = $5,
+           max_selections = $6,
+           sort_order = $7
+         WHERE step_id = $8`, [
+                input.step_name,
+                input.step_key,
+                input.step_type,
+                input.is_required,
+                input.min_selections,
+                input.max_selections,
+                input.sort_order,
+                input.step_id
+            ]);
+            return ok(res, 200, { message: 'Step updated', step_id: input.step_id });
+        }
+        // Create new step
+        const step_id = gen_id('step');
+        await pool.query(`INSERT INTO builder_steps (step_id, config_id, step_name, step_key, step_type, is_required, min_selections, max_selections, sort_order, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`, [
+            step_id,
+            config_id,
+            input.step_name,
+            input.step_key,
+            input.step_type,
+            input.is_required,
+            input.min_selections,
+            input.max_selections,
+            input.sort_order,
+            ts
+        ]);
+        return ok(res, 201, { message: 'Step created', step_id });
+    }
+    catch (error) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+        }
+        console.error('Error creating/updating builder step:', error);
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+// DELETE /api/admin/menu/builder-steps/:step_id - Admin endpoint to delete a builder step
+app.delete('/api/admin/menu/builder-steps/:step_id', authenticate_token, require_role(['admin']), async (req, res) => {
+    try {
+        const { step_id } = req.params;
+        // Delete step (cascade will handle step items)
+        const result = await pool.query('DELETE FROM builder_steps WHERE step_id = $1 RETURNING step_id', [step_id]);
+        if (result.rows.length === 0) {
+            return res.status(404).json(createErrorResponse('Step not found', null, 'NOT_FOUND', req.request_id));
+        }
+        return ok(res, 200, { message: 'Step deleted' });
+    }
+    catch (error) {
+        console.error('Error deleting builder step:', error);
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+// POST /api/admin/menu/builder-step-items - Admin endpoint to add item to step
+app.post('/api/admin/menu/builder-step-items', authenticate_token, require_role(['admin']), async (req, res) => {
+    try {
+        const schema = z.object({
+            step_id: z.string(),
+            item_id: z.string(),
+            override_price: z.number().nullable().optional(),
+            sort_order: z.number().int().nonnegative(),
+            is_active: z.boolean().default(true),
+        });
+        const input = schema.parse(req.body);
+        const ts = now_iso();
+        // Verify step exists
+        const step_res = await pool.query('SELECT step_id FROM builder_steps WHERE step_id = $1', [input.step_id]);
+        if (step_res.rows.length === 0) {
+            return res.status(404).json(createErrorResponse('Step not found', null, 'STEP_NOT_FOUND', req.request_id));
+        }
+        // Verify menu item exists
+        const item_res = await pool.query('SELECT item_id FROM menu_items WHERE item_id = $1', [input.item_id]);
+        if (item_res.rows.length === 0) {
+            return res.status(404).json(createErrorResponse('Menu item not found', null, 'ITEM_NOT_FOUND', req.request_id));
+        }
+        // Check if already exists
+        const existing = await pool.query('SELECT step_item_id FROM builder_step_items WHERE step_id = $1 AND item_id = $2', [input.step_id, input.item_id]);
+        if (existing.rows.length > 0) {
+            // Update existing
+            await pool.query(`UPDATE builder_step_items SET override_price = $1, sort_order = $2, is_active = $3 WHERE step_item_id = $4`, [input.override_price ?? null, input.sort_order, input.is_active, existing.rows[0].step_item_id]);
+            return ok(res, 200, { message: 'Step item updated', step_item_id: existing.rows[0].step_item_id });
+        }
+        // Create new
+        const step_item_id = gen_id('bsi');
+        await pool.query(`INSERT INTO builder_step_items (step_item_id, step_id, item_id, override_price, sort_order, is_active, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`, [step_item_id, input.step_id, input.item_id, input.override_price ?? null, input.sort_order, input.is_active, ts]);
+        return ok(res, 201, { message: 'Step item created', step_item_id });
+    }
+    catch (error) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json(createErrorResponse('Validation failed', error, 'VALIDATION_ERROR', req.request_id, { issues: error.issues }));
+        }
+        console.error('Error creating builder step item:', error);
+        return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+    }
+});
+// DELETE /api/admin/menu/builder-step-items/:step_item_id - Admin endpoint to remove item from step
+app.delete('/api/admin/menu/builder-step-items/:step_item_id', authenticate_token, require_role(['admin']), async (req, res) => {
+    try {
+        const { step_item_id } = req.params;
+        const result = await pool.query('DELETE FROM builder_step_items WHERE step_item_id = $1 RETURNING step_item_id', [step_item_id]);
+        if (result.rows.length === 0) {
+            return res.status(404).json(createErrorResponse('Step item not found', null, 'NOT_FOUND', req.request_id));
+        }
+        return ok(res, 200, { message: 'Step item deleted' });
+    }
+    catch (error) {
+        console.error('Error deleting builder step item:', error);
         return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
     }
 });

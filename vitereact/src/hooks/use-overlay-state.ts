@@ -2,8 +2,8 @@ import { create } from 'zustand';
 
 interface OverlayState {
   isOverlayOpen: boolean;
-  overlayType: 'mobile-menu' | 'filter' | 'customization' | 'cart-drawer' | 'checkout-modal' | null;
-  openOverlay: (type: 'mobile-menu' | 'filter' | 'customization' | 'cart-drawer' | 'checkout-modal') => void;
+  overlayType: 'mobile-menu' | 'filter' | 'customization' | 'cart-drawer' | 'checkout-modal' | 'builder' | null;
+  openOverlay: (type: 'mobile-menu' | 'filter' | 'customization' | 'cart-drawer' | 'checkout-modal' | 'builder') => void;
   closeOverlay: () => void;
 }
 

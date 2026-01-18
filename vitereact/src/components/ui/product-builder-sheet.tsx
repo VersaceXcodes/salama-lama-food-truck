@@ -637,7 +637,7 @@ export const ProductBuilderSheet: React.FC<ProductBuilderSheetProps> = ({
       <div
         data-product-builder="true"
         className={`
-          fixed z-[9999] bg-white flex flex-col
+          fixed z-[9999] bg-white flex flex-col transform-gpu
           
           /* Mobile: Full-height bottom sheet - CRITICAL: no horizontal overflow */
           left-0 right-0 bottom-0 rounded-t-[24px]
@@ -904,8 +904,8 @@ export const ProductBuilderSheet: React.FC<ProductBuilderSheetProps> = ({
           contain: layout style paint;
           overscroll-behavior: contain;
           /* Force GPU acceleration for smoother animations */
-          transform: translateZ(0);
-          -webkit-transform: translateZ(0);
+          /* transform: translateZ(0); - Removed to fix desktop positioning */
+          /* -webkit-transform: translateZ(0); - Removed to fix desktop positioning */
           /* Ensure flex layout works correctly */
           display: flex !important;
           flex-direction: column !important;
@@ -991,8 +991,8 @@ export const ProductBuilderSheet: React.FC<ProductBuilderSheetProps> = ({
         
         /* Ensure all direct children respect flex layout and don't overflow */
         [data-product-builder] > * {
-          transform: translateZ(0);
-          -webkit-transform: translateZ(0);
+          /* transform: translateZ(0); */
+          /* -webkit-transform: translateZ(0); */
           flex-shrink: 0;
           max-width: 100% !important;
           overflow-x: hidden;

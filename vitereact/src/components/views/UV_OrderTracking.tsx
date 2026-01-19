@@ -67,7 +67,7 @@ const fetchOrderTracking = async (ticketNumber: string): Promise<OrderTrackingDa
   }
   
   // The API returns the tracking data directly at the root level (not nested under 'data')
-  const { success, ...trackingData } = response.data;
+  const { success: _success, ...trackingData } = response.data;
   
   // Validate that we have the required fields
   if (!trackingData.ticket_number || !trackingData.order_number) {

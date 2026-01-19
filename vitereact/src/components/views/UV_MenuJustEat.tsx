@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useAppStore } from '@/store/main';
 import { useToast } from '@/hooks/use-toast';
-import { ProductCustomizerSheet } from '@/components/ui/product-customizer-sheet';
-import { MENU_DATA, HIGHLIGHTS, MenuItem, MenuCategory } from '@/data/justEatMenuData';
+import { MENU_DATA, HIGHLIGHTS, MenuItem } from '@/data/justEatMenuData';
 import { Info, Plus, Search, X } from 'lucide-react';
 
 // ===========================
@@ -182,28 +181,43 @@ const UV_MenuJustEat: React.FC = () => {
           </div>
 
           {/* Horizontal Scrollable Cards */}
-          <div className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4">
+          <div className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
             {HIGHLIGHTS.map((item) => (
               <div
                 key={item.id}
                 onClick={() => handleItemClick(item)}
-                className="min-w-[280px] bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-5 snap-start cursor-pointer border border-gray-200 flex-shrink-0"
+                className="min-w-[260px] sm:min-w-[280px] bg-white rounded-xl shadow-sm hover:shadow-lg transition-all p-4 sm:p-5 snap-start cursor-pointer border border-gray-100 flex-shrink-0 relative"
               >
-                <div className="text-xs text-gray-500 font-semibold mb-1 uppercase">
+                {/* Category Label */}
+                <div className="text-xs text-orange-600 font-bold mb-2 uppercase tracking-wide">
                   {item.category}
                 </div>
-                <div className="flex justify-between items-start gap-3">
+                
+                {/* Content */}
+                <div className="flex justify-between items-start gap-3 mb-3">
                   <div className="flex-1">
-                    <h3 className="font-bold text-base mb-1">{item.name}</h3>
-                    <p className="text-lg font-bold text-gray-900 mt-2">
+                    <h3 className="font-bold text-base text-gray-900 leading-tight mb-2">
+                      {item.name}
+                    </h3>
+                    <p className="text-lg font-bold text-gray-900">
                       €{item.price.toFixed(2)}
                     </p>
                   </div>
                   {item.image && (
-                    <div className="w-16 h-16 bg-gray-200 rounded-lg flex-shrink-0"></div>
+                    <div className="w-20 h-20 bg-gradient-to-br from-orange-100 to-orange-200 rounded-lg flex-shrink-0 flex items-center justify-center">
+                      <span className="text-orange-600 text-xs font-semibold">Image</span>
+                    </div>
                   )}
                 </div>
-                <button className="w-9 h-9 rounded-full bg-orange-600 text-white flex items-center justify-center mt-3 hover:bg-orange-700 transition-colors ml-auto">
+                
+                {/* Add Button */}
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleItemClick(item);
+                  }}
+                  className="w-9 h-9 rounded-full bg-orange-600 text-white flex items-center justify-center hover:bg-orange-700 transition-all shadow-md hover:scale-105 ml-auto"
+                >
                   <Plus className="w-5 h-5" />
                 </button>
               </div>
@@ -222,7 +236,7 @@ const UV_MenuJustEat: React.FC = () => {
             {/* Category Header */}
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-2xl font-bold text-gray-900">{category.name}</h2>
-              <span className="text-gray-500 text-sm">{category.itemCount} items</span>
+              <span className="text-gray-500 text-sm">{category.items.length} {category.items.length === 1 ? 'item' : 'items'}</span>
             </div>
 
             {/* Category Note */}
@@ -241,14 +255,26 @@ const UV_MenuJustEat: React.FC = () => {
                   <div
                     key={item.id}
                     onClick={() => handleItemClick(item)}
-                    className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all p-5 cursor-pointer border border-gray-100 relative group"
+                    className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all p-5 cursor-pointer border border-gray-100 relative group hover:border-orange-200"
                   >
+                    {/* Add Button - Top Right */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleItemClick(item);
+                      }}
+                      className="absolute top-4 right-4 w-10 h-10 rounded-full bg-orange-600 text-white flex items-center justify-center hover:bg-orange-700 transition-all shadow-md group-hover:scale-110 z-10"
+                      aria-label="Add to cart"
+                    >
+                      <Plus className="w-6 h-6" />
+                    </button>
+
                     {/* Item Content */}
-                    <div className="flex justify-between gap-4">
+                    <div className="flex justify-between gap-4 pr-12">
                       <div className="flex-1">
                         {/* Item Name with Info Icon */}
                         <div className="flex items-start gap-2 mb-2">
-                          <h3 className="font-bold text-lg text-gray-900 flex-1">
+                          <h3 className="font-bold text-lg text-gray-900 flex-1 leading-tight">
                             {item.name}
                           </h3>
                           <button
@@ -256,15 +282,16 @@ const UV_MenuJustEat: React.FC = () => {
                               e.stopPropagation();
                               handleItemClick(item);
                             }}
-                            className="w-5 h-5 rounded-full border-2 border-gray-300 text-gray-400 text-xs flex items-center justify-center hover:border-orange-600 hover:text-orange-600 transition-colors flex-shrink-0"
+                            className="w-5 h-5 rounded-full border border-gray-300 text-gray-400 flex items-center justify-center hover:border-orange-600 hover:text-orange-600 transition-colors flex-shrink-0 mt-0.5"
+                            aria-label="View details"
                           >
-                            <Info className="w-3 h-3" />
+                            <Info className="w-3.5 h-3.5" />
                           </button>
                         </div>
 
-                        {/* Description */}
+                        {/* Description - 2-3 lines with ellipsis */}
                         {item.description && (
-                          <p className="text-gray-600 text-sm line-clamp-2 mb-3 leading-relaxed">
+                          <p className="text-gray-600 text-sm line-clamp-3 mb-3 leading-relaxed">
                             {item.description}
                           </p>
                         )}
@@ -275,22 +302,13 @@ const UV_MenuJustEat: React.FC = () => {
                         </p>
                       </div>
 
-                      {/* Optional Image */}
+                      {/* Optional Image - Right Thumbnail */}
                       {item.image && (
-                        <div className="w-24 h-24 bg-gray-200 rounded-lg flex-shrink-0"></div>
+                        <div className="w-24 h-24 bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl flex-shrink-0 flex items-center justify-center">
+                          <span className="text-orange-600 text-xs font-semibold">Image</span>
+                        </div>
                       )}
                     </div>
-
-                    {/* Add Button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleItemClick(item);
-                      }}
-                      className="absolute top-4 right-4 w-10 h-10 rounded-full bg-orange-600 text-white flex items-center justify-center hover:bg-orange-700 transition-colors shadow-md group-hover:scale-110"
-                    >
-                      <Plus className="w-6 h-6" />
-                    </button>
                   </div>
                 ))}
               </div>
@@ -320,8 +338,15 @@ const UV_MenuJustEat: React.FC = () => {
 
       {/* Item Modal (Simple Version) */}
       {modalOpen && selectedItem && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="bg-white w-full sm:max-w-2xl sm:rounded-2xl rounded-t-2xl max-h-[90vh] overflow-y-auto">
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setModalOpen(false);
+            }
+          }}
+        >
+          <div className="bg-white w-full sm:max-w-2xl sm:rounded-2xl rounded-t-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             {/* Modal Header */}
             <div className="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
               <h2 className="text-xl font-bold text-gray-900">{selectedItem.name}</h2>

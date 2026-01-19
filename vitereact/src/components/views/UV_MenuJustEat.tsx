@@ -3,6 +3,7 @@ import { useAppStore } from '@/store/main';
 import { useToast } from '@/hooks/use-toast';
 import { MENU_DATA, HIGHLIGHTS, MenuItem } from '@/data/justEatMenuData';
 import { Info, Plus, Search, X } from 'lucide-react';
+import ItemCustomizationModal, { ItemCustomization } from '@/components/ItemCustomizationModal';
 
 // ===========================
 // Main Component
@@ -25,7 +26,6 @@ const UV_MenuJustEat: React.FC = () => {
   // Modal state
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [quantity, setQuantity] = useState(1);
 
   // Intersection Observer for scroll spy
   useEffect(() => {

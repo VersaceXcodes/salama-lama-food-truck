@@ -19,6 +19,7 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 // Import Unique Views
 import UV_Landing from '@/components/views/UV_Landing';
 import UV_Menu from '@/components/views/UV_Menu';
+import UV_MenuJustEat from '@/components/views/UV_MenuJustEat';
 import UV_Cart from '@/components/views/UV_Cart';
 import UV_CheckoutOrderType from '@/components/views/UV_CheckoutOrderType';
 import UV_CheckoutContact from '@/components/views/UV_CheckoutContact';
@@ -324,6 +325,7 @@ const AppRoutes: React.FC = () => {
 
         {/* Menu & Cart */}
         <Route path="/menu" element={<UV_Menu />} />
+        <Route path="/menu-justeat" element={<UV_MenuJustEat />} />
         <Route path="/cart" element={<UV_Cart />} />
 
         {/* Catering Public Pages */}

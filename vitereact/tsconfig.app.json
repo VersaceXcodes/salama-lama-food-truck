@@ -27,5 +27,5 @@
 		}
 	},
 	"include": ["src"],
-	"exclude": ["src/components/ui/**/*"]
+	"exclude": ["src/**/__tests__/*", "src/**/*.test.tsx", "src/**/*.test.ts", "src/test/**/*"]
 }

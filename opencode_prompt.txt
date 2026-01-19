@@ -1,112 +1,14 @@
-FIX: Item customization options are not selectable in the menu item modal.
-Right now the modal only shows a banner “Customization options available…” but no controls. Implement modifier groups UI + cart pricing so customers can choose spice level, add-ons, and extras.
-
-SCOPE
-- Only change menu customization behavior + modal UI + cart line item structure (do NOT redesign the whole menu page).
-- Must work for items in these categories (or item types): Grilled Subs, Saj Wraps, Loaded Fries, Rice Bowls.
-- If “Most Popular” reuses those same items, the modifiers must still appear (don’t treat Most Popular as a separate non-customizable category).
-
-STEP 1 — Ensure the DATA MODEL supports modifiers (if missing, add it)
-Each menu item must support:
-- modifiers: array of modifierGroups
-Each modifierGroup:
-- id, title, required (bool), minSelect, maxSelect
-- type: "single" (radio) or "multi" (checkbox) or "single_optional" (select / radio with “None”)
-- options: [{ id, label, priceDelta }]
-
-If current menu data does not include modifiers, then add modifiers dynamically based on the item’s base category:
-- If category in [grilled-subs, saj-wraps, loaded-fries, rice-bowls], attach modifierGroups below.
-
-Modifier Groups to implement:
-
-A) Spice Level (REQUIRED)
-- title: “Spice Level”
-- required: true, minSelect: 1, maxSelect: 1, type: single
-- options:
-  - Mild (+€0.00)
-  - Spicy (+€0.00) (note text: “Harissa instead of hot honey”)
-
-B) Remove Items (OPTIONAL, free) — multi checkbox
-- required: false, minSelect: 0, maxSelect: depends on list, type: multi
-- grilled-subs: No cheese, No garlic, No salad (fries only), No hot honey
-- saj-wraps: No cheese, No garlic, No salad (fries only), No hot honey
-- loaded-fries: No cheese, No garlic, No salad, No hot honey
-- rice-bowls: No cheese, No garlic, No salad, No hot honey, No fries on top
-(All priceDelta €0.00)
-
-C) Add-ons (OPTIONAL, paid) — multi checkbox
-- required: false, minSelect: 0, type: multi
-- grilled-subs:
-  - Chicken topping on fries (+€3.00)
-  - Brisket topping on fries (+€4.00)
-  - Mixed topping on fries (+€5.00)
-- saj-wraps:
-  - Extra shredded mozzarella in wrap (+€1.00)
-  - Chicken topping on fries (+€3.00)
-  - Brisket topping on fries (+€4.00)
-  - Mixed topping on fries (+€5.00)
-- loaded-fries:
-  - Extra chicken (+€3.99)
-  - Extra brisket (+€4.99)
-  - Extra mixed (+€5.99)
-- rice-bowls:
-  - Extra chicken (+€3.99)
-  - Extra brisket (+€4.99)
-  - Extra mixed (+€5.99)
-
-D) Extras (OPTIONAL, paid) — multi checkbox
-- required: false, minSelect: 0, type: multi
-- Grilled Halloumi Sticks (+€6.50)
-- Cheesy Pizza Poppers (+€6.50)
-
-E) Add a Drink (OPTIONAL, choose max 1) — single_optional
-- required: false, minSelect: 0, maxSelect: 1, type: single_optional
-- options are the 10 drinks in the Drinks category (each option uses its drink price as priceDelta)
-- include a “None” default option with +€0.00
-
-STEP 2 — Render the modifier groups inside the MODAL
-In the item modal:
-- Replace the “Customization options available…” banner-only behavior with actual controls.
-- Render modifier groups in this order:
-  1) Required groups first (Spice Level)
-  2) Optional groups after (Remove Items, Add-ons, Extras, Add a Drink)
-This ordering should be consistent with common online ordering behavior where required modifiers appear first. 
-
-Controls:
-- Spice Level -> radio group
-- Remove Items / Add-ons / Extras -> checkbox list, show “+€X.XX” for paid options
-- Add a Drink -> radio group or dropdown with “None” option
-
-Validation:
-- Disable “Add to Cart” until all required modifier groups satisfy minSelect.
-- If user tries to add without selecting required options, show inline error under that group.
-
-Live price updates:
-- The button text should update in real time:
-  “Add to Cart • €{computedTotal}”
-- computedTotal = basePrice + sum(priceDelta of all selected options)
-
-STEP 3 — Cart line items must store selections + computed pricing
-When adding to cart, store:
-- itemId, name, basePrice
-- selectedModifiers: [{ groupId, groupTitle, selections: [{ optionId, label, priceDelta }] }]
-- quantity
-- unitTotal (computedTotal at time of add)
-- lineTotal = unitTotal * quantity
-
-Cart display:
-- Show item name
-- Under it, show selected options in readable lines (e.g., “Spice Level: Spicy”, “Add-ons: Extra chicken”)
-- Show unit total and line total
-- Allow edit: reopening modal should prefill previous selections and recompute totals.
-
-STEP 4 — Acceptance tests (must pass)
-1) Open Brisket Saj Wrap modal -> Spice Level radios appear and are required.
-2) Add-ons + Extras checkboxes appear and change total price instantly.
-3) “Add a Drink” allows None or exactly 1 drink; selecting a drink adds its price.
-4) Add to cart stores selections and shows them in cart.
-5) Items outside these categories (Sides, Sauces and Dips, Drinks) do NOT show modifier UI.
-END.
+fix this "vendor-KeFEExaQ.js:38 Uncaught Error: Minified React error #310; visit https://reactjs.org/docs/error-decoder.html?invariant=310 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at ut (vendor-KeFEExaQ.js:38:17576)
+    at ha (vendor-KeFEExaQ.js:38:17829)
+    at Object.useState (vendor-KeFEExaQ.js:38:24636)
+    at Q.useState (vendor-KeFEExaQ.js:9:6364)
+    at vl (index-DLZLHJb1.js:657:18926)
+    at jc (vendor-KeFEExaQ.js:38:16981)
+    at pu (vendor-KeFEExaQ.js:40:3135)
+    at hg (vendor-KeFEExaQ.js:40:44679)
+    at cg (vendor-KeFEExaQ.js:40:39686)
+    at fw (vendor-KeFEExaQ.js:40:39614)"
 
 When the user mentions generic pages, map them to concrete files/components by scanning for headings and routes. Examples you MUST follow:
 - If the user says "login" or "sign in", search for components containing the literal heading "Sign in to your account" and edit that file.
@@ -117,113 +19,15 @@ When the user mentions generic pages, map them to concrete files/components by s
 - The user's request above is the PRIMARY task. Complete it first.
 - Ignore any existing errors, warnings, or issues you detect in the project unless they directly prevent you from completing the user's requested task.
 - Do NOT automatically fix unrelated errors or refactor code unless explicitly requested.
-- Focus solely on implementing the user's request: "FIX: Item customization options are not selectable in the menu item modal.
-Right now the modal only shows a banner “Customization options available…” but no controls. Implement modifier groups UI + cart pricing so customers can choose spice level, add-ons, and extras.
-
-SCOPE
-- Only change menu customization behavior + modal UI + cart line item structure (do NOT redesign the whole menu page).
-- Must work for items in these categories (or item types): Grilled Subs, Saj Wraps, Loaded Fries, Rice Bowls.
-- If “Most Popular” reuses those same items, the modifiers must still appear (don’t treat Most Popular as a separate non-customizable category).
-
-STEP 1 — Ensure the DATA MODEL supports modifiers (if missing, add it)
-Each menu item must support:
-- modifiers: array of modifierGroups
-Each modifierGroup:
-- id, title, required (bool), minSelect, maxSelect
-- type: "single" (radio) or "multi" (checkbox) or "single_optional" (select / radio with “None”)
-- options: [{ id, label, priceDelta }]
-
-If current menu data does not include modifiers, then add modifiers dynamically based on the item’s base category:
-- If category in [grilled-subs, saj-wraps, loaded-fries, rice-bowls], attach modifierGroups below.
-
-Modifier Groups to implement:
-
-A) Spice Level (REQUIRED)
-- title: “Spice Level”
-- required: true, minSelect: 1, maxSelect: 1, type: single
-- options:
-  - Mild (+€0.00)
-  - Spicy (+€0.00) (note text: “Harissa instead of hot honey”)
-
-B) Remove Items (OPTIONAL, free) — multi checkbox
-- required: false, minSelect: 0, maxSelect: depends on list, type: multi
-- grilled-subs: No cheese, No garlic, No salad (fries only), No hot honey
-- saj-wraps: No cheese, No garlic, No salad (fries only), No hot honey
-- loaded-fries: No cheese, No garlic, No salad, No hot honey
-- rice-bowls: No cheese, No garlic, No salad, No hot honey, No fries on top
-(All priceDelta €0.00)
-
-C) Add-ons (OPTIONAL, paid) — multi checkbox
-- required: false, minSelect: 0, type: multi
-- grilled-subs:
-  - Chicken topping on fries (+€3.00)
-  - Brisket topping on fries (+€4.00)
-  - Mixed topping on fries (+€5.00)
-- saj-wraps:
-  - Extra shredded mozzarella in wrap (+€1.00)
-  - Chicken topping on fries (+€3.00)
-  - Brisket topping on fries (+€4.00)
-  - Mixed topping on fries (+€5.00)
-- loaded-fries:
-  - Extra chicken (+€3.99)
-  - Extra brisket (+€4.99)
-  - Extra mixed (+€5.99)
-- rice-bowls:
-  - Extra chicken (+€3.99)
-  - Extra brisket (+€4.99)
-  - Extra mixed (+€5.99)
-
-D) Extras (OPTIONAL, paid) — multi checkbox
-- required: false, minSelect: 0, type: multi
-- Grilled Halloumi Sticks (+€6.50)
-- Cheesy Pizza Poppers (+€6.50)
-
-E) Add a Drink (OPTIONAL, choose max 1) — single_optional
-- required: false, minSelect: 0, maxSelect: 1, type: single_optional
-- options are the 10 drinks in the Drinks category (each option uses its drink price as priceDelta)
-- include a “None” default option with +€0.00
-
-STEP 2 — Render the modifier groups inside the MODAL
-In the item modal:
-- Replace the “Customization options available…” banner-only behavior with actual controls.
-- Render modifier groups in this order:
-  1) Required groups first (Spice Level)
-  2) Optional groups after (Remove Items, Add-ons, Extras, Add a Drink)
-This ordering should be consistent with common online ordering behavior where required modifiers appear first. 
-
-Controls:
-- Spice Level -> radio group
-- Remove Items / Add-ons / Extras -> checkbox list, show “+€X.XX” for paid options
-- Add a Drink -> radio group or dropdown with “None” option
-
-Validation:
-- Disable “Add to Cart” until all required modifier groups satisfy minSelect.
-- If user tries to add without selecting required options, show inline error under that group.
-
-Live price updates:
-- The button text should update in real time:
-  “Add to Cart • €{computedTotal}”
-- computedTotal = basePrice + sum(priceDelta of all selected options)
-
-STEP 3 — Cart line items must store selections + computed pricing
-When adding to cart, store:
-- itemId, name, basePrice
-- selectedModifiers: [{ groupId, groupTitle, selections: [{ optionId, label, priceDelta }] }]
-- quantity
-- unitTotal (computedTotal at time of add)
-- lineTotal = unitTotal * quantity
-
-Cart display:
-- Show item name
-- Under it, show selected options in readable lines (e.g., “Spice Level: Spicy”, “Add-ons: Extra chicken”)
-- Show unit total and line total
-- Allow edit: reopening modal should prefill previous selections and recompute totals.
-
-STEP 4 — Acceptance tests (must pass)
-1) Open Brisket Saj Wrap modal -> Spice Level radios appear and are required.
-2) Add-ons + Extras checkboxes appear and change total price instantly.
-3) “Add a Drink” allows None or exactly 1 drink; selecting a drink adds its price.
-4) Add to cart stores selections and shows them in cart.
-5) Items outside these categories (Sides, Sauces and Dips, Drinks) do NOT show modifier UI.
-END."
+- Focus solely on implementing the user's request: "fix this "vendor-KeFEExaQ.js:38 Uncaught Error: Minified React error #310; visit https://reactjs.org/docs/error-decoder.html?invariant=310 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at ut (vendor-KeFEExaQ.js:38:17576)
+    at ha (vendor-KeFEExaQ.js:38:17829)
+    at Object.useState (vendor-KeFEExaQ.js:38:24636)
+    at Q.useState (vendor-KeFEExaQ.js:9:6364)
+    at vl (index-DLZLHJb1.js:657:18926)
+    at jc (vendor-KeFEExaQ.js:38:16981)
+    at pu (vendor-KeFEExaQ.js:40:3135)
+    at hg (vendor-KeFEExaQ.js:40:44679)
+    at cg (vendor-KeFEExaQ.js:40:39686)
+    at fw (vendor-KeFEExaQ.js:40:39614)""
 - Only address errors if they block the specific functionality requested by the user.

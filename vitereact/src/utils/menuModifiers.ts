@@ -26,19 +26,20 @@ const MODIFIER_CATEGORIES = ['grilled-subs', 'saj-wraps', 'loaded-fries', 'rice-
 /**
  * Check if an item (based on category) should have modifiers
  */
-export function shouldHaveModifiers(categoryId: string | null): boolean {
-  if (!categoryId) return false;
-  return MODIFIER_CATEGORIES.includes(categoryId.toLowerCase());
+export function shouldHaveModifiers(categoryName: string | null): boolean {
+  if (!categoryName) return false;
+  const normalized = categoryName.toLowerCase().replace(/ /g, '-');
+  return MODIFIER_CATEGORIES.includes(normalized);
 }
 
 /**
  * Generate modifiers for a specific category
  */
 export function generateModifiersForCategory(
-  categoryId: string,
-  drinkItems?: Array<{ item_id: string; name: string; price: number }>
+  categoryName: string,
+  drinkItems?: Array<{ id: string; name: string; price: number }>
 ): ModifierGroup[] {
-  const normalizedCategoryId = categoryId.toLowerCase();
+  const normalizedCategoryId = categoryName.toLowerCase().replace(/ /g, '-');
   
   if (!shouldHaveModifiers(normalizedCategoryId)) {
     return [];
@@ -155,7 +156,7 @@ export function generateModifiersForCategory(
   if (drinkItems && drinkItems.length > 0) {
     drinkItems.forEach((drink) => {
       drinkOptions.push({
-        id: `drink-${drink.item_id}`,
+        id: `drink-${drink.id}`,
         label: drink.name,
         priceDelta: drink.price,
       });
@@ -206,40 +207,23 @@ export function generateModifiersForCategory(
  */
 export function attachModifiersToItem(
   item: any,
-  drinkItems?: Array<{ item_id: string; name: string; price: number }>
+  drinkItems?: Array<{ id: string; name: string; price: number }>
 ): any {
-  // Check if item already has customization_groups
-  if (item.customization_groups && item.customization_groups.length > 0) {
-    // Item already has customizations from the database
+  // Check if item already has modifiers
+  if (item.modifiers && item.modifiers.length > 0) {
     return item;
   }
 
   // Check if item category should have modifiers
-  if (!shouldHaveModifiers(item.category_id)) {
+  if (!shouldHaveModifiers(item.category)) {
     return item;
   }
 
   // Generate modifiers for this category
-  const modifierGroups = generateModifiersForCategory(item.category_id, drinkItems);
-
-  // Convert ModifierGroup[] to CustomizationGroup[] format expected by the UI
-  const customization_groups = modifierGroups.map((group, groupIndex) => ({
-    group_id: group.id,
-    name: group.title,
-    type: group.type === 'multi' ? 'multiple' : 'single',
-    is_required: group.required,
-    sort_order: groupIndex,
-    options: group.options.map((option, optionIndex) => ({
-      option_id: option.id,
-      name: option.label + (option.note ? ` (${option.note})` : ''),
-      additional_price: option.priceDelta,
-      is_default: option.id === 'mild' || option.id === 'none', // Default selections
-      sort_order: optionIndex,
-    })),
-  }));
+  const modifiers = generateModifiersForCategory(item.category, drinkItems);
 
   return {
     ...item,
-    customization_groups,
+    modifiers,
   };
 }

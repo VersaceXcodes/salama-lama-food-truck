@@ -10,6 +10,7 @@ export interface MenuItem {
   image?: string;
   isHighlight?: boolean;
   hasCustomizations?: boolean;
+  modifiers?: any[]; // Using any[] for now to avoid circular dependency, defined properly in menuModifiers.ts
 }
 
 export interface MenuCategory {

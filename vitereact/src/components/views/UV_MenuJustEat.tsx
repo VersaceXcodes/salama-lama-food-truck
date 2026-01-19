@@ -3,7 +3,7 @@ import { useAppStore } from '@/store/main';
 import { useToast } from '@/hooks/use-toast';
 import { MENU_DATA, HIGHLIGHTS, MenuItem } from '@/data/justEatMenuData';
 import { Info, Plus, Search, X } from 'lucide-react';
-import ItemCustomizationModal, { ItemCustomization } from '@/components/ItemCustomizationModal';
+import ItemCustomizationModal, { ModifierSelection } from '@/components/ItemCustomizationModal';
 
 // ===========================
 // Main Component
@@ -26,7 +26,6 @@ const UV_MenuJustEat: React.FC = () => {
   // Modal state
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [quantity, setQuantity] = useState(1);
 
   // Intersection Observer for scroll spy
   useEffect(() => {
@@ -77,33 +76,45 @@ const UV_MenuJustEat: React.FC = () => {
   // Handle item click
   const handleItemClick = (item: MenuItem) => {
     setSelectedItem(item);
-    setQuantity(1);
     setModalOpen(true);
   };
 
-  // Handle add to cart
-  const handleAddToCart = () => {
-    if (!selectedItem) return;
+  // Handle add to cart from Modal
+  const handleAddToCart = (
+    item: MenuItem,
+    selectedModifiers: ModifierSelection[],
+    quantity: number,
+    totalPrice: number
+  ) => {
+    const unitTotal = totalPrice / quantity;
 
     const cartItem = {
-      item_id: selectedItem.id,
-      item_name: selectedItem.name,
+      item_id: item.id,
+      item_name: item.name,
       quantity: quantity,
-      unit_price: selectedItem.price,
-      customizations: [],
-      line_total: selectedItem.price * quantity,
+      unit_price: item.price,
+      selectedModifiers: selectedModifiers, // Store structured selections
+      unitTotal: unitTotal,
+      line_total: totalPrice,
+      // Map to flat customizations for backward compatibility if needed by other components
+      customizations: selectedModifiers.flatMap(group => 
+        group.selections.map(sel => ({
+          group_name: group.groupTitle,
+          option_name: sel.label,
+          additional_price: sel.priceDelta
+        }))
+      )
     };
 
     addToCartAction(cartItem);
 
     toast({
       title: 'Added to cart',
-      description: `${selectedItem.name} x${quantity}`,
+      description: `${item.name} x${quantity}`,
     });
 
     setModalOpen(false);
     setSelectedItem(null);
-    setQuantity(1);
   };
 
   // Category pills data
@@ -337,92 +348,13 @@ const UV_MenuJustEat: React.FC = () => {
         )}
       </div>
 
-      {/* Item Modal (Simple Version) */}
-      {modalOpen && selectedItem && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setModalOpen(false);
-            }
-          }}
-        >
-          <div className="bg-white w-full sm:max-w-2xl sm:rounded-2xl rounded-t-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            {/* Modal Header */}
-            <div className="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
-              <h2 className="text-xl font-bold text-gray-900">{selectedItem.name}</h2>
-              <button
-                onClick={() => setModalOpen(false)}
-                className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Modal Content */}
-            <div className="p-6">
-              {/* Image */}
-              {selectedItem.image && (
-                <div className="w-full h-48 bg-gray-200 rounded-lg mb-4"></div>
-              )}
-
-              {/* Description */}
-              {selectedItem.description && (
-                <p className="text-gray-700 mb-6 leading-relaxed">
-                  {selectedItem.description}
-                </p>
-              )}
-
-              {/* Price */}
-              <div className="text-2xl font-bold text-gray-900 mb-6">
-                €{selectedItem.price.toFixed(2)}
-              </div>
-
-              {/* Customizations Notice */}
-              {selectedItem.hasCustomizations && (
-                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
-                  <p className="text-sm text-orange-800 font-semibold">
-                    Customization options available for this item
-                  </p>
-                  <p className="text-xs text-orange-700 mt-1">
-                    Choose your spice level, add-ons, and extras
-                  </p>
-                </div>
-              )}
-
-              {/* Quantity */}
-              <div className="mb-6">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Quantity
-                </label>
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center hover:border-orange-600 transition-colors"
-                  >
-                    -
-                  </button>
-                  <span className="text-xl font-bold w-12 text-center">{quantity}</span>
-                  <button
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center hover:border-orange-600 transition-colors"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-
-              {/* Add to Cart Button */}
-              <button
-                onClick={handleAddToCart}
-                className="w-full py-4 bg-orange-600 text-white rounded-full font-bold text-lg hover:bg-orange-700 transition-colors shadow-lg"
-              >
-                Add to Cart • €{(selectedItem.price * quantity).toFixed(2)}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Item Customization Modal */}
+      <ItemCustomizationModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        item={selectedItem}
+        onAddToCart={handleAddToCart}
+      />
     </div>
   );
 };

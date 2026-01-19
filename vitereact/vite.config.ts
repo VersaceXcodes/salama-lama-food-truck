@@ -66,15 +66,7 @@ export default defineConfig({
 		outDir: "public",
 		rollupOptions: {
 			output: {
-				manualChunks: {
-					'vendor': ['react', 'react-dom', 'react-router-dom'],
-					'ui': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select'],
-					'forms': ['react-hook-form', '@hookform/resolvers'],
-					'query': ['@tanstack/react-query'],
-					'charts': ['recharts'],
-					'state': ['zustand', 'axios'],
-					'socket': ['socket.io-client'],
-				},
+				// Let Vite handle chunking automatically
 			},
 		},
 		chunkSizeWarningLimit: 1000,

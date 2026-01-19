@@ -236,7 +236,7 @@ const UV_MenuJustEat: React.FC = () => {
             {/* Category Header */}
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-2xl font-bold text-gray-900">{category.name}</h2>
-              <span className="text-gray-500 text-sm">{category.items.length} {category.items.length === 1 ? 'item' : 'items'}</span>
+              <span className="text-gray-500 text-sm font-medium">{category.items.length} {category.items.length === 1 ? 'item' : 'items'}</span>
             </div>
 
             {/* Category Note */}
@@ -246,8 +246,8 @@ const UV_MenuJustEat: React.FC = () => {
 
             {/* Items Grid or Empty State */}
             {category.items.length === 0 ? (
-              <div className="text-center py-12 bg-white rounded-xl border-2 border-dashed border-gray-200">
-                <p className="text-gray-500 text-sm">No items match your search in this category</p>
+              <div className="py-4">
+                <p className="text-gray-500 text-sm">No matching items</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

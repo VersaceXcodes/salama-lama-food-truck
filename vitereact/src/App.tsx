@@ -324,8 +324,8 @@ const AppRoutes: React.FC = () => {
         <Route path="/track-order" element={<UV_TrackOrder />} />
 
         {/* Menu & Cart */}
-        <Route path="/menu" element={<UV_Menu />} />
-        <Route path="/menu-justeat" element={<UV_MenuJustEat />} />
+        <Route path="/menu" element={<UV_MenuJustEat />} />
+        <Route path="/menu-old" element={<UV_Menu />} />
         <Route path="/cart" element={<UV_Cart />} />
 
         {/* Catering Public Pages */}

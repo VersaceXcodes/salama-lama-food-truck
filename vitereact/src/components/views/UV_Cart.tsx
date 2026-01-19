@@ -586,16 +586,42 @@ const UV_Cart: React.FC = () => {
       return null;
     }
 
-    const customizationArray = Object.entries(customizations).map(([key, value]) => {
-      if (typeof value === 'object' && value !== null) {
-        return `${key}: ${value.name || value}${value.additional_price ? ` (+€${Number(value.additional_price || 0).toFixed(2)})` : ''}`;
+    // Convert customizations to array and group by modifier group
+    const customizationEntries = Object.entries(customizations);
+    
+    // Handle both old format (flat) and new format (grouped)
+    const formattedCustomizations: string[] = [];
+    
+    customizationEntries.forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        // New format: value is an array of options
+        const optionNames = value
+          .map((opt: any) => {
+            const name = typeof opt === 'object' ? opt.option_name || opt.name : String(opt);
+            const price = typeof opt === 'object' && opt.additional_price ? Number(opt.additional_price) : 0;
+            return price > 0 ? `${name} (+€${price.toFixed(2)})` : name;
+          })
+          .join(', ');
+        formattedCustomizations.push(`${key}: ${optionNames}`);
+      } else if (typeof value === 'object' && value !== null) {
+        // Old format: single object with name and price
+        const name = value.name || value.option_name || String(value);
+        const price = value.additional_price ? Number(value.additional_price) : 0;
+        const displayText = price > 0 ? `${name} (+€${price.toFixed(2)})` : name;
+        formattedCustomizations.push(`${key}: ${displayText}`);
+      } else {
+        // Fallback: simple string value
+        formattedCustomizations.push(`${key}: ${value}`);
       }
-      return `${key}: ${value}`;
     });
 
     return (
-      <div className="mt-1 text-sm text-gray-600">
-        {customizationArray.join(', ')}
+      <div className="mt-2 space-y-1">
+        {formattedCustomizations.map((text, index) => (
+          <div key={index} className="text-xs sm:text-sm text-gray-600 leading-relaxed">
+            {text}
+          </div>
+        ))}
       </div>
     );
   };

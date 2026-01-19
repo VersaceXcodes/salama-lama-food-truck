@@ -17,7 +17,7 @@ interface CustomizationOption {
 interface CustomizationGroup {
   group_id: string;
   name: string;
-  type: 'single' | 'multiple';
+  type: 'single' | 'multiple' | 'single_optional';
   is_required: boolean;
   sort_order: number;
   options: CustomizationOption[];
@@ -50,7 +50,7 @@ interface ProductCustomizerSheetProps {
   onCustomizationChange: (
     groupId: string,
     groupName: string,
-    groupType: 'single' | 'multiple',
+    groupType: 'single' | 'multiple' | 'single_optional',
     option: CustomizationOption
   ) => void;
   onQuantityChange: (newQuantity: number) => void;
@@ -68,7 +68,7 @@ interface OptionGroupProps {
   onOptionChange: (
     groupId: string,
     groupName: string,
-    groupType: 'single' | 'multiple',
+    groupType: 'single' | 'multiple' | 'single_optional',
     option: CustomizationOption
   ) => void;
   showError?: boolean;
@@ -95,7 +95,7 @@ const OptionGroup: React.FC<OptionGroupProps> = ({
           )}
         </div>
         <span className="text-[10px] sm:text-xs text-[var(--primary-text)]/60 whitespace-nowrap">
-          {group.type === 'single' ? 'Select one' : 'Select any'}
+          {group.type === 'single' || group.type === 'single_optional' ? 'Select one' : 'Select any'}
         </span>
       </div>
 
@@ -124,7 +124,7 @@ const OptionGroup: React.FC<OptionGroupProps> = ({
                 className={`
                   flex-shrink-0 flex items-center justify-center
                   w-6 h-6 border-2 transition-all duration-150
-                  ${group.type === 'single' ? 'rounded-full' : 'rounded-md'}
+                  ${group.type === 'single' || group.type === 'single_optional' ? 'rounded-full' : 'rounded-md'}
                   ${isSelected 
                     ? 'bg-[var(--btn-bg)] border-[var(--btn-bg)]' 
                     : 'bg-white border-[var(--border-light)]'
@@ -138,7 +138,7 @@ const OptionGroup: React.FC<OptionGroupProps> = ({
 
               {/* Hidden actual input for accessibility */}
               <input
-                type={group.type === 'single' ? 'radio' : 'checkbox'}
+                type={group.type === 'single' || group.type === 'single_optional' ? 'radio' : 'checkbox'}
                 name={group.group_id}
                 checked={isSelected}
                 onChange={() =>

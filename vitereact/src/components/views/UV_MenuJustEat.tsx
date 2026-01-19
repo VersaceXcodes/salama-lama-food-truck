@@ -26,6 +26,7 @@ const UV_MenuJustEat: React.FC = () => {
   // Modal state
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [quantity, setQuantity] = useState(1);
 
   // Intersection Observer for scroll spy
   useEffect(() => {

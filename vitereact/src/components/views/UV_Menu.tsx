@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { ProductCustomizerSheet } from '@/components/ui/product-customizer-sheet';
 import { ProductBuilderSheet, BuilderStep, BuilderSelection } from '@/components/ui/product-builder-sheet';
+import { attachModifiersToItem } from '@/utils/menuModifiers';
 
 // ===========================
 // Type Definitions
@@ -270,21 +271,35 @@ const UV_Menu: React.FC = () => {
   const menuItems: MenuItem[] = useMemo(() => {
     if (!menuItemsData?.items) return [];
     
+    // Get drink items for modifier generation (if available)
+    const drinkItems = menuItemsData.items
+      .filter((item: any) => item.category_id === 'drinks' || (item.category_id && item.category_id.toLowerCase().includes('drink')))
+      .map((item: any) => ({
+        item_id: item.item_id,
+        name: item.name,
+        price: Number(item.price || 0),
+      }));
+    
     // Transform items to ensure proper data types (CRITICAL: PostgreSQL NUMERIC -> number)
-    return menuItemsData.items.map((item: any) => ({
-      ...item,
-      price: Number(item.price || 0),
-      current_stock: item.current_stock !== null ? Number(item.current_stock) : null,
-      image_url: item.image_url || `https://picsum.photos/300/300?random=${item.item_id}`,
-      dietary_tags: item.dietary_tags || [],
-      customization_groups: (item.customization_groups || []).map((group: any) => ({
-        ...group,
-        options: (group.options || []).map((option: any) => ({
-          ...option,
-          additional_price: Number(option.additional_price || 0),
+    return menuItemsData.items.map((item: any) => {
+      const transformedItem = {
+        ...item,
+        price: Number(item.price || 0),
+        current_stock: item.current_stock !== null ? Number(item.current_stock) : null,
+        image_url: item.image_url || `https://picsum.photos/300/300?random=${item.item_id}`,
+        dietary_tags: item.dietary_tags || [],
+        customization_groups: (item.customization_groups || []).map((group: any) => ({
+          ...group,
+          options: (group.options || []).map((option: any) => ({
+            ...option,
+            additional_price: Number(option.additional_price || 0),
+          })),
         })),
-      })),
-    }));
+      };
+      
+      // Attach modifiers dynamically if the item doesn't have customizations from DB
+      return attachModifiersToItem(transformedItem, drinkItems);
+    });
   }, [menuItemsData]);
 
   // React Query: Add to Cart Mutation
@@ -606,23 +621,25 @@ const UV_Menu: React.FC = () => {
   const handleCustomizationChange = (
     groupId: string,
     groupName: string,
-    groupType: 'single' | 'multiple',
+    groupType: 'single' | 'multiple' | 'single_optional',
     option: CustomizationOption
   ) => {
     setCustomizationModal(prev => {
       let newSelections = [...prev.selected_customizations];
 
-      if (groupType === 'single') {
+      if (groupType === 'single' || groupType === 'single_optional') {
         // Remove existing selection for this group
         newSelections = newSelections.filter(s => s.group_id !== groupId);
-        // Add new selection
-        newSelections.push({
-          group_id: groupId,
-          group_name: groupName,
-          option_id: option.option_id,
-          option_name: option.name,
-          additional_price: Number(option.additional_price),
-        });
+        // Add new selection (unless it's "None" option being deselected)
+        if (option.option_id !== 'none' || groupType === 'single_optional') {
+          newSelections.push({
+            group_id: groupId,
+            group_name: groupName,
+            option_id: option.option_id,
+            option_name: option.name,
+            additional_price: Number(option.additional_price),
+          });
+        }
       } else {
         // Multiple choice: toggle selection
         const existingIndex = newSelections.findIndex(

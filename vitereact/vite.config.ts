@@ -66,7 +66,28 @@ export default defineConfig({
 		outDir: "public",
 		rollupOptions: {
 			output: {
-				// Let Vite handle chunking automatically
+				manualChunks(id) {
+					if (id.includes('node_modules')) {
+						if (id.includes('@radix-ui')) {
+							return 'radix';
+						}
+						if (id.includes('lucide-react')) {
+							return 'icons';
+						}
+						if (id.includes('framer-motion')) {
+							return 'framer';
+						}
+						if (id.includes('recharts')) {
+							return 'charts';
+						}
+						if (id.includes('date-fns')) {
+							return 'utils';
+						}
+						if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+							return 'vendor';
+						}
+					}
+				},
 			},
 		},
 		chunkSizeWarningLimit: 1000,

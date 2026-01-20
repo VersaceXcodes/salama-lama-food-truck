@@ -335,8 +335,8 @@ const UV_MenuJustEat: React.FC = () => {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {cartItems.map((item) => (
-                      <div key={item.cart_item_id || item.item_id} className="flex flex-col gap-2 pb-4 border-b border-gray-50 last:border-0 last:pb-0">
+                    {cartItems.map((item, index) => (
+                      <div key={`${item.item_id}_${index}`} className="flex flex-col gap-2 pb-4 border-b border-gray-50 last:border-0 last:pb-0">
                         <div className="flex justify-between items-start gap-2">
                           <span className="text-sm font-medium text-gray-900 flex-1">
                             {item.quantity}x {item.item_name}

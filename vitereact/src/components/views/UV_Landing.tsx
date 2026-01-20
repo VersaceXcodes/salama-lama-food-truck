@@ -4,6 +4,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppStore } from '@/store/main';
 import { Star, MapPin, Phone, Clock, ChevronRight, Check, AlertCircle, Loader2, Navigation, ExternalLink } from 'lucide-react';
+import landingHeroImage from '../../assets/images/landing-hero.jpg';
 
 // ===========================
 // Type Definitions
@@ -273,7 +274,7 @@ const UV_Landing: React.FC = () => {
             <div className="order-1 lg:order-2 relative w-full">
               <div className="relative rounded-2xl lg:rounded-3xl overflow-hidden shadow-xl lg:shadow-2xl lg:transform lg:translate-x-8 hover:scale-105 transition-transform duration-500">
                 <img
-                  src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&h=1000&fit=crop&q=90"
+                  src={landingHeroImage}
                   alt="Delicious Food"
                   className="w-full aspect-[4/3] sm:aspect-[3/2] lg:aspect-[4/5] object-cover"
                 />

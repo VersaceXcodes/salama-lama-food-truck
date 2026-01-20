@@ -1,40 +1,4 @@
-Redesign the mobile menu view to be high-density and compact, exactly like the Just Eat or Deliveroo mobile interface.
-
-1. The List Layout (Crucial Fix):
-
-Do NOT use large vertical cards.
-
-Use a Compact List View: Each food item must be a short horizontal row (max height 110px).
-
-Density Goal: Users must be able to see 3 to 4 full menu items on a single mobile screen.
-
-Row Structure:
-
-Left Side (70% width): Text content. Item Title (bold, size 16px), 2 lines of description (grey, size 12px), and Price (bold black, bottom left).
-
-Right Side (30% width): A square thumbnail image (80x80px) with rounded corners.
-
-Divider: A thin light-grey line separating each row.
-
-2. Top Navigation (Highlights/Categories):
-
-Position: Sticky top bar (stays visible when scrolling).
-
-Style: Horizontal scrolling "Pill" buttons.
-
-Visuals:
-
-Inactive pills: White background, Grey border, Dark text.
-
-Active/Selected pill: Dark Coffee Brown background (#2C1A16), White text.
-
-Categories: "Highlights", "Meal Deals", "Wraps", "Subs", "Sides", "Drinks".
-
-3. Floating Elements:
-
-Remove any large floating buttons that cover the content.
-
-Use a minimal "View Basket" sticky bar at the very bottom of the viewport (full width, dark brown background).
+change landing page where it has picture next order now on the right side to the attached image
 
 When the user mentions generic pages, map them to concrete files/components by scanning for headings and routes. Examples you MUST follow:
 - If the user says "login" or "sign in", search for components containing the literal heading "Sign in to your account" and edit that file.
@@ -45,41 +9,11 @@ When the user mentions generic pages, map them to concrete files/components by s
 - The user's request above is the PRIMARY task. Complete it first.
 - Ignore any existing errors, warnings, or issues you detect in the project unless they directly prevent you from completing the user's requested task.
 - Do NOT automatically fix unrelated errors or refactor code unless explicitly requested.
-- Focus solely on implementing the user's request: "Redesign the mobile menu view to be high-density and compact, exactly like the Just Eat or Deliveroo mobile interface.
-
-1. The List Layout (Crucial Fix):
-
-Do NOT use large vertical cards.
-
-Use a Compact List View: Each food item must be a short horizontal row (max height 110px).
-
-Density Goal: Users must be able to see 3 to 4 full menu items on a single mobile screen.
-
-Row Structure:
-
-Left Side (70% width): Text content. Item Title (bold, size 16px), 2 lines of description (grey, size 12px), and Price (bold black, bottom left).
-
-Right Side (30% width): A square thumbnail image (80x80px) with rounded corners.
-
-Divider: A thin light-grey line separating each row.
-
-2. Top Navigation (Highlights/Categories):
-
-Position: Sticky top bar (stays visible when scrolling).
-
-Style: Horizontal scrolling "Pill" buttons.
-
-Visuals:
-
-Inactive pills: White background, Grey border, Dark text.
-
-Active/Selected pill: Dark Coffee Brown background (#2C1A16), White text.
-
-Categories: "Highlights", "Meal Deals", "Wraps", "Subs", "Sides", "Drinks".
-
-3. Floating Elements:
-
-Remove any large floating buttons that cover the content.
-
-Use a minimal "View Basket" sticky bar at the very bottom of the viewport (full width, dark brown background)."
+- Focus solely on implementing the user's request: "change landing page where it has picture next order now on the right side to the attached image"
 - Only address errors if they block the specific functionality requested by the user.
+
+Additional context:
+User uploaded the following images. Place them exactly where requested; if no explicit location is provided, position them where they best fit within the layout without breaking responsiveness.
+- Asset 1: https://tgvswctfhlubctiodmvo.supabase.co/storage/v1/object/public/project_uploads/14c908b9-356c-42da-b048-85c8422aeeac/salama-lama-food-truck/1768931619684_0_salama_lama_hero_2_550x440.jpg (image/jpeg)
+
+Use the given URLs directly or copy into the project under an appropriate assets/images folder and update imports/links.

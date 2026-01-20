@@ -1,28 +1,40 @@
-High-fidelity UI design of a food delivery restaurant menu page, desktop view. The layout should be structurally identical to Just Eat or DoorDash.
+UI/UX design of a food delivery product customization modal (pop-up) for a restaurant website, inspired by the Just Eat and Deliveroo interface.
 
-Color Palette:
+Visual Style:
 
-Primary Accent: Dark Coffee Brown (#2C1A16) - used for buttons and active states.
+Clean white background with a sticky footer button.
 
-Background: Clean White (#FFFFFF) with subtle warm beige (#F9F5F0) section backgrounds.
+Typography: Modern sans-serif (Inter or Roboto). Headings in Dark Charcoal, details in Grey.
 
-Text: Dark Charcoal for headings, medium grey for descriptions.
+Accent Color: Dark Coffee Brown (#2C1A16) for selected states and the primary action button.
 
-Layout Structure (3-Column):
+Layout Structure:
 
-Left Column (Navigation): A sticky sidebar listing food categories (e.g., Grilled Subs, Saj Wraps, Rice Bowls). Active category highlighted in Dark Coffee Brown.
+Header: Product Title 'Grilled Sub' (Bold, Large) with Price '€14.50' next to it. Beneath, a short grey description: 'Toasted ciabatta sub filled with melted mozzarella...'.
 
-Center Column (Menu Feed): A vertical list of food items. Each item is a horizontal row with a clean separator line.
+Scrollable Content Area (The Modifiers): The list needs to be broken into distinct sections with clear headers.
 
-Content (Left): Food Title (Bold Sans-serif), 2-line description, and Price (€14.50).
+Section A (Radio Button Group): Header 'Choose Your Protein' with a 'Required' badge on the right. Options: Kick'n Chicken, Buss'n Brisket (+€1.50), Mixed (+€2.50).
 
-Visual (Right): A high-quality square food image with rounded corners (12px radius).
+Section B (Radio Button Group): Header 'Spice Level' with a '1 Required' badge. Options: Mild, Spicy (Harissa).
 
-Action: A minimal circular 'Plus' (+) button next to the price or image.
+Section C (Checkbox Group): Header 'Remove Items (Free)' with an 'Optional' badge. Options: No Cheese, No Garlic, No Salad.
 
-Right Column (Basket): A fixed, sticky 'Your Order' summary panel with a checkout button in Dark Coffee Brown.
+Section D (Checkbox Group): Header 'Add-ons' with price tags. Options: Chicken topping on fries (+€3.00), Halloumi Sticks (+€6.50).
 
-Style: Minimalist, clean lines, high readability, modern sans-serif typography (Inter or Roboto).
+Footer (Sticky):
+
+A quantity counter (- 1 +) on the left.
+
+A large, full-width 'Add to Order - €14.50' button in Dark Coffee Brown on the right.
+
+UX Details:
+
+Use circular radio buttons for 'Select One' options.
+
+Use square checkboxes for 'Select Multiple' options.
+
+Grey out the 'Add to Order' button until all 'Required' fields are selected."
 
 When the user mentions generic pages, map them to concrete files/components by scanning for headings and routes. Examples you MUST follow:
 - If the user says "login" or "sign in", search for components containing the literal heading "Sign in to your account" and edit that file.
@@ -33,29 +45,41 @@ When the user mentions generic pages, map them to concrete files/components by s
 - The user's request above is the PRIMARY task. Complete it first.
 - Ignore any existing errors, warnings, or issues you detect in the project unless they directly prevent you from completing the user's requested task.
 - Do NOT automatically fix unrelated errors or refactor code unless explicitly requested.
-- Focus solely on implementing the user's request: "High-fidelity UI design of a food delivery restaurant menu page, desktop view. The layout should be structurally identical to Just Eat or DoorDash.
+- Focus solely on implementing the user's request: "UI/UX design of a food delivery product customization modal (pop-up) for a restaurant website, inspired by the Just Eat and Deliveroo interface.
 
-Color Palette:
+Visual Style:
 
-Primary Accent: Dark Coffee Brown (#2C1A16) - used for buttons and active states.
+Clean white background with a sticky footer button.
 
-Background: Clean White (#FFFFFF) with subtle warm beige (#F9F5F0) section backgrounds.
+Typography: Modern sans-serif (Inter or Roboto). Headings in Dark Charcoal, details in Grey.
 
-Text: Dark Charcoal for headings, medium grey for descriptions.
+Accent Color: Dark Coffee Brown (#2C1A16) for selected states and the primary action button.
 
-Layout Structure (3-Column):
+Layout Structure:
 
-Left Column (Navigation): A sticky sidebar listing food categories (e.g., Grilled Subs, Saj Wraps, Rice Bowls). Active category highlighted in Dark Coffee Brown.
+Header: Product Title 'Grilled Sub' (Bold, Large) with Price '€14.50' next to it. Beneath, a short grey description: 'Toasted ciabatta sub filled with melted mozzarella...'.
 
-Center Column (Menu Feed): A vertical list of food items. Each item is a horizontal row with a clean separator line.
+Scrollable Content Area (The Modifiers): The list needs to be broken into distinct sections with clear headers.
 
-Content (Left): Food Title (Bold Sans-serif), 2-line description, and Price (€14.50).
+Section A (Radio Button Group): Header 'Choose Your Protein' with a 'Required' badge on the right. Options: Kick'n Chicken, Buss'n Brisket (+€1.50), Mixed (+€2.50).
 
-Visual (Right): A high-quality square food image with rounded corners (12px radius).
+Section B (Radio Button Group): Header 'Spice Level' with a '1 Required' badge. Options: Mild, Spicy (Harissa).
 
-Action: A minimal circular 'Plus' (+) button next to the price or image.
+Section C (Checkbox Group): Header 'Remove Items (Free)' with an 'Optional' badge. Options: No Cheese, No Garlic, No Salad.
 
-Right Column (Basket): A fixed, sticky 'Your Order' summary panel with a checkout button in Dark Coffee Brown.
+Section D (Checkbox Group): Header 'Add-ons' with price tags. Options: Chicken topping on fries (+€3.00), Halloumi Sticks (+€6.50).
 
-Style: Minimalist, clean lines, high readability, modern sans-serif typography (Inter or Roboto)."
+Footer (Sticky):
+
+A quantity counter (- 1 +) on the left.
+
+A large, full-width 'Add to Order - €14.50' button in Dark Coffee Brown on the right.
+
+UX Details:
+
+Use circular radio buttons for 'Select One' options.
+
+Use square checkboxes for 'Select Multiple' options.
+
+Grey out the 'Add to Order' button until all 'Required' fields are selected.""
 - Only address errors if they block the specific functionality requested by the user.

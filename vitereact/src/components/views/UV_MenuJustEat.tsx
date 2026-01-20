@@ -3,7 +3,7 @@ import { useAppStore } from '@/store/main';
 import { useToast } from '@/hooks/use-toast';
 import { MENU_DATA, HIGHLIGHTS, MenuItem } from '@/data/justEatMenuData';
 import { Info, Plus, Search, X, ShoppingBag, Minus, Trash2 } from 'lucide-react';
-import ItemCustomizationModal, { ModifierSelection } from '@/components/ItemCustomizationModal';
+import ItemCustomizationModal, { type ModifierSelection } from '@/components/ItemCustomizationModal';
 import { useNavigate } from 'react-router-dom';
 
 // ===========================

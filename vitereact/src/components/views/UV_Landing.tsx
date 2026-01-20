@@ -274,7 +274,7 @@ const UV_Landing: React.FC = () => {
             <div className="order-1 lg:order-2 relative w-full">
               <div className="relative rounded-2xl lg:rounded-3xl overflow-hidden shadow-xl lg:shadow-2xl lg:transform lg:translate-x-8 hover:scale-105 transition-transform duration-500">
                 <img
-                  src={landingHeroImage}
+                  src="https://pub-3b7303b412294731aa17afb2c3dff192.r2.dev/8833a50a-5293-4e99-9814-e2c654d742a5/salama-lama-food-truck/salama_lama_hero_2_550x440.jpg"
                   alt="Delicious Food"
                   className="w-full aspect-[4/3] sm:aspect-[3/2] lg:aspect-[4/5] object-cover"
                 />

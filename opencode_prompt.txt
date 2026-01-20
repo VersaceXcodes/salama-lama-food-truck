@@ -1,4 +1,44 @@
-for each product thats in the menu you can find the required and the options toppings and they have to select when choosing a product you can find it in the storage under the file name " Salama_Lama_Delivery_App_Menu_FULL_v2.pdf " and use that as the reference how each product requirements needs
+Redesign the "Product Customization" interface for a food delivery website to match the UX of Just Eat or Uber Eats. The design must be responsive for both Desktop and Mobile.
+
+1. Visual Style & Layout
+
+Desktop View: Display as a centered Modal Pop-up (Lightbox) over the menu. Left column: Large high-quality food image. Right column: Scrollable customization options with a sticky "Add to Order" button at the bottom.
+
+Mobile View: Display as a Full-Screen Bottom Sheet. Top third is the hero image. Below is the scrollable content. The "Add to Order" button must be a fixed sticky bar at the very bottom of the screen.
+
+Typography: Clean sans-serif (Inter/Roboto). Bold headings for option groups (e.g., "Choose Your Protein").
+
+2. Content Structure (Use this real data) Use the "Grilled Sub" item to populate the design:
+
+Header: "Grilled Sub" (€14.50) + Description.
+
+Section 1 (Required): "Choose Your Protein". Display as a Radio Button List.
+
+Kick'n Chicken (Base)
+
+Buss'n Brisket (+€1.50)
+
+Section 2 (Required): "Spice Level". Display as Large Pill Toggles or Radio Buttons.
+
+Mild
+
+Spicy
+
+Section 3 (Optional): "Remove Items". Display as Checkboxes.
+
+No Cheese, No Garlic.
+
+Section 4 (Upsell): "Make it a Meal". Display as Checkboxes with Thumbnail Images.
+
+Add Halloumi Sticks (+€6.50).
+
+3. Key UX Elements
+
+Badges: Distinctly label sections as "Required" (in red/orange text) or "Optional" (in grey).
+
+Validation: The primary button "Add to Order - €14.50" should look disabled/greyed out until the user selects a protein and spice level.
+
+Colors: Background #FFFFFF, Text #333333, Buttons Dark Coffee Brown (#2C1A16).
 
 When the user mentions generic pages, map them to concrete files/components by scanning for headings and routes. Examples you MUST follow:
 - If the user says "login" or "sign in", search for components containing the literal heading "Sign in to your account" and edit that file.
@@ -9,5 +49,45 @@ When the user mentions generic pages, map them to concrete files/components by s
 - The user's request above is the PRIMARY task. Complete it first.
 - Ignore any existing errors, warnings, or issues you detect in the project unless they directly prevent you from completing the user's requested task.
 - Do NOT automatically fix unrelated errors or refactor code unless explicitly requested.
-- Focus solely on implementing the user's request: "for each product thats in the menu you can find the required and the options toppings and they have to select when choosing a product you can find it in the storage under the file name " Salama_Lama_Delivery_App_Menu_FULL_v2.pdf " and use that as the reference how each product requirements needs"
+- Focus solely on implementing the user's request: "Redesign the "Product Customization" interface for a food delivery website to match the UX of Just Eat or Uber Eats. The design must be responsive for both Desktop and Mobile.
+
+1. Visual Style & Layout
+
+Desktop View: Display as a centered Modal Pop-up (Lightbox) over the menu. Left column: Large high-quality food image. Right column: Scrollable customization options with a sticky "Add to Order" button at the bottom.
+
+Mobile View: Display as a Full-Screen Bottom Sheet. Top third is the hero image. Below is the scrollable content. The "Add to Order" button must be a fixed sticky bar at the very bottom of the screen.
+
+Typography: Clean sans-serif (Inter/Roboto). Bold headings for option groups (e.g., "Choose Your Protein").
+
+2. Content Structure (Use this real data) Use the "Grilled Sub" item to populate the design:
+
+Header: "Grilled Sub" (€14.50) + Description.
+
+Section 1 (Required): "Choose Your Protein". Display as a Radio Button List.
+
+Kick'n Chicken (Base)
+
+Buss'n Brisket (+€1.50)
+
+Section 2 (Required): "Spice Level". Display as Large Pill Toggles or Radio Buttons.
+
+Mild
+
+Spicy
+
+Section 3 (Optional): "Remove Items". Display as Checkboxes.
+
+No Cheese, No Garlic.
+
+Section 4 (Upsell): "Make it a Meal". Display as Checkboxes with Thumbnail Images.
+
+Add Halloumi Sticks (+€6.50).
+
+3. Key UX Elements
+
+Badges: Distinctly label sections as "Required" (in red/orange text) or "Optional" (in grey).
+
+Validation: The primary button "Add to Order - €14.50" should look disabled/greyed out until the user selects a protein and spice level.
+
+Colors: Background #FFFFFF, Text #333333, Buttons Dark Coffee Brown (#2C1A16)."
 - Only address errors if they block the specific functionality requested by the user.

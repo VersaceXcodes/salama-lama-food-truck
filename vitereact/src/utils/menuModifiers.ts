@@ -8,6 +8,7 @@ export interface ModifierOption {
   label: string;
   priceDelta: number;
   note?: string;
+  image?: string;
 }
 
 export interface ModifierGroup {
@@ -47,7 +48,32 @@ export function generateModifiersForCategory(
 
   const modifierGroups: ModifierGroup[] = [];
 
-  // A) Spice Level (REQUIRED)
+  // 1. Choose Your Protein (Required) - Specific to Grilled Subs per redesign
+  if (normalizedCategoryId === 'grilled-subs') {
+    modifierGroups.push({
+      id: 'protein',
+      title: 'Choose Your Protein',
+      required: true,
+      minSelect: 1,
+      maxSelect: 1,
+      type: 'single',
+      options: [
+        {
+          id: 'kickn-chicken',
+          label: "Kick'n Chicken",
+          priceDelta: 0,
+          note: 'Base'
+        },
+        {
+          id: 'bussn-brisket',
+          label: "Buss'n Brisket",
+          priceDelta: 1.50,
+        }
+      ]
+    });
+  }
+
+  // 2. Spice Level (REQUIRED)
   modifierGroups.push({
     id: 'spice-level',
     title: 'Spice Level',
@@ -133,17 +159,30 @@ export function generateModifiersForCategory(
     });
   }
 
-  // D) Extras (OPTIONAL, paid)
+  // D) Extras / Make it a Meal (OPTIONAL, paid)
+  // For Grilled Subs, we call it "Make it a Meal" and show thumbnails
+  const isGrilledSub = normalizedCategoryId === 'grilled-subs';
+  
   modifierGroups.push({
     id: 'extras',
-    title: 'Extras',
+    title: isGrilledSub ? 'Make it a Meal' : 'Extras',
     required: false,
     minSelect: 0,
     maxSelect: 2,
     type: 'multi',
     options: [
-      { id: 'halloumi-sticks', label: 'Grilled Halloumi Sticks', priceDelta: 6.5 },
-      { id: 'pizza-poppers', label: 'Cheesy Pizza Poppers', priceDelta: 6.5 },
+      { 
+        id: 'halloumi-sticks', 
+        label: isGrilledSub ? 'Add Halloumi Sticks' : 'Grilled Halloumi Sticks', 
+        priceDelta: 6.5,
+        image: isGrilledSub ? 'halloumi-sticks' : undefined 
+      },
+      { 
+        id: 'pizza-poppers', 
+        label: 'Cheesy Pizza Poppers', 
+        priceDelta: 6.5,
+        image: isGrilledSub ? 'pizza-poppers' : undefined
+      },
     ],
   });
 

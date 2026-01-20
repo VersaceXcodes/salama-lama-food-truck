@@ -2312,11 +2312,24 @@ app.get('/api/menu/items', async (req, res) => {
     const { items, total } = await fetch_menu_items({ for_admin: false, search });
     const customizations_map = await fetch_customizations_for_items(items.map((i) => i.item_id));
 
-    const enriched_items = items.map((i) => ({
-      ...i,
-      category_name: undefined,
-      customization_groups: customizations_map.get(i.item_id) || [],
-    }));
+    // Construct base URL from request
+    const protocol = req.protocol;
+    const host = req.get('host');
+    const baseUrl = `${protocol}://${host}`;
+
+    const enriched_items = items.map((i) => {
+      let fullImageUrl = i.image_url;
+      if (fullImageUrl && fullImageUrl.startsWith('/storage')) {
+        fullImageUrl = `${baseUrl}${fullImageUrl}`;
+      }
+
+      return {
+        ...i,
+        image_url: fullImageUrl,
+        category_name: undefined,
+        customization_groups: customizations_map.get(i.item_id) || [],
+      };
+    });
 
     return ok(res, 200, { items: enriched_items, total, limit: search.limit, offset: search.offset });
   } catch (error) {

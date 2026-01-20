@@ -1,44 +1,40 @@
-Redesign the "Product Customization" interface for a food delivery website to match the UX of Just Eat or Uber Eats. The design must be responsive for both Desktop and Mobile.
+Redesign the mobile menu view to be high-density and compact, exactly like the Just Eat or Deliveroo mobile interface.
 
-1. Visual Style & Layout
+1. The List Layout (Crucial Fix):
 
-Desktop View: Display as a centered Modal Pop-up (Lightbox) over the menu. Left column: Large high-quality food image. Right column: Scrollable customization options with a sticky "Add to Order" button at the bottom.
+Do NOT use large vertical cards.
 
-Mobile View: Display as a Full-Screen Bottom Sheet. Top third is the hero image. Below is the scrollable content. The "Add to Order" button must be a fixed sticky bar at the very bottom of the screen.
+Use a Compact List View: Each food item must be a short horizontal row (max height 110px).
 
-Typography: Clean sans-serif (Inter/Roboto). Bold headings for option groups (e.g., "Choose Your Protein").
+Density Goal: Users must be able to see 3 to 4 full menu items on a single mobile screen.
 
-2. Content Structure (Use this real data) Use the "Grilled Sub" item to populate the design:
+Row Structure:
 
-Header: "Grilled Sub" (€14.50) + Description.
+Left Side (70% width): Text content. Item Title (bold, size 16px), 2 lines of description (grey, size 12px), and Price (bold black, bottom left).
 
-Section 1 (Required): "Choose Your Protein". Display as a Radio Button List.
+Right Side (30% width): A square thumbnail image (80x80px) with rounded corners.
 
-Kick'n Chicken (Base)
+Divider: A thin light-grey line separating each row.
 
-Buss'n Brisket (+€1.50)
+2. Top Navigation (Highlights/Categories):
 
-Section 2 (Required): "Spice Level". Display as Large Pill Toggles or Radio Buttons.
+Position: Sticky top bar (stays visible when scrolling).
 
-Mild
+Style: Horizontal scrolling "Pill" buttons.
 
-Spicy
+Visuals:
 
-Section 3 (Optional): "Remove Items". Display as Checkboxes.
+Inactive pills: White background, Grey border, Dark text.
 
-No Cheese, No Garlic.
+Active/Selected pill: Dark Coffee Brown background (#2C1A16), White text.
 
-Section 4 (Upsell): "Make it a Meal". Display as Checkboxes with Thumbnail Images.
+Categories: "Highlights", "Meal Deals", "Wraps", "Subs", "Sides", "Drinks".
 
-Add Halloumi Sticks (+€6.50).
+3. Floating Elements:
 
-3. Key UX Elements
+Remove any large floating buttons that cover the content.
 
-Badges: Distinctly label sections as "Required" (in red/orange text) or "Optional" (in grey).
-
-Validation: The primary button "Add to Order - €14.50" should look disabled/greyed out until the user selects a protein and spice level.
-
-Colors: Background #FFFFFF, Text #333333, Buttons Dark Coffee Brown (#2C1A16).
+Use a minimal "View Basket" sticky bar at the very bottom of the viewport (full width, dark brown background).
 
 When the user mentions generic pages, map them to concrete files/components by scanning for headings and routes. Examples you MUST follow:
 - If the user says "login" or "sign in", search for components containing the literal heading "Sign in to your account" and edit that file.
@@ -49,45 +45,41 @@ When the user mentions generic pages, map them to concrete files/components by s
 - The user's request above is the PRIMARY task. Complete it first.
 - Ignore any existing errors, warnings, or issues you detect in the project unless they directly prevent you from completing the user's requested task.
 - Do NOT automatically fix unrelated errors or refactor code unless explicitly requested.
-- Focus solely on implementing the user's request: "Redesign the "Product Customization" interface for a food delivery website to match the UX of Just Eat or Uber Eats. The design must be responsive for both Desktop and Mobile.
+- Focus solely on implementing the user's request: "Redesign the mobile menu view to be high-density and compact, exactly like the Just Eat or Deliveroo mobile interface.
 
-1. Visual Style & Layout
+1. The List Layout (Crucial Fix):
 
-Desktop View: Display as a centered Modal Pop-up (Lightbox) over the menu. Left column: Large high-quality food image. Right column: Scrollable customization options with a sticky "Add to Order" button at the bottom.
+Do NOT use large vertical cards.
 
-Mobile View: Display as a Full-Screen Bottom Sheet. Top third is the hero image. Below is the scrollable content. The "Add to Order" button must be a fixed sticky bar at the very bottom of the screen.
+Use a Compact List View: Each food item must be a short horizontal row (max height 110px).
 
-Typography: Clean sans-serif (Inter/Roboto). Bold headings for option groups (e.g., "Choose Your Protein").
+Density Goal: Users must be able to see 3 to 4 full menu items on a single mobile screen.
 
-2. Content Structure (Use this real data) Use the "Grilled Sub" item to populate the design:
+Row Structure:
 
-Header: "Grilled Sub" (€14.50) + Description.
+Left Side (70% width): Text content. Item Title (bold, size 16px), 2 lines of description (grey, size 12px), and Price (bold black, bottom left).
 
-Section 1 (Required): "Choose Your Protein". Display as a Radio Button List.
+Right Side (30% width): A square thumbnail image (80x80px) with rounded corners.
 
-Kick'n Chicken (Base)
+Divider: A thin light-grey line separating each row.
 
-Buss'n Brisket (+€1.50)
+2. Top Navigation (Highlights/Categories):
 
-Section 2 (Required): "Spice Level". Display as Large Pill Toggles or Radio Buttons.
+Position: Sticky top bar (stays visible when scrolling).
 
-Mild
+Style: Horizontal scrolling "Pill" buttons.
 
-Spicy
+Visuals:
 
-Section 3 (Optional): "Remove Items". Display as Checkboxes.
+Inactive pills: White background, Grey border, Dark text.
 
-No Cheese, No Garlic.
+Active/Selected pill: Dark Coffee Brown background (#2C1A16), White text.
 
-Section 4 (Upsell): "Make it a Meal". Display as Checkboxes with Thumbnail Images.
+Categories: "Highlights", "Meal Deals", "Wraps", "Subs", "Sides", "Drinks".
 
-Add Halloumi Sticks (+€6.50).
+3. Floating Elements:
 
-3. Key UX Elements
+Remove any large floating buttons that cover the content.
 
-Badges: Distinctly label sections as "Required" (in red/orange text) or "Optional" (in grey).
-
-Validation: The primary button "Add to Order - €14.50" should look disabled/greyed out until the user selects a protein and spice level.
-
-Colors: Background #FFFFFF, Text #333333, Buttons Dark Coffee Brown (#2C1A16)."
+Use a minimal "View Basket" sticky bar at the very bottom of the viewport (full width, dark brown background)."
 - Only address errors if they block the specific functionality requested by the user.

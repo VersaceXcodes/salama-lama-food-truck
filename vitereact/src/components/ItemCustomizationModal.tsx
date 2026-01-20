@@ -70,6 +70,9 @@ const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({
   // Store selections as map: groupId -> Set<optionId>
   const [selections, setSelections] = useState<Record<string, Set<string>>>({});
   
+  // Validation touch state
+  const [touched, setTouched] = useState(false);
+  
   // Derived state: modified item with customization groups
   const modifiedItem = useMemo(() => {
     if (!item) return null;
@@ -227,7 +230,6 @@ const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({
     return errors;
   };
 
-  const [touched, setTouched] = useState(false);
   const validationErrors = touched ? getValidationErrors() : {};
   const isValid = Object.keys(getValidationErrors()).length === 0;
 

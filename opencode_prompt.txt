@@ -1,4 +1,22 @@
-use the image from the storage under the name " salama_lama_hero_2_550x440.jpg " and have it displayed on the home page next to order now on the right side
+Fix the image rendering issue on the customer-facing menu. Images uploaded via the Admin Dashboard are not displaying on the live website.
+
+1. The Technical Task (Data Binding)
+
+Connect Backend to Frontend: Ensure the Product Image field in the database is correctly mapped to the Image Source (src) on the frontend card component.
+
+Check API Response: Verify that the API fetching the menu data includes the full image URL path (e.g., https://.../image.jpg) and not just a filename or null value.
+
+Permissions: Ensure the storage bucket or media folder where admin images are saved has "Public Read" access so customers can actually see them.
+
+2. The Frontend Implementation
+
+Dynamic Rendering: On the menu list, change the static image placeholder to a dynamic variable (e.g., {item.image_url}).
+
+Fallback State: If a product does not have an image uploaded in the admin panel yet, display a default "Salama Lama" logo placeholder instead of a broken link icon.
+
+3. Admin Panel Improvement
+
+Preview: Add a small thumbnail preview in the Admin "Edit Product" view so I can confirm the image uploaded successfully before I save.
 
 When the user mentions generic pages, map them to concrete files/components by scanning for headings and routes. Examples you MUST follow:
 - If the user says "login" or "sign in", search for components containing the literal heading "Sign in to your account" and edit that file.
@@ -9,5 +27,23 @@ When the user mentions generic pages, map them to concrete files/components by s
 - The user's request above is the PRIMARY task. Complete it first.
 - Ignore any existing errors, warnings, or issues you detect in the project unless they directly prevent you from completing the user's requested task.
 - Do NOT automatically fix unrelated errors or refactor code unless explicitly requested.
-- Focus solely on implementing the user's request: "use the image from the storage under the name " salama_lama_hero_2_550x440.jpg " and have it displayed on the home page next to order now on the right side"
+- Focus solely on implementing the user's request: "Fix the image rendering issue on the customer-facing menu. Images uploaded via the Admin Dashboard are not displaying on the live website.
+
+1. The Technical Task (Data Binding)
+
+Connect Backend to Frontend: Ensure the Product Image field in the database is correctly mapped to the Image Source (src) on the frontend card component.
+
+Check API Response: Verify that the API fetching the menu data includes the full image URL path (e.g., https://.../image.jpg) and not just a filename or null value.
+
+Permissions: Ensure the storage bucket or media folder where admin images are saved has "Public Read" access so customers can actually see them.
+
+2. The Frontend Implementation
+
+Dynamic Rendering: On the menu list, change the static image placeholder to a dynamic variable (e.g., {item.image_url}).
+
+Fallback State: If a product does not have an image uploaded in the admin panel yet, display a default "Salama Lama" logo placeholder instead of a broken link icon.
+
+3. Admin Panel Improvement
+
+Preview: Add a small thumbnail preview in the Admin "Edit Product" view so I can confirm the image uploaded successfully before I save."
 - Only address errors if they block the specific functionality requested by the user.

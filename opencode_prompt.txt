@@ -1,14 +1,14 @@
-fix this "vendor-KeFEExaQ.js:38 Uncaught Error: Minified React error #310; visit https://reactjs.org/docs/error-decoder.html?invariant=310 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+when i click on any product from menu page it dosent work also check " Uncaught Error: Minified React error #310; visit https://reactjs.org/docs/error-decoder.html?invariant=310 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
     at ut (vendor-KeFEExaQ.js:38:17576)
     at ha (vendor-KeFEExaQ.js:38:17829)
     at Object.useState (vendor-KeFEExaQ.js:38:24636)
     at Q.useState (vendor-KeFEExaQ.js:9:6364)
-    at vl (index-DLZLHJb1.js:657:18926)
+    at vl (index-BXNkJEXz.js:657:18921)
     at jc (vendor-KeFEExaQ.js:38:16981)
     at pu (vendor-KeFEExaQ.js:40:3135)
     at hg (vendor-KeFEExaQ.js:40:44679)
     at cg (vendor-KeFEExaQ.js:40:39686)
-    at fw (vendor-KeFEExaQ.js:40:39614)"
+    at fw (vendor-KeFEExaQ.js:40:39614) "
 
 When the user mentions generic pages, map them to concrete files/components by scanning for headings and routes. Examples you MUST follow:
 - If the user says "login" or "sign in", search for components containing the literal heading "Sign in to your account" and edit that file.
@@ -19,15 +19,15 @@ When the user mentions generic pages, map them to concrete files/components by s
 - The user's request above is the PRIMARY task. Complete it first.
 - Ignore any existing errors, warnings, or issues you detect in the project unless they directly prevent you from completing the user's requested task.
 - Do NOT automatically fix unrelated errors or refactor code unless explicitly requested.
-- Focus solely on implementing the user's request: "fix this "vendor-KeFEExaQ.js:38 Uncaught Error: Minified React error #310; visit https://reactjs.org/docs/error-decoder.html?invariant=310 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+- Focus solely on implementing the user's request: "when i click on any product from menu page it dosent work also check " Uncaught Error: Minified React error #310; visit https://reactjs.org/docs/error-decoder.html?invariant=310 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
     at ut (vendor-KeFEExaQ.js:38:17576)
     at ha (vendor-KeFEExaQ.js:38:17829)
     at Object.useState (vendor-KeFEExaQ.js:38:24636)
     at Q.useState (vendor-KeFEExaQ.js:9:6364)
-    at vl (index-DLZLHJb1.js:657:18926)
+    at vl (index-BXNkJEXz.js:657:18921)
     at jc (vendor-KeFEExaQ.js:38:16981)
     at pu (vendor-KeFEExaQ.js:40:3135)
     at hg (vendor-KeFEExaQ.js:40:44679)
     at cg (vendor-KeFEExaQ.js:40:39686)
-    at fw (vendor-KeFEExaQ.js:40:39614)""
+    at fw (vendor-KeFEExaQ.js:40:39614) ""
 - Only address errors if they block the specific functionality requested by the user.

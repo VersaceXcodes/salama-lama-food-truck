@@ -77,7 +77,7 @@ const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({
     // Get drinks for the drink modifier options
     const drinkCategory = MENU_DATA.find(cat => cat.id === 'drinks');
     const drinkItems = drinkCategory?.items.map(d => ({
-      item_id: d.id,
+      id: d.id,
       name: d.name,
       price: d.price
     })) || [];

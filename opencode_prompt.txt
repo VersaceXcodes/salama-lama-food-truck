@@ -1,14 +1,28 @@
-when i click on any product from menu page it dosent work also check " Uncaught Error: Minified React error #310; visit https://reactjs.org/docs/error-decoder.html?invariant=310 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
-    at ut (vendor-KeFEExaQ.js:38:17576)
-    at ha (vendor-KeFEExaQ.js:38:17829)
-    at Object.useState (vendor-KeFEExaQ.js:38:24636)
-    at Q.useState (vendor-KeFEExaQ.js:9:6364)
-    at vl (index-BXNkJEXz.js:657:18921)
-    at jc (vendor-KeFEExaQ.js:38:16981)
-    at pu (vendor-KeFEExaQ.js:40:3135)
-    at hg (vendor-KeFEExaQ.js:40:44679)
-    at cg (vendor-KeFEExaQ.js:40:39686)
-    at fw (vendor-KeFEExaQ.js:40:39614) "
+High-fidelity UI design of a food delivery restaurant menu page, desktop view. The layout should be structurally identical to Just Eat or DoorDash.
+
+Color Palette:
+
+Primary Accent: Dark Coffee Brown (#2C1A16) - used for buttons and active states.
+
+Background: Clean White (#FFFFFF) with subtle warm beige (#F9F5F0) section backgrounds.
+
+Text: Dark Charcoal for headings, medium grey for descriptions.
+
+Layout Structure (3-Column):
+
+Left Column (Navigation): A sticky sidebar listing food categories (e.g., Grilled Subs, Saj Wraps, Rice Bowls). Active category highlighted in Dark Coffee Brown.
+
+Center Column (Menu Feed): A vertical list of food items. Each item is a horizontal row with a clean separator line.
+
+Content (Left): Food Title (Bold Sans-serif), 2-line description, and Price (€14.50).
+
+Visual (Right): A high-quality square food image with rounded corners (12px radius).
+
+Action: A minimal circular 'Plus' (+) button next to the price or image.
+
+Right Column (Basket): A fixed, sticky 'Your Order' summary panel with a checkout button in Dark Coffee Brown.
+
+Style: Minimalist, clean lines, high readability, modern sans-serif typography (Inter or Roboto).
 
 When the user mentions generic pages, map them to concrete files/components by scanning for headings and routes. Examples you MUST follow:
 - If the user says "login" or "sign in", search for components containing the literal heading "Sign in to your account" and edit that file.
@@ -19,15 +33,29 @@ When the user mentions generic pages, map them to concrete files/components by s
 - The user's request above is the PRIMARY task. Complete it first.
 - Ignore any existing errors, warnings, or issues you detect in the project unless they directly prevent you from completing the user's requested task.
 - Do NOT automatically fix unrelated errors or refactor code unless explicitly requested.
-- Focus solely on implementing the user's request: "when i click on any product from menu page it dosent work also check " Uncaught Error: Minified React error #310; visit https://reactjs.org/docs/error-decoder.html?invariant=310 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
-    at ut (vendor-KeFEExaQ.js:38:17576)
-    at ha (vendor-KeFEExaQ.js:38:17829)
-    at Object.useState (vendor-KeFEExaQ.js:38:24636)
-    at Q.useState (vendor-KeFEExaQ.js:9:6364)
-    at vl (index-BXNkJEXz.js:657:18921)
-    at jc (vendor-KeFEExaQ.js:38:16981)
-    at pu (vendor-KeFEExaQ.js:40:3135)
-    at hg (vendor-KeFEExaQ.js:40:44679)
-    at cg (vendor-KeFEExaQ.js:40:39686)
-    at fw (vendor-KeFEExaQ.js:40:39614) ""
+- Focus solely on implementing the user's request: "High-fidelity UI design of a food delivery restaurant menu page, desktop view. The layout should be structurally identical to Just Eat or DoorDash.
+
+Color Palette:
+
+Primary Accent: Dark Coffee Brown (#2C1A16) - used for buttons and active states.
+
+Background: Clean White (#FFFFFF) with subtle warm beige (#F9F5F0) section backgrounds.
+
+Text: Dark Charcoal for headings, medium grey for descriptions.
+
+Layout Structure (3-Column):
+
+Left Column (Navigation): A sticky sidebar listing food categories (e.g., Grilled Subs, Saj Wraps, Rice Bowls). Active category highlighted in Dark Coffee Brown.
+
+Center Column (Menu Feed): A vertical list of food items. Each item is a horizontal row with a clean separator line.
+
+Content (Left): Food Title (Bold Sans-serif), 2-line description, and Price (€14.50).
+
+Visual (Right): A high-quality square food image with rounded corners (12px radius).
+
+Action: A minimal circular 'Plus' (+) button next to the price or image.
+
+Right Column (Basket): A fixed, sticky 'Your Order' summary panel with a checkout button in Dark Coffee Brown.
+
+Style: Minimalist, clean lines, high readability, modern sans-serif typography (Inter or Roboto)."
 - Only address errors if they block the specific functionality requested by the user.

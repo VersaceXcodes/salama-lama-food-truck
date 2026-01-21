@@ -214,7 +214,7 @@ const UV_Menu: React.FC = () => {
   const { data: categoriesData } = useQuery({
     queryKey: ['categories'],
     queryFn: fetchCategories,
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 30 * 1000, // 30 seconds - reduced for real-time admin updates
   });
 
   const categories: Category[] = useMemo(() => {
@@ -225,7 +225,7 @@ const UV_Menu: React.FC = () => {
   const { data: builderConfigData } = useQuery({
     queryKey: ['builder-config'],
     queryFn: fetchBuilderConfig,
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 30 * 1000, // 30 seconds - reduced for real-time admin updates
   });
 
   const builderCategoryIds: string[] = useMemo(() => {
@@ -269,7 +269,8 @@ const UV_Menu: React.FC = () => {
       dietary_filters: dietaryFilters.length > 0 ? dietaryFilters : undefined,
       sort: sortOption !== 'default' ? sortOption : undefined,
     }),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 30 * 1000, // 30 seconds - reduced for real-time admin updates
+    refetchInterval: 60 * 1000, // Auto-refetch every 60 seconds when component is mounted
   });
 
   const menuItems: MenuItem[] = useMemo(() => {

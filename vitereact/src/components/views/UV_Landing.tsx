@@ -134,7 +134,8 @@ const UV_Landing: React.FC = () => {
   } = useQuery({
     queryKey: ['featured-items'],
     queryFn: fetchFeaturedItems,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 30 * 1000, // 30 seconds - reduced for real-time admin updates
+    refetchInterval: 60 * 1000, // Auto-refetch every 60 seconds when component is mounted
     retry: 1,
   });
 
@@ -145,7 +146,7 @@ const UV_Landing: React.FC = () => {
   } = useQuery({
     queryKey: ['business-info'],
     queryFn: fetchBusinessInfo,
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 30 * 1000, // 30 seconds - reduced for real-time admin updates
     retry: 1,
   });
 

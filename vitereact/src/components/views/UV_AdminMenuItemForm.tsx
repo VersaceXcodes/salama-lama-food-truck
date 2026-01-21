@@ -185,6 +185,8 @@ const UV_AdminMenuItemForm: React.FC = () => {
   // UI state
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [successMessage, setSuccessMessage] = useState('');
+  const [isUploadingPrimary, setIsUploadingPrimary] = useState(false);
+  const [uploadingGalleryIndex, setUploadingGalleryIndex] = useState<number | null>(null);
 
   // ===========================
   // React Query: Fetch Categories
@@ -485,6 +487,91 @@ const UV_AdminMenuItemForm: React.FC = () => {
   };
 
   // ===========================
+  // Image Upload Functions
+  // ===========================
+
+  const uploadImage = async (file: File): Promise<string | null> => {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api/admin/upload/image`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      return response.data.url;
+    } catch (error: any) {
+      console.error('[AdminMenuItemForm] Upload error:', error);
+      const errorMsg = error.response?.data?.message || error.message || 'Failed to upload image';
+      setValidationErrors(prev => [...prev, errorMsg]);
+      return null;
+    }
+  };
+
+  const handlePrimaryImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingPrimary(true);
+    setValidationErrors([]);
+    
+    const url = await uploadImage(file);
+    if (url) {
+      setImageUrl(url);
+    }
+    
+    setIsUploadingPrimary(false);
+    // Reset input so same file can be re-selected
+    e.target.value = '';
+  };
+
+  const handleGalleryImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingGalleryIndex(index);
+    setValidationErrors([]);
+    
+    const url = await uploadImage(file);
+    if (url) {
+      updateImageUrl(index, url);
+    }
+    
+    setUploadingGalleryIndex(null);
+    // Reset input so same file can be re-selected
+    e.target.value = '';
+  };
+
+  const addGalleryImageWithUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Add a placeholder entry first
+    const newIndex = imageUrls.length;
+    setImageUrls(prev => [...prev, '']);
+    setUploadingGalleryIndex(newIndex);
+    setValidationErrors([]);
+    
+    const url = await uploadImage(file);
+    if (url) {
+      setImageUrls(prev => prev.map((u, i) => i === newIndex ? url : u));
+    } else {
+      // Remove the placeholder if upload failed
+      setImageUrls(prev => prev.filter((_, i) => i !== newIndex));
+    }
+    
+    setUploadingGalleryIndex(null);
+    // Reset input so same file can be re-selected
+    e.target.value = '';
+  };
+
+  // ===========================
   // Loading & Error States
   // ===========================
 
@@ -681,8 +768,42 @@ const UV_AdminMenuItemForm: React.FC = () => {
                 {/* Primary Image */}
                 <div>
                   <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700 mb-1">
-                    Primary Image URL
+                    Primary Image
                   </label>
+                  
+                  {/* Upload Button */}
+                  <div className="mb-3">
+                    <label className="inline-flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+                      {isUploadingPrimary ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          Upload Image
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePrimaryImageUpload}
+                        disabled={isUploadingPrimary}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+
+                  {/* URL Input (optional, for manual entry) */}
+                  <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+                    <span>Or enter URL manually:</span>
+                  </div>
                   <input
                     type="url"
                     id="imageUrl"
@@ -692,15 +813,25 @@ const UV_AdminMenuItemForm: React.FC = () => {
                     placeholder="https://example.com/image.jpg"
                   />
                   {imageUrl && (
-                    <div className="mt-2">
+                    <div className="mt-3 relative inline-block">
                       <img 
-                        src={imageUrl} 
+                        src={imageUrl.startsWith('/storage') ? `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}${imageUrl}` : imageUrl} 
                         alt="Primary preview" 
                         className="h-32 w-32 object-cover rounded-lg border-2 border-gray-200"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23ddd" width="100" height="100"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3ENo Image%3C/text%3E%3C/svg%3E';
                         }}
                       />
+                      <button
+                        type="button"
+                        onClick={() => setImageUrl('')}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                        title="Remove image"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
                     </div>
                   )}
                 </div>
@@ -710,32 +841,89 @@ const UV_AdminMenuItemForm: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Additional Images (Gallery)
                   </label>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {imageUrls.map((url, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <input
-                          type="url"
-                          value={url}
-                          onChange={(e) => updateImageUrl(index, e.target.value)}
-                          className="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 focus:ring-4 focus:ring-orange-100 transition-all"
-                          placeholder="https://example.com/image.jpg"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeImageUrl(index)}
-                          className="px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
-                        >
-                          Remove
-                        </button>
+                      <div key={index} className="p-3 border-2 border-gray-100 rounded-lg bg-gray-50">
+                        <div className="flex items-center gap-2 mb-2">
+                          {/* Upload for this gallery slot */}
+                          <label className="inline-flex items-center px-3 py-1.5 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-colors cursor-pointer text-sm">
+                            {uploadingGalleryIndex === index ? (
+                              <>
+                                <svg className="animate-spin -ml-1 mr-1 h-3 w-3" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Uploading...
+                              </>
+                            ) : (
+                              <>
+                                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                </svg>
+                                Upload
+                              </>
+                            )}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => handleGalleryImageUpload(e, index)}
+                              disabled={uploadingGalleryIndex === index}
+                              className="hidden"
+                            />
+                          </label>
+                          <span className="text-xs text-gray-500">or enter URL:</span>
+                          <input
+                            type="url"
+                            value={url}
+                            onChange={(e) => updateImageUrl(index, e.target.value)}
+                            className="flex-1 px-3 py-1.5 text-sm border-2 border-gray-200 rounded-lg focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all"
+                            placeholder="https://example.com/image.jpg"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImageUrl(index)}
+                            className="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                        {url && (
+                          <div className="mt-2">
+                            <img 
+                              src={url.startsWith('/storage') ? `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}${url}` : url}
+                              alt={`Gallery image ${index + 1}`}
+                              className="h-20 w-20 object-cover rounded-lg border-2 border-gray-200"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23ddd" width="100" height="100"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3ENo Image%3C/text%3E%3C/svg%3E';
+                              }}
+                            />
+                          </div>
+                        )}
                       </div>
                     ))}
-                    <button
-                      type="button"
-                      onClick={addImageUrl}
-                      className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
-                    >
-                      + Add Image URL
-                    </button>
+                    
+                    {/* Add new gallery image buttons */}
+                    <div className="flex gap-2 flex-wrap">
+                      <label className="inline-flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors cursor-pointer text-sm font-medium">
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        Upload Gallery Image
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={addGalleryImageWithUpload}
+                          className="hidden"
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={addImageUrl}
+                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
+                      >
+                        + Add Image URL
+                      </button>
+                    </div>
                   </div>
                 </div>
 

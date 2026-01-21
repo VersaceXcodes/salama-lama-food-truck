@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Minus, Plus, Check, Info } from 'lucide-react';
+import { X, Minus, Plus, Check } from 'lucide-react';
 import { MenuItem, MENU_DATA } from '@/data/justEatMenuData';
 import { attachModifiersToItem, ModifierGroup } from '@/utils/menuModifiers';
 

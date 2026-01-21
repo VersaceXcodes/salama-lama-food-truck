@@ -187,7 +187,6 @@ const UV_Menu: React.FC = () => {
     searchParams.get('sort') || 'default'
   );
   const [filterPanelOpen, setFilterPanelOpen] = useState(false);
-  const [loadingItemId, setLoadingItemId] = useState<string | null>(null);
   const [customizationModal, setCustomizationModal] = useState<{
     is_open: boolean;
     item: MenuItem | null;
@@ -310,7 +309,6 @@ const UV_Menu: React.FC = () => {
   // React Query: Add to Cart Mutation
   const addToCartMutation = useMutation({
     mutationFn: (data: { item_id: string; quantity: number; selected_customizations: Record<string, any> }) => {
-      setLoadingItemId(data.item_id);
       return addItemToCart(data, authToken);
     },
     onSuccess: () => {
@@ -333,7 +331,6 @@ const UV_Menu: React.FC = () => {
       }
 
       // Clear loading state
-      setLoadingItemId(null);
 
       // Close modal and reset
       setCustomizationModal({
@@ -352,7 +349,6 @@ const UV_Menu: React.FC = () => {
     },
     onError: (error: any) => {
       // Clear loading state
-      setLoadingItemId(null);
       
       // Show error notification
       toast({
@@ -366,9 +362,6 @@ const UV_Menu: React.FC = () => {
   // React Query: Add Builder Item to Cart Mutation
   const addBuilderToCartMutation = useMutation({
     mutationFn: (data: { item_id: string; quantity: number; builder_selections: any; builder_unit_price: number }) => {
-      if (builderModal.item) {
-        setLoadingItemId(builderModal.item.item_id);
-      }
       return addBuilderItemToCart(data, authToken);
     },
     onSuccess: (_response, variables) => {
@@ -394,7 +387,6 @@ const UV_Menu: React.FC = () => {
       }
 
       // Clear loading state
-      setLoadingItemId(null);
 
       // Close builder modal
       setBuilderModal({
@@ -410,7 +402,6 @@ const UV_Menu: React.FC = () => {
     },
     onError: (error: any) => {
       // Clear loading state
-      setLoadingItemId(null);
       
       // Show error notification
       toast({
@@ -482,10 +473,6 @@ const UV_Menu: React.FC = () => {
         ? prev.filter(f => f !== filter)
         : [...prev, filter]
     );
-  };
-
-  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSortOption(e.target.value);
   };
 
   const handleClearFilters = () => {

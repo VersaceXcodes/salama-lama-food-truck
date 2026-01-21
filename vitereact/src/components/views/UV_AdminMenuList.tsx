@@ -9,8 +9,6 @@ import {
   Edit,
   Copy,
   Trash2,
-  ToggleLeft,
-  ToggleRight,
   Package,
   AlertCircle,
   CheckCircle,
@@ -173,8 +171,8 @@ const UV_AdminMenuList: React.FC = () => {
   const statusParam = searchParams.get('status');
 
   // Local state
-  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string | null>(categoryParam);
-  const [selectedStatusFilter, setSelectedStatusFilter] = useState<string | null>(statusParam);
+  const [selectedCategoryFilter] = useState<string | null>(categoryParam);
+  const [selectedStatusFilter] = useState<string | null>(statusParam);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);

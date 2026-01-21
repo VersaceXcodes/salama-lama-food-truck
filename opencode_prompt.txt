@@ -1,4 +1,4 @@
-right now the menu of admin " https://123salama-lama-food-truck.launchpulse.ai/admin/menu " is not aligned with the menu view from the customer side " https://123salama-lama-food-truck.launchpulse.ai/menu " i need the admin menu to be the same as the customer menu view
+i want to be able to upload an image for each of the product under " Edit Menu Item " under Images and the images that i upload i want them to be saved in the storage
 
 When the user mentions generic pages, map them to concrete files/components by scanning for headings and routes. Examples you MUST follow:
 - If the user says "login" or "sign in", search for components containing the literal heading "Sign in to your account" and edit that file.
@@ -9,5 +9,5 @@ When the user mentions generic pages, map them to concrete files/components by s
 - The user's request above is the PRIMARY task. Complete it first.
 - Ignore any existing errors, warnings, or issues you detect in the project unless they directly prevent you from completing the user's requested task.
 - Do NOT automatically fix unrelated errors or refactor code unless explicitly requested.
-- Focus solely on implementing the user's request: "right now the menu of admin " https://123salama-lama-food-truck.launchpulse.ai/admin/menu " is not aligned with the menu view from the customer side " https://123salama-lama-food-truck.launchpulse.ai/menu " i need the admin menu to be the same as the customer menu view"
+- Focus solely on implementing the user's request: "i want to be able to upload an image for each of the product under " Edit Menu Item " under Images and the images that i upload i want them to be saved in the storage"
 - Only address errors if they block the specific functionality requested by the user.

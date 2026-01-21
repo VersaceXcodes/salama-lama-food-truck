@@ -4,7 +4,6 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppStore } from '@/store/main';
 import { Star, MapPin, Phone, Clock, ChevronRight, Check, AlertCircle, Loader2, Navigation, ExternalLink } from 'lucide-react';
-import landingHeroImage from '../../assets/images/landing-hero.jpg';
 
 // ===========================
 // Type Definitions

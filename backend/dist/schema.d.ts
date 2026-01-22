@@ -709,8 +709,8 @@ export declare const createMenuItemInputSchema: z.ZodObject<{
     description: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     category_id: z.ZodString;
     price: z.ZodNumber;
-    image_url: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-    image_urls: z.ZodOptional<z.ZodNullable<z.ZodArray<z.ZodString, "many">>>;
+    image_url: z.ZodOptional<z.ZodNullable<z.ZodUnion<[z.ZodString, z.ZodLiteral<"">, z.ZodNull]>>>;
+    image_urls: z.ZodOptional<z.ZodNullable<z.ZodArray<z.ZodUnion<[z.ZodString, z.ZodLiteral<"">]>, "many">>>;
     dietary_tags: z.ZodOptional<z.ZodNullable<z.ZodArray<z.ZodString, "many">>>;
     is_limited_edition: z.ZodDefault<z.ZodBoolean>;
     limited_edition_end_date: z.ZodOptional<z.ZodNullable<z.ZodString>>;
@@ -771,8 +771,8 @@ export declare const updateMenuItemInputSchema: z.ZodObject<{
     description: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     category_id: z.ZodOptional<z.ZodString>;
     price: z.ZodOptional<z.ZodNumber>;
-    image_url: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-    image_urls: z.ZodOptional<z.ZodNullable<z.ZodArray<z.ZodString, "many">>>;
+    image_url: z.ZodOptional<z.ZodNullable<z.ZodUnion<[z.ZodString, z.ZodLiteral<"">]>>>;
+    image_urls: z.ZodOptional<z.ZodNullable<z.ZodArray<z.ZodUnion<[z.ZodString, z.ZodLiteral<"">]>, "many">>>;
     dietary_tags: z.ZodOptional<z.ZodNullable<z.ZodArray<z.ZodString, "many">>>;
     is_limited_edition: z.ZodOptional<z.ZodBoolean>;
     limited_edition_end_date: z.ZodOptional<z.ZodNullable<z.ZodString>>;

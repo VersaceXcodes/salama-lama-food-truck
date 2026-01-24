@@ -84,14 +84,14 @@ const GV_FloatingCart: React.FC = () => {
         }
       }
     }
-  }, [serverCartData, isCartLoading, syncCartFromApi]);
+  }, [serverCartData, isCartLoading, syncCartFromApi, cartItems.length]);
 
   // Mark cart as hydrated if API fails but we have local data
   useEffect(() => {
     if (!isCartLoading && !serverCartData && cartItems.length > 0 && !isHydrated) {
       setCartHydrated(true);
     }
-  }, [isCartLoading, serverCartData, cartItems.length, isHydrated, setCartHydrated]);
+  }, [isCartLoading, serverCartData, cartItems, isHydrated, setCartHydrated]);
   
   // ===========================
   // Derived State - Use Zustand as single source (synced from API)

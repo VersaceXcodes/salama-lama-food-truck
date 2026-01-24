@@ -150,7 +150,7 @@ const UV_EmailVerification: React.FC = () => {
         message: 'Invalid verification link. No token provided.',
       });
     }
-  }, [token]);
+  }, [token, verifyEmailMutation]);
 
   // ===========================
   // Event Handlers

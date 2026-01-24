@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import axios from 'axios';
@@ -225,7 +225,7 @@ const UV_CheckoutReview: React.FC = () => {
   });
 
 
-  const cart_items = cart_data?.items || [];
+  const cart_items = useMemo(() => cart_data?.items || [], [cart_data]);
   const cart_discount_code = cart_data?.discount_code || null;
   
   // Get guest cart ID for tracking

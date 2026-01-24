@@ -308,7 +308,7 @@ const UV_OrderHistory: React.FC = () => {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [search_input]);
+  }, [search_input, searchParams, setSearchParams]);
 
   // ===========================
   // Pagination Handlers

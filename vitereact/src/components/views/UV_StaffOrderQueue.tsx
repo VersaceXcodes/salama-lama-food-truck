@@ -342,7 +342,10 @@ const UV_StaffOrderQueue: React.FC = () => {
     retry: 2,
   });
 
-  const orders = Array.isArray(ordersData?.orders) ? ordersData.orders : [];
+  const orders = useMemo(() => 
+    Array.isArray(ordersData?.orders) ? ordersData.orders : [],
+    [ordersData]
+  );
   const queueStats = ordersData?.stats || {
     total_active: 0,
     new_count: 0,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
@@ -141,7 +141,7 @@ const UV_CheckoutOrderType: React.FC = () => {
     retry: 1
   });
 
-  const cartItems = cartData?.items || [];
+  const cartItems = useMemo(() => cartData?.items || [], [cartData]);
   
   // Calculate totals using shared utility
   const cartTotals = calculateCartTotals(parseCartData(cartData));

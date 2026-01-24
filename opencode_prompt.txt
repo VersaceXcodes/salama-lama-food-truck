@@ -1,4 +1,4 @@
-i cant edit any of any of the menu from the admin i need to be able to edit fix this
+the menu in " Menu Management " is not linked with the menu page for the public right now when i change something from "Menu Management https://123salama-lama-food-truck.launchpulse.ai/admin/menu " in admin it dose not reflect on the menu page for the public " https://123salama-lama-food-truck.launchpulse.ai/menu " i want this to be fixed as when i edit any item or add a new item i need it to also reflect on the public page menu
 
 When the user mentions generic pages, map them to concrete files/components by scanning for headings and routes. Examples you MUST follow:
 - If the user says "login" or "sign in", search for components containing the literal heading "Sign in to your account" and edit that file.
@@ -9,5 +9,5 @@ When the user mentions generic pages, map them to concrete files/components by s
 - The user's request above is the PRIMARY task. Complete it first.
 - Ignore any existing errors, warnings, or issues you detect in the project unless they directly prevent you from completing the user's requested task.
 - Do NOT automatically fix unrelated errors or refactor code unless explicitly requested.
-- Focus solely on implementing the user's request: "i cant edit any of any of the menu from the admin i need to be able to edit fix this"
+- Focus solely on implementing the user's request: "the menu in " Menu Management " is not linked with the menu page for the public right now when i change something from "Menu Management https://123salama-lama-food-truck.launchpulse.ai/admin/menu " in admin it dose not reflect on the menu page for the public " https://123salama-lama-food-truck.launchpulse.ai/menu " i want this to be fixed as when i edit any item or add a new item i need it to also reflect on the public page menu"
 - Only address errors if they block the specific functionality requested by the user.

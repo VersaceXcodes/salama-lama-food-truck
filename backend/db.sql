@@ -1,6 +1,7 @@
 -- ============================================
 -- DROP EXISTING TABLES (in reverse order of dependencies)
 -- ============================================
+DROP TABLE IF EXISTS contact_messages CASCADE;
 DROP TABLE IF EXISTS activity_logs CASCADE;
 DROP TABLE IF EXISTS system_settings CASCADE;
 DROP TABLE IF EXISTS invoices CASCADE;

@@ -27,18 +27,44 @@ const pool = new Pool(
 async function initDb() {
   const client = await pool.connect();
   try {
-    // Begin transaction
+    // Read SQL file
+    const sqlContent = fs.readFileSync(`./db.sql`, "utf-8").toString();
+    
+    // Split into DROP, CREATE, and INSERT sections
+    const dbInitCommands = sqlContent
+      .split(/(?=DROP TABLE |CREATE TABLE |CREATE INDEX |INSERT INTO)/);
+
+    // Separate DROP statements from others
+    const dropCommands = [];
+    const otherCommands = [];
+    
+    for (let cmd of dbInitCommands) {
+      const trimmedCmd = cmd.trim();
+      if (trimmedCmd.length === 0) continue;
+      
+      // Skip comments and section headers
+      if (trimmedCmd.startsWith('--')) continue;
+      
+      if (trimmedCmd.startsWith('DROP TABLE')) {
+        dropCommands.push(trimmedCmd);
+      } else {
+        otherCommands.push(trimmedCmd);
+      }
+    }
+
+    // Execute DROP statements first (without transaction to ensure they complete)
+    console.log('Dropping existing tables...');
+    for (let cmd of dropCommands) {
+      console.dir({ "backend:db:drop": cmd.substring(0, 50) + '...' });
+      await client.query(cmd);
+    }
+    
+    // Now execute CREATE and INSERT statements in a transaction
     await client.query('BEGIN');
     
-    // Read and split SQL commands
-    const dbInitCommands = fs
-      .readFileSync(`./db.sql`, "utf-8")
-      .toString()
-      .split(/(?=CREATE TABLE |INSERT INTO)/);
-
-    // Execute each command
-    for (let cmd of dbInitCommands) {
-      console.dir({ "backend:db:init:command": cmd });
+    console.log('Creating tables and inserting data...');
+    for (let cmd of otherCommands) {
+      console.dir({ "backend:db:init": cmd.substring(0, 50) + '...' });
       await client.query(cmd);
     }
 
@@ -47,7 +73,7 @@ async function initDb() {
     console.log('Database initialization completed successfully');
   } catch (e) {
     // Rollback on error
-    await client.query('ROLLBACK');
+    await client.query('ROLLBACK').catch(() => {});
     console.error('Database initialization failed:', e);
     throw e;
   } finally {

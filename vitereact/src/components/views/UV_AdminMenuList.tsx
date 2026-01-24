@@ -19,6 +19,7 @@ import {
   Settings,
   Eye,
   EyeOff,
+  RefreshCw,
 } from 'lucide-react';
 
 // ===========================
@@ -154,6 +155,15 @@ const duplicateMenuItem = async (
       sort_order: Number(response.data.item.sort_order || 0),
     },
   };
+};
+
+const syncMenuFromPDF = async (token: string): Promise<{ success: boolean; summary: any; source: any }> => {
+  const response = await axios.post(
+    `${API_BASE_URL}/api/admin/menu/sync-from-pdf`,
+    {},
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return response.data;
 };
 
 // ===========================
@@ -321,6 +331,25 @@ const UV_AdminMenuList: React.FC = () => {
     },
   });
 
+  // PDF Sync mutation
+  const syncPDFMutation = useMutation({
+    mutationFn: () => syncMenuFromPDF(authToken!),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-menu-items'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-menu-categories'] });
+      const summary = data.summary;
+      setSuccessMessage(
+        `Menu synced from PDF! ${summary.totalCategories} categories, ${summary.totalItems} items (${summary.itemsCreated} new, ${summary.itemsUpdated} updated)`
+      );
+      setTimeout(() => setSuccessMessage(null), 5000);
+    },
+    onError: (error: any) => {
+      const errorMsg = error?.response?.data?.message || error?.message || 'Failed to sync menu from PDF';
+      setErrorMessage(errorMsg);
+      setTimeout(() => setErrorMessage(null), 5000);
+    },
+  });
+
   // Handlers
   const handleToggleItemStatus = (itemId: string, currentStatus: boolean) => {
     toggleStatusMutation.mutate({ itemId, isActive: !currentStatus });
@@ -484,6 +513,15 @@ const UV_AdminMenuList: React.FC = () => {
 
             {/* Action Buttons */}
             <div className="flex gap-3">
+              <button
+                onClick={() => syncPDFMutation.mutate()}
+                disabled={syncPDFMutation.isPending}
+                className="inline-flex items-center px-4 py-2 border border-[#2C1A16] rounded-lg text-sm font-medium text-[#2C1A16] bg-white hover:bg-[#F9F5F0] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Sync menu from PDF in storage"
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${syncPDFMutation.isPending ? 'animate-spin' : ''}`} />
+                {syncPDFMutation.isPending ? 'Syncing...' : 'Sync from PDF'}
+              </button>
               <Link
                 to="/admin/menu/categories"
                 className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"

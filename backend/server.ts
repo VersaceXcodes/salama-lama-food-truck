@@ -2290,10 +2290,17 @@ app.get('/api/business/reviews', async (req, res) => {
 
 /**
  * MENU (PUBLIC)
+ * Customer-facing menu endpoints that read from database
+ * Cache control: no-store to ensure admin changes are immediately visible
  */
 
 app.get('/api/menu/categories', async (req, res) => {
   try {
+    // Prevent caching to ensure real-time updates from admin
+    res.setHeader('Cache-Control', 'no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    
     const rows = await pool.query('SELECT * FROM categories ORDER BY sort_order ASC, name ASC');
     const categories = rows.rows.map((r) => categorySchema.parse({
       ...r,
@@ -2308,6 +2315,11 @@ app.get('/api/menu/categories', async (req, res) => {
 
 app.get('/api/menu/items', async (req, res) => {
   try {
+    // Prevent caching to ensure real-time updates from admin
+    res.setHeader('Cache-Control', 'no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    
     const search = parse_query(searchMenuItemInputSchema, req.query);
     const { items, total } = await fetch_menu_items({ for_admin: false, search });
     const customizations_map = await fetch_customizations_for_items(items.map((i) => i.item_id));
@@ -2342,6 +2354,11 @@ app.get('/api/menu/items', async (req, res) => {
 
 app.get('/api/menu/item/:id', async (req, res) => {
   try {
+    // Prevent caching to ensure real-time updates from admin
+    res.setHeader('Cache-Control', 'no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    
     const item_id = req.params.id;
     const item_res = await pool.query(
       `SELECT mi.*, c.name as category_name
@@ -6741,6 +6758,48 @@ app.delete('/api/admin/menu/items/:id', authenticate_token, require_role(['admin
   } catch (error) {
     console.error('[admin/menu/items/:id DELETE] Error:', error);
     return res.status(500).json(createErrorResponse('Internal server error', error, 'INTERNAL_SERVER_ERROR', req.request_id));
+  }
+});
+
+/**
+ * PDF Menu Sync Endpoint
+ * Syncs menu data from PDF in storage to database
+ */
+app.post('/api/admin/menu/sync-from-pdf', authenticate_token, require_role(['admin']), async (req, res) => {
+  try {
+    console.log(`[PDF_SYNC API] Received sync request from user: ${req.user.user_id}`);
+    
+    // Import the sync function dynamically
+    const { syncMenuFromPDF } = await import('./lib/pdf-menu-sync.js');
+    
+    // Execute the sync
+    const result = await syncMenuFromPDF(pool);
+    
+    // Log activity
+    await log_activity({
+      user_id: req.user.user_id,
+      action_type: 'sync',
+      entity_type: 'menu',
+      entity_id: 'pdf_sync',
+      description: `Synced menu from PDF: ${result.summary.totalCategories} categories, ${result.summary.totalItems} items`,
+      changes: result.summary,
+      ip_address: req.ip,
+      user_agent: req.headers['user-agent'],
+    });
+    
+    return ok(res, 200, {
+      message: 'Menu synced successfully from PDF',
+      summary: result.summary,
+      source: result.source,
+    });
+  } catch (error) {
+    console.error('[PDF_SYNC API] Error:', error);
+    return res.status(500).json(createErrorResponse(
+      `Failed to sync menu from PDF: ${error.message}`,
+      error,
+      'PDF_SYNC_FAILED',
+      req.request_id
+    ));
   }
 });
 

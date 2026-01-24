@@ -1,65 +1,123 @@
-BUG
-- When I add/edit items in /admin/menu (Menu Management), the customer menu at /menu does NOT reflect the changes.
-- Evidence: the category lists differ between admin (“Hot Drinks, Cold Drinks, Pastries…”) and customer (“Grilled Subs, Saj Wraps, Rice Bowls…”), which strongly suggests the two pages are reading from different data sources, different tenant/store IDs, or a “draft vs published” menu pipeline.
+CONTEXT
+The PDF is NOT in the repo. It is already uploaded to the product’s storage (the app’s file storage). The file name is exactly:
+Salama_Lama_Delivery_App_Menu_FULL_v2.pdf
+You must fetch it from storage and use it as the reference to populate/update the menu.
 
 GOAL
-Make /menu always display the same menu data managed in /admin/menu (same items, categories, prices, images, featured/active flags), immediately after changes (at least after a refresh; ideally without).
+- Use the PDF in storage to build the canonical menu (categories + items).
+- Store that menu in the database.
+- Ensure BOTH:
+  1) Admin Menu Management (/admin/menu) reads/writes the DB
+  2) Customer Menu (/menu) reads the same DB
+So edits in admin always reflect on /menu.
 
-TASKS (do these in order)
-1) TRACE DATA SOURCES
-   - Find exactly where /admin/menu reads menu items + categories from, and where it writes them (create/update/delete/toggle featured/active).
-   - Find exactly where /menu (customer page) reads items + categories from.
-   - Confirm whether /menu uses:
-     a) hardcoded/mock/seed data (constants like MENU_ITEMS, HIGHLIGHTS, demo arrays),
-     b) a different DB table/collection than admin,
-     c) a “menu builder / published menu” table or snapshot,
-     d) a different tenant/store/restaurant ID filter.
+DO THIS IN ORDER
 
-2) FIX THE ROOT CAUSE (most likely one of these; implement the correct one based on the codebase)
-   A) If /menu is using mock/static data:
-      - Remove the mock/static source and fetch from the same backend source used by admin.
-      - Share a single “menu service” (server function) used by BOTH pages.
+1) FIND THE STORAGE PROVIDER + FILE RECORD
+- Inspect the codebase for storage usage and identify which provider is used:
+  - Supabase Storage / Firebase Storage / S3 / Cloudinary / Uploadthing / Storage API routes
+- Search for:
+  - “storage”, “bucket”, “supabase.storage”, “firebase.storage”, “s3”, “cloudinary”, “upload”, “signedUrl”, “getPublicUrl”
+- Find where uploaded files are stored and how they’re referenced (DB table like files/documents/assets, or direct provider path).
 
-   B) If this is a tenant/store mismatch:
-      - Identify how tenant/store is resolved in both places (host/subdomain, slug, session user, env var).
-      - Implement ONE canonical function (e.g., getTenantIdFromRequest()) and use it everywhere.
-      - Ensure menu item writes always set tenant_id/store_id correctly.
+2) LOCATE THE PDF BY FILENAME IN STORAGE
+- Implement a function that finds the file by name EXACT MATCH:
+  findStoredFileByName("Salama_Lama_Delivery_App_Menu_FULL_v2.pdf")
+- If the storage provider supports listing:
+  - list objects in the relevant bucket/folder and match by name
+- If files are indexed in DB:
+  - query the files/assets table by filename and retrieve its storage key/path + bucket.
 
-   C) If there is a draft/publish pipeline (Menu Builder exists):
-      - Confirm whether /menu reads ONLY “published” menu.
-      - Decide on the intended behavior:
-        - Option 1 (simplest): /menu reads directly from Menu Items where active=true (and optionally published=true).
-        - Option 2: keep publish flow, but when admin edits/adds an item, automatically update the published snapshot OR clearly require “Publish” and add a Publish button + status indicators.
-      - Implement whichever matches the product intent, but the end result must be: admin changes show on /menu.
+3) DOWNLOAD/READ THE PDF SERVER-SIDE
+- Implement server-side retrieval:
+  - If private storage: use signed URL or provider SDK to download bytes
+  - If public: fetch directly from public URL
+- Convert to a Buffer/Uint8Array for parsing.
+- Add basic integrity checks:
+  - Confirm content-type is PDF OR header starts with %PDF
+  - Log file size and storage path used (for debugging)
 
-   D) If this is caching/ISR/stale fetch:
-      - For Next.js (or any SSR caching), ensure /menu does not serve stale menu:
-        - Set fetch to no-store OR implement tag-based revalidation.
-        - Example pattern (adapt to our stack):
-          - Customer fetch: fetch(..., { next: { tags: ['menu'], revalidate: 0 } }) OR { cache: 'no-store' }
-          - After mutations in admin: revalidateTag('menu') (or equivalent) so the public page updates.
-      - If using React Query/SWR on /menu: invalidate queries after mutations (or at least ensure refresh pulls latest).
+4) EXTRACT MENU STRUCTURE FROM THE PDF INTO JSON
+- Parse the PDF into a canonical JSON schema:
+  {
+    "source": {
+      "type": "pdf",
+      "filename": "Salama_Lama_Delivery_App_Menu_FULL_v2.pdf",
+      "storagePath": "...",
+      "checksum": "..." 
+    },
+    "categories": [
+      {
+        "name": "Category",
+        "sortOrder": 1,
+        "items": [
+          {
+            "name": "Item Name",
+            "description": "…",
+            "price": 0,
+            "tags": [],
+            "isFeatured": false,
+            "isActive": true
+          }
+        ]
+      }
+    ]
+  }
+- Prefer a deterministic parser:
+  - If Node: pdf-parse or pdfjs-dist
+- If extraction is messy, still produce a working JSON by:
+  - extracting text, then using robust heuristics + normalization,
+  - AND logging any lines that couldn’t be classified.
+- Save the resulting JSON in DB (and optionally also save a copy at /data/menu/ for dev visibility).
 
-3) ALIGN DATA SHAPE + FILTERING
-   - Customer menu should show categories derived from DB (not a separate list).
-   - Only show items that are active (and published if that concept exists).
-   - Ensure “featured/highlights/most popular” is driven by the same flags used in admin.
+5) UPSERT INTO DATABASE (SINGLE SOURCE OF TRUTH)
+- Create/confirm DB tables/collections:
+  Categories: id, name, sortOrder, tenant/store id
+  MenuItems: id, categoryId, name, description, price, tags, isFeatured, isActive, tenant/store id, updatedAt
+- Implement an idempotent upsert import:
+  - Stable key for categories: tenant_id + normalized(categoryName)
+  - Stable key for items: tenant_id + categoryKey + normalized(itemName)
+  - Update existing items (price/description/tags) instead of duplicating
+- Ensure tenant/store scoping is consistent everywhere.
 
-4) DELIVERABLES
-   - Provide:
-     - Root cause explanation (1–2 paragraphs).
-     - The exact files changed (paths).
-     - A patch/diff of changes.
-     - Manual verification steps:
-       1) Add a new item in /admin/menu
-       2) Refresh /menu
-       3) Confirm the new item appears under the correct category
-     - If possible, add a minimal automated check (smoke test) or logging to confirm both pages use the same tenant_id and same source.
+6) MAKE ADMIN + CUSTOMER USE THE SAME DB QUERIES
+- Remove/stop any hardcoded/mock menu arrays on /menu (customer).
+- /menu must query:
+  - categories sorted
+  - items where isActive=true (and isPublished=true only if that concept exists)
+- /admin/menu must read/write the same records.
+
+7) ELIMINATE STALE DATA
+- If Next.js caching/ISR is used:
+  - Customer menu fetch must be “no-store” OR use tag-based revalidation.
+  - After admin mutations (create/update/toggle active/featured), revalidate the menu tag/path.
+- If SWR/React Query:
+  - invalidate menu query on successful admin mutation.
+
+8) ADD AN ADMIN ACTION: “Sync from PDF”
+- In /admin/menu add a button: “Sync from PDF (v2)”
+  - Calls an API route /api/admin/menu/sync-from-pdf
+  - That route:
+    a) fetches the PDF from storage by filename
+    b) parses it into JSON
+    c) upserts DB
+    d) returns summary (categories count, items count, updated count)
+- Show a success toast + refresh admin list.
+
+DELIVERABLES
+- Root cause explanation (why admin/customer were diverging)
+- File paths changed
+- Patch/diff
+- Verification steps:
+  1) Click “Sync from PDF”
+  2) Confirm categories/items populate in admin
+  3) Edit an item in admin (price/name)
+  4) Refresh /menu and confirm it updates immediately
 
 IMPORTANT
-- Do NOT “work around” it by duplicating data.
-- Do NOT leave /menu dependent on demo arrays or a different table than admin unless there is a clear publish step—and then implement automatic publish or a clear publish UX.
-- Prefer a single source of truth + explicit cache invalidation.
+- The PDF in STORAGE is the reference for initial structure + a re-sync tool.
+- The LIVE runtime source for both admin and customer must be the DB.
+- Do NOT keep two parallel menu sources.
 
 When the user mentions generic pages, map them to concrete files/components by scanning for headings and routes. Examples you MUST follow:
 - If the user says "login" or "sign in", search for components containing the literal heading "Sign in to your account" and edit that file.
@@ -70,66 +128,124 @@ When the user mentions generic pages, map them to concrete files/components by s
 - The user's request above is the PRIMARY task. Complete it first.
 - Ignore any existing errors, warnings, or issues you detect in the project unless they directly prevent you from completing the user's requested task.
 - Do NOT automatically fix unrelated errors or refactor code unless explicitly requested.
-- Focus solely on implementing the user's request: "BUG
-- When I add/edit items in /admin/menu (Menu Management), the customer menu at /menu does NOT reflect the changes.
-- Evidence: the category lists differ between admin (“Hot Drinks, Cold Drinks, Pastries…”) and customer (“Grilled Subs, Saj Wraps, Rice Bowls…”), which strongly suggests the two pages are reading from different data sources, different tenant/store IDs, or a “draft vs published” menu pipeline.
+- Focus solely on implementing the user's request: "CONTEXT
+The PDF is NOT in the repo. It is already uploaded to the product’s storage (the app’s file storage). The file name is exactly:
+Salama_Lama_Delivery_App_Menu_FULL_v2.pdf
+You must fetch it from storage and use it as the reference to populate/update the menu.
 
 GOAL
-Make /menu always display the same menu data managed in /admin/menu (same items, categories, prices, images, featured/active flags), immediately after changes (at least after a refresh; ideally without).
+- Use the PDF in storage to build the canonical menu (categories + items).
+- Store that menu in the database.
+- Ensure BOTH:
+  1) Admin Menu Management (/admin/menu) reads/writes the DB
+  2) Customer Menu (/menu) reads the same DB
+So edits in admin always reflect on /menu.
 
-TASKS (do these in order)
-1) TRACE DATA SOURCES
-   - Find exactly where /admin/menu reads menu items + categories from, and where it writes them (create/update/delete/toggle featured/active).
-   - Find exactly where /menu (customer page) reads items + categories from.
-   - Confirm whether /menu uses:
-     a) hardcoded/mock/seed data (constants like MENU_ITEMS, HIGHLIGHTS, demo arrays),
-     b) a different DB table/collection than admin,
-     c) a “menu builder / published menu” table or snapshot,
-     d) a different tenant/store/restaurant ID filter.
+DO THIS IN ORDER
 
-2) FIX THE ROOT CAUSE (most likely one of these; implement the correct one based on the codebase)
-   A) If /menu is using mock/static data:
-      - Remove the mock/static source and fetch from the same backend source used by admin.
-      - Share a single “menu service” (server function) used by BOTH pages.
+1) FIND THE STORAGE PROVIDER + FILE RECORD
+- Inspect the codebase for storage usage and identify which provider is used:
+  - Supabase Storage / Firebase Storage / S3 / Cloudinary / Uploadthing / Storage API routes
+- Search for:
+  - “storage”, “bucket”, “supabase.storage”, “firebase.storage”, “s3”, “cloudinary”, “upload”, “signedUrl”, “getPublicUrl”
+- Find where uploaded files are stored and how they’re referenced (DB table like files/documents/assets, or direct provider path).
 
-   B) If this is a tenant/store mismatch:
-      - Identify how tenant/store is resolved in both places (host/subdomain, slug, session user, env var).
-      - Implement ONE canonical function (e.g., getTenantIdFromRequest()) and use it everywhere.
-      - Ensure menu item writes always set tenant_id/store_id correctly.
+2) LOCATE THE PDF BY FILENAME IN STORAGE
+- Implement a function that finds the file by name EXACT MATCH:
+  findStoredFileByName("Salama_Lama_Delivery_App_Menu_FULL_v2.pdf")
+- If the storage provider supports listing:
+  - list objects in the relevant bucket/folder and match by name
+- If files are indexed in DB:
+  - query the files/assets table by filename and retrieve its storage key/path + bucket.
 
-   C) If there is a draft/publish pipeline (Menu Builder exists):
-      - Confirm whether /menu reads ONLY “published” menu.
-      - Decide on the intended behavior:
-        - Option 1 (simplest): /menu reads directly from Menu Items where active=true (and optionally published=true).
-        - Option 2: keep publish flow, but when admin edits/adds an item, automatically update the published snapshot OR clearly require “Publish” and add a Publish button + status indicators.
-      - Implement whichever matches the product intent, but the end result must be: admin changes show on /menu.
+3) DOWNLOAD/READ THE PDF SERVER-SIDE
+- Implement server-side retrieval:
+  - If private storage: use signed URL or provider SDK to download bytes
+  - If public: fetch directly from public URL
+- Convert to a Buffer/Uint8Array for parsing.
+- Add basic integrity checks:
+  - Confirm content-type is PDF OR header starts with %PDF
+  - Log file size and storage path used (for debugging)
 
-   D) If this is caching/ISR/stale fetch:
-      - For Next.js (or any SSR caching), ensure /menu does not serve stale menu:
-        - Set fetch to no-store OR implement tag-based revalidation.
-        - Example pattern (adapt to our stack):
-          - Customer fetch: fetch(..., { next: { tags: ['menu'], revalidate: 0 } }) OR { cache: 'no-store' }
-          - After mutations in admin: revalidateTag('menu') (or equivalent) so the public page updates.
-      - If using React Query/SWR on /menu: invalidate queries after mutations (or at least ensure refresh pulls latest).
+4) EXTRACT MENU STRUCTURE FROM THE PDF INTO JSON
+- Parse the PDF into a canonical JSON schema:
+  {
+    "source": {
+      "type": "pdf",
+      "filename": "Salama_Lama_Delivery_App_Menu_FULL_v2.pdf",
+      "storagePath": "...",
+      "checksum": "..." 
+    },
+    "categories": [
+      {
+        "name": "Category",
+        "sortOrder": 1,
+        "items": [
+          {
+            "name": "Item Name",
+            "description": "…",
+            "price": 0,
+            "tags": [],
+            "isFeatured": false,
+            "isActive": true
+          }
+        ]
+      }
+    ]
+  }
+- Prefer a deterministic parser:
+  - If Node: pdf-parse or pdfjs-dist
+- If extraction is messy, still produce a working JSON by:
+  - extracting text, then using robust heuristics + normalization,
+  - AND logging any lines that couldn’t be classified.
+- Save the resulting JSON in DB (and optionally also save a copy at /data/menu/ for dev visibility).
 
-3) ALIGN DATA SHAPE + FILTERING
-   - Customer menu should show categories derived from DB (not a separate list).
-   - Only show items that are active (and published if that concept exists).
-   - Ensure “featured/highlights/most popular” is driven by the same flags used in admin.
+5) UPSERT INTO DATABASE (SINGLE SOURCE OF TRUTH)
+- Create/confirm DB tables/collections:
+  Categories: id, name, sortOrder, tenant/store id
+  MenuItems: id, categoryId, name, description, price, tags, isFeatured, isActive, tenant/store id, updatedAt
+- Implement an idempotent upsert import:
+  - Stable key for categories: tenant_id + normalized(categoryName)
+  - Stable key for items: tenant_id + categoryKey + normalized(itemName)
+  - Update existing items (price/description/tags) instead of duplicating
+- Ensure tenant/store scoping is consistent everywhere.
 
-4) DELIVERABLES
-   - Provide:
-     - Root cause explanation (1–2 paragraphs).
-     - The exact files changed (paths).
-     - A patch/diff of changes.
-     - Manual verification steps:
-       1) Add a new item in /admin/menu
-       2) Refresh /menu
-       3) Confirm the new item appears under the correct category
-     - If possible, add a minimal automated check (smoke test) or logging to confirm both pages use the same tenant_id and same source.
+6) MAKE ADMIN + CUSTOMER USE THE SAME DB QUERIES
+- Remove/stop any hardcoded/mock menu arrays on /menu (customer).
+- /menu must query:
+  - categories sorted
+  - items where isActive=true (and isPublished=true only if that concept exists)
+- /admin/menu must read/write the same records.
+
+7) ELIMINATE STALE DATA
+- If Next.js caching/ISR is used:
+  - Customer menu fetch must be “no-store” OR use tag-based revalidation.
+  - After admin mutations (create/update/toggle active/featured), revalidate the menu tag/path.
+- If SWR/React Query:
+  - invalidate menu query on successful admin mutation.
+
+8) ADD AN ADMIN ACTION: “Sync from PDF”
+- In /admin/menu add a button: “Sync from PDF (v2)”
+  - Calls an API route /api/admin/menu/sync-from-pdf
+  - That route:
+    a) fetches the PDF from storage by filename
+    b) parses it into JSON
+    c) upserts DB
+    d) returns summary (categories count, items count, updated count)
+- Show a success toast + refresh admin list.
+
+DELIVERABLES
+- Root cause explanation (why admin/customer were diverging)
+- File paths changed
+- Patch/diff
+- Verification steps:
+  1) Click “Sync from PDF”
+  2) Confirm categories/items populate in admin
+  3) Edit an item in admin (price/name)
+  4) Refresh /menu and confirm it updates immediately
 
 IMPORTANT
-- Do NOT “work around” it by duplicating data.
-- Do NOT leave /menu dependent on demo arrays or a different table than admin unless there is a clear publish step—and then implement automatic publish or a clear publish UX.
-- Prefer a single source of truth + explicit cache invalidation."
+- The PDF in STORAGE is the reference for initial structure + a re-sync tool.
+- The LIVE runtime source for both admin and customer must be the DB.
+- Do NOT keep two parallel menu sources."
 - Only address errors if they block the specific functionality requested by the user.

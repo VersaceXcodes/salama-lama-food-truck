@@ -10,7 +10,9 @@ import { useAppStore } from '@/store/main';
 
 // Wrapper component for router context
 const Wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <BrowserRouter>{children}</BrowserRouter>
+  <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    {children}
+  </BrowserRouter>
 );
 
 describe('Auth E2E Flow (Real API)', () => {

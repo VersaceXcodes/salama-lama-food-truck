@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppStore } from '@/store/main';
 import { FileText, Printer, ChevronRight, ArrowUp, Menu, X } from 'lucide-react';
@@ -45,7 +45,7 @@ const UV_Terms: React.FC = () => {
   const observerRef = useRef<IntersectionObserver | null>(null);
 
   // Static terms content (production would fetch from API)
-  const staticTermsContent: TermsContent = {
+  const staticTermsContent: TermsContent = useMemo(() => ({
     title: 'Terms and Conditions',
     last_updated: '2024-01-15',
     sections: [
@@ -407,7 +407,7 @@ const UV_Terms: React.FC = () => {
         ]
       }
     ]
-  };
+  }), [businessSettings]);
 
   // Initialize terms content and table of contents
   useEffect(() => {
@@ -449,7 +449,7 @@ const UV_Terms: React.FC = () => {
     };
     
     loadTerms();
-  }, []);
+  }, [staticTermsContent]);
 
   // Set up Intersection Observer for scroll tracking
   useEffect(() => {

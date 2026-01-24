@@ -1,0 +1,135 @@
+BUG
+- When I add/edit items in /admin/menu (Menu Management), the customer menu at /menu does NOT reflect the changes.
+- Evidence: the category lists differ between admin (“Hot Drinks, Cold Drinks, Pastries…”) and customer (“Grilled Subs, Saj Wraps, Rice Bowls…”), which strongly suggests the two pages are reading from different data sources, different tenant/store IDs, or a “draft vs published” menu pipeline.
+
+GOAL
+Make /menu always display the same menu data managed in /admin/menu (same items, categories, prices, images, featured/active flags), immediately after changes (at least after a refresh; ideally without).
+
+TASKS (do these in order)
+1) TRACE DATA SOURCES
+   - Find exactly where /admin/menu reads menu items + categories from, and where it writes them (create/update/delete/toggle featured/active).
+   - Find exactly where /menu (customer page) reads items + categories from.
+   - Confirm whether /menu uses:
+     a) hardcoded/mock/seed data (constants like MENU_ITEMS, HIGHLIGHTS, demo arrays),
+     b) a different DB table/collection than admin,
+     c) a “menu builder / published menu” table or snapshot,
+     d) a different tenant/store/restaurant ID filter.
+
+2) FIX THE ROOT CAUSE (most likely one of these; implement the correct one based on the codebase)
+   A) If /menu is using mock/static data:
+      - Remove the mock/static source and fetch from the same backend source used by admin.
+      - Share a single “menu service” (server function) used by BOTH pages.
+
+   B) If this is a tenant/store mismatch:
+      - Identify how tenant/store is resolved in both places (host/subdomain, slug, session user, env var).
+      - Implement ONE canonical function (e.g., getTenantIdFromRequest()) and use it everywhere.
+      - Ensure menu item writes always set tenant_id/store_id correctly.
+
+   C) If there is a draft/publish pipeline (Menu Builder exists):
+      - Confirm whether /menu reads ONLY “published” menu.
+      - Decide on the intended behavior:
+        - Option 1 (simplest): /menu reads directly from Menu Items where active=true (and optionally published=true).
+        - Option 2: keep publish flow, but when admin edits/adds an item, automatically update the published snapshot OR clearly require “Publish” and add a Publish button + status indicators.
+      - Implement whichever matches the product intent, but the end result must be: admin changes show on /menu.
+
+   D) If this is caching/ISR/stale fetch:
+      - For Next.js (or any SSR caching), ensure /menu does not serve stale menu:
+        - Set fetch to no-store OR implement tag-based revalidation.
+        - Example pattern (adapt to our stack):
+          - Customer fetch: fetch(..., { next: { tags: ['menu'], revalidate: 0 } }) OR { cache: 'no-store' }
+          - After mutations in admin: revalidateTag('menu') (or equivalent) so the public page updates.
+      - If using React Query/SWR on /menu: invalidate queries after mutations (or at least ensure refresh pulls latest).
+
+3) ALIGN DATA SHAPE + FILTERING
+   - Customer menu should show categories derived from DB (not a separate list).
+   - Only show items that are active (and published if that concept exists).
+   - Ensure “featured/highlights/most popular” is driven by the same flags used in admin.
+
+4) DELIVERABLES
+   - Provide:
+     - Root cause explanation (1–2 paragraphs).
+     - The exact files changed (paths).
+     - A patch/diff of changes.
+     - Manual verification steps:
+       1) Add a new item in /admin/menu
+       2) Refresh /menu
+       3) Confirm the new item appears under the correct category
+     - If possible, add a minimal automated check (smoke test) or logging to confirm both pages use the same tenant_id and same source.
+
+IMPORTANT
+- Do NOT “work around” it by duplicating data.
+- Do NOT leave /menu dependent on demo arrays or a different table than admin unless there is a clear publish step—and then implement automatic publish or a clear publish UX.
+- Prefer a single source of truth + explicit cache invalidation.
+
+When the user mentions generic pages, map them to concrete files/components by scanning for headings and routes. Examples you MUST follow:
+- If the user says "login" or "sign in", search for components containing the literal heading "Sign in to your account" and edit that file.
+- If the user says "sign up" or "register", search for "Create your account" or equivalent.
+- Always return an explicit list of changed file paths. If your first attempt doesn't change the UI, re-search by heading text and update the correct file.
+
+⚠️ PRIORITY INSTRUCTIONS:
+- The user's request above is the PRIMARY task. Complete it first.
+- Ignore any existing errors, warnings, or issues you detect in the project unless they directly prevent you from completing the user's requested task.
+- Do NOT automatically fix unrelated errors or refactor code unless explicitly requested.
+- Focus solely on implementing the user's request: "BUG
+- When I add/edit items in /admin/menu (Menu Management), the customer menu at /menu does NOT reflect the changes.
+- Evidence: the category lists differ between admin (“Hot Drinks, Cold Drinks, Pastries…”) and customer (“Grilled Subs, Saj Wraps, Rice Bowls…”), which strongly suggests the two pages are reading from different data sources, different tenant/store IDs, or a “draft vs published” menu pipeline.
+
+GOAL
+Make /menu always display the same menu data managed in /admin/menu (same items, categories, prices, images, featured/active flags), immediately after changes (at least after a refresh; ideally without).
+
+TASKS (do these in order)
+1) TRACE DATA SOURCES
+   - Find exactly where /admin/menu reads menu items + categories from, and where it writes them (create/update/delete/toggle featured/active).
+   - Find exactly where /menu (customer page) reads items + categories from.
+   - Confirm whether /menu uses:
+     a) hardcoded/mock/seed data (constants like MENU_ITEMS, HIGHLIGHTS, demo arrays),
+     b) a different DB table/collection than admin,
+     c) a “menu builder / published menu” table or snapshot,
+     d) a different tenant/store/restaurant ID filter.
+
+2) FIX THE ROOT CAUSE (most likely one of these; implement the correct one based on the codebase)
+   A) If /menu is using mock/static data:
+      - Remove the mock/static source and fetch from the same backend source used by admin.
+      - Share a single “menu service” (server function) used by BOTH pages.
+
+   B) If this is a tenant/store mismatch:
+      - Identify how tenant/store is resolved in both places (host/subdomain, slug, session user, env var).
+      - Implement ONE canonical function (e.g., getTenantIdFromRequest()) and use it everywhere.
+      - Ensure menu item writes always set tenant_id/store_id correctly.
+
+   C) If there is a draft/publish pipeline (Menu Builder exists):
+      - Confirm whether /menu reads ONLY “published” menu.
+      - Decide on the intended behavior:
+        - Option 1 (simplest): /menu reads directly from Menu Items where active=true (and optionally published=true).
+        - Option 2: keep publish flow, but when admin edits/adds an item, automatically update the published snapshot OR clearly require “Publish” and add a Publish button + status indicators.
+      - Implement whichever matches the product intent, but the end result must be: admin changes show on /menu.
+
+   D) If this is caching/ISR/stale fetch:
+      - For Next.js (or any SSR caching), ensure /menu does not serve stale menu:
+        - Set fetch to no-store OR implement tag-based revalidation.
+        - Example pattern (adapt to our stack):
+          - Customer fetch: fetch(..., { next: { tags: ['menu'], revalidate: 0 } }) OR { cache: 'no-store' }
+          - After mutations in admin: revalidateTag('menu') (or equivalent) so the public page updates.
+      - If using React Query/SWR on /menu: invalidate queries after mutations (or at least ensure refresh pulls latest).
+
+3) ALIGN DATA SHAPE + FILTERING
+   - Customer menu should show categories derived from DB (not a separate list).
+   - Only show items that are active (and published if that concept exists).
+   - Ensure “featured/highlights/most popular” is driven by the same flags used in admin.
+
+4) DELIVERABLES
+   - Provide:
+     - Root cause explanation (1–2 paragraphs).
+     - The exact files changed (paths).
+     - A patch/diff of changes.
+     - Manual verification steps:
+       1) Add a new item in /admin/menu
+       2) Refresh /menu
+       3) Confirm the new item appears under the correct category
+     - If possible, add a minimal automated check (smoke test) or logging to confirm both pages use the same tenant_id and same source.
+
+IMPORTANT
+- Do NOT “work around” it by duplicating data.
+- Do NOT leave /menu dependent on demo arrays or a different table than admin unless there is a clear publish step—and then implement automatic publish or a clear publish UX.
+- Prefer a single source of truth + explicit cache invalidation."
+- Only address errors if they block the specific functionality requested by the user.

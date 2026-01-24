@@ -1,1 +1,4 @@
-{"permission":{"skill":{"frontend-design":"allow","storage":"allow","*":"allow"}}}
+{
+  "permission": {},
+  "$schema": "https://opencode.ai/config.json"
+}

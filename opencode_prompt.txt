@@ -1,13 +1,230 @@
-the menu in " Menu Management " is not linked with the menu page for the public right now when i change something from "Menu Management https://123salama-lama-food-truck.launchpulse.ai/admin/menu " in admin it dose not reflect on the menu page for the public " https://123salama-lama-food-truck.launchpulse.ai/menu " i want this to be fixed as when i edit any item or add a new item i need it to also reflect on the public page menu
+VALIDATION FAILURE - Lint Project (Attempt 1/100)
 
-When the user mentions generic pages, map them to concrete files/components by scanning for headings and routes. Examples you MUST follow:
-- If the user says "login" or "sign in", search for components containing the literal heading "Sign in to your account" and edit that file.
-- If the user says "sign up" or "register", search for "Create your account" or equivalent.
-- Always return an explicit list of changed file paths. If your first attempt doesn't change the UI, re-search by heading text and update the correct file.
+The project validation failed at the "Lint Project" step. You need to analyze the error and fix it.
 
-⚠️ PRIORITY INSTRUCTIONS:
-- The user's request above is the PRIMARY task. Complete it first.
-- Ignore any existing errors, warnings, or issues you detect in the project unless they directly prevent you from completing the user's requested task.
-- Do NOT automatically fix unrelated errors or refactor code unless explicitly requested.
-- Focus solely on implementing the user's request: "the menu in " Menu Management " is not linked with the menu page for the public right now when i change something from "Menu Management https://123salama-lama-food-truck.launchpulse.ai/admin/menu " in admin it dose not reflect on the menu page for the public " https://123salama-lama-food-truck.launchpulse.ai/menu " i want this to be fixed as when i edit any item or add a new item i need it to also reflect on the public page menu"
-- Only address errors if they block the specific functionality requested by the user.
+## Error Details:
+
+> conductor@0.0.0 lint
+> eslint .
+
+
+/app/vitereact/src/__tests__/auth.e2e.test.tsx
+  1:1  error  Do not use "@ts-nocheck" because it alters compilation errors  @typescript-eslint/ban-ts-comment
+
+/app/vitereact/src/__tests__/product-builder-mobile-regression.test.tsx
+    1:1   error  Do not use "@ts-nocheck" because it alters compilation errors                                                        @typescript-eslint/ban-ts-comment
+   26:1   error  Comments mentioning mock/dummy/fake data are not allowed. Implement real functionality                               custom/no-mock-data
+   27:7   error  Variable names containing "mock", "dummy", or "fake" are not allowed. Use real data                                  custom/no-mock-data
+  110:9   error  Variable names containing "mock", "dummy", or "fake" are not allowed. Use real data                                  custom/no-mock-data
+  111:9   error  Variable names containing "mock", "dummy", or "fake" are not allowed. Use real data                                  custom/no-mock-data
+  117:5   error  Comments mentioning mock/dummy/fake data are not allowed. Implement real functionality                               custom/no-mock-data
+  129:5   error  Comments mentioning mock/dummy/fake data are not allowed. Implement real functionality                               custom/no-mock-data
+  130:5   error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  132:5   error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  191:15  error  'container' is assigned a value but never used                                                                       @typescript-eslint/no-unused-vars
+  386:16  error  'selections' is assigned a value but never used                                                                      @typescript-eslint/no-unused-vars
+  421:15  error  'container' is assigned a value but never used                                                                       @typescript-eslint/no-unused-vars
+  446:15  error  'container' is assigned a value but never used                                                                       @typescript-eslint/no-unused-vars
+  518:13  error  Variable names containing "mock", "dummy", or "fake" are not allowed. Use real data                                  custom/no-mock-data
+
+/app/vitereact/src/__tests__/product-builder-modal.test.tsx
+    1:1   error  Do not use "@ts-nocheck" because it alters compilation errors                           @typescript-eslint/ban-ts-comment
+    9:1   error  Comments mentioning mock/dummy/fake data are not allowed. Implement real functionality  custom/no-mock-data
+   10:7   error  Variable names containing "mock", "dummy", or "fake" are not allowed. Use real data     custom/no-mock-data
+  116:9   error  Variable names containing "mock", "dummy", or "fake" are not allowed. Use real data     custom/no-mock-data
+  117:9   error  Variable names containing "mock", "dummy", or "fake" are not allowed. Use real data     custom/no-mock-data
+  123:5   error  Comments mentioning mock/dummy/fake data are not allowed. Implement real functionality  custom/no-mock-data
+  625:11  error  Variable names containing "mock", "dummy", or "fake" are not allowed. Use real data     custom/no-mock-data
+  656:11  error  Variable names containing "mock", "dummy", or "fake" are not allowed. Use real data     custom/no-mock-data
+
+/app/vitereact/src/components/views/GV_FloatingCart.tsx
+  87:6  warning  React Hook useEffect has a missing dependency: 'cartItems.length'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/app/vitereact/src/components/views/UV_CheckoutOrderType.tsx
+  144:9  warning  The 'cartItems' logical expression could make the dependencies of useEffect Hook (at line 465) change on every render. Move it inside the useEffect callback. Alternatively, wrap the initialization of 'cartItems' in its own useMemo() Hook  react-hooks/exhaustive-deps
+
+/app/vitereact/src/components/views/UV_CheckoutReview.tsx
+  228:9  warning  The 'cart_items' logical expression could make the dependencies of useEffect Hook (at line 295) change on every render. To fix this, wrap the initialization of 'cart_items' in its own useMemo() Hook  react-hooks/exhaustive-deps
+  228:9  warning  The 'cart_items' logical expression could make the dependencies of useEffect Hook (at line 362) change on every render. To fix this, wrap the initialization of 'cart_items' in its own useMemo() Hook  react-hooks/exhaustive-deps
+
+/app/vitereact/src/components/views/UV_EmailVerification.tsx
+  153:6  warning  React Hook useEffect has a missing dependency: 'verifyEmailMutation'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/app/vitereact/src/components/views/UV_OrderHistory.tsx
+  311:6  warning  React Hook useEffect has missing dependencies: 'searchParams' and 'setSearchParams'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+/app/vitereact/src/components/views/UV_StaffOrderQueue.tsx
+  345:9  warning  The 'orders' conditional could make the dependencies of useMemo Hook (at line 508) change on every render. To fix this, wrap the initialization of 'orders' in its own useMemo() Hook  react-hooks/exhaustive-deps
+
+/app/vitereact/src/components/views/UV_Terms.tsx
+  452:6  warning  React Hook useEffect has a missing dependency: 'staticTermsContent'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/app/vitereact/src/test/setup.ts
+   4:1  error  Comments mentioning mock/dummy/fake data are not allowed. Implement real functionality  custom/no-mock-data
+   7:1  error  Comments mentioning mock/dummy/fake data are not allowed. Implement real functionality  custom/no-mock-data
+  10:1  error  Comments mentioning mock/dummy/fake data are not allowed. Implement real functionality  custom/no-mock-data
+
+✖ 34 problems (26 errors, 8 warnings)
+
+
+
+## Validation Context:
+- Step: Lint Project
+- Working Directory: /app/vitereact
+- Attempt: 1/100
+- Previous failures for this step: 1
+
+## Project Memory Summary:
+- Total validation attempts: 7
+- Common issues encountered: None
+- Known dependencies: @heroicons/react, @hookform/resolvers, @radix-ui/react-accordion, @radix-ui/react-alert-dialog, @radix-ui/react-aspect-ratio, @radix-ui/react-avatar, @radix-ui/react-checkbox, @radix-ui/react-collapsible, @radix-ui/react-context-menu, @radix-ui/react-dialog
+- Missing dependencies: None
+
+## Project Structure:
+FULL PROJECT STRUCTURE CONTEXT for Agent:
+=====================================
+
+Working Directory: /app/vitereact
+
+PROJECT DIRECTORIES:
+/app
+/app/exports
+/app/.opencode
+/app/.opencode/tool
+/app/vitereact
+/app/vitereact/src
+/app/vitereact/src/hooks
+/app/vitereact/src/__tests__
+/app/vitereact/src/assets
+/app/vitereact/src/store
+/app/vitereact/src/components
+/app/vitereact/src/test
+/app/vitereact/src/data
+/app/vitereact/src/lib
+/app/vitereact/src/utils
+/app/vitereact/src/config
+/app/vitereact/public_assets
+/app/.github
+/app/.github/workflows
+/app/.git
+
+
+KEY PROJECT FILES:
+/app/MENU_BUILDER_MODAL_QA_CHECKLIST.md
+/app/CART_CUSTOMIZATION_FIX.md
+/app/CHECKOUT_CART_PERSISTENCE_FIX.md
+/app/test_users.json
+/app/CATERING_FORM_DATE_FIX_V3.md
+/app/DEPLOYMENT_FIX.md
+/app/CATERING_FORM_FIX.md
+/app/CHECKOUT_UNAVAILABLE_ITEMS_FIX.md
+/app/CART_LOADING_FIX.md
+/app/STAFF_ORDER_QUEUE_PREVIOUS_FIX.md
+/app/code_summary.json
+/app/package-lock.json
+/app/CHECKOUT_PAYMENT_TOTAL_FIX.md
+/app/REGISTRATION_ERROR_BANNER_VISIBILITY_FIX_FINAL.md
+/app/LOGO_IMPLEMENTATION_SUMMARY.md
+/app/ADMIN_MENU_PRICE_CACHE_FIX.md
+/app/MENU_CUSTOMIZATION_IMPLEMENTATION.md
+/app/CART_TOTALS_SYNC_FIX.md
+/app/ADMIN_MENU_PRICE_UPDATE_FIX_V2.md
+/app/MODAL_BACKDROP_CLICK_FIX.md
+/app/exports/1765469462071.json
+/app/exports/1765469766348.json
+/app/exports/1765469674612.json
+/app/exports/1765469711298.json
+/app/exports/1765469734849.json
+/app/exports/1765469691388.json
+/app/exports/1765469721452.json
+/app/exports/1765466832504.json
+/app/exports/1765469720202.json
+/app/exports/1765469720234.json
+/app/exports/1765468445039.json
+/app/exports/1765469676299.json
+/app/exports/1765469681211.json
+/app/exports/1765469766277.json
+/app/exports/1765469747984.json
+/app/exports/1765469689613.json
+/app/exports/1765469769376.json
+/app/exports/1765469766188.json
+/app/exports/1765469706358.json
+/app/exports/1765469581692.json
+/app/exports/1765469728498.json
+/app/exports/1765469717551.json
+/app/exports/1765469772044.json
+/app/exports/1765469766357.json
+/app/exports/1765469581902.json
+/app/exports/1765469702851.json
+/app/exports/1765467434917.json
+/app/exports/1765469766191.json
+/app/exports/1765469768833.json
+/app/exports/1765469697901.json
+
+
+FRONTEND (vitereact) PACKAGE.JSON:
+  Scripts: dev, build, lint, preview, test, test:ui, test:run
+  Dependencies: 63 packages
+  DevDependencies: 22 packages
+  Key Dependencies: @heroicons/react, @hookform/resolvers, @radix-ui/react-accordion, @radix-ui/react-alert-dialog, @radix-ui/react-aspect-ratio, @radix-ui/react-avatar, @radix-ui/react-checkbox, @radix-ui/react-collapsible, @radix-ui/react-context-menu, @radix-ui/react-dialog
+
+BACKEND PACKAGE.JSON:
+  Scripts: start, build, dev, test, test:watch, test:coverage, cleanup-test-data
+  Dependencies: 21 packages
+  Key Dependencies: @electric-sql/pglite, @types/bcryptjs, @types/multer, @types/pdfkit, bcryptjs, cookie-parser, cors, dotenv, express, jsonwebtoken
+
+ROOT PACKAGE.JSON:
+  Scripts: dev
+
+BACKEND SCHEMA AVAILABLE:
+  Location: /app/backend/schema.ts
+  Size: 55987 characters
+  Contains Zod schemas for type validation
+
+BACKEND SERVER AVAILABLE:
+  Location: /app/backend/server.ts
+  Size: 428698 characters
+  Contains actual API endpoints and implementations
+
+PROTECTED DIRECTORIES (DO NOT MODIFY):
+  - /app/vitereact/src/components/ui/** (UI library)
+  - /app/node_modules/** (Dependencies)
+  - /app/.git/** (Version control)
+
+
+
+## Previous Validation Failures for Lint Project:
+- 6:33:16 PM: 
+
+## Your Task:
+1. **Analyze the Error**: Understand what specifically went wrong in the Lint Project step
+2. **Check Previous Attempts**: Consider if this is a recurring issue based on validation history
+3. **Locate the Problem**: Identify which files need to be modified
+4. **Apply Fixes**: Use the available tools to fix the specific issues
+5. **Focus on Root Cause**: Don't just suppress errors, fix the underlying problems
+
+
+
+
+
+## Important Notes:
+- You are working in a Modal Sandbox environment at /app/vitereact
+- Make changes to the actual project files that will be used in the next validation attempt
+- Always check packages are installed correctly, if not, install them, npm install
+- For TypeScript errors: Fix type issues, missing imports, etc.
+- For Build errors: Fix configuration issues, missing dependencies, syntax errors
+- For Lint errors: Fix code style issues, unused variables, missing dependencies, etc.
+- For Install errors: Fix package.json issues, dependency conflicts, etc.
+- For SQL errors: Fix syntax issues, schema problems, foreign key constraints, etc.
+- Use your memory context to avoid repeating failed approaches
+
+after you have fixed the issues, run the following commands to make sure there are no errors left:
+for typescript errors, run: cd /app/vitereact && npx tsc -b in /app/vitereact, it is important to run this command with -b so npx tsc -b in /app/vitereact
+for lint errors run npm run lint in vitereact
+for test errors, run: npm test in the appropriate directory (backend or vitereact)
+for SQL errors, run: node initdb.js in the backend directory to test database initialization
+
+MAKE SURE TO FIX ALL ERRORS! SMALL AND BIG!
+
+
+The validation will retry this step after your fixes. Make sure to address the specific error shown above.

@@ -495,11 +495,12 @@ const UV_AdminCategoryManagement: React.FC = () => {
 
           {/* Create/Edit Form Modal */}
           {form_visible && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="p-6 border-b border-gray-200">
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+              <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl my-8 mx-auto">
+                {/* Modal Header - Fixed */}
+                <div className="sticky top-0 bg-white rounded-t-xl p-4 sm:p-6 border-b border-gray-200 z-10">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-bold text-gray-900">
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
                       {form_mode === 'create' ? 'Create New Category' : 'Edit Category'}
                     </h2>
                     <button
@@ -508,17 +509,19 @@ const UV_AdminCategoryManagement: React.FC = () => {
                         resetForm();
                         setErrorMessage(null);
                       }}
-                      className="text-gray-400 hover:text-gray-600 transition-colors"
+                      className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0 ml-4"
+                      aria-label="Close modal"
                     >
-                      <X className="w-6 h-6" />
+                      <X className="w-5 h-5 sm:w-6 sm:h-6" />
                     </button>
                   </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                {/* Modal Body - Scrollable */}
+                <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-6 max-h-[calc(90vh-12rem)] overflow-y-auto">
                   {/* Category Name */}
                   <div>
-                    <label htmlFor="category-name" className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label htmlFor="category-name" className="block text-sm sm:text-base font-semibold text-gray-900 mb-2">
                       Category Name <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -532,16 +535,16 @@ const UV_AdminCategoryManagement: React.FC = () => {
                       placeholder="e.g., Mains, Sides, Drinks"
                       maxLength={100}
                       required
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-orange-500 focus:ring-4 focus:ring-orange-100 transition-all outline-none"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border-2 border-gray-300 rounded-lg focus:border-orange-500 focus:ring-4 focus:ring-orange-100 transition-all outline-none bg-white"
                     />
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className="mt-1.5 text-xs sm:text-sm text-gray-600">
                       {category_form.name.length}/100 characters
                     </p>
                   </div>
 
                   {/* Description */}
                   <div>
-                    <label htmlFor="category-description" className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label htmlFor="category-description" className="block text-sm sm:text-base font-semibold text-gray-900 mb-2">
                       Description (Optional)
                     </label>
                     <textarea
@@ -554,16 +557,16 @@ const UV_AdminCategoryManagement: React.FC = () => {
                       placeholder="Brief description of this category"
                       rows={3}
                       maxLength={500}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-orange-500 focus:ring-4 focus:ring-orange-100 transition-all outline-none resize-none"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border-2 border-gray-300 rounded-lg focus:border-orange-500 focus:ring-4 focus:ring-orange-100 transition-all outline-none resize-none bg-white"
                     />
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className="mt-1.5 text-xs sm:text-sm text-gray-600">
                       {(category_form.description?.length || 0)}/500 characters
                     </p>
                   </div>
 
                   {/* Sort Order */}
                   <div>
-                    <label htmlFor="category-sort-order" className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label htmlFor="category-sort-order" className="block text-sm sm:text-base font-semibold text-gray-900 mb-2">
                       Display Order
                     </label>
                     <input
@@ -575,15 +578,17 @@ const UV_AdminCategoryManagement: React.FC = () => {
                         setCategoryForm(prev => ({ ...prev, sort_order: parseInt(e.target.value) || 0 }));
                       }}
                       min={0}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-orange-500 focus:ring-4 focus:ring-orange-100 transition-all outline-none"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border-2 border-gray-300 rounded-lg focus:border-orange-500 focus:ring-4 focus:ring-orange-100 transition-all outline-none bg-white"
                     />
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className="mt-1.5 text-xs sm:text-sm text-gray-600">
                       Lower numbers appear first in the menu. You can also drag and drop to reorder.
                     </p>
                   </div>
+                </form>
 
-                  {/* Buttons */}
-                  <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
+                {/* Modal Footer - Fixed */}
+                <div className="sticky bottom-0 bg-white rounded-b-xl p-4 sm:p-6 border-t border-gray-200">
+                  <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end space-y-reverse space-y-2 sm:space-y-0 sm:space-x-3">
                     <button
                       type="button"
                       onClick={() => {
@@ -591,14 +596,15 @@ const UV_AdminCategoryManagement: React.FC = () => {
                         resetForm();
                         setErrorMessage(null);
                       }}
-                      className="px-6 py-3 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors"
+                      className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors text-sm sm:text-base"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
+                      onClick={handleSubmit}
                       disabled={createMutation.isPending || updateMutation.isPending}
-                      className="px-6 py-3 bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                      className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-sm sm:text-base"
                     >
                       {(createMutation.isPending || updateMutation.isPending) ? (
                         <>
@@ -610,13 +616,13 @@ const UV_AdminCategoryManagement: React.FC = () => {
                         </>
                       ) : (
                         <>
-                          <Check className="w-5 h-5 mr-2" />
+                          <Check className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                           {form_mode === 'create' ? 'Create Category' : 'Update Category'}
                         </>
                       )}
                     </button>
                   </div>
-                </form>
+                </div>
               </div>
             </div>
           )}

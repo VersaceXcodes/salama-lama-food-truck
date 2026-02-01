@@ -1,35 +1,75 @@
-## BUILD FAILURE - Fix Required (Attempt 2/3)
+Locate the file named Salama_Lama_Delivery_App_Menu_FULL_v2.pdf in the project directory.
 
-The Vite build process failed. Analyze the error output below and fix the issue.
+Also use this URL as a reference source for the same menu structure and content:
+https://www.just-eat.ie/restaurants-salama-lama-dublin/menu
 
-## Build Error Output:
-```
+Extract and normalize all:
 
-> conductor@0.0.0 build
-> vite build
+Categories
 
-vite v5.4.21 building for production...
-transforming...
+Menu items
 
-```
+Descriptions
 
-## Build Directory: /app/vitereact
+Prices
 
-## Your Task:
-1. **Analyze the Error**: Read the error output carefully to understand what went wrong
-2. **Locate the Problem**: Find the file(s) mentioned in the error
-3. **Apply the Fix**: 
-   - Missing file/component? CREATE it with correct exports
-   - Wrong import path? FIX the import statement  
-   - Syntax error? FIX the syntax in the affected file
-   - Type error? FIX the TypeScript types
-   - Missing dependency? Check if it needs to be installed or if it's a local import issue
-4. **Verify**: After fixing, ensure all imports resolve correctly
+Options or variants (if present)
 
-## IMPORTANT:
-- The build CANNOT succeed until this error is fixed
-- If creating a missing component, ensure exports match what's being imported (default vs named)
-- If the error mentions a specific line number, check that line in the source file
-- Run `npx tsc --noEmit` after fixing to verify no TypeScript errors remain
+Ensure the menu data matches the PDF and the Just Eat menu exactly.
+If there are discrepancies, prioritize the PDF file as the source of truth and use the Just Eat page only for validation and formatting consistency.
 
-Fix this error so the build can succeed on retry.
+Update the Admin Menu Management system so that:
+
+Categories and items mirror the extracted menu structure.
+
+Names, descriptions, and prices are mapped correctly.
+
+Existing menu data is replaced with the new menu data.
+
+Ensure the Customer Menu Page dynamically reflects the same updated menu from the admin panel (single shared data source).
+
+Do not hardcode menu values.
+Use dynamic data binding between Admin and Customer menu pages.
+
+When the user mentions generic pages, map them to concrete files/components by scanning for headings and routes. Examples you MUST follow:
+- If the user says "login" or "sign in", search for components containing the literal heading "Sign in to your account" and edit that file.
+- If the user says "sign up" or "register", search for "Create your account" or equivalent.
+- Always return an explicit list of changed file paths. If your first attempt doesn't change the UI, re-search by heading text and update the correct file.
+
+⚠️ PRIORITY INSTRUCTIONS:
+- The user's request above is the PRIMARY task. Complete it first.
+- Ignore any existing errors, warnings, or issues you detect in the project unless they directly prevent you from completing the user's requested task.
+- Do NOT automatically fix unrelated errors or refactor code unless explicitly requested.
+- Focus solely on implementing the user's request: "Locate the file named Salama_Lama_Delivery_App_Menu_FULL_v2.pdf in the project directory.
+
+Also use this URL as a reference source for the same menu structure and content:
+https://www.just-eat.ie/restaurants-salama-lama-dublin/menu
+
+Extract and normalize all:
+
+Categories
+
+Menu items
+
+Descriptions
+
+Prices
+
+Options or variants (if present)
+
+Ensure the menu data matches the PDF and the Just Eat menu exactly.
+If there are discrepancies, prioritize the PDF file as the source of truth and use the Just Eat page only for validation and formatting consistency.
+
+Update the Admin Menu Management system so that:
+
+Categories and items mirror the extracted menu structure.
+
+Names, descriptions, and prices are mapped correctly.
+
+Existing menu data is replaced with the new menu data.
+
+Ensure the Customer Menu Page dynamically reflects the same updated menu from the admin panel (single shared data source).
+
+Do not hardcode menu values.
+Use dynamic data binding between Admin and Customer menu pages."
+- Only address errors if they block the specific functionality requested by the user.

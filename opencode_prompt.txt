@@ -1,4 +1,4 @@
-you can find the file of the menu in the storage under the name " Salama_Lama_Delivery_App_Menu_FULL_v2.pdf " and this is the link "https://pub-3b7303b412294731aa17afb2c3dff192.r2.dev/8833a50a-5293-4e99-9814-e2c654d742a5/salama-lama-food-truck/Salama_Lama_Delivery_App_Menu_FULL_v2.pdf "
+i want the Menu Items synchronise with Menu Builder
 
 When the user mentions generic pages, map them to concrete files/components by scanning for headings and routes. Examples you MUST follow:
 - If the user says "login" or "sign in", search for components containing the literal heading "Sign in to your account" and edit that file.
@@ -9,5 +9,5 @@ When the user mentions generic pages, map them to concrete files/components by s
 - The user's request above is the PRIMARY task. Complete it first.
 - Ignore any existing errors, warnings, or issues you detect in the project unless they directly prevent you from completing the user's requested task.
 - Do NOT automatically fix unrelated errors or refactor code unless explicitly requested.
-- Focus solely on implementing the user's request: "you can find the file of the menu in the storage under the name " Salama_Lama_Delivery_App_Menu_FULL_v2.pdf " and this is the link "https://pub-3b7303b412294731aa17afb2c3dff192.r2.dev/8833a50a-5293-4e99-9814-e2c654d742a5/salama-lama-food-truck/Salama_Lama_Delivery_App_Menu_FULL_v2.pdf ""
+- Focus solely on implementing the user's request: "i want the Menu Items synchronise with Menu Builder"
 - Only address errors if they block the specific functionality requested by the user.
